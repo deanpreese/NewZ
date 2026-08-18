@@ -122,6 +122,31 @@ class BudgetReport:
             if self.tokens else 0.0
 
 
+def diet_line(b: BudgetReport) -> str:
+    """The §9.1 line, naming the ceiling that actually applied.
+
+    It used to read `ingest {x} <= earning {y}  headroom {z}` and that stopped
+    being true when #33 sized the diet on 2026-08-16. Since then ingest is
+    permitted below the LOOSER of the earning sum and §9.1's stated 50%-of-
+    tokens target, so the line could print `736,948 <= 422,402` beside a
+    positive headroom — an arithmetic contradiction on the face of a check
+    that was working correctly. The verdict was always right; only the words
+    were wrong, which is the worse failure for an instrument, because it is
+    the words that are read. It made me distrust a correct number twice in
+    one day before I looked at the code.
+
+    Kept as a separate function so it can be tested at all: health.py had no
+    tests, which is exactly how the stale wording survived the change that
+    invalidated it.
+    """
+    if b.ingest_ceiling() <= 0:
+        return (f"ingest {b.ingest_tokens:,} — nothing earned yet, so no "
+                f"ingest is permitted")
+    verb = "<=" if b.invariant_holds() else ">"
+    return (f"ingest {b.ingest_tokens:,} {verb} {b.binding_ceiling()} ceiling "
+            f"{b.ingest_ceiling():,}  headroom {b.ingest_headroom():,}")
+
+
 def read_budget(log_path: Path, window_hours: float = 168.0) -> BudgetReport:
     report = BudgetReport(window_hours=window_hours)
     if not Path(log_path).exists():

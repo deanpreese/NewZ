@@ -261,13 +261,16 @@ and every failure path — robots, timeout, PDF, paywall, truncation — falls b
 to the abstract that ran before). **2.4** the governed diet, sized last and
 from measurement, as the line required.
 
-**What the store says** *(method: counts from `data/newz.db`, v2 window
-`opened_at`/`ts` ≥ 2026-08-08, read 2026-08-18)*:
+**What the store says** *(method: counts from `data/newz.db`, read
+2026-08-18 by `tools/evidence.py 2e`. The v1/v2 boundary is the import
+record's own timestamp — 2026-08-08 21:32, not midnight; a midnight cutoff
+hands v1's last working day to v2 and moved four concerns and eight advances
+when this was first written)*:
 
 | | |
 |---|---|
-| concerns opened in v2 | 10 — 5 curiosity, 5 research, **0 conversation** |
-| advances | 45, of which 26 carry evidence refs (58%) |
+| concerns opened in v2 | 6 — 1 curiosity, 5 research, **0 conversation** |
+| advances | 37, of which 25 carry evidence refs (68%) — against v1's 73 of 162 (45%) |
 | setbacks | 53 — 33 blocked, 20 restated |
 | concerns closed through the closure path | 2 (08-14, 08-15) |
 | deliberations started | 88, 1 unreadable |
@@ -279,7 +282,7 @@ from measurement, as the line required.
 strictness, and it went 4 of 4 after the fix. That closes the *prompt*
 diagnosis; it does not discharge 2.2, whose claim was that conversation-opened
 concerns give the being something to pursue with no feed whatsoever. Zero of
-v2's ten came from conversation. The opener is built and demonstrably capable,
+v2's six came from conversation. The opener is built and demonstrably capable,
 and it has not yet fired in life. That is the first thing Evidence 2-E should
 read, not a footnote to it.
 
@@ -331,7 +334,9 @@ The audit's headline was that v2 had two input channels and one of them
 required the operator to be typing. It now has the six it was specified to
 have. Ledger at close: 42 invariants — 25 consumer_traced, 12 enforced, 3
 structural, 2 deferred (INV-013 → 3.3, INV-014 → 4.2). Suite green at 432
-tests.
+tests — with the caveat that four `test_noticing.py` tests read the wall clock
+and fail outside INV-037's own 07:00–23:00 wake window, so "green" is a
+statement about the time of day it was run.
 
 **Both evidence windows are now collectible, and neither has been read.**
 Evidence 1-E was deliberately deferred until the diet and the openers were live
