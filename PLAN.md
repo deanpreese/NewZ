@@ -247,6 +247,99 @@ reason its 111 concerns all came from reading. Deliberation-lite lands
 before the diet because it both moves concerns and grows the denominator
 that makes reading permissible. The diet is sized last, from measurement.
 
+**Phase 2 delivered** *(built 2026-08-11 → 08-16; recorded 2026-08-18)*. Built
+in the stated order. **2.5** injection hardening — trust-tagged blocks in every
+prompt carrying external text, hostile fixtures in the suite, INV-011
+consumer-traced *before* feeds enabled; INV-042 later widened quarantine from
+the chunk to the whole document, because a page whose halves split an
+instruction across a 2,000-char boundary would otherwise have contributed the
+claims from its clean chunks. **2.1** concerns v2 with the three-part advance
+judge. **2.2** the three openers through one door — with the qualification
+below. **2.3** the research cascade inside a scheduled deliberation-lite
+(INV-012: no web path exists in ambient; INV-040: depth is strictly additive,
+and every failure path — robots, timeout, PDF, paywall, truncation — falls back
+to the abstract that ran before). **2.4** the governed diet, sized last and
+from measurement, as the line required.
+
+**What the store says** *(method: counts from `data/newz.db`, v2 window
+`opened_at`/`ts` ≥ 2026-08-08, read 2026-08-18)*:
+
+| | |
+|---|---|
+| concerns opened in v2 | 10 — 5 curiosity, 5 research, **0 conversation** |
+| advances | 45, of which 26 carry evidence refs (58%) |
+| setbacks | 53 — 33 blocked, 20 restated |
+| concerns closed through the closure path | 2 (08-14, 08-15) |
+| deliberations started | 88, 1 unreadable |
+| ingest | 359 rows across 38 outlets; 324 abstract, 35 full; 0 quarantined |
+| source-gap records | 12 |
+
+**The conversation opener has still never opened a concern.** R-21 closed
+2026-08-16 on a controlled probe — 0 of 71 was the prompt, not correct
+strictness, and it went 4 of 4 after the fix. That closes the *prompt*
+diagnosis; it does not discharge 2.2, whose claim was that conversation-opened
+concerns give the being something to pursue with no feed whatsoever. Zero of
+v2's ten came from conversation. The opener is built and demonstrably capable,
+and it has not yet fired in life. That is the first thing Evidence 2-E should
+read, not a footnote to it.
+
+**Two sizings loosened stated rules, both measured before they were made.**
+R-28 *(2026-08-15)* narrowed the share cap from a fetch-time veto to §13's
+stated **target**: when every candidate is over-cap the best one is read
+anyway. Refusing the only source able to answer a question is manufacturing
+balance, and the `blocked` setback it produced was writing *"nothing was
+relevant enough to read"* into `source_gaps` — corrupting the very record §9.1
+uses to decide which sources to add. Feeds stay hard-capped; only the **pull**
+path changed. #33 *(2026-08-16, `b082a8d` in the predecessor repo)* sized the
+diet against §9.1's own *"≤50% of tokens"* after finding the ratio ceiling was
+holding ingest to 11% — about a fifth of the share the same sentence names as
+the target — because conversation and the gate are 57% of cognition and
+deliberation is 9%. Headroom went **0 → 549,619 tokens**. Zero earning is still
+zero ceiling: the first draft returned `max(earning, share)` unconditionally
+and two existing tests caught it inside a minute. Falsification stated in
+advance — *if ingest rises toward the new ceiling and the citation rate is
+still ~0 after a week, the sizing was wrong and the ratio comes back.* Stamped
+08-17 trending firmly against reversion: citation rate 0% → 9.0%, ingest 11% →
+28%, deliberation 9% → 14%, and the observed reading rate settled well below
+the new ceiling rather than running at it. **The week is not up; the watch
+stays open.**
+
+R-30 records two deliberate deviations from S2, visible rather than absorbed:
+§8.3's novelty comparison now excludes an advance the being explicitly declares
+it **supersedes** (one only, and only when named — cosine distance cannot
+separate *supersedes X* from *repeats X*), and §9.1's full-extraction trigger
+would be stretched by feed items surviving **triage** rather than sleep, which
+is recorded before it is relied on because that path is held.
+
+**Interphase — the six coverage gaps, closed** *(2026-08-13 → 08-17)*. The S2
+coverage audit of 2026-08-13 found six specified capabilities scheduled in **no
+phase**, three of them input paths, and the operator extended the closed port
+allowlist the same day to admit affect, ingest, and the noticing *policy*. All
+six are now built and consumer-traced. They are recorded here because no phase
+line ever scheduled them:
+
+| S2 | Capability | Ledger |
+|---|---|---|
+| 6.1 | Substrate self-state, folded to one clause a day | INV-035 |
+| 6.1 | Noticing — the being raises something unprompted | INV-037 |
+| 6.3 | Affect on six axes, reported in words never numbers | INV-036 |
+| 8.4 | Concern closure, failing closed | INV-034 |
+| 9.1 | Operator-curated feeds and canon | INV-038, INV-039 |
+| 13 | Traceability — what shaped this view | INV-033 |
+
+The audit's headline was that v2 had two input channels and one of them
+required the operator to be typing. It now has the six it was specified to
+have. Ledger at close: 42 invariants — 25 consumer_traced, 12 enforced, 3
+structural, 2 deferred (INV-013 → 3.3, INV-014 → 4.2). Suite green at 432
+tests.
+
+**Both evidence windows are now collectible, and neither has been read.**
+Evidence 1-E was deliberately deferred until the diet and the openers were live
+*(amendment above)*; they are, and nine Perspective versions exist against a
+floor of seven nights. Evidence 2-E's own denominator is in the store and
+unclassified — 84 of 117 concerns stand stalled. Reading them is the work that
+gates Phase 3, not a formality after it.
+
 **Evidence 2-E.** Advance rate with evidence-carrying fraction (expect the raw
 advance rate to *fall* relative to v1 — if it doesn't, the corrected judge is
 decorative). Stall pool with cause classification. Ingest share under the cap
