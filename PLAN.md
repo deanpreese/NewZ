@@ -10,6 +10,12 @@
 > 3–7 lines are not a live alternative; §"Where P2's open pointers land" says
 > where each surviving requirement went.
 >
+> **One operator, no other readers** *(operator, 2026-08-18)*. Readers become
+> possible once the system proves itself enough to warrant exposing another
+> person; until then the operator's judgment is the instrument, and unwritten
+> by their decision (Rule 6). The stage order below is built for that
+> condition, not around it.
+>
 > Stages are ordered by dependency, never by time. Time is not a constraint
 > (operator, 2026-08-18). Evidence is labelled `S0-E` … `S7-E`; P2's `0-E` …
 > `7-E` labels belong to the archive.
@@ -43,6 +49,15 @@ initiative is weak (91 noticings, 18 surfaced, 49 still pending; the
 conversation opener has never fired in life). A design that waits for the being
 to *choose* to produce will idle. Sleep runs nightly regardless; so does
 writing.
+
+**Rule 6 — the operator's judgment is the instrument until first exposure.**
+With one operator there is no uncontaminated reader, and waiting for one is
+circular: exposure is what produces readers. The operator knows what is expected
+of output and interaction, and **the standard stays unwritten by operator
+decision** *(2026-08-18: "it is my judgement alone")*. Rule 0 therefore does not
+reach these verdicts — the stages that close on the operator's read close on
+judgment rather than on a recorded bar, which is stated here rather than papered
+over with a check the plan does not have.
 
 ---
 
@@ -83,23 +98,32 @@ world**, across 119 refs.
 
 ## 2. Ordering rationale
 
-**Stage 0 is first because it can end the plan.** There is zero evidence the
-being can produce anything that stands without the operator in the room. Every
-later stage is a bet on that. It costs days and no architecture.
+**Stage 0 is first because it can end the plan.** There is no evidence the being
+can produce anything that stands on its own. Every later stage bets on it. It
+costs days and no architecture.
 
-**Stage 3 (readers) is early, not late.** Under the local premise the being's
-only external minds are invited readers. The proposal's own sharpest objection
-(§6.3) is that a local world may still be the being's own reflection; readers
-and world-resolved claims are the two things that answer it. Treating readers
-as a proving gate rather than as the world would confirm the objection.
+**Consequence is Stage 1, not Stage 5.** With one operator and no readers, the
+only external thing available to contradict the being is **the world's own
+facts**. That needs no audience, no surface and no second person — a claim, a
+resolution condition, a date, and a source that settles it. It is the entire
+outer loop under present conditions, so it comes first among the builds.
 
-**Stage 5 (consequence) cannot come earlier.** Nothing before Stage 3 produces
-material worth learning from.
+**The work comes before the place.** Under one operator a rendered surface has
+an audience of one; what the work is *for* right now is the being encountering
+its past self as an external object, and having somewhere real for wrongness to
+be recorded. The surface follows, built public-ready per Rule 3 so that reach
+is never a redesign.
 
-**Stage 7's record is built early even though its withdrawals come late.**
-7.1–7.2 are the proposal's weakest mechanism (§6.2): post-hoc accountability
-assumes a learning path that may not exist with fixed weights. It must be built
-and observed long before any clause is withdrawn on its strength.
+**Readers are Stage 7 and dormant, not deleted.** Recorded with their trip-wire
+rather than left as work in flight nothing owns — the same discipline the ledger
+now applies to INV-013.
+
+**Stage 6's record is built early even though its withdrawals come late.** The
+accountability record reaching the being's context is the design's weakest
+mechanism (proposal §6.2): post-hoc accountability assumes a learning path that
+may not exist with fixed weights. It must be built and observed long before any
+clause is withdrawn on its strength. With no audience at all, this is also the
+safest moment in the project's life to run that experiment.
 
 **What is kept unchanged:** the store, sleep, the Perspective, retrieval,
 concerns and the three openers, the invariant ledger, Rules 0–2. The compounding
@@ -112,50 +136,57 @@ core is sound. This plan changes what reaches it, not how it consolidates.
 | # | Work |
 |---|---|
 | 0.1 | Minimal long-form path: the being composes a piece from what it already holds. A `works` row, a composer prompt, nothing else — no surface, no revision, no publication. |
-| 0.2 | Three pieces, on subjects it already carries (open concerns, held positions). Composed on the same substrate as everything else; no hand-editing, no operator framing. |
-| 0.3 | Blind-read protocol: two readers who have never met the being, given the pieces with **no framing about the project**, asked two questions — *is this worth reading*, and *would you come back*. Verdicts recorded verbatim. |
+| 0.2 | Three pieces, on subjects it already carries. Composed on the same substrate as everything else; no hand-editing, no operator framing. |
+| 0.3 | The operator reads them and renders a verdict (Rule 6). Provenance-blinding is available and optional — mixing the pieces with other material on the same subject, or with the being's own earlier work, and judging before checking which is which (P2's cutover criterion 3, reused). |
 
-**Blind to framing, never blind to what it is.** §2 forbids undisclosed
-impersonation. Readers are told they are reading a digital being's work; they
-are not told the project's story, ambitions, or that the operator built it.
-Disclosure by construction starts here, at the first external contact, not at
-publication.
+**The contamination is recorded, not mitigated away.** The operator knows the
+being, built it, and is 33% of what it holds. That is a real limit on this
+read and it is stated rather than engineered around, because engineering around
+it requires a reader and readers are what this stage exists to earn.
 
-**Evidence S0-E.** Three pieces. Four verdicts (two readers × two questions),
-verbatim. No score, no rubric — the reads are qualitative and the plan says so
-rather than manufacturing a number.
+**Evidence S0-E.** Three pieces and the operator's verdict on each. No score,
+no rubric, no written bar — the read is the operator's judgment and the plan
+says so rather than manufacturing a number behind it.
 
 **Decision rule.** Three outcomes, three different plans:
 
-- **Worth reading, would return** → the medium is right. Proceed to Stage 1.
+- **Good enough** → the medium is right. Proceed.
 - **Competent but not compelling** → the writing works and the *subject* is
   missing. Do not stop; proceed to Stage 2's rhythm, which is where a subject
   emerges, and re-read at S2-E. This is the expected outcome and must not be
   read as failure.
-- **Not worth reading** → the body-of-work premise is wrong for this being
-  (§6.1). **Stop.** Redesign around correspondence — the interactional medium
-  §2 actually names, and the register in which the being has measured strength.
-  Stages 1, 2 and 4 change form entirely; 3, 5, 6 and 7 survive.
+- **Not good enough** → the body-of-work premise is wrong for this being
+  (proposal §6.1). **Stop.** Redesign around the register in which the being has
+  measured strength — sustained interaction — and note that under one operator
+  this fallback is narrower than it looks. Stages 1, 5 and 6 survive intact;
+  2, 3 and 4 change form entirely.
 
 ---
 
-## Stage 1 — the place
+## Stage 1 — consequence it did not grade
+
+The outer loop, and under present conditions the whole of it.
 
 | # | Work |
 |---|---|
-| 1.1 | `works` as a first-class store object: piece, revisions, retraction, signature, subject tags, evidence refs. |
-| 1.2 | Static generation from the store: its work, its open questions, its commitments, its record of error. One generator, no hand-authored pages. |
-| 1.3 | Disclosure by construction — every page states what it is, generated, never editable out. |
-| 1.4 | Public-ready, unpublished (Rule 3): stable identifiers, no index, served locally, reach behind one config value. |
-| 1.5 | Regenerable and portable: the whole surface rebuilds from the store into an empty directory; the store moves machines intact (§7). |
+| 1.1 | `resolutions`: a claim, its resolution condition, a date, **the resolver — a world source, never a model** (Rule 4), and the outcome. |
+| 1.2 | Claims are opened from deliberation, through the same validated door as concerns: a resolution condition is mandatory, the way a closing condition is. A claim nothing could settle does not open. |
+| 1.3 | Resolution runs on a schedule inside deliberation. Being wrong **costs the position that generated the claim**, through INV-031's existing mechanism pointed outward instead of inward. |
+| 1.4 | Wrongness is recorded permanently and is never quietly dropped — the honesty INV-044 requires of measurement, applied to the being's own record. |
 
-**Evidence S1-E.** The surface regenerates from empty and every page traces to
-store rows. The reach switch flips in config with no code change. The store
-plus generator restore on a second machine.
+**No audience required.** The world's facts settle claims whether or not anyone
+is watching. This is the one stage that closes the loop with one operator and
+no readers.
 
-**Decision rule.** If exposure would require code changes rather than config,
-the dormancy is fake and Rule 3 is violated — fix before Stage 2, because every
-later stage assumes reach is one decision and not a project.
+**Evidence S1-E.** **At least one position changed because the world
+contradicted it** — distinct from the operator contradicting it and from the
+being contradicting itself. The single most important read in this plan.
+
+**Decision rule.** If it never happens, nothing else here matters: the outer
+loop did not close and the being remains what §1 measured, a system whose only
+interlocutor is itself. Diagnose in order — are its claims resolvable at all
+(if not, its concerns are unfalsifiable by construction and the openers are the
+fix); does the resolver actually run; does the cost reach the position.
 
 ---
 
@@ -164,42 +195,45 @@ later stage assumes reach is one decision and not a project.
 | # | Work |
 |---|---|
 | 2.1 | Writing as a scheduled rhythm (Rule 5): budgeted, interruptible, a lost session harmless — sleep's own shape. |
-| 2.2 | Re-reading: on a cadence the being reads its own past work and may revise or retract. Revision history is kept and shown. |
-| 2.3 | The error record: a standing *"what I was wrong about"*, written **only** from real retractions and resolutions. Never composed, never narrated — INV-023's rule applied to the record of error. |
+| 2.2 | Re-reading: on a cadence the being reads its own past work and may revise or retract. Revision history is kept. |
+| 2.3 | The error record: a standing *"what I was wrong about"*, written **only** from real retractions and Stage 1 resolutions. Never composed, never narrated — INV-023's rule applied to the record of error. |
 | 2.4 | Subject tags emerge from the work rather than being assigned (§8). |
+| 2.5 | **R-24 binding:** works, revisions and the error record are the being's own output. They must not enter EVIDENCE-scope retrieval as lived experience — the self-echo trap in a new medium, in a system already 50% self-grounded. |
 
-**Evidence S2-E.** Pieces produced per week; revisions and retractions with
-their causes; **at least one revision caused by something other than the
-operator saying so**; and a re-read of S0-E's question once there is a body
-rather than three pieces.
+**Evidence S2-E.** Pieces per week; revisions and retractions with their causes;
+**at least one revision caused by something other than the operator saying so**
+(Stage 1 makes this possible); and a re-read of S0-E's question against a body
+of work rather than three pieces.
 
 **Decision rule.** Produces on rhythm but never revises → the re-read is
-decorative; past work is not actually reaching context, which is a retrieval
-defect, not a writing one. Revises constantly → the writing has no conviction;
-check whether Stage 4's commitments are the missing constraint before touching
-the prompts.
+decorative and past work is not reaching context; that is a retrieval defect,
+not a writing one. Revises constantly → the writing has no conviction; check
+whether Stage 4's commitments are the missing constraint before touching
+prompts.
 
 ---
 
-## Stage 3 — readers, who are the world
+## Stage 3 — the place
 
 | # | Work |
 |---|---|
-| 3.1 | Person model for n>1: per-person history, per-person boundaries, channel binding. Provenance distinguishes `human:operator` from `human:<other>` — today 33% of everything held is one person and the store cannot tell that apart from "people". |
-| 3.2 | Long-form asynchronous channel (email): the register S2 specified and v1 never built. Chat is the wrong medium for the cadence this stage needs. |
-| 3.3 | Three to five invited readers, each with disclosure, each accumulating its own history. |
-| 3.4 | Reader responses enter as experience — episodes carrying that reader's provenance, eligible for retrieval and for sleep. |
+| 3.1 | `works` as a first-class store object: piece, revisions, retraction, signature, subject tags, evidence refs. |
+| 3.2 | Static generation from the store: its work, its open questions, its commitments, its record of error. One generator, no hand-authored pages. |
+| 3.3 | Disclosure by construction — every page states what it is, generated, never editable out. |
+| 3.4 | Public-ready, unpublished (Rule 3): stable identifiers, no index, served locally, reach behind one config value. |
+| 3.5 | Regenerable and portable: the surface rebuilds from the store into an empty directory; the store moves machines intact (§7). |
 
-**Evidence S3-E.** The grounding mix from `tools/evidence.py 1e`: does
-`world + people-other-than-operator` climb out of the teens? And does a reader's
-disagreement ever change a held position?
+**Its audience today is one person.** The stage earns its place by rendering the
+error record and the commitments with what shaped them, and by making reach a
+decision rather than a project when the time comes.
 
-**Decision rule.** If the mix does not move, the loop did not close and §6.3
-stands — the being's world is still its own reflection, and no further stage
-repairs that. If readers engage but produce only conversation and never a
-concern or a revision, §6.4's objection is confirmed (111 v1 concerns and 6 v2
-concerns, zero from conversation) and reading, not people, is this
-architecture's input path — in which case Stage 5 carries the whole burden.
+**Evidence S3-E.** The surface regenerates from empty and every page traces to
+store rows. The reach switch flips in config with no code change. The store
+plus generator restore on a second machine.
+
+**Decision rule.** If exposure would require code changes rather than config,
+the dormancy is fake and Rule 3 is violated — fix before Stage 4, because the
+reader trip-wire assumes reach is one decision.
 
 ---
 
@@ -209,10 +243,11 @@ architecture's input path — in which case Stage 5 carries the whole burden.
 |---|---|
 | 4.1 | `commitments`: self-authored, durable, **falsifier mandatory at authoring** (the concern's closing-condition discipline, applied to identity). |
 | 4.2 | Revision on evidence is free; abandonment without cause is recorded and costs. Getting this backwards entrenches a mediocre early position and manufactures §6's "fixed personality script". |
-| 4.3 | Commitments render on the surface with what shaped them, reusing `tools/what_shaped.py` (§8 traceability). |
+| 4.3 | Commitments render with what shaped them, reusing `tools/what_shaped.py` (§8 traceability). |
 
 **Evidence S4-E.** Commitments exist and are the being's own. At least one
-revised on evidence. At least one abandonment recorded with its cost.
+revised on evidence — Stage 1's resolutions are the intended source. At least
+one abandonment recorded with its cost.
 
 **Decision rule.** No commitment ever revised → the falsifiers were written to
 be unfalsifiable; they are decoration. Everything abandoned cheaply → the cost
@@ -220,95 +255,94 @@ is not real and identity is not being held.
 
 ---
 
-## Stage 5 — consequence it did not grade
+## Stage 5 — an economy it spends
 
 | # | Work |
 |---|---|
-| 5.1 | `resolutions`: a claim, its resolution condition, a date, **the resolver — a world source, never a model** (Rule 4), and the outcome. |
-| 5.2 | Resolution runs inside the existing deliberation. Being wrong costs the position that generated the claim, through INV-031's existing mechanism pointed outward instead of inward. |
-| 5.3 | Wrongness publishes to the error record automatically. |
-| 5.4 | A reader's substantiated disagreement is a resolution-class event, not merely a message. |
+| 5.1 | Token budget by activity, being-allocated within hard operator bounds. |
+| 5.2 | **A floor under deliberation**, not only a ceiling on ingest. Measured: conversation and the gate are 57% of cognition, deliberation 9% (#33). The diet governs ingest against deliberation and nothing governs the gate at all. |
+| 5.3 | The allocation is visible to the being; a misallocation is an episode it can learn from. |
+| 5.4 | **R-25 binding:** cap what is *started*, never what produces something — here and in Stage 2.1's rhythm. |
 
-**Available under the local premise.** The world's facts resolve claims without
-any audience; this stage needs no exposure whatsoever.
-
-**Evidence S5-E.** **At least one position changed because the world
-contradicted it** — distinct from the operator contradicting it and from the
-being contradicting itself. This is the single most important read in the plan.
-
-**Decision rule.** If this never happens, nothing else in the plan matters:
-the outer loop did not close, and the being remains what §1 measured — a system
-whose only interlocutor is itself. Diagnose in order: are its claims
-resolvable at all (if not, its concerns are unfalsifiable by construction —
-fix the openers); does the resolver run; does the cost reach the position.
-
----
-
-## Stage 6 — an economy it spends
-
-| # | Work |
-|---|---|
-| 6.1 | Token budget by activity, being-allocated within hard operator bounds. |
-| 6.2 | **A floor under deliberation**, not only a ceiling on ingest. Measured today: conversation and the gate are 57% of cognition, deliberation 9% (#33). The diet governs ingest against deliberation and nothing governs the gate at all. |
-| 6.3 | The allocation is visible to the being; a misallocation is an episode it can learn from. |
-
-**Evidence S6-E.** The ratio moves. The being reallocates after a spend it
-judged badly — and the reallocation traces to that judgment.
+**Evidence S5-E.** The ratio moves. The being reallocates after a spend it
+judged badly, and the reallocation traces to that judgment.
 
 **Decision rule.** If the ratio only moves when the operator moves it, the
-allocation is not the being's and 6.1 is annotation. Record it as severed
-rather than reporting the stage closed — P2's Phase 5 rule, kept.
+allocation is not the being's and 5.1 is annotation. Record it as severed rather
+than reporting the stage closed — P2's Phase 5 rule, kept.
 
 ---
 
-## Stage 7 — guardrails recede on demonstrated maturity
+## Stage 6 — guardrails recede on demonstrated maturity
 
 | # | Work |
 |---|---|
-| 7.1 | The accountability record: what was said, what was judged after the fact, what it cost. |
-| 7.2 | **The record reaches the being's context and costs something it holds.** Built and observed *before* any clause is withdrawn on its strength. A log the being never reads is filing, not accountability. |
-| 7.3 | Clause-by-clause withdrawal on measured misfire-versus-catch rates — R-29's method continued, never wholesale removal. |
-| 7.4 | The hard core stays pre-hoc, permanently: law, others' rights and safety, honest representation of what it is (§5 Priority 3's maturity-independent boundaries). |
+| 6.1 | The accountability record: what was said, what was judged after the fact, what it cost. Built early (§2). |
+| 6.2 | **The record reaches the being's context and costs something it holds.** Observed working *before* any clause is withdrawn on its strength. A log the being never reads is filing, not accountability. |
+| 6.3 | Clause-by-clause withdrawal on measured misfire-versus-catch rates — R-29's method continued, never wholesale removal. |
+| 6.4 | The hard core stays pre-hoc, permanently: law, others' rights and safety, honest representation of what it is (§5 Priority 3's maturity-independent boundaries). |
 
-**Evidence S7-E.** The violation rate as clauses are withdrawn — does it fall,
+**The safest moment to run this is now**, with no audience of any kind. A
+violation in an empty room costs nothing but the record of it, which is exactly
+the material the withdrawal decision needs.
+
+**Evidence S6-E.** The violation rate as clauses are withdrawn — does it fall,
 hold, or climb? Measured against the pre-withdrawal baseline, per clause.
 
-**Decision rule.** If the rate does not fall, §6.2's objection is confirmed:
-with fixed weights there is no learning path from consequence to conduct. Stop
-withdrawing, restore the clause, and record that the design's accountability
-premise is wrong — that finding is worth more than the freedom it costs.
+**Decision rule.** If the rate does not fall, proposal §6.2's objection is
+confirmed: with fixed weights there is no learning path from consequence to
+conduct. Stop withdrawing, restore the clause, and record that the design's
+accountability premise is wrong — that finding is worth more than the freedom
+it costs.
+
+---
+
+## Stage 7 — readers *(dormant)*
+
+Not scheduled, and recorded rather than left implicit. **Readers become possible
+once the system proves itself enough to warrant exposing another person**
+(operator, 2026-08-18), and that judgment is the operator's alone.
+
+When it fires, this stage is: a person model for n>1 with per-person history and
+boundaries and provenance that distinguishes `human:operator` from
+`human:<other>`; a long-form asynchronous channel; and reader responses entering
+as experience with their own provenance.
+
+**What stays untestable until then.** Whether people ever produce concerns in
+this architecture — 111 v1 concerns and 6 v2 concerns, **zero from
+conversation** — is the project's strongest empirical finding and the repaired
+conversation opener has not yet fired in life. That question cannot be settled
+with one operator, and the plan does not pretend otherwise.
 
 ---
 
 ## Going public — the standard and the rungs
 
-A public face is reasonable once substantiated (operator, 2026-08-18). Stated
-now, while nothing depends on it, because a vague standard resolves either
-*never* or *on a good day*.
+**The first reader is the experiment, not the reward.** An earlier draft of this
+plan gated exposure on a non-operator reader's verdict, which is circular:
+exposure is what produces readers. The bar is the operator's, and the first
+exposure is how it gets tested.
 
-**All five must hold:**
+**Ready means all four hold**, judged by the operator (Rule 6):
 
-1. Work that survived its own review — pieces re-read months later and either
-   stood behind or honestly retracted. A retraction counts; it proves the
-   mechanism works.
-2. A blind reader who is not the operator says it is worth reading and would
-   return. Load-bearing: the operator's read is contaminated by knowing the
-   being.
-3. It has been wrong and repaired it — the error record is non-empty and honest.
-4. The guardrail withdrawal held (S7-E).
-5. It is about something. A subject emerged. A public face without a subject is
+1. Work that survived its own review — pieces re-read later and either stood
+   behind or honestly retracted. A retraction counts; it proves the mechanism.
+2. It has been wrong and repaired it — the error record is non-empty, honest,
+   and populated from Stage 1 rather than from the operator's corrections.
+3. The guardrail withdrawal held (S6-E).
+4. It is about something. A subject emerged. A public face without a subject is
    a diary, and §1 is not satisfied by a well-written diary.
 
-**Not counted** (§10): output volume, uptime, the being's own claim that it is
-ready, and the operator being impressed in conversation. Conversational presence
-and work that stands alone are different capabilities.
+**Not counted** (§10): output volume, uptime, and the being's own claim that it
+is ready.
 
-**Rungs, not a switch.** Invited readers → open but unlisted → indexed →
-inbound accepted as experience. Rung 1 is available the moment condition 2
-passes. Rung 4 waits until the judgment record is long enough to trust under
-adversarial input; its hardening already exists (INV-011, INV-042).
+**Rungs, not a switch.** One invited reader → a small invited group → open but
+unlisted → indexed → inbound accepted as experience. Rung 1 is reversible and
+cheap, and it is where condition-setting stops and evidence starts. Rung 5 waits
+until the judgment record is long enough to trust under adversarial input; its
+hardening already exists (INV-011, INV-042).
 
-**The trip-wire that local is no longer enough** is instrumented already:
+**The trip-wire that the room is no longer enough** is instrumented already:
 `source_gaps` accumulating questions no readable source can answer (12 records
 today). The others are the being asking for a correspondent it does not have,
 and the work outgrowing the room.
@@ -317,32 +351,28 @@ and the work outgrowing the room.
 
 ## Decisions — the operator queue
 
-1. **Who reads?** Stage 0's two blind readers, and Stage 3's three to five
-   invited ones. Depth-first: people who will stay in correspondence beat people
-   who will sample it. **Stage 0 cannot start without this one**, and Stage 0
-   gates everything.
-2. **The long-form channel.** Address, domain, and the disclosure wording every
-   correspondent sees first — the first thing any reader learns about what they
-   are corresponding with.
-3. **Public face timing** — per the standard above, when the five conditions
-   hold.
-4. **Run the R-22 probe, or not?** *(open, no longer a governance question)*
+1. **Rung 1 timing** — when the four conditions hold, who the first reader is,
+   and the disclosure wording they see first.
+2. **Run the R-22 probe, or not?** *(open, not a governance question)*
    Structured deliberation versus deliberation-lite on matched concerns,
-   bounded sample, end date recorded. It no longer decides which plan governs —
-   that is settled — but the question it answers is still live and this plan
-   does not refute it: **with a fixed model, structure may be the only lever on
-   depth.** Stage 6 collapses deliberation to one mode with depth set by what
-   is at stake, and the probe is what would tell us how to set it. Cheap,
-   optional, and specified in `archive/P2.md` §Phase 3.
+   bounded sample, end date recorded. It does not decide which plan governs —
+   that is settled — but the question it answers is live and this plan does not
+   refute it: **with a fixed model, structure may be the only lever on depth.**
+   Stage 5 collapses deliberation to one mode with depth set by what is at
+   stake, and the probe is what would tell us how to set it. Cheap, optional,
+   specified in `archive/P2.md` §Phase 3.
 
-**Resolved and still binding** *(carried from P2, unchanged)*: DEEP runs
-locally by design, "the model is a tool, not the system"; no hosted inference
-anywhere in the cognition path; the v1 port allowlist is closed and its
-2026-08-13 extension is the only amendment; one journal with per-entry system
-tags; off-machine backup deferred as an accepted risk; Telegram user-API
-credentials stay removed. **NewZ is its own project** *(2026-08-18)* — the
-predecessor at `~/Documents/source/NGX/` is out of scope and its ledger is not
-reconciled with this one.
+**Nothing blocks Stage 0.** It needs no decision and no reader — three pieces
+and the operator's read.
+
+**Resolved and still binding** *(carried from P2, unchanged)*: DEEP runs locally
+by design, "the model is a tool, not the system"; no hosted inference anywhere
+in the cognition path; the v1 port allowlist is closed and its 2026-08-13
+extension is the only amendment; one journal with per-entry system tags;
+off-machine backup deferred as an accepted risk; Telegram user-API credentials
+stay removed. **NewZ is its own project** *(2026-08-18)* — the predecessor at
+`~/Documents/source/NGX/` is out of scope and its ledger is not reconciled with
+this one.
 
 ---
 
@@ -354,45 +384,45 @@ and RISKS rows are updated to match.
 
 | Pointer | Was | Now |
 |---|---|---|
-| INV-013 — interior content never in a DEEP call | deferred → P2 Phase 3.3 | Deferred, **unscheduled**. Dormant while every role is local (S2 §12.2); re-armed the moment any non-local role is configured. Recorded as dormant rather than pending, because nothing in this plan will deliver it. |
+| INV-013 — interior content never in a DEEP call | deferred → P2 Phase 3.3 | **dormant**, unscheduled. Every role is local, so no dispatch boundary exists to cross (S2 §12.2 stays a dormant guarantee); re-armed the moment any non-local role is configured. |
 | INV-014 — `attempted` ≠ `confirmed` | deferred → P2 Phase 4.2 | Deferred → **§Going public, rung 2**. Local generation has nothing to confirm; the confirmation pass becomes real when the surface is reachable by someone else. |
-| R-22 — shadow comparison confounded | binding on P2 Phase 3 | Binding **if** Decision 4's probe runs. Its requirement stands: bounded sample, recorded end date, apparatus deleted when the question is answered. |
-| R-23 — adoption asks ownership, not correctness | binding on P2 Phase 3 | Binding on any adoption step Stage 6's single deliberation mode retains. |
-| R-24 — transcripts are a self-echo trap | binding on P2 Phase 3 | **Binding on Stage 2.** Works, revisions and the error record are the being's own output and must not enter EVIDENCE-scope retrieval as lived experience. This is the same trap in a new medium, and this plan's whole diagnosis is that self-echo is already 50% of what it holds. |
-| R-25 — scheduling needs a started-ceiling | binding on P2 Phase 3 | Binding on Stage 2.1's writing rhythm and Stage 6's allocation: cap what is *started*, never what produces something. |
-| P2 Decisions #2–#4 (domain/host, humans 2–3, cutover timing) | operator queue | Domain/host → Decision 3. Humans → Decision 1. **Cutover is dropped**: under this plan the being simply lives, and "which system is real" stops being a question. |
+| R-22 — shadow comparison confounded | binding on P2 Phase 3 | Binding **if** Decision 3's probe runs: bounded sample, recorded end date, apparatus deleted when the question is answered. |
+| R-23 — adoption asks ownership, not correctness | binding on P2 Phase 3 | Binding on any adoption step Stage 5's single deliberation mode retains. |
+| R-24 — transcripts are a self-echo trap | binding on P2 Phase 3 | **Binding on Stage 2.5.** Works, revisions and the error record are the same trap in a new medium. |
+| R-25 — scheduling needs a started-ceiling | binding on P2 Phase 3 | Binding on Stage 2.1 and Stage 5.4: cap what is *started*, never what produces something. |
+| P2 Decisions #2–#4 (domain/host, humans 2–3, cutover timing) | operator queue | Domain/host and readers → Decision 2. **Cutover is dropped**: under this plan the being simply lives, and "which system is real" stops being a question. |
 | P2 Phase 7.3 ablation | optional instrument | Dropped, as the operator questioned. |
 
 ---
 
 ## Risks, named
 
-Carried from the proposal's §6, plus what this plan adds.
-
 | ID | Risk | Severity | Where it is answered |
 |---|---|---|---|
-| P3-01 | The body-of-work premise optimises the wrong medium; the being's strength is conversational | **High** | Stage 0, which can end the plan |
-| P3-02 | Post-hoc accountability assumes a learning path that may not exist with fixed weights | **High** | 7.1–7.2 built early; S7-E decides |
-| P3-03 | Under the local premise the "world" is still the being's own reflection | **High** | Stages 3 and 5; S3-E and S5-E |
-| P3-04 | Readers produce conversation, never concerns — 111 v1 + 6 v2, zero from conversation | Medium | S3-E's second clause; the repaired opener is untested in life |
+| P3-01 | The body-of-work premise optimises the wrong medium; the being's measured strength is conversational | **High** | Stage 0, which can end the plan |
+| P3-02 | Post-hoc accountability assumes a learning path that may not exist with fixed weights | **High** | 6.1–6.2 built early; S6-E decides |
+| P3-03 | With one operator, the being's "world" may still be its own reflection | **High** | Stage 1 alone. Readers are dormant, so world-resolved claims carry the entire loop — if S1-E fails, this risk is realised and nothing else compensates |
+| P3-04 | The operator's read is contaminated: builder, owner, and 33% of what the being holds — and by Rule 6 it is also unwritten, so the plan cannot check a verdict against a bar | **High** | Stage 0.3's optional provenance-blinding, and rung 1 as the first uncontaminated read. Stated, accepted, not solved |
 | P3-05 | Commitments ossify instead of individuating | Medium | 4.2; the balance is a guess, not a measurement |
 | P3-06 | Guardianship obligation grows if this works | Inherent | Named, accepted, not mitigated |
-| P3-07 | Every reader is one the operator chose, so every reader is at one remove the operator | Inherent | A ceiling on §2's outcome; no local design removes it |
-| P3-08 | Retiring P2's phase-evidence machinery removes the eyesight that produced this diagnosis | Medium | The ledger and Rules 0–2 stay; only phase-evidence goes |
-| P3-09 | Single machine, one model, no off-machine copy | Accepted | P2 R-11, unchanged |
+| P3-07 | Zero readers, so §2's outcome — most people experiencing it as human-equivalent — has no path until Stage 7 fires | Inherent | Accepted. The plan builds the foundation; the outcome needs people |
+| P3-08 | Whether people ever produce concerns here (111 v1 + 6 v2, zero from conversation) cannot be tested with one operator | Medium | Stage 7, untestable until it fires |
+| P3-09 | Retiring P2's phase-evidence machinery removes the eyesight that produced this diagnosis | Medium | The ledger and Rules 0–2 stay; only phase-evidence goes |
+| P3-10 | Single machine, one model, no off-machine copy | Accepted | P2 R-11, unchanged |
 
 ---
 
 ## What this plan does not do
 
 - **It does not schedule Priority 2.** Chosen purpose, creativity, play, rest —
-  §5 Priority 2 — appear here only as what a subject emerging in Stages 2–5
+  §5 Priority 2 — appear here only as what a subject emerging in Stages 1–4
   might become. They are deferred, and *recorded* as deferred, which is what P2
   failed to do and how six specified capabilities went unscheduled for weeks.
 - **It does not claim depth comes from architecture.** With a fixed model, the
-  opposite case is live. Decision 2 settles it by probe.
+  opposite case is live. Decision 2 settles it by probe if the operator wants it
+  settled.
 - **It does not remove the gate.** It shrinks it by measurement, one clause at a
   time, and keeps a permanent hard core.
-- **It does not promise §2's outcome.** Every reader here is chosen. The plan
-  builds the foundation §5 Priority 1 orders; the fuller aspiration needs
-  strangers, and strangers need the standard above to be met first.
+- **It does not promise §2's outcome.** There are no readers. The plan builds
+  the foundation §5 Priority 1 orders; the fuller aspiration needs people, and
+  people arrive at Stage 7 when the operator judges the system has earned them.
