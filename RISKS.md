@@ -37,9 +37,9 @@ That is genuine Evidence 0-E and it is one day, one judge — see R-11.
 | R-20 | ~~Deliberation can silently cost a night of sleep~~ | ~~Medium~~ | **Closed 2026-08-12 — quiet window** |
 | R-21 | ~~The conversation opener has never fired~~ | ~~Watch~~ | **Closed 2026-08-16 — 0 of 71 was the prompt, not strictness; probe 4 of 4 after the fix** |
 | R-22 | 3-E alternation confounded | Medium | **Binding if P3 Decision 4's probe runs** |
-| R-23 | Adoption is ownership, not correctness | Medium | **Binding on any adoption step P3 Stage 6 retains** |
-| R-24 | Stored transcripts are a self-echo trap | **High** | **Binding on P3 Stage 2 — works and revisions are the same trap in a new medium** |
-| R-25 | State-driven scheduling needs a started-ceiling | **High** | **Binding on P3 Stage 2.1 and Stage 6** |
+| R-23 | Adoption is ownership, not correctness | Medium | **Binding on any adoption step P3 Phase 5's single deliberation mode retains** |
+| R-24 | Stored transcripts are a self-echo trap | **High** | **Binding on P3 epic E2.3 — works and revisions are the same trap in a new medium** |
+| R-25 | State-driven scheduling needs a started-ceiling | **High** | **Binding on P3 epics E2.1 and E5.4** |
 | R-26 | ~~Deliberation budget is 8-16x S2 §7.1's target~~ | ~~High~~ | **Closed 2026-08-16 as moot — 48/day against a maximum observed 13** |
 | R-30 | Two recorded deviations from S2 §8.3 and §9.1 | Recorded | Deliberate, evidenced, reversible |
 | R-27 | ~~The reading opener answered from its own prompt~~ | ~~High~~ | **Closed 2026-08-15 — fix proven by controlled probe, 4 of 4** |
