@@ -1,0 +1,172 @@
+
+canon:
+  # Philosophy
+  - title: "Meditations"
+    author: "Marcus Aurelius"
+    topic: "philosophy"
+    url: "https://www.gutenberg.org/files/2680/2680-0.txt"
+    license_note: "Public domain (Project Gutenberg)"
+    priority: 7
+    enabled: true
+
+  - title: "Tao Te Ching"
+    author: "Lao Tzu"
+    topic: "philosophy"
+    url: "https://www.gutenberg.org/cache/epub/216/pg216.txt"
+    license_note: "Public domain"
+    priority: 7
+    enabled: true
+
+  # Economics
+  - title: "The Wealth of Nations"
+    author: "Adam Smith"
+    topic: "economics"
+    url: "https://www.gutenberg.org/cache/epub/3300/pg3300.txt"
+    license_note: "Public domain"
+    priority: 6
+    enabled: true
+
+  - title: "Common Sense"
+    author: "Thomas Paine"
+    topic: "history"
+    url: "https://www.gutenberg.org/cache/epub/147/pg147.txt"
+    license_note: "Public domain"
+    priority: 5
+    enabled: true
+
+  # Science
+  - title: "On the Origin of Species"
+    author: "Charles Darwin"
+    topic: "science"
+    url: "https://www.gutenberg.org/files/1228/1228-0.txt"
+    license_note: "Public domain"
+    priority: 6
+    enabled: true
+
+  - title: "Relativity: The Special and General Theory"
+    author: "Albert Einstein"
+    topic: "science"
+    url: "https://www.gutenberg.org/cache/epub/30155/pg30155.txt"
+    license_note: "Public domain"
+    priority: 5
+    enabled: true
+
+  # Literature
+  - title: "Pride and Prejudice"
+    author: "Jane Austen"
+    topic: "literature"
+    url: "https://www.gutenberg.org/files/1342/1342-0.txt"
+    license_note: "Public domain"
+    priority: 4
+    enabled: true
+
+  - title: "The Adventures of Sherlock Holmes"
+    author: "Arthur Conan Doyle"
+    topic: "literature"
+    url: "https://www.gutenberg.org/cache/epub/1661/pg1661.txt"
+    license_note: "Public domain"
+    priority: 4
+    enabled: true
+
+  # Religion / mythology
+  - title: "The King James Bible"
+    author: "Various"
+    topic: "religion"
+    url: "https://www.gutenberg.org/cache/epub/10/pg10.txt"
+    license_note: "Public domain"
+    priority: 6
+    enabled: true
+
+  # Music history
+  - title: "The Letters of Wolfgang Amadeus Mozart"
+    author: "Wolfgang Amadeus Mozart"
+    topic: "music"
+    url: "https://www.gutenberg.org/cache/epub/5307/pg5307.txt"
+    license_note: "Public domain"
+    priority: 3
+    enabled: true
+
+  # Ethics
+  - title: "The Nicomachean Ethics"
+    author: "Aristotle"
+    topic: "philosophy"
+    url: "https://www.gutenberg.org/cache/epub/8438/pg8438.txt"
+    license_note: "Public domain"
+    priority: 7
+    enabled: true
+
+  - title: "The Analects of Confucius"
+    author: "Confucius"
+    topic: "philosophy"
+    url: "https://www.gutenberg.org/cache/epub/3330/pg3330.txt"
+    license_note: "Public domain"
+    priority: 6
+    enabled: true
+
+  # Reasoning / epistemology
+  - title: "Discourse on the Method"
+    author: "René Descartes"
+    topic: "philosophy"
+    url: "https://www.gutenberg.org/cache/epub/59/pg59.txt"
+    license_note: "Public domain"
+    priority: 7
+    enabled: true
+
+  - title: "An Enquiry Concerning Human Understanding"
+    author: "David Hume"
+    topic: "philosophy"
+    url: "https://www.gutenberg.org/cache/epub/9662/pg9662.txt"
+    license_note: "Public domain"
+    priority: 6
+    enabled: true
+
+  # Governance / cooperation
+  - title: "The Republic"
+    author: "Plato"
+    topic: "philosophy"
+    url: "https://www.gutenberg.org/cache/epub/1497/pg1497.txt"
+    license_note: "Public domain"
+    priority: 7
+    enabled: true
+
+  - title: "Leviathan"
+    author: "Thomas Hobbes"
+    topic: "philosophy"
+    url: "https://www.gutenberg.org/cache/epub/3207/pg3207.txt"
+    license_note: "Public domain"
+    priority: 5
+    enabled: true
+
+  - title: "On Liberty"
+    author: "John Stuart Mill"
+    topic: "philosophy"
+    url: "https://www.gutenberg.org/cache/epub/34901/pg34901.txt"
+    license_note: "Public domain"
+    priority: 6
+    enabled: true
+
+  # Strategy
+  - title: "The Art of War"
+    author: "Sun Tzu"
+    topic: "strategy"
+    url: "https://www.gutenberg.org/cache/epub/132/pg132.txt"
+    license_note: "Public domain"
+    priority: 6
+    enabled: true
+
+  - title: "The Prince"
+    author: "Niccolò Machiavelli"
+    topic: "strategy"
+    url: "https://www.gutenberg.org/cache/epub/1232/pg1232.txt"
+    license_note: "Public domain"
+    priority: 5
+    enabled: true
+
+  # Psychology of mind / belief
+  - title: "The Varieties of Religious Experience"
+    author: "William James"
+    topic: "psychology"
+    url: "https://www.gutenberg.org/cache/epub/621/pg621.txt"
+    license_note: "Public domain"
+    priority: 5
+    enabled: true

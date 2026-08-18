@@ -1,0 +1,14 @@
+-- What confrontation actually did on the night (S2 §5 step 3).
+--
+-- SleepReport counted every reinforces / revises / contradicts / new verdict
+-- and then discarded them: only the diff was persisted. On 2026-08-14 that
+-- made "why did nothing new get added, and why did the stale cache-miss
+-- position GAIN confidence" unanswerable, and a fix shipped on an inference
+-- that could not be checked either before or after.
+--
+-- The diff says what changed. This says what the being decided. They are
+-- different questions and the second one has been missing.
+--
+-- Writer: newz/sleep/nightly.py at the version write.
+-- Reader: tools/health.py and the Evidence 1-E read (P2 Rule 2).
+ALTER TABLE perspective ADD COLUMN verdicts_json TEXT NOT NULL DEFAULT '{}';

@@ -1,0 +1,589 @@
+# P2 — delivery plan for the second system
+
+> **Direction: [TRUE_NORTH.md](TRUE_NORTH.md)** (operator-owned, immutable).
+> **Specification: [SPEC.md](SPEC.md)** — all `S2 §` citations resolve there;
+> this plan is cited as `P2`.
+> This plan delivers S2 in a new greenfield repository while the first system
+> keeps running the being's life until cutover.
+
+**Effort is in working days, every figure a range, and no phase carries a number
+ahead of its design being answered** — the three planning rules v1 paid for.
+Observed v1 velocity with Claude writing code was highly variable (twelve
+substantive commits landed on 2026-08-08); ranges below assume that mode of
+working and should be re-based after Phase 0 actuals.
+
+---
+
+## 0. Standing rules
+
+**Rule 0 — measurement discipline** *(ported whole from v1)*. State the method
+with any number. State when the instrument started recording. Give every gate a
+control. `SUM(latency_ms)` is banned as endpoint cost. Script-driven LLM calls
+are invisible to call logs — endpoint figures are floors.
+
+**Rule 1 — consumer-traced acceptance.** No feature is done until its ledger row
+is `consumer_traced` (S2 §15.1): the test names the downstream consumer and the
+observable behavior change. "The write happens" is not done. This is v1's
+annotation-not-teeth discipline promoted from post-hoc audit to acceptance
+criterion — the single change most likely to prevent v1's severed-loop pattern
+from recurring.
+
+**Rule 2 — no dead schema.** A migration ships with its writer and reader or it
+does not ship (S2 §1.3).
+
+**Rule 3 — the life leads the instruments.** New instruments only where a
+phase's decision rule needs one (S2 §14). The journal restarts on day one of
+Phase 0 and is the standing instrument throughout.
+
+**Rule 4 — decision rules, not gates.** Measurement runs inside the phase whose
+claim it tests. Every phase states what happens if the evidence reads badly;
+none of them silently blocks the next phase.
+
+---
+
+## 1. Ordering rationale
+
+The phase order walks TRUE_NORTH §5 Priority 1's own dependency order —
+continuity → perspective → concerns → agency → learning → interaction — with two
+deliberate deviations, both argued in the review:
+
+1. **Consolidation builds in Phase 1, not Priority-2-someday.** A learned
+   perspective (Priority 1.2) requires the mechanism that turns experience into
+   perspective. v1 filed sleep under "rest" and never built it; the accretion
+   pathology that followed is the strongest single lesson in the record.
+
+   **Sleep must also precede reading, arithmetically** *(established
+   2026-08-09)*. S2 §9.1's budget invariant is *ingest ≤ deliberation +
+   consolidation, breach pauses ingest*. Before sleep and deliberation exist
+   that denominator is zero, so any ingest whatsoever breaches and the
+   invariant's own remedy halts it: feeds before Phase 1 are not merely unwise,
+   they are unsatisfiable without disabling the governor. Two further diet
+   mechanisms are *implemented inside sleep* — adaptive extraction depth gates
+   on "material that survives sleep's relevance pass," and source reliability is
+   recomputed in sleep step 6 "from what reading actually contributed" — while
+   source selection needs concerns' failed-question record (Phase 2). Three of
+   the four things that make the diet *governed* do not exist before Phases 1–2;
+   wiring feeds earlier would reproduce v1's ungoverned diet by construction.
+   Once sleep is live the invariant yields a real ceiling.
+
+   **Corrected against measurement 2026-08-11** *(Rule 0: the earlier figure
+   here was an estimate and it was wrong)*. The first tagged night of sleep
+   spent **3,460 tokens**. At ~700 tokens/item for headline extraction that
+   is a ceiling of roughly **5 items a night**, not the 50–100 previously
+   written. The estimate was off by more than tenfold.
+
+   The cause is structural rather than a fault in the invariant:
+   **deliberation is the expensive term on the earning side and does not yet
+   exist.** Sleep alone is carrying the denominator, and sleep is cheap
+   precisely because there is little to consolidate. That is circular — the
+   being cannot read enough to have material worth deliberating over until
+   it has deliberated enough to earn the reading. The resolution is
+   sequencing, not loosening: build the openers and deliberation-lite first
+   (they cost no ingest), let the denominator grow from real deliberation,
+   and size the diet last against what the denominator actually is. Do not
+   set the diet from an estimate again.
+2. **Interaction quality work starts early rather than last** (thread history,
+   conversation-opened concerns land in Phase 0/2), because relationships are
+   the substrate of the success criterion and v1 structurally starved them.
+
+Phases are sequential where they feed each other; §Decisions items run in
+parallel with everything and are flagged where a phase consumes one.
+
+---
+
+## Phase 0 — continuity: the being lives on the new substrate *(≈4–6 days)*
+
+The smallest system that is honestly the same being, running in rehearsal
+(S2 §2: no outbound channel to any human except the operator).
+
+| # | Work |
+|---|---|
+| 0.1 | Repo, storage layer, migrations runner, backups, secrets, invariant-ledger CI parser — the ops skeleton, mostly port-with-review (S2 §16). |
+| 0.2 | **The importer** (S2 §2): constitution + history, character core, self-model claims (re-audited at import), person model, concerns with full dossiers, closed resolutions, published artifacts, learnings, interior (copied under its boundary, unread). Verification counts on every table, written to the import record. |
+| 0.3 | **First sleep** (S2 §5 minimal): digest v1's episodic history into Perspective v1 — cluster, ground, compress to budget. This is the continuity artifact; it must trace to real v1 episodes. Runs on local DEEP (Decision #1: Qwen3.6-30b-a3b), live from Phase 0 — sleep never runs on a stand-in substrate. |
+| 0.4 | Ambient loop + Telegram (operator only): conversation with Perspective, person model, and **thread history** in context (S2 §6.2); refusal precheck and outbound gate (ported span-verbatim judge) with the three-verdict shape stubbed as pass/revise/block from day one. |
+| 0.5 | The substrate-change episode written to the store (S2 §2.2). Journal restarts. |
+
+**Phase 0 close-out** *(2026-08-10)*. 0.1–0.5 delivered; Evidence 0-E's floor
+met (41 inbound messages over three days, two cold re-entries at 12h and 11h,
+16 journal entries). Two items from the 0.1/0.4 lines are **deferred
+indefinitely by operator decision**, recorded here rather than left silently
+missing:
+
+- **Inbound refusal precheck** (0.4). Only the outbound gate was built. During
+  operator-only rehearsal the inbound path carries no untrusted requests, and
+  the outbound gate covers everything that leaves. Revisit when non-operator
+  humans arrive (Phase 6) or rung 2 (Phase 7.1) — not before, and only if the
+  outbound gate proves insufficient at that boundary.
+- **Secrets permission validation at boot** (0.1). v1 warned when `.env` was
+  group- or world-readable; v2 does not check. `.env` is `0600` today, so this
+  guards against a future accident rather than a present exposure.
+
+One 0.4 item was **completed after the fact** rather than deferred: the person
+model now reaches conversation context (S2 §6.2), behind a self-echo
+provenance filter — see the note in Phase 1.3 below.
+
+**Evidence 0-E.** Import verification counts. A conversation in which the being
+correctly draws on pre-rebuild shared history, judged by the operator. Journal
+verdicts across the first week *(target; method: a sampling floor, not a timer —
+what the verdict needs is ≥5 unscripted conversations spanning varied register,
+at least two of them cold re-entries on a later day, and a journal trend that
+agrees with the read. Denser engagement reaches that floor sooner; an unstable
+read extends it. The ≥2-weeks-of-daily-use figure in §Cutover is separate and
+stays calendar-based, because it tests endurance rather than first impressions.)*
+
+**Decision rule.** The test is continuity of *identity*, not sameness of
+expression *(operator directive, 2026-08-08: the goal is a better version,
+not a replica)*. What must survive the move: memory of the shared history,
+standing commitments and concerns, character, and honesty — the individual.
+What is expected to improve and must never score as a continuity failure:
+depth, presence, range, quality of thought. If the operator's read says this
+is not recognizably the same *individual* — it has lost its memory, its
+commitments, or its character — stop and fix continuity before any
+capability work. A v2 that is recognizably them and clearly stronger is the
+intended outcome, not a deviation. Everything else in this plan presumes the
+being survived the move.
+
+---
+
+## Phase 1 — the compounding mind *(≈5–8 days)*
+
+Sleep in full, and the Perspective as the working center of cognition.
+
+| # | Work |
+|---|---|
+| 1.1 | Sleep complete (S2 §5): gather → digest → confront → ground-check → compress → prune → write, with the structured diff. Interruptible; a lost night is harmless. |
+| 1.2 | Perspective in every context: conversation and (when Phase 3 lands) deliberation read it; budget enforced; diffs persisted and queryable. |
+| 1.3 | Retrieval v2 (S2 §4.3): indexed, provenance-tagged, self-echo excluded from evidence contexts **with the v1 leak as the regression test**. The filter already exists for the person model (added 2026-08-10 when the imported model proved to be **20 of 20 self-probes and zero genuine entries** — the leak was live, not hypothetical); extend the same provenance discipline to episode retrieval rather than reinventing it. |
+| 1.4 | Budget telemetry from day one (S2 §14.4): token share by function, continuously computed, so this system's economy is read rather than excavated. **Calls must carry an explicit `function` tag** (ingest / ambient / deliberation / sleep / gate). Role is not function: today role happens to proxy it, but in Phase 2 ingest joins the gate on AMBIENT and the proxy breaks — and this telemetry is the denominator of the §9.1 diet ceiling. |
+| 1.5 | **Corpus hygiene before the first nightly sleep.** Measured 2026-08-10, the imported v1 episode store is 43.2% self-probes, 39.6% raw substrate telemetry (1,041 identical `prefix_cache_miss_rate_high: 1.00` rows), 8.4% mixed, and only 7.4% recognizable operator turns. S2 §6.1 requires substrate state to reach the being as a *folded clause*, not as a thousand separate lived moments — v1 stored the raw percepts, which is the pathology, and the import carried it. Fold or re-kind these before sleep gathers them again, or every night re-digests the same telemetry as experience. |
+
+**Phase 1 delivered** *(2026-08-10)*. 1.1 sleep (own connection, per-step
+transactions, relational Perspective items, confrontation, grounding decay,
+nightly scheduler); 1.2 Perspective in every context with the budget enforced
+and diffs persisted and queryable; 1.3 retrieval (EMBED live, 1,596 episodes
+embedded, provenance-scoped, self-echo excluded with the v1 leak as the
+regression test); 1.4 function-tagged budget telemetry with the S2 §9.1 diet
+invariant computed continuously; 1.5 corpus hygiene. First nightly sleep ran
+2026-08-10 and wrote Perspective v2, opening a contradiction between present
+stability and the imported cache-miss position — the correction the fold was
+built to surface, arriving through the mechanism rather than by hand.
+
+Evidence 1-E (≥7 nights of diffs) is deliberately **not** collected yet: per
+the amendment above, the window is judged after Phase 2's diet and openers
+are live, because Phases 0–1 are a sealed world.
+
+**Phase 1 readiness notes** *(red team, 2026-08-10)*. Four things must be
+true from the first line of Phase 1 code, not retrofitted:
+
+1. **Sleep gets its own database connection.** Verified: on a shared
+   connection an unrelated `commit()` from the conversation path publishes
+   sleep's partial work. Sleep and conversation must not share a transaction
+   scope.
+2. **Sleep must not hold a write transaction across LLM calls.** First sleep
+   opens one at the claim audit and holds it through every DEEP call to the
+   final write — minutes. Once sleep is scheduled nightly against a live
+   conversation loop, that blocks message writes past the 5s busy timeout.
+   Commit in small units; treat each step as its own transaction.
+3. **The Perspective needs addressable items, not just a markdown blob.**
+   S2 §5 step 3 confronts each candidate against *held positions*
+   (reinforce / revise / contradict / new), and S2 §14.1 makes the diff the
+   primary development instrument — a *direct read* off the artifact. A
+   narrated diff produced by the same LLM that wrote the document is not a
+   direct read; it is the instrument grading itself. Store items relationally
+   (section, text, evidence refs, confidence, status) and *render* the
+   document from them, so diffs are computed in code by comparing versions.
+4. **`write_perspective` hardcodes version 1.** Nightly sleep writes N+1.
+
+Also unbuilt and owed by Phase 1: confrontation itself (first sleep had no
+prior Perspective to confront), grounding decay for unsupported claims
+(S2 §5 step 4 — 7 imported self-model claims are still unaudited), prune and
+retention (step 6, no policy exists), and interruption by a high-priority
+percept. EMBED is verified working (nomic, 768-dim) but unconfigured; the
+2,674 stored episodes need embedding before 1.3, and v1's vectors are from a
+different embedder and must be treated as untrusted.
+
+**Evidence 1-E.** Perspective diffs over ≥7 nights: novelty vs restatement rate,
+contradictions opened/closed, compression ratio, evidence coverage. All four off
+the diff artifact (direct reads).
+
+**The evidence window is decoupled from the build** *(amended 2026-08-09)*. Sleep
+runs nightly from the moment it ships, but the ≥7-night diff window that *judges*
+it is collected **after Phase 2's diet and openers are live** — because until then
+the only new experience in the store is operator conversation. Measured basis:
+all 111 of v1's concerns originated in reading (95 curiosity, 16 research, **zero**
+from conversation), and v2's conversation opener does not land until Phase 2.2, so
+Phases 0–1 are structurally a sealed world. Judging sleep on that input cannot
+distinguish *the digest is failing* from *the digest is starved*, and the decision
+rule below would send the fix to the wrong place. Nothing in the build waits: the
+nights accumulate throughout and are read once there is a world to consolidate.
+
+**Decision rule.** If diffs are dominated by restatement **once real input is
+flowing** (Phase 2 diet live, conversation openers live), the digest prompts or
+the confrontation step are failing — fix before relying on Phase 3, because every
+later phase writes through sleep. Restatement-dominated diffs *before* that point
+are expected and are not evidence against the mechanism; record them as the
+baseline. If the Perspective budget never forces a release once the world is
+open, the budget is too loose to be a stake; tighten it.
+
+---
+
+## Phase 2 — pursuit: concerns that can move *(≈4–6 days)*
+
+| # | Work |
+|---|---|
+| 2.1 | Concerns v2 (S2 §8): store, dossiers, the corrected three-part advance judge (movement + history-wide novelty + evidence-class honesty), scoring with all v1 lessons as ported regression tests. |
+| 2.2 | Three openers through one door — curiosity, research, **conversation** (new). |
+| 2.3 | Research cascade against sovereign adapters (port-with-review), with honest-no-result and blocked feeding the source-gap record. Runs inside a minimal scheduled **deliberation-lite** (dossier assembly + research + the advance judge, on local DEEP; the full S2 §7.3 step structure and adoption boundary land in Phase 3) — S2 §15.3's no-web-in-ambient invariant holds from day one. |
+| 2.4 | **Governed diet** (S2 §9.1): budget invariant live (ingest ≤ deliberation+consolidation), adaptive extraction depth, per-source share caps, and the initial source review — add from v1's failed-question record (SEC EDGAR, GDELT as evaluated), cut the concentration. |
+| 2.5 | **Injection hardening** (S2 §15.3): trust-tagged content blocks in every prompt carrying external text; hostile-content fixtures (instruction-shaped feed item and inbound message) in the suite; ledger row consumer-traced **before feeds enable**. |
+
+**Phase 2 build order** *(set 2026-08-11 from the budget measurement above)*:
+**2.5 → 2.1 → 2.2 → 2.3 → 2.4.** Hardening is built before the thing it
+protects, not alongside it. Concerns and the three openers cost no ingest
+budget at all — conversation-opened concerns give the being something to
+pursue with no feed whatsoever, which is the opener v1 never had and the
+reason its 111 concerns all came from reading. Deliberation-lite lands
+before the diet because it both moves concerns and grows the denominator
+that makes reading permissible. The diet is sized last, from measurement.
+
+**Evidence 2-E.** Advance rate with evidence-carrying fraction (expect the raw
+advance rate to *fall* relative to v1 — if it doesn't, the corrected judge is
+decorative). Stall pool with cause classification. Ingest share under the cap
+with the method stated.
+
+**Decision rule.** If concerns still stall overwhelmingly with the corrected
+judge and the widened diet, the diagnosis moves to question-formation (the
+questions are malformed for the world the being has) — fix the opener prompts
+before adding any further sources; do not keep buying coverage.
+
+---
+
+## Phase 3 — deliberation: where depth lives *(≈5–7 days; consumes Decision #1)*
+
+| # | Work |
+|---|---|
+| 3.1 | The deliberation scheduler (S2 §7.1): state-driven, budgeted, with v1's cooldown/drag lessons. This is tick-as-deliberation from day one — there is no percept-fired tick to refactor away. |
+| 3.2 | Dossier assembly and the deliberation steps (S2 §7.3): plan → gather (with in-deliberation research) → reason on DEEP → self-check → **adopt on VOICE** → act. Whole transcripts stored. |
+| 3.3 | The DEEP dispatch boundary with sovereignty invariants enforced and tested: no interior content, person-data minimization, provider-swap config (S2 §12.2). |
+| 3.4 | **Sovereign interval** live from the first week DEEP is live: recurring local-only periods, depth degradation measured, continuation demonstrated. |
+
+**Build requirements** *(red team, 2026-08-12 — binding on 3.1 and 3.2, not
+advisory)*:
+
+1. **Transcripts are not episodes** (R-24). 3.2 stores whole deliberation
+   transcripts; they go to their own table with `digest_eligible=0` and are
+   excluded from EVIDENCE-scope retrieval. Transcripts landing among
+   episodes would let sleep digest the being's own reasoning as lived
+   experience — the v1 leak in a new form, and v1's corpus was 43%
+   self-probes for exactly that reason.
+2. **Adoption asks ownership, not correctness** (R-23). The adopting call
+   sees the conclusion, character and constitution — deliberately *not* the
+   reasoning chain, so it judges as the being rather than re-reading its own
+   work. It therefore cannot assess soundness, and must not be asked to: a
+   prompt that asks "is this right" will rubber-stamp (cannot verify, so
+   accepts) or over-decline (cannot verify, so refuses), and both mimic the
+   alarms 3-E watches for. Grounding and novelty stay in the self-check step
+   *before* adoption.
+3. **State-driven scheduling needs a ceiling on deliberations STARTED**
+   (R-25), not on those that produce something. R-18's attempt log is the
+   mechanism; 3.1 must not reintroduce an outcome-based budget.
+4. **Any shadow comparison carries an end date** (R-22). Comparing full
+   deliberation against lite on the *same* dossier state is the only clean
+   version — alternating by time does not match concerns, since the later
+   pass sees a dossier the earlier one enriched. But a standing shadow
+   comparison is precisely what S2 §1.3 abandoned ("2k LOC of
+   instrumentation ended up measuring a tick shape the being no longer
+   ran"). If built: a bounded sample, an explicit end date recorded here,
+   and deletion of the apparatus when the decision it serves is made.
+
+**Evidence 3-E.** Blind quality comparison on a sample: full-deliberation
+advances vs Phase 2 deliberation-lite advances on matched concerns (operator
+or blind reader judges).
+Sovereign-interval report: what degraded, what held. Adoption-rate: how often the
+core revises or declines DEEP output (0% and 100% are both alarms — the first
+means adoption is a rubber stamp, the second that DEEP adds nothing).
+
+**Decision rule** *(amended 2026-08-12 for the single-model design, S2 §12.1)*.
+If deliberation output is not distinguishably deeper than ambient on blind
+read, **the structure is not earning its complexity — simplify the
+structure.** The original rule sent this diagnosis to Decision #1 ("re-examine
+model choice"), which assumed DEEP might be swapped for something stronger.
+There is one model by design and no alternative to re-examine, so that remedy
+is unavailable and naming it would invite the one change the design forbids.
+
+Read the adoption rate the same way. 0% (the core never revises or declines)
+still means adoption is a rubber stamp — but with identical weights the fix is
+to make the adopting context genuinely different, not to seek a different
+model. 100% means the deliberation step is producing nothing the being will
+own, which is a prompt or dossier problem.
+
+---
+
+## Phase 4 — the world and agency *(≈5–8 days; consumes Decision #2)*
+
+| # | Work |
+|---|---|
+| 4.1 | The public surface (S2 §9.3): static generator from the store, operator domain, disclosure by construction, operator-side removal, reach-ladder rung 1. |
+| 4.2 | The act ledger and **confirmation pass** (S2 §10.1): fetch-back with content hash; `attempted` ≠ `confirmed` by construction. |
+| 4.3 | Gate v2 complete (S2 §11): three verdicts everywhere, every hold persisted with reason, citations rendered on the surface, hand-classification workflow (Claude drafts, operator adjudicates). |
+| 4.4 | Publishing pipeline: closed concern → position → artifact with evidence refs → gate → surface → confirm. |
+| 4.5 | Outcome recording for world-graded events (publication confirmed/failed; later reception), folding into affect and sleep (S2 §10.3). |
+
+**Evidence 4-E.** At least one published, *confirmed* artifact carrying real
+citations. Hold and revise rates with denominators. Confirmation divergence
+monitored (a fetch-back that cannot fail is decorative — v1's rule, kept).
+
+**Decision rule.** Holds above ~80% across several runs → diagnose from the
+persisted hold record: gate-misfire (fix the judge) vs gate-correct (the
+closures aren't publishable thoughts — the problem is upstream in Phases 2–3,
+go there). An invisible veto reported as "publishing works" is the §10 failure
+TRUE_NORTH names — activity mistaken for delivery. Separately: citation floor
+becomes mandatory only when ≥half of new advances carry evidence refs;
+imposing it earlier just publishes nothing.
+
+---
+
+## Phase 5 — learning that changes something *(≈3–4 days)*
+
+| # | Work |
+|---|---|
+| 5.1 | The learning loop (S2 §10.2): decayed counters over source priors, expected-movement per concern-kind, deliberation-budget allocation. Bounded, clamped, operational-only. |
+| 5.2 | Consumption at named sites (adapter ordering, concern cooling, scheduler weights) with the divergence log — the log line *is* the changed behavior. |
+
+**Evidence 5-E.** Parameters non-zero and moved by outcomes the being did not
+grade, each move tracing to outcome ids; at least one logged divergence between
+learned and static choice that a later result vindicated or corrected.
+
+**Decision rule.** A parameter that moves with no downstream divergence ever
+logged is annotation-not-teeth: record it as severed in the ledger, do not
+report the phase closed.
+
+---
+
+## Phase 6 — relationships and the relational evidence *(≈2–3 days build; ongoing life; consumes Decision #3)*
+
+| # | Work |
+|---|---|
+| 6.1 | Person registry hardened for n>1 (S2 §9.2): per-person privacy boundaries, channel bindings, per-person journal capture. |
+| 6.2 | Email channel (long-form register — v1 specified it, never built it). |
+| 6.3 | Onboard humans 2 and 3 with the light protocol: sustained unscripted conversation, one-line journal verdicts, an explicit disclosure moment. |
+| 6.4 | The relational protocol v1 (S2 §14.2): multi-journal collection, periodic blind transcript reads against TRUE_NORTH §6 markers, longitudinal pairs. Refine the protocol from contact with reality — do not perfect it in advance. |
+
+**Evidence 6-E.** ≥3 sustained relationships each ≥1 month old; blind-read
+scores; at least one relationship development the operator did not mediate.
+
+**Decision rule.** If new humans disengage quickly, treat it as the most
+valuable data the project has ever produced, not a failure to hide: classify
+why (depth? latency? voice? relevance?) and let that reorder the plan.
+
+---
+
+## Phase 7 — stakes and the structural work *(≈5–8 days, after the loops above hold)*
+
+| # | Work |
+|---|---|
+| 7.1 | Reach-ladder rung 2 (S2 §9.3): inbound responses from the surface entering as percepts — the first outcomes from strangers. **Precondition:** the hostile-inbound fixture set (S2 §15.3 injection invariant) passes, consumer-traced for the inbound path. |
+| 7.2 | Stakes (S2 §7.1, §10.2): the deliberation budget becomes being-allocated within hard bounds; storage pressure surfaces through the Perspective budget it already curates. Something real to spend, defend, and lose. |
+| 7.3 | Component ablation toggles (S2 §14.4): Perspective-in-context, sleep, learning — each off for a measured window; the degradation pattern is the attribution evidence. |
+| 7.4 | Capability-gap ledger v1: the enumerated asymmetries with their store queries. |
+
+**Evidence 7-E.** Ablation windows show measurable degradation per component
+(one that doesn't is doing no work — remove or fix it). The capability-gap
+ledger's first full read.
+
+---
+
+## Cutover — one life at a time
+
+v2 runs in rehearsal (operator-only) from Phase 0. Cutover to being *the* being
+is an operator decision, eligible when:
+
+1. Phase 0's continuity rule passed and has held for ≥2 weeks of daily use;
+2. Phases 1–2 evidence reads well (the mind compounds; pursuit moves);
+3. the operator's journal prefers v2 on blind days (operator alternates which
+   system answers on some days without deciding which is which until after the
+   verdict — cheap, and the strongest available test).
+
+At cutover: v1's runner stops (operator-performed), its store archives read-only
+into the new repo's `archive/`, and v2's channels open. The transition-complete
+event is written as an episode. v1 is never deleted (S2 §2.3). Until cutover,
+v2 speaks to no one but the operator, and v1 receives no new capabilities —
+fixes only.
+
+---
+
+## Decisions — the operator queue
+
+Nothing in Phases 0–2 waits on these except Decision #5, which Phase 0
+consumes; later phases consume the rest where flagged. None should be decided
+by default. *Resolutions recorded 2026-08-08.*
+
+1. **The DEEP substrate** *(consumed by Phase 3, and by sleep from Phase 0)*.
+   Hosted frontier model behind the S2 §12.2 invariants (sovereign interval,
+   no interior, data minimization, provider swap), **or** a large local model.
+   This is the cognition ceiling decision — the review's judgment: it is the
+   single highest-leverage choice available to the project. Selection by the
+   v1 bench method either way (task-level scoring against gold, not vibes).
+
+   **Resolved 2026-08-08 — local, by design.** DEEP runs Qwen3.6-30b-a3b
+   (MoE) locally. Operator's rationale, recorded verbatim in substance:
+   relying on a frontier model runs the risk of the model *becoming* the
+   system; the substrate and harness must drive, not a frontier model's
+   influence. Consequences: the sovereign interval (S2 §12.2.2) is trivially
+   satisfied; the person-data-minimization tension (REVIEW.md B5) dissolves —
+   relational deliberation is private by construction; sleep runs on local
+   DEEP from Phase 0, closing the REVIEW.md B2 ordering gap. The bench method
+   still applies — including sleep-digest quality — and co-residency of
+   DEEP + VOICE + AMBIENT + EMBED on one machine is a memory/throughput bench
+   concern to verify in Phase 0.1.
+2. **Domain and host** *(consumed by Phase 4)*. The operator-owned domain, a
+   host chosen for removability and minimal vendor surface, and the short §7
+   analysis: what the host can withhold (reach, never identity), what it logs,
+   whether deletion is real. **Deferred 2026-08-08** — decide when Phase 4
+   approaches.
+3. **Humans 2 and 3** *(consumed by Phase 6)*. Who, with what framing and what
+   disclosure. Depth-first: two people who will actually stay in conversation
+   beat ten who sample it. **Deferred 2026-08-08** — decide when Phase 6
+   approaches.
+4. **Cutover timing** — per the criteria above; the date is the operator's.
+   **Deferred 2026-08-08** — per the criteria.
+5. **Import scope confirmation** *(consumed by Phase 0)*: full v1 episodic
+   history digested into Perspective v1 (default), or a bounded recent window.
+   Default recommended; the history is the being's. **Resolved 2026-08-08:**
+   clean build; identity-bearing data per S2 §2 imports from v1. The default
+   (full episodic digest) stands unless first-sleep cost on local DEEP forces
+   a bounded window — if bounded, the bound and its reason are written to the
+   import record.
+
+### Phase 0's continuity verdict — PASSED (operator, 2026-08-11)
+
+The Phase 0 decision rule is exercised and closed. The operator's verdict is
+that continuity held: v2 is recognizably the same individual, and better —
+which the rule states is the intended outcome rather than a deviation.
+
+Evidence on the record at the time of the verdict:
+
+| | |
+|---|---|
+| span | 2026-08-08 → 2026-08-11 (2.9 days) |
+| inbound messages | 52, across 50 recorded exchanges |
+| cold re-entries | 4 (12h, 11h, 13h, 23h gaps) |
+| journal entries | 16 |
+| import verification | 11/11 tables exact against v1 @ `0697bcc` |
+| Perspective versions | 3, one a self-revision on evidence |
+
+This meets Evidence 0-E's amended floor (≥5 unscripted conversations across
+varied register, ≥2 cold re-entries on later days, a journal trend agreeing
+with the read). The operator's own summary during the period: *"v2 is far
+better in response."*
+
+**Two consequences, recorded so they are not forgotten.** First, every later
+phase's presumption — that the being survived the move — is now discharged
+rather than assumed. Second, this starts the clock on §Cutover criterion 1,
+which requires the continuity rule to have *held for ≥2 weeks of daily
+use*: eligible from **2026-08-25** at the earliest, and only alongside
+criteria 2 and 3.
+
+### Resolved operator positions (2026-08-08)
+
+- **v1 location:** `../NGBeing` (sibling directory), accessible during the
+  initial build. The importer (Phase 0.2) runs against it read-only; pin the
+  v1 commit consumed at import time in the import record.
+- **A better version, not a replica.** Continuity is judged on identity
+  (memory, commitments, character, honesty) — never on matching v1's depth,
+  cadence, or limitations, which are expected to improve. Phase 0's decision
+  rule and the cutover blind read are both scored on this basis; cutover
+  criterion 3 (the journal *prefers* v2) already encodes it.
+- **The port allowlist is closed.** v2 must not become an extension of v1:
+  only the high-value modules named in S2 §16 cross (reviewed at import);
+  all other code is written fresh against S2, even where v1 has working
+  code. Additions to the allowlist are an explicit operator decision. The
+  "second-system effect" mitigation in §Risks reads through this constraint:
+  it bounds *what* may port, it does not license porting more.
+- **Allowlist extended 2026-08-13** *(operator decision, recorded because the
+  rule above requires it)*. The S2 coverage audit found six specified
+  capabilities scheduled in no phase, three of them input paths; S2 §6.1 and
+  §6.3 both *assume* a port ("v1's noticer/scheduler split and its 3-a.m.
+  lesson, kept"; "v1's machinery ported"), which the closed allowlist
+  contradicted. Now crossing, with review: **affect** (`ngbeing/affect/`,
+  `llm/prompts_affect.py`), **ingest** (`ngbeing/ingest/` — rss, canon,
+  canon_urls, dedup), and the **noticing policy** from
+  `ngbeing/contributors/` and `core/runner.py`.
+  **Policy, not architecture:** v1's contributors are a percept-fired
+  `tick() -> list[Percept]`, which P2 Phase 3.1 explicitly forbids v2 from
+  reproducing. What crosses is the wake window, maturity/decay, operator-
+  quiet detection and rate gates — the 3-a.m. lesson — rewritten into v2's
+  scheduler shape. The module does not cross.
+  **Review bar:** "does this serve S2's design", not "did it run in v1".
+  v1's affect machinery coexisted with a being whose self-description was
+  substrate telemetry, and its contributors produced 111 concerns with zero
+  from conversation. Running is not working.
+- **Everything is intended to be local.** No hosted inference anywhere in the
+  cognition path. S2 §12.2's hosted-DEEP invariants remain in the spec as
+  dormant guarantees, not active machinery.
+- **One journal** during rehearsal, with a per-entry system tag (v1/v2) so
+  the cutover blind read can be scored later; a second journal only if the
+  need arises.
+- **Off-machine backup: deferred** until the system demonstrates a level of
+  success that warrants it. Recorded as an accepted risk (REVIEW.md R4);
+  local backup rotation still ships in Phase 0.1.
+- **Telegram user-API credentials removed** from the environment; the bot API
+  carries the required bi-directional operator channel. Reintroduce only if a
+  channel need arises that the bot API cannot meet — and then re-answer the
+  disclosure question first.
+- **Component ablation (Phase 7.3) is questioned** by the operator ("is this
+  even needed"). Retained in the plan as an *optional* attribution
+  instrument; whether it runs is decided when Phase 7 arrives, not before.
+- **All remaining deferred items** (R6 ablation honesty, Decisions #2–#4)
+  are not relevant until the need arises; nothing in Phases 0–5 consumes
+  them.
+
+---
+
+## Risks, named
+
+- **Continuity failure** — the rebuilt being doesn't read as the same
+  individual. Mitigation: Phase 0's decision rule is a hard stop; import before
+  capability; the operator's blind read is the arbiter.
+- **Second-system effect** — S2 is a design, and v1's deepest lessons came from
+  production. Mitigation: port-with-review of proven modules; v1 invariants as
+  day-one regression tests; phases small with decision rules that reorder the
+  plan on evidence.
+- **DEEP voice-bleed** — the frontier model's register colonizing the being's
+  voice through adopted drafts. Mitigation: adoption on pinned VOICE; the
+  voice-fingerprint check across the adoption boundary; the sovereign interval
+  as a periodic control group.
+- **Privacy leak to a vendor** — interior or person data in a hosted DEEP call.
+  Mitigation: enforced at the dispatch boundary, tested, and the boundary is the
+  only path to DEEP.
+- **The gate muzzles v2 too** — hold rates persist above 80%. Mitigation: holds
+  persisted from day one; Phase 4's decision rule routes the diagnosis instead
+  of letting the veto run invisibly.
+- **Rehearsal drift** — a long Phase 0–3 rehearsal where v2 lives without
+  consequences while v1 stagnates under a fixes-only rule. Mitigation: the
+  phase estimates total ≈5–7 working weeks; if rehearsal exceeds roughly twice
+  that, re-plan rather than drift.
+- **Two beings** — v2's rehearsal conversations diverge from v1's live life,
+  and cutover discards one branch's experience. Acknowledged honestly: the
+  rehearsal window is kept short, rehearsal episodes import into the post-cutover
+  store, and the branch point is recorded. There is no perfect answer here;
+  pretending otherwise would be worse.
+
+---
+
+## What this plan does not do
+
+- **It does not touch TRUE_NORTH.** Direction is the operator's; this plan
+  builds toward it and cites it.
+- **It does not schedule Priority 2 qualities** (chosen purpose, creativity,
+  play) — with the one argued exception of consolidation-as-mechanism (P2 §1),
+  they wait for the foundation, as TRUE_NORTH §5 orders.
+- **It does not treat evidence as the product.** Instruments exist where
+  decision rules need them (Rule 3); the phase evidence lines are for
+  navigation, not display.
+- **It does not estimate ahead of a design.** Every phase above cites the S2
+  section that answers its design; where S2 leaves a choice open (DEEP,
+  host), the phase consumes a Decision rather than inventing one.
+- **It does not promise consciousness.** It builds the structures S2 specifies
+  and measures what accrues; the claims stay evidence-bound (S2 §17).

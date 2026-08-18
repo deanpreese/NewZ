@@ -1,0 +1,590 @@
+
+rss:
+- name: Federal Reserve press releases
+  url: https://www.federalreserve.gov/feeds/press_all.xml
+  category: macro
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.95
+- name: SEC filings (latest)
+  url: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=&company=&dateb=&owner=include&count=40&output=atom
+  category: equities
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.95
+- name: CoinDesk
+  url: https://www.coindesk.com/arc/outboundfeeds/rss/
+  category: crypto
+  enabled: true
+  poll_interval_seconds: 5400
+  reliability: 0.65
+- name: Aeon Essays
+  url: https://aeon.co/feed.rss
+  category: essays
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.75
+- name: Quanta Magazine
+  url: https://www.quantamagazine.org/feed/
+  category: science
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.85
+- name: Psyche
+  url: https://psyche.co/feed.rss
+  category: essays
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.75
+- name: Google News Philosophy
+  url: https://news.google.com/rss/search?q=philosophy&hl=en-US&gl=US&ceid=US:en
+  category: philosophy
+  enabled: true
+  poll_interval_seconds: 1800
+  reliability: 0.5
+- name: New York Times Opinion
+  url: https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/section/opinion/rss.xml
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.7
+- name: Los Angeles Times Opinion
+  url: https://www.latimes.com/opinion.rss
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 4200
+  reliability: 0.7
+- name: The Guardian Comment Is Free
+  url: https://www.theguardian.com/uk/commentisfree/rss
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 5400
+  reliability: 0.7
+- name: Bloomberg Markets
+  url: https://feeds.bloomberg.com/markets/news.rss
+  category: markets
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.85
+- name: Bloomberg Opinion
+  url: https://feeds.bloomberg.com/bview/news.rss
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.8
+- name: Bloomberg Economics
+  url: https://feeds.bloomberg.com/economics/news.rss
+  category: macro
+  enabled: true
+  poll_interval_seconds: 4620
+  reliability: 0.9
+- name: Associated Press Top News
+  url: https://feedx.net/rss/ap.xml
+  category: world
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.9
+- name: BBC News
+  url: https://feeds.bbci.co.uk/news/rss.xml
+  category: world
+  enabled: true
+  poll_interval_seconds: 5580
+  reliability: 0.9
+- name: BBC Business
+  url: https://feeds.bbci.co.uk/news/business/rss.xml
+  category: business
+  enabled: true
+  poll_interval_seconds: 4380
+  reliability: 0.85
+- name: BBC Technology
+  url: https://feeds.bbci.co.uk/news/technology/rss.xml
+  category: tech
+  enabled: true
+  poll_interval_seconds: 3180
+  reliability: 0.85
+- name: New York Times Politics
+  url: https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/section/politics/rss.xml
+  category: politics
+  enabled: true
+  poll_interval_seconds: 4260
+  reliability: 0.85
+- name: NPR Politics
+  url: https://feeds.npr.org/1014/rss.xml
+  category: politics
+  enabled: true
+  poll_interval_seconds: 5820
+  reliability: 0.85
+- name: Politico Picks
+  url: https://www.politico.com/rss/politicopicks.xml
+  category: politics
+  enabled: true
+  poll_interval_seconds: 4260
+  reliability: 0.85
+- name: DW Science
+  url: https://rss.dw.com/xml/rss_en_science
+  category: science
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.8
+- name: DW Environment
+  url: https://rss.dw.com/xml/rss_en_environment
+  category: green
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.8
+- name: DW Culture
+  url: https://rss.dw.com/rdf/rss-en-cul
+  category: culture
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.7
+# Removed: Reddit Personal Finance — post titles are action verbs and
+# short headlines ('Co-sign for family member', '30-Day Challenge #6')
+# with zero extractable named entities. Soak observation: every post
+# becomes a new low-reliability source with no claims. Structural
+# mismatch for entity-driven graph extraction, not a model problem.
+
+# Viewpoint diversity (right-of-center / heterodox)
+- name: WSJ Opinion
+  url: https://feeds.a.dj.com/rss/RSSOpinion.xml
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.8
+- name: Reason
+  url: https://reason.com/feed/
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.6
+- name: UnHerd
+  url: https://unherd.com/feed/
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.6
+# Geographic diversity
+- name: Al Jazeera
+  url: https://www.aljazeera.com/xml/rss/all.xml
+  category: world
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.8
+- name: The Hindu
+  url: https://www.thehindu.com/feeder/default.rss
+  category: world
+  enabled: true
+  poll_interval_seconds: 5400
+  reliability: 0.8
+# Science / tech / health / ideas (sped up so they actually surface)
+- name: Nature
+  url: https://www.nature.com/nature.rss
+  category: science
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.9
+- name: MIT Technology Review
+  url: https://www.technologyreview.com/feed/
+  category: tech
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.85
+- name: STAT News
+  url: https://www.statnews.com/feed/
+  category: health
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.85
+- name: Project Syndicate
+  url: https://www.project-syndicate.org/rss
+  category: macro
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.8
+- name: The Marginalian
+  url: https://www.themarginalian.org/feed/
+  category: essays
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.7
+# Ideas / knowledge / culture (2026-05-27 curated additions; all feed URLs
+# verified to return valid RSS before enabling). Fills domains that previously
+# had only a static Wikipedia page: history, literature, mathematics, art,
+# philosophy depth.
+- name: Nautilus
+  url: https://nautil.us/feed/
+  category: science
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.8
+- name: Scientific American
+  url: http://rss.sciam.com/ScientificAmerican-Global
+  category: science
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.85
+- name: Knowable Magazine
+  url: https://knowablemagazine.org/rss
+  category: science
+  enabled: true
+  poll_interval_seconds: 14400
+  reliability: 0.85
+- name: Smithsonian Magazine
+  url: https://www.smithsonianmag.com/rss/latest_articles/
+  category: history
+  enabled: true
+  poll_interval_seconds: 3600
+  reliability: 0.8
+- name: The Public Domain Review
+  url: https://publicdomainreview.org/rss.xml
+  category: culture
+  enabled: true
+  poll_interval_seconds: 21600
+  reliability: 0.8
+- name: Colossal
+  url: https://www.thisiscolossal.com/feed/
+  category: culture
+  enabled: true
+  poll_interval_seconds: 14400
+  reliability: 0.65
+- name: Literary Hub
+  url: https://lithub.com/feed/
+  category: literature
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.7
+- name: The Paris Review Daily
+  url: https://www.theparisreview.org/blog/feed/
+  category: literature
+  enabled: true
+  poll_interval_seconds: 14400
+  reliability: 0.8
+- name: Daily Nous
+  url: https://dailynous.com/feed/
+  category: philosophy
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.7
+- name: Stanford Encyclopedia of Philosophy
+  url: https://plato.stanford.edu/rss/sep.xml
+  category: philosophy
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.95
+# Tagged 'essays' (not 'economics') on purpose so the news-share quota
+# favors it as ideas rather than capping it as market news.
+- name: Marginal Revolution
+  url: https://marginalrevolution.com/feed
+  category: essays
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.7
+- name: Plus Magazine
+  url: https://plus.maths.org/content/rss.xml
+  category: mathematics
+  enabled: true
+  poll_interval_seconds: 21600
+  reliability: 0.8
+# ── Phase A: political + perspective breadth (2026-07-18; EACH URL verified to
+#    return valid RSS/Atom before enabling). Deliberately balanced left / center /
+#    right + wire + international + geopolitics, so the being forms social/political
+#    views from breadth rather than a narrow tilt. The stance mechanism stays
+#    viewpoint-neutral regardless of the list.
+# Wire / factual
+- name: Reuters (Google News)
+  url: https://news.google.com/rss/search?q=when:24h+source:reuters&hl=en-US&gl=US&ceid=US:en
+  category: world
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.9
+# Left / center-left
+- name: Vox
+  url: https://www.vox.com/rss/index.xml
+  category: politics
+  enabled: true
+  poll_interval_seconds: 5400
+  reliability: 0.7
+- name: The Nation
+  url: https://www.thenation.com/feed/?post_type=article
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.65
+- name: The Atlantic
+  url: https://www.theatlantic.com/feed/all/
+  category: essays
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.75
+# Center / brief / geopolitics
+- name: Axios
+  url: https://api.axios.com/feed/
+  category: politics
+  enabled: true
+  poll_interval_seconds: 5400
+  reliability: 0.8
+- name: The Economist (latest)
+  url: https://www.economist.com/latest/rss.xml
+  category: world
+  enabled: true
+  poll_interval_seconds: 5400
+  reliability: 0.85
+- name: Foreign Affairs
+  url: https://www.foreignaffairs.com/rss.xml
+  category: world
+  enabled: true
+  poll_interval_seconds: 14400
+  reliability: 0.85
+# Right / center-right (reported + opinion — the real gap in the prior list)
+- name: National Review
+  url: https://www.nationalreview.com/feed/
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.65
+- name: The Dispatch
+  url: https://thedispatch.com/feed/
+  category: politics
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.75
+- name: The Free Press
+  url: https://www.thefp.com/feed
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.65
+- name: Washington Examiner
+  url: https://www.washingtonexaminer.com/feed
+  category: politics
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.65
+- name: Quillette
+  url: https://quillette.com/rss
+  category: opinion
+  enabled: true
+  poll_interval_seconds: 10800
+  reliability: 0.6
+# International
+- name: France 24
+  url: https://www.france24.com/en/rss
+  category: world
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.8
+- name: Nikkei Asia
+  url: https://asia.nikkei.com/rss/feed/nar
+  category: business
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.8
+# Tech / markets
+- name: Ars Technica
+  url: https://feeds.arstechnica.com/arstechnica/index
+  category: tech
+  enabled: true
+  poll_interval_seconds: 5400
+  reliability: 0.85
+- name: Financial Times
+  url: https://www.ft.com/rss/home
+  category: markets
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.85
+web:
+- name: USDA WASDE
+  url: https://www.usda.gov/oce/commodity/wasde
+  category: commodities
+  # Disabled 2026-05-23: this page persistently ReadTimeouts on scrape
+  # (21x in one day) and yielded only noise. Re-enable if the endpoint
+  # becomes reliable or is repointed at the actual WASDE report URL.
+  enabled: false
+  poll_interval_seconds: 86400
+  reliability: 0.95
+  max_hops: 0
+  max_links_per_page: 0
+  same_domain_only: true
+  max_items: 1
+- name: EIA weekly petroleum status
+  url: https://www.eia.gov/petroleum/supply/weekly/
+  category: commodities
+  enabled: true
+  poll_interval_seconds: 86400
+  reliability: 0.9
+  max_hops: 0
+  max_links_per_page: 0
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Music
+  url: https://en.wikipedia.org/wiki/Music
+  category: music
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Science
+  url: https://en.wikipedia.org/wiki/Science
+  category: science
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Philosophy
+  url: https://en.wikipedia.org/wiki/Philosophy
+  category: philosophy
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia History
+  url: https://en.wikipedia.org/wiki/History
+  category: history
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Mathematics
+  url: https://en.wikipedia.org/wiki/Mathematics
+  category: mathematics
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Literature
+  url: https://en.wikipedia.org/wiki/Literature
+  category: literature
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Politics
+  url: https://en.wikipedia.org/wiki/Politics
+  category: politics
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Religion
+  url: https://en.wikipedia.org/wiki/Religion
+  category: religion
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Technology
+  url: https://en.wikipedia.org/wiki/Technology
+  category: technology
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Economics
+  url: https://en.wikipedia.org/wiki/Economics
+  category: economics
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Psychology
+  url: https://en.wikipedia.org/wiki/Psychology
+  category: psychology
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Sociology
+  url: https://en.wikipedia.org/wiki/Sociology
+  category: sociology
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Wikipedia Anthropology
+  url: https://en.wikipedia.org/wiki/Anthropology
+  category: anthropology
+  enabled: true
+  poll_interval_seconds: 43200
+  reliability: 0.85
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 1
+- name: Reddit StonerPhilosophy
+  url: https://www.reddit.com/r/StonerPhilosophy/
+  category: social
+  enabled: true
+  poll_interval_seconds: 14400
+  reliability: 0.4
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 25
+- name: Reddit GameTheorists
+  url: https://www.reddit.com/r/GameTheorists/
+  category: social
+  enabled: true
+  poll_interval_seconds: 7200
+  reliability: 0.4
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 25
+- name: Reddit Astral Projection
+  url: https://www.reddit.com/r/Astral_Projection/
+  category: social
+  enabled: true
+  poll_interval_seconds: 21600
+  reliability: 0.4
+  max_hops: 1
+  max_links_per_page: 3
+  same_domain_only: true
+  max_items: 25
+watched_topics:
+- symbol: GC=F
+  label: Gold futures
+  category: commodities
+- symbol: CL=F
+  label: Crude oil futures
+  category: commodities
+- symbol: BTC-USD
+  label: Bitcoin
+  category: crypto
+- keyword: interest rate decision
+  category: macro

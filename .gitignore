@@ -1,0 +1,74 @@
+# Secrets + operator-local config
+.env
+runner.yaml
+*.key
+*.pem
+
+# Data — runtime stores are ignored; curated config YAMLs are tracked
+# (they are the diet's provenance record, TRUE_NORTH §8 / S2 §13)
+data/*
+!data/*.yaml
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+backups/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Tooling
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pre-commit-cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# The publish surface (P2 Phase 4.1). Artifacts are regenerable from the
+# concerns store; git history would add churn on every publish, and the
+# operator handles commits. Delete a file here to retract it — `--reconcile`
+# notices.
+published/*
+!published/.gitkeep
+
+# Carried from the predecessor repo at the close (2026-08-17): raw Claude Code session
+# transcripts, kept as the archive of how v2 was decided. Not committed —
+# 28MB of jsonl nobody reads, and anything ever echoed in a session is in
+# there verbatim, which is the same reason .env is ignored above.
+# provenance/INDEX.md is the readable handoff and IS tracked.
+provenance/newz-sessions/
