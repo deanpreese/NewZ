@@ -94,6 +94,8 @@ class FakeLLM:
 
         r = R()
         r.text = text
+        r.role = role
+        r.model = "fake-model"
         r.prompt_tokens = 0
         r.completion_tokens = 0
         r.truncated = truncated
