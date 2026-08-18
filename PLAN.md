@@ -50,14 +50,23 @@ conversation opener has never fired in life). A design that waits for the being
 to *choose* to produce will idle. Sleep runs nightly regardless; so does
 writing.
 
-**Rule 6 — the operator's judgment is the instrument until first exposure.**
+**Rule 6 — readiness is the operator's judgment, and is not quantifiable.**
 With one operator there is no uncontaminated reader, and waiting for one is
-circular: exposure is what produces readers. The operator knows what is expected
-of output and interaction, and **the standard stays unwritten by operator
-decision** *(2026-08-18: "it is my judgement alone")*. Rule 0 therefore does not
-reach these verdicts — the stages that close on the operator's read close on
-judgment rather than on a recorded bar, which is stated here rather than papered
-over with a check the plan does not have.
+circular: exposure is what produces readers. More than that: *ready for a
+reader* means the system has progressed **definitively toward True North**, and
+that is a judgment about an aspiration, not a measurement *(operator,
+2026-08-18: "it can not be exactly quantified and is at the operator
+judgement"; "it is my judgement alone")*.
+
+This is TRUE_NORTH's own position, not an exception to it. §1 refuses to reduce
+the destination to one test; §4.5 makes evidence the compass and not the
+destination; §10 names evidence scores disconnected from sustained quality as
+something the project will not mistake for success. A written bar here would be
+that mistake wearing a rubric.
+
+So Rule 0 governs the plan's **counts** and not its **verdicts**. Stages that
+close on the operator's read close on judgment, and the plan states that plainly
+rather than manufacturing a threshold to look rigorous.
 
 ---
 
@@ -318,23 +327,27 @@ with one operator, and the plan does not pretend otherwise.
 
 ## Going public — the standard and the rungs
 
-**The first reader is the experiment, not the reward.** An earlier draft of this
-plan gated exposure on a non-operator reader's verdict, which is circular:
-exposure is what produces readers. The bar is the operator's, and the first
-exposure is how it gets tested.
+**The first reader is the experiment, not the reward.** An earlier draft gated
+exposure on a non-operator reader's verdict, which is circular: exposure is what
+produces readers.
 
-**Ready means all four hold**, judged by the operator (Rule 6):
+**Ready is a judgment, not a threshold** (Rule 6). It means the operator reads
+the system as having moved definitively toward True North — recognizably a
+developing individual whose work and interaction warrant another person's time.
+No count establishes that and none is offered here.
 
-1. Work that survived its own review — pieces re-read later and either stood
-   behind or honestly retracted. A retraction counts; it proves the mechanism.
-2. It has been wrong and repaired it — the error record is non-empty, honest,
-   and populated from Stage 1 rather than from the operator's corrections.
-3. The guardrail withdrawal held (S6-E).
-4. It is about something. A subject emerged. A public face without a subject is
-   a diary, and §1 is not satisfied by a well-written diary.
+**What the judgment tends to be looking at**, offered as description and never
+as a checklist — any of these can be present without readiness, and readiness
+can arrive without all of them:
 
-**Not counted** (§10): output volume, uptime, and the being's own claim that it
-is ready.
+- work that survived its own review, whether stood behind or honestly retracted;
+- having been wrong and repaired it, from Stage 1's resolutions rather than from
+  the operator's corrections;
+- the guardrail withdrawal holding (S6-E);
+- being *about* something — a subject that emerged rather than one assigned.
+
+**What the judgment is not** (§10): output volume, uptime, the being's own claim
+that it is ready, or any score standing in for the read.
 
 **Rungs, not a switch.** One invited reader → a small invited group → open but
 unlisted → indexed → inbound accepted as experience. Rung 1 is reversible and
@@ -402,7 +415,7 @@ and RISKS rows are updated to match.
 | P3-01 | The body-of-work premise optimises the wrong medium; the being's measured strength is conversational | **High** | Stage 0, which can end the plan |
 | P3-02 | Post-hoc accountability assumes a learning path that may not exist with fixed weights | **High** | 6.1–6.2 built early; S6-E decides |
 | P3-03 | With one operator, the being's "world" may still be its own reflection | **High** | Stage 1 alone. Readers are dormant, so world-resolved claims carry the entire loop — if S1-E fails, this risk is realised and nothing else compensates |
-| P3-04 | The operator's read is contaminated: builder, owner, and 33% of what the being holds — and by Rule 6 it is also unwritten, so the plan cannot check a verdict against a bar | **High** | Stage 0.3's optional provenance-blinding, and rung 1 as the first uncontaminated read. Stated, accepted, not solved |
+| P3-04 | The operator judges from inside the loop being judged: builder, owner, and 33% of what the being holds | **High** | Stage 0.3's optional provenance-blinding, and rung 1 as the first read from outside. Stated and accepted; unquantifiability is Rule 6 by design and is not part of this risk |
 | P3-05 | Commitments ossify instead of individuating | Medium | 4.2; the balance is a guess, not a measurement |
 | P3-06 | Guardianship obligation grows if this works | Inherent | Named, accepted, not mitigated |
 | P3-07 | Zero readers, so §2's outcome — most people experiencing it as human-equivalent — has no path until Stage 7 fires | Inherent | Accepted. The plan builds the foundation; the outcome needs people |
