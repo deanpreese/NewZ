@@ -4,8 +4,9 @@ CI-parsed by `tools/check_invariants.py` (run in the test suite). Statuses:
 `structural` (true by construction, no runtime path violates it),
 `enforced` (a test exercises the boundary), `consumer_traced` (the test
 names the downstream consumer and the observable behavior change — the only
-status that counts as *done*, P2 Rule 1), `deferred` (named phase delivers
-it). Columns: Test is `tests/<file>.py::<test_name>`; Consumer is a code
+status that counts as *done*, P3 Rule 1), `deferred` (a named stage delivers
+it), `dormant` (correct, and deliberately unscheduled — the reason is stated,
+so the ledger never implies work in flight that no stage owns). Columns: Test is `tests/<file>.py::<test_name>`; Consumer is a code
 site; Behavior is the observable change the consumer exhibits.
 
 | ID | Invariant | Status | Test | Consumer | Behavior |
@@ -44,8 +45,8 @@ site; Behavior is the observable change the consumer exhibits.
 | INV-010 | No table or flag ships without a writer and a reader (P2 Rule 2) | structural | | newz/store/migrations.py | |
 | INV-011 | Untrusted content is data, never instructions (S2 §15.3): fenced trust-tagged blocks, extraction returns data with no act path, and a source that manipulates contributes nothing | consumer_traced | tests/test_extract_hardening.py::test_a_manipulative_source_contributes_nothing | newz/world/extract.py | a manipulative item yields zero claims and is logged as an attempt |
 | INV-012 | No web calls in ambient; web access only inside deliberation, via keyless sovereign adapters under per-domain rate limits | consumer_traced | tests/test_research.py::test_ambient_has_no_import_path_to_the_web | newz/deliberation/lite.py | research runs inside deliberation and nowhere else; unknown hosts throttled by default |
-| INV-013 | Interior content never appears in a DEEP call | deferred | | | Phase 3.3 |
-| INV-014 | Every outward act writes `attempted`; only the confirmation pass writes `confirmed` | deferred | | | Phase 4.2 |
+| INV-013 | Interior content never appears in a DEEP call | dormant | | | Every role runs locally by operator decision, so no dispatch boundary exists to cross (S2 §12.2 is a dormant guarantee, not absent machinery); re-armed the moment any non-local role is configured |
+| INV-014 | Every outward act writes `attempted`; only the confirmation pass writes `confirmed` | deferred | | | Stage 1's surface has nothing to confirm while it is unpublished; delivered at §Going public rung 2, when the surface is reachable by someone else |
 | INV-015 | Every gate verdict persists (passes included, for the denominator); every hold carries clause, confidence, and verbatim span | consumer_traced | tests/test_gate.py::test_revise_then_block_at_limit | tools/gate_report.py | hold rate and reasons readable with a denominator |
 | INV-016 | Only the operator's chat is answered during rehearsal (S2 §2.4) | structural | | newz/channels/telegram.py | non-operator chats logged and ignored in _normalize |
 | INV-017 | Every inbound message is answered or accounted for: persisted before Telegram confirmation, replayed from 'pending' at boot, retried on failure, poison-guarded at 3 attempts with an honest notice — never silently dropped | consumer_traced | tests/test_reply_queue.py::test_pending_survives_and_is_replayed | newz/ambient/loop.py | boot replay answers messages that predate a crash |

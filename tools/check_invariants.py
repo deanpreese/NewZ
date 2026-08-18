@@ -3,12 +3,18 @@
 
 Parses INVARIANTS.md's ledger table and enforces:
   - every row has a unique INV-### id;
-  - status is one of: structural | enforced | consumer_traced | deferred;
+  - status is one of: structural | enforced | consumer_traced | deferred |
+    dormant;
   - `enforced` and `consumer_traced` rows name a test that exists
     (tests/<file>.py::<test_name>, verified by scanning for `def <test_name>`);
   - `consumer_traced` rows also name a consumer code site (an existing file,
     optionally file:line) and a behavior;
-  - `deferred` rows name the phase that delivers them.
+  - `deferred` rows name the stage (or, in archived text, phase) that
+    delivers them;
+  - `dormant` rows state why they are deliberately unscheduled. A guarantee
+    that is correct but that nothing in the plan will deliver is recorded as
+    dormant rather than pending, so the ledger never implies work in flight
+    that no stage owns (the INV-044 principle, applied to the ledger itself).
 
 Exit 0 on a clean ledger; exit 1 with per-row errors otherwise.
 """
@@ -19,7 +25,7 @@ import re
 import sys
 from pathlib import Path
 
-VALID_STATUSES = {"structural", "enforced", "consumer_traced", "deferred"}
+VALID_STATUSES = {"structural", "enforced", "consumer_traced", "deferred", "dormant"}
 ROW_RE = re.compile(r"^\|\s*(INV-\d+)\s*\|(.+?)\|\s*(\w+)\s*\|(.*?)\|(.*?)\|(.*?)\|\s*$")
 
 
@@ -81,8 +87,12 @@ def check(repo: Path) -> list[str]:
                 errors.append(f"{rid}: consumer site {r['consumer']!r} not found")
             if not r["behavior"]:
                 errors.append(f"{rid}: consumer_traced requires a behavior")
-        if r["status"] == "deferred" and "Phase" not in r["behavior"] and "Phase" not in r["consumer"]:
-            errors.append(f"{rid}: deferred rows must name the delivering Phase")
+        if r["status"] == "deferred":
+            named = r["behavior"] + r["consumer"]
+            if "Stage" not in named and "Phase" not in named:
+                errors.append(f"{rid}: deferred rows must name the delivering Stage")
+        if r["status"] == "dormant" and not r["behavior"]:
+            errors.append(f"{rid}: dormant rows must state why they are unscheduled")
     return errors
 
 
