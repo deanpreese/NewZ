@@ -432,3 +432,140 @@ specified it. Two questions that change what gets built:
    queue blocks?** Recommended **from the start, as proposals only**, since a
    rung-5 proposal costs an email and R-N1 says a stale plan is the risk nothing
    else in this design detects.
+
+---
+
+## 12. The plan is a living guide, and the operator is in that loop
+
+*Added 2026-08-19, on the operator's correction: the plan should change over
+time as part of the loop, with the operator in it.*
+
+### 12.1 The measurement that forces this
+
+`git log -- PLAN.md`: **13 modifications in 37 hours.** Created 2026-08-18 06:38,
+last touched 2026-08-19 06:47, and never a full day unchanged. Within that
+window it superseded P2, was restructured for one operator, had Rule 6 rewritten
+from a threshold into a judgment, had **E1.0 inserted into an already-ordered
+Phase 1** at 18:22, and had that epic's entry **amended 2h05m later** at 20:27
+when running it revealed a constraint the plan had not anticipated.
+
+§9's R-N1 said PLAN "is a snapshot of reasoning and the loop will treat it as
+standing instruction." That understates it. **A static PLAN has never existed
+here.** §2's rung 4 modelled the plan as a fixed queue, and that model has never
+been true for a single day of this project's life.
+
+### 12.2 Three kinds of change, all by proposal
+
+The loop **writes proposals; it never edits PLAN** (§5.1 stands). PLAN changes
+only by operator act. This is not a new mechanism — it is the one that already
+produced every version of the plan, automated:
+
+| Kind | Precedent | Weight |
+|---|---|---|
+| **Amend an epic** — a constraint discovered by building or running it | E1.0's same-evening amendment | common; one line of the report |
+| **Insert or reorder** — a dependency the plan had wrong | E1.0 added to Phase 1 and made first | uncommon; its own proposal |
+| **Supersede** — the diagnosis changed | P2 → P3 | rare; requires a stated evidence window |
+
+### 12.3 What triggers a plan-change proposal
+
+Evidence, never judgment about the plan's quality:
+
+1. **A fired `Decision rule`** (rung 3). All seven are plan-invalidating
+   conditions the plan wrote about itself — Phase 6's *"stop withdrawing, restore
+   the clause, and record that the design's accountability premise is wrong"* is
+   an instruction to change the plan. A fired decision rule **requires** a
+   plan-change proposal; it is not satisfied by halting.
+2. **A post-build falsifier fires** — E1.0's *"if coverage does not rise, the
+   answer is a rotation floor, never the old filter."*
+3. **A `Done when` proves uncheckable**, or a `Depends on` proves wrong.
+4. **A rung-2 §10 signal that no queued epic addresses.**
+5. **A bound risk becomes binding or is resolved** (R-22…R-30).
+6. **A premise moves** — §12.4.
+
+### 12.4 `evolution/premises.yaml` — the answer to R-N1
+
+§9 conceded that a plan can go stale in ways no decision rule anticipates and
+that "nothing here detects that." That was wrong, and the fix is cheap: **PLAN
+states its premises as measured numbers, and every one of them has an
+instrument.**
+
+From PLAN §1 and §"The evidence that produced this plan": 117 concerns (6 open,
+19 closed, 84 stalled); 242 operator messages; 204 reading episodes; 88
+deliberations; 359 ingest rows; 1 person; **0 outcomes the being did not grade
+itself**; pooled novelty 3.2%; advance acceptance 28.3% → 41.1%; the stall pool
+77 untouched / 7 attempted; the §9.1 ingest share UNREADABLE; the grounding mix
+**50% self / 33% operator / ≤17% world** across 119 refs; 34 of 61 feeds ever
+contributing a read; 12 `source_gaps`; 91 noticings, 18 surfaced, 49 pending;
+111 v1 + 6 v2 concerns, **zero from conversation**.
+
+Each is extracted with its instrument and the argument it carries, and
+re-measured every cycle. Several are load-bearing: *0 non-self-graded outcomes*
+is the entire reason Phase 1 exists; *50/33/≤17* is the diagnosis P3 was built
+on; *zero concerns from conversation* is P3-08. **When a load-bearing premise
+moves materially, the argument that rests on it is flagged for review** — which
+is exactly what should have happened, by hand, the moment E1.4 shipped and "0
+outcomes it did not grade" started to become false.
+
+Premise drift is reported whether or not the loop proposes anything. It is the
+plan's own staleness instrument.
+
+### 12.5 The operator is in the loop at four points, and nowhere else
+
+1. **Approving plan changes** — all three kinds in §12.2.
+2. **Closing phase evidence and `Decision rule`s** — Rule 6, where PLAN already
+   put judgment (§3.2).
+3. **Approving Class B epics for build**, during the ramp.
+4. **Holding the brake.**
+
+Everything else runs without them. The weekly report therefore ends with a
+**decision queue**: the small set of things waiting on the operator, each with
+what it needs, what is blocked behind it, and what happens if it is left. An
+operator in the loop at four defined points is in the loop; an operator sent
+everything is drowning in it, and stops reading — which is the same as not being
+in the loop, arrived at more slowly.
+
+### 12.6 The risk this introduces
+
+**The loop now proposes the frame in which its own work is judged.** That is a
+deeper problem than Rule 4's: not grading its own work, but authoring the rubric.
+Over months a plan drifts toward whatever the loop finds tractable, and every
+individual change looks reasonable. Four defenses:
+
+- **A plan-change proposal must name the premise that moved and cite its
+  instrument.** No premise movement, no plan change. This is the load-bearing
+  rule of this section — it forbids plan changes motivated by preference,
+  convenience or elegance.
+- **TRUE_NORTH is immutable by the loop, absolutely.** If PLAN drifts, TRUE_NORTH
+  is the fixed point that makes the drift visible. This is why §5.1 puts it in
+  the hard core and why §2 keeps it above PLAN in precedence.
+- **Rejected alternatives are reported** (§7.5), so the operator sees the space
+  the loop is not exploring, not only the path it chose.
+- **A scheduled full re-read.** Quarterly, PLAN is read against TRUE_NORTH from
+  scratch — by the operator, or by a fresh-context agent with no access to the
+  loop's history and instructed to ask only *"does this plan still follow from
+  this direction?"* This is the P2 → P3 event, scheduled rather than incidental.
+
+**Rate limits**, because a system that can re-plan will re-plan instead of
+building: at most **one plan-change proposal per weekly cycle**; supersession
+proposals require a stated minimum evidence window and never fire in the same
+cycle as an amendment. Epic amendments arising directly from building an epic
+are exempt from the cap — that is E1.0's case, and delaying it by a week would
+have shipped a known-wrong plan entry.
+
+### 12.7 Precedence, revised
+
+Rung 3 gains an obligation and rung 5 splits:
+
+| | Guide | Effect |
+|---|---|---|
+| 1 | INVARIANTS + hard core | refuse |
+| 2 | TRUE_NORTH §10 negative space | halt new build, report |
+| 3 | PLAN `Decision rule` fired | halt, escalate, **and open a plan-change proposal** |
+| 4 | PLAN epic queue | build |
+| **5a** | True North + architecture | propose a step outside the plan |
+| **5b** | premise drift or §12.3 trigger | propose a change to the plan |
+
+Rung 5b is what makes the plan a living guide rather than a snapshot the loop
+obeys until it is visibly absurd. It is also, per §12.6, the rung with the least
+mechanical protection — which is why every 5b proposal must cite a moved premise,
+and why the operator sits on every one of them.
