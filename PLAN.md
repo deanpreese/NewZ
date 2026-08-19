@@ -214,7 +214,7 @@ own, before any architecture is built on the assumption that it can.
 mechanism; what they produce is a verdict, not a behaviour change. Every later
 phase is consumer-traced in the ordinary way.
 
-**E0.1 — the long-form path**
+**E0.1 — the long-form path** *(built 2026-08-18)*
 *Delivers:* the being composes a piece from what it already holds. A minimal
 `works` row, a composer prompt, and nothing else — no surface, no revision, no
 publication.
@@ -222,14 +222,14 @@ publication.
 everything else, retrievable by id, with no hand-editing anywhere in the path.
 *Depends on:* nothing.
 
-**E0.2 — three pieces from what it carries**
+**E0.2 — three pieces from what it carries** *(built 2026-08-18)*
 *Delivers:* three pieces on subjects the being already holds — open concerns,
 held positions — chosen by it rather than assigned.
 *Done when:* three pieces exist, each tracing to the concern or position it came
 from, none framed or steered by the operator.
 *Depends on:* E0.1.
 
-**E0.3 — the read**
+**E0.3 — the read** *(closed 2026-08-18 — the operator's verdict, with its qualification kept)*
 *Delivers:* the operator's verdict on each piece (Rule 6). Provenance-blinding
 is available and optional — mixing the pieces with other material on the same
 subject, or with the being's own earlier work, and judging before checking which
@@ -310,7 +310,7 @@ need no audience, no surface and no second person.
 E1.0 comes first because a loop that closes on one domain is a defective loop,
 and the feed path currently guarantees one domain.
 
-**E1.0 — undirected reading** *(added 2026-08-18; proposal:
+**E1.0 — undirected reading** *(built 2026-08-18, amended the same evening; proposal:
 `proposals/2026-08-18-the-filter-that-ate-the-feeds.md`)*
 *Delivers:* four changes to the feed path. **(a)** the relevance filter is
 removed — candidates are no longer ranked against open concerns and triage no
@@ -1022,6 +1022,25 @@ classified exactly once, and both are tested. **Done.**
 an instrument. Under a loop it is worse than broken: a path that happens to exist
 makes it measure a different repository and report a number that looks fine.
 
+**E8.5 — the gate made runnable and trustworthy**
+*Delivers:* a declared environment a clean machine can reproduce; the test suite
+and `check_invariants.py` run on every push; and the order-dependent race in
+`tests/test_reply_queue.py::test_drainer_survives_a_transient_store_error` fixed
+— it waits on a count of 500 event-loop yields rather than on a condition.
+*Done when:* a fresh clone installs and runs the suite from a declared
+environment with no hand steps, the suite is green on ten consecutive full runs,
+and a push that breaks either check is refused.
+*Depends on:* nothing.
+*Hooks:* **E8.4 cannot exist without this.** Its gate is "the suite green twice",
+and today nothing runs the suite at all — no CI, no runner — while a fresh clone
+cannot even collect it (`requires-python = ">=3.12"`; five runtime dependencies
+installed by hand) and the suite was red in two of three full runs on 2026-08-19.
+A gate that flaps teaches its operator to ignore it, and an automated builder
+that runs a subset for speed sees a red that is not there.
+*Numbered last, sequenced first.* Epic numbers in this plan are identifiers;
+`Depends on` carries the order (§"Standing rules"). This one precedes every
+build the loop ever attempts.
+
 **E8.2 — the runner, the commit discipline, and the continuity assertion**
 *Delivers:* a repo-local runner in the hard core — no service manager — that
 pins a sha, applies migrations, launches the being as a child, and on a failed
@@ -1066,7 +1085,7 @@ the hard core, and the epic's own `Done when` as an executable check — with
 conditions live before the first autonomous restart.
 *Done when:* a Class A change is built, gated, restarted into and verified with
 no operator action, **and** a tautological test is demonstrated to fail the gate.
-*Depends on:* E3.9, E2.11, E8.2, E8.3.
+*Depends on:* E3.9, E2.11, E8.2, E8.3, E8.5.
 *Hooks:* **Rule 4 in the build path.** A test written by the agent that wrote the
 code, in the same context, minutes later, is not independent verification. The
 red-first rule is mechanical and needs no model judgment; it is also defeatable
@@ -1088,6 +1107,36 @@ this plan whose `Done when` clauses are all mechanical, its evidence read is
 mechanical, and it is Class A throughout. If the loop can deliver Phase 3, that
 is real evidence about its judgment before it touches anything that alters the
 being.
+
+### Enablement — how the loop's autonomy widens, and how it narrows
+
+Autonomy is a **stage**, recorded in one operator-only file inside the hard core.
+The loop reads its stage; it can never set it. Widening is the operator's act and
+follows E6.4's discipline exactly — one step, measured against the previous
+stage, reversible.
+
+| Stage | The loop may | It widens when |
+|---|---|---|
+| **0 — read** | read, decide, red team, propose, report, prepare sessions. **Builds nothing.** | it has proposed a next step **three times** and each has been compared against what the operator would have chosen *(Decision 3)* |
+| **1 — build, operator restarts** | build Class A behind the mechanical gate, and stop. The operator restarts. | three Class A changes have passed the gate and none needed reverting by hand |
+| **2 — build and restart Class A** | restart itself in the window, with `LAST_KNOWN_GOOD` auto-revert | one month at stage 2 with reverted restarts below 1 in 5, and nights slept at or above the pre-loop baseline |
+| **3 — build Class B, operator approves** | one Class B epic per evidence window, built and left for approval | S8-E read and held across two windows |
+| **4 — Class B autonomous** | one Class B epic per window, restarted autonomously | *not scheduled.* Recorded so the ladder is a plan and not an intention |
+
+**Narrowing is not symmetric.** Any kill condition in the `Decision rule` below
+returns the loop to **stage 0** immediately — not one rung, all the way — and
+re-widening starts again from stage 0's three cycles. A ratchet that loosens
+gradually and tightens gradually is a ratchet that never tightens in time.
+
+**Stage 0 is genuinely useful on its own.** It reads, it reports, it prepares
+sessions, and it watches premises — which is the whole of what P4 §1 found
+missing when E1.4 moved a load-bearing premise unremarked. If the loop never
+leaves stage 0, the sensors built in Phases 1–3 and the report built in E8.3 are
+still delivering the thing that was actually absent.
+
+**Phase 3 is where stages 1 and 2 are earned.** Its epics are the only ones in
+this plan that are mechanical throughout and Class A throughout, so the loop's
+first real building is done where a mistake costs a revert and not a night.
 
 **Evidence S8-E.** Not the loop's output. **Whether the being was harmed, and
 whether the reads were worth reading**: nights slept against the pre-loop
@@ -1131,6 +1180,7 @@ produced. No epic was dropped; every id resolves.
 | E8.12 runner and continuity | **E8.2** | the loop |
 | E8.13 Watcher, report, session | **E8.3** | the loop |
 | E8.14 the builder | **E8.4** | the loop |
+| *(nothing — P3 assumed it)* | **E8.5** the gate made runnable | E8.4's gate is "the suite green twice", and P3 named no epic that makes the suite runnable. Found by walking P4's graph on 2026-08-19 |
 
 ---
 
