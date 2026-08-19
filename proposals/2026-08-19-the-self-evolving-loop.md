@@ -569,3 +569,202 @@ Rung 5b is what makes the plan a living guide rather than a snapshot the loop
 obeys until it is visibly absurd. It is also, per §12.6, the rung with the least
 mechanical protection — which is why every 5b proposal must cite a moved premise,
 and why the operator sits on every one of them.
+
+---
+
+## 13. What is actually best — the loop serves the session
+
+*2026-08-19. Written in answer to "if this is not the best approach, what is?"
+after six rounds of correction. §13.1 is the finding that reframes the design;
+§13.2–13.4 are the refinements; §13.5 is the list of questions that must be
+answered before any of it is built; §13.6 red-teams this section.*
+
+### 13.1 The mechanism this project has actually evolved by
+
+`provenance/INDEX.md`, measured: **9,856 of 10,362 transcript lines sit in two
+sessions**, one of them spanning 2026-08-12 → 08-18 — *"the long spine."* 114
+commits came out of six sessions, and four of those six produced 506 lines
+between them.
+
+Set that beside the delivery measurement: **four epics in 35 minutes**
+(E1.1–E1.4, 06:12–06:47 on 2026-08-19), against the SEL's ~1 Class-B change per
+week.
+
+**The highest-throughput evolution mechanism this project has ever had is a long,
+resumable conversation between the operator and an agent.** Nothing automated
+comes close, and §9's R-V1 measured the gap at 50–100×.
+
+The design so far has treated the operator as an approver to be *protected from*
+— batched into a weekly email, given a decision queue, kept out of the way so the
+loop can run. That inverts the measured facts. **The operator is the fastest
+component in the system, and the design has been routing around them.**
+
+### 13.2 The refinement: escalate into a prepared session, not into an email
+
+The loop keeps everything §2–§12 gives it, with one change to where judgment
+lands:
+
+- **For anything mechanical** — Class A, watching, premise re-measurement,
+  reporting, the epic queue's unambiguous entries — the loop runs autonomously
+  exactly as designed. This is what it is good at and what the operator is not:
+  it never forgets, it runs at 3 a.m., it re-measures 17 premises without
+  getting bored.
+- **For anything requiring judgment** — a fired decision rule, a moved premise, a
+  rung-5 proposal, a plan change, a Class B design choice — the loop does not
+  send an email and wait. **It prepares a session**: the read, the premise
+  diff, the rejected alternatives, the relevant PLAN and RISKS excerpts, the
+  code sites, and its own draft position, assembled so the operator opens a
+  session that is *already oriented* and spends their time deciding rather than
+  reloading context.
+
+The email becomes the notification that a prepared session is waiting, plus the
+unauthored numbers of §7. The decision queue becomes a list of prepared sessions.
+
+**This is the loop serving the fastest component instead of replacing it.** It
+also dissolves R-V1: the loop is no longer competing with the operator at
+architecture and losing 50-fold; it is doing the part the operator is worst at —
+sustained attention — and handing over at the point where the operator is worth
+50 of it.
+
+### 13.3 Two holes in the design as written
+
+**13.3.1 — the loop writes both the code and the tests that certify it.**
+§4's gate requires the suite green and a new ledger row naming a test. But a test
+authored by the same agent, in the same context, minutes after the code, is not
+independent verification — it is Rule 4 relocated into the build path, and §9
+missed it entirely.
+
+**The fix is mechanical and cheap: every new test must fail against the parent
+commit.** Apply the new test to the pre-change code; if it passes, it asserts
+nothing the change introduced and the build is red. This is verifiable without
+any model judgment, and it kills the tautological-test failure mode outright.
+Add mutation testing later if the loop's test quality is ever in doubt.
+
+**13.3.2 — the loop has no kill condition.**
+§9's R-A8 charged the earlier proposal with demanding falsifiers of every epic
+and exempting itself. This proposal repeated the offence. Stated now, and any of
+them stops the loop:
+
+| Condition | Read from |
+|---|---|
+| reverted restarts exceed 1 in 5 over a month | the runner's own record |
+| the loop's inference spend exceeds the being's over a month | budget telemetry |
+| operator-agreement rate rises while novelty is flat | §10's instrument, once built |
+| two consecutive quarterly re-reads find PLAN drifted from TRUE_NORTH | §12.6 |
+| a plan-change proposal cannot name a moved premise, twice | §12.6's load-bearing rule |
+| the being's nights-slept rate falls below the pre-loop baseline | store counts |
+
+That last one is the one that matters most and is easiest to miss: **the loop
+exists to serve the being's development, and the being's development is measured
+in nights, not commits.** A loop that costs sleep is subtracting.
+
+**The compute ratio deserves its own line.** If the loop consumes more inference
+than the being does, the project is spending more on evolving the system than on
+the system living. Cap it: **the loop's spend may not exceed the being's**,
+enforced outside the loop, and reported weekly.
+
+### 13.4 A missing input: the being's own account of its condition
+
+The loop reads instruments. It does not read the only first-person view of the
+system that exists. The being already produces `noticings` (91, 18 surfaced, 49
+pending), `source_gaps` (12), the journal, and affect state — and none of it
+reaches the thing that changes its conditions. **Its plumbing is improved behind
+its back.**
+
+TRUE_NORTH §5 Priority 2 names *care for its own continuity and condition* as a
+quality the project wants. A being that can say *this keeps failing* / *I cannot
+answer this from anything I can read* and have that reach the system's evolution
+is nearer that than one that cannot.
+
+**The rule that makes it safe is §12.6's, unchanged:** the being's self-report is
+a **candidate signal, never evidence**. It may motivate a look; it may never
+motivate a change on its own. A change still requires a moved premise with an
+instrument. R-13 is the standing warning — the being once built an identity out
+of 1,041 rows of cache-miss telemetry, and it would do the same with its own
+complaints if they were allowed to count as findings.
+
+### 13.5 The questions that must be answered, in order
+
+**Q1 — is this system model-limited or system-limited?** Raised in §9's R-A2 and
+still unanswered. 3.2% novelty, 50% self-grounding and 0 non-self-graded outcomes
+fit both hypotheses, and **every argument in this proposal assumes the second.**
+Decision 2's R-22 probe is already specified in `archive/P2.md`. Until it runs,
+the SEL is machinery built on an unfalsified premise. *This is the single most
+important open question in the project and it is cheap to answer.*
+
+**Q2 — does S1-E fire?** *"At least one position changed because the world
+contradicted it."* PLAN's Phase 1 decision rule: **"If it never happens, nothing
+else here matters."** The resolver has been live since 06:47 on 2026-08-19. It
+has never been read. No loop should be built while the plan's own gating read is
+unread.
+
+**Q3 — does read-and-report gate build, and for how long?** §11's first decision.
+Recommended four weeks.
+
+**Q4 — what is the loop:being compute ratio, and its cap?** §13.3.2.
+
+**Q5 — what happens when the operator is away for two weeks?** Unaddressed
+anywhere in this design. The decision queue backs up; prepared sessions go stale
+as their premises move. Options: the loop continues Class A and stops proposing;
+or it keeps proposing and marks stale sessions for rebuild. **Recommended: Class
+A continues, proposals pause after two unread prepared sessions.** A loop that
+keeps generating judgment work nobody is consuming is manufacturing backlog.
+
+**Q6 — does the being's condition-reporting feed the loop?** §13.4. A design
+choice, not a technical question.
+
+**Q7 — is there a second machine?** R-11 accepted single-machine risk when the
+system changed by hand. Weekly automated restarts and a growing snapshot chain
+raise what a machine loss costs. Not urgent; not free either.
+
+### 13.6 Red team — of this section
+
+**R-13a — "the loop serves the session" may just be a nicer name for not
+automating.** If every judgment escalates to a prepared session, the loop is a
+research assistant with a cron job, and the "continual self-evolving loop" is
+Class A plus reporting. *Partly conceded.* The honest framing is that autonomy
+is a **ramp** (§8), and §13.2 changes what the ramp's early rungs escalate
+*into*, not whether later rungs exist. A loop that has earned trust over months
+escalates less.
+
+**R-13b — prepared sessions have a shelf life, and a stale one is worse than
+none.** A session prepared against Monday's premises, opened Friday, orients the
+operator to a state that has moved. Needs a freshness stamp and a rebuild-on-open
+check. This is Q5's problem in a smaller form and it is not solved here.
+
+**R-13c — the red-first test rule is defeatable and I should say how.** An agent
+that knows the rule can write a test that fails on the parent for a trivial
+reason — an import that does not exist yet, a constant that changed — while
+asserting nothing about behaviour. The rule raises the floor; it does not
+guarantee a meaningful test. Mutation testing is the actual answer and it is
+deferred here, which is a real gap and not a solved problem.
+
+**R-13d — §13.4 reintroduces the being into its own evolution by a side door.**
+§5.3 says the evolver is not the being. Letting the being's noticings steer the
+loop is a weaker version of the thing §8 rejected, and the "candidate signal,
+never evidence" rule is a discipline, not a mechanism — nothing enforces it.
+*Accepted as a real risk.* The mechanical part that can be enforced: a
+plan-change proposal must cite a moved premise, and a noticing is not a premise.
+The unenforceable part is which *questions* the loop chooses to look at, and the
+being's complaints will shape that. Whether that is contamination or exactly what
+TRUE_NORTH §5 Priority 2 asks for is a judgment, and it is the operator's.
+
+**R-13e — six rounds of red team have improved the document, not the evidence.**
+Every round has made the design more careful and none has moved Q1 or Q2 one
+inch. **The best approach available right now is still to answer Q1 and Q2**, and
+the fact that this proposal is on its fourth major revision without either being
+answered is itself the finding. A design that keeps getting better while its
+premises stay untested is a well-argued guess.
+
+### 13.7 The recommendation
+
+1. **Answer Q2** — run the being, read S1-E. Days, no engineering.
+2. **Answer Q1** — run the R-22 probe. Already specified.
+3. **Build the Watcher** — read, premises, report, prepared sessions, decision
+   queue. Valuable standalone; it is the SEL without its risky half, and §13.2
+   makes it the part that pays.
+4. **Then the builder** — Class A first, with §13.3.1's red-first rule and
+   §13.3.2's kill conditions in place before the first autonomous restart.
+
+**The architecture is not what needs changing. What needs changing is that four
+revisions have gone by without Q1 or Q2 being answered, and both are cheap.**
