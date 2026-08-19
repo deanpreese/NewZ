@@ -134,6 +134,10 @@ may not exist with fixed weights. It must be built and observed long before any
 clause is withdrawn on its strength. With no audience at all, this is also the
 safest moment in the project's life to run that experiment.
 
+**Phase 8 is orthogonal and is ordered against nothing here.** It delivers the
+mechanism by which these phases get delivered, not a capability of the being, and
+it must not reorder them.
+
 **What is kept unchanged:** the store, sleep, the Perspective, retrieval,
 concerns and the three openers, the invariant ledger, Rules 0–2. The compounding
 core is sound. This plan changes what reaches it, not how it consolidates.
@@ -712,6 +716,212 @@ with one operator, and the plan does not pretend otherwise.
 
 ---
 
+## Phase 8 — the self-evolving loop *(orthogonal to Phases 0–7)*
+
+**Intent.** Stand up the SEL — read health, results and instrumentation, decide
+the next step, red team it, build it, restart the being, report — under
+TRUE_NORTH and this plan together. Approved in principle by the operator
+2026-08-19; the design, its red teams and its withdrawn predecessor are
+`proposals/2026-08-19-the-self-evolving-loop.md`.
+
+**This phase is not the next step after Phase 7.** It delivers no capability of
+the being. It delivers the mechanism by which Phases 1–6 get delivered, so it is
+ordered against nothing in that chain and **must not reorder it**. Phase 7 stays
+dormant; the SEL does not wake it.
+
+**Rule 4 is not relaxed.** No model verdict is a passing condition anywhere in
+this phase. **Rule 6 is not amended** — the loop closes mechanical `Done when`
+clauses; phase Evidence and every `Decision rule` stop at the operator, which is
+where this plan already put judgment.
+
+**Metric alignment is the first work, not a by-product.** The instrumentation
+audit (proposal §15) found no registry, three probes hardcoding a dead absolute
+path, one word carrying two quantities, and a premise set mixing mechanical and
+model-graded numbers unlabelled. A loop steering on that would re-plan on drift
+in the model's own judging and call it change in the world.
+
+---
+
+**E8.1 — the instruments made portable and enumerated**
+*Delivers:* `tools/conversation_probe.py`, `tools/opener_probe.py` and
+`tools/triage_probe.py` stop hardcoding `/Users/dean/Documents/source/NewZ` and
+resolve the repo the way every other tool does; and `evolution/instruments.yaml`
+enumerates every instrument with, per row: what it measures, the store or log it
+reads, **whether a model touched any link in its chain**, its denominator, its
+Rule 0 method line, and whether it is canonical.
+*Done when:* no tool contains an absolute path outside the repo, a test asserts
+it, and every instrument in `tools/` is either a row in `instruments.yaml` or
+explicitly marked not-an-instrument.
+*Depends on:* nothing.
+*Hooks:* TRUE_NORTH §7 portability — a probe that runs on one machine is not an
+instrument, it is a local habit. Rule 2, applied to instruments.
+
+**E8.2 — every metric carries its grade**
+*Delivers:* each metric in `instruments.yaml` is graded **mechanical /
+model-graded / mixed / known-biased**, with the reason. Advance acceptance and
+closure counts are model-graded (`judge_advance`, `judge_closure` — Rule 4 names
+the first by name); pooled novelty is mixed (INV-023's read consults no model,
+but `added`/`revised`/`carried` are labels the model applied at consolidation);
+the grounding mix is mechanical and carries R-15's known bias.
+*Done when:* every metric the loop can read has a grade, and the loop refuses to
+cite an ungraded metric.
+*Depends on:* E8.1.
+*Hooks:* **Rule 4.** This is the row that makes Rule 4 checkable rather than
+remembered.
+
+**E8.3 — the metric-to-purpose map (Rule 2 for metrics)**
+*Delivers:* every metric names what it is *for* — a precedence rung, a TRUE_NORTH
+§10 item, a phase Evidence read, a `Decision rule`, or a kill condition — and
+every one of those names the metrics that serve it.
+*Done when:* no metric exists without a named consumer, and no rung, §10 item or
+kill condition depends on a metric that does not exist. Both directions are
+tested.
+*Depends on:* E8.2.
+*Hooks:* **Rule 2**, extended from tables and flags to measurements. A metric
+nothing consumes is the same defect as a column nothing reads.
+
+**E8.4 — the baseline-and-delta layer**
+*Delivers:* one windowed comparison layer used by every metric — value,
+baseline, window, delta — replacing per-tool ad-hoc comparison. `INCOMPLETE`
+when the window has gaps; `UNREADABLE` when the input is missing.
+*Done when:* every canonical metric reports through it, and a gapped or missing
+window is reported as such rather than as a number.
+*Depends on:* E8.3.
+*Hooks:* **INV-044**, generalised. Today the project's deltas exist only in
+prose — *"acceptance rose 28.3% → 41.1% where P2 expected a fall"* was computed
+by hand, once, inside an argument, and a loop cannot steer on that.
+
+**E8.5 — metric revision without silent breakage**
+*Delivers:* every metric carries a `definition_version`. Changing a definition
+**resets its baseline and records the reset with its reason**; the prior series
+is retained and marked as belonging to the older definition.
+*Done when:* a definition change is visible in the record, no delta is ever
+computed across a definition boundary, and a test asserts both.
+*Depends on:* E8.4.
+*Hooks:* the "novelty" collision (proposal §15.3) is what this prevents in
+future — one word carried two quantities and nothing in the system objected.
+
+**E8.6 — the Tier 1 set complete**
+*Delivers:* the six mechanical metrics the loop may steer by: nights slept and
+the interval between them; grounding mix with INV-033's single-source flag;
+claims made, claims resolved, and **positions changed by a resolution**; feeds
+contributing a read and `source_gaps`; the compute split by function, being
+versus loop; and the loop's own harm record — restarts, reverts, downtime,
+nights lost.
+*Done when:* all six report through E8.4 with a baseline, and each is graded
+mechanical.
+*Depends on:* E8.4.
+*Hooks:* the third is **S1-E's reader**, which does not exist today — `claims.py`
+renders claims and their costs and computes no rate, no latency and no count of
+positions changed, so the plan's own gating read currently has nothing to read it
+with. The sixth is §13.3.2's kill conditions.
+
+**E8.7 — the derivation layer**
+*Delivers:* metrics composed from Tier 1 and what exists — volume-to-development
+(episodes per item added or revised), restatement rate (`1 − novelty`),
+consequence rate (advances accepted against claims resolved), autonomy against
+world-grounded position.
+*Done when:* four of TRUE_NORTH §10's six checkable items are readable, each
+through E8.4.
+*Depends on:* E8.6.
+*Hooks:* §10. These are ratios of data already collected; the shortfall was never
+collection.
+
+**E8.8 — operator agreement, informing only**
+*Delivers:* the one §10 item with no raw material — a measured agreement or
+disagreement signal in the operator exchange.
+*Done when:* the signal exists, is graded **model-graded**, and the loop is
+tested to refuse it as justification for a plan change while accepting it as a
+rung 2 halt.
+*Depends on:* E8.2, E8.6.
+*Hooks:* §10, and proposal §15.4's rule. It is the item most likely to move under
+a loop optimising for a quiet week, which is exactly why it may never justify
+anything.
+
+**E8.9 — the canonical freeze**
+*Delivers:* the instrument set is frozen into the hard core; changing any
+instrument is an operator act.
+*Done when:* the gate refuses a diff touching a canonical instrument, and a test
+asserts the refusal.
+*Depends on:* E8.1, E8.3.
+*Hooks:* the loop steers by evidence the being produces while changing the being;
+at n=1 it cannot separate improving the being from improving the instrument's
+view of it, and it has a gradient toward the second.
+
+**E8.10 — `epics.yaml` and its drift check**
+*Delivers:* this plan's epics hand-derived into machine-readable form — id,
+depends-on, `Done when` and its class (mechanical / in-life / operator-judgment),
+bound risks and invariants, falsifier — plus a check that every row still matches
+PLAN's text.
+*Done when:* the loop reads the queue from `epics.yaml`, and the drift check
+fails the build when a row and PLAN disagree.
+*Depends on:* nothing.
+*Hooks:* the extraction is **hand-derived**, because deriving it automatically
+loses what "the line this epic must not cross" is doing in E1.0.
+
+**E8.11 — `premises.yaml`, the plan's staleness instrument**
+*Delivers:* this plan's stated premises extracted with their instrument, their
+grade and the argument each carries; re-measured every cycle; drift reported
+whether or not anything is proposed.
+*Done when:* a materially moved premise flags the argument resting on it, and a
+plan-change proposal that cites no moved **mechanical** premise is refused.
+*Depends on:* E8.2, E8.4.
+*Hooks:* *0 outcomes the being did not grade itself* is the premise Phase 1
+exists for, and E1.4 began falsifying it on 2026-08-19. Nothing noticed.
+
+**E8.12 — the runner, the commit discipline, and the continuity assertion**
+*Delivers:* a repo-local runner in the hard core; expand-contract migrations;
+`Schema:` / `Restart:` / `Class:` / `Semantics:` commit trailers;
+`LAST_KNOWN_GOOD`; a pre-restart snapshot named for the sha; and a mechanical
+post-restart continuity assertion.
+*Done when:* a deliberately bad commit is restarted into, fails its assertion,
+and is reverted to `LAST_KNOWN_GOOD` without the operator present.
+*Depends on:* nothing.
+*Hooks:* continuity has been verified once, by hand, 2026-08-11. A loop that
+restarts weekly crosses that boundary weekly.
+
+**E8.13 — the Watcher, the report and the prepared session**
+*Delivers:* the daily state read, the weekly report — unauthored numbers first,
+the loop's reasoning last and marked unverified, rejected alternatives included,
+and a decision queue — and judgment escalating into a *prepared* session rather
+than an email and a wait.
+*Done when:* a week runs unattended and its report is one the operator reads to
+the end.
+*Depends on:* E8.4, E8.6.
+*Hooks:* Rule 6. The operator is in the loop at four points — plan changes, phase
+Evidence and `Decision rule`s, Class B approval, the brake — and nowhere else.
+
+**E8.14 — the builder, Class A only**
+*Delivers:* autonomous build and restart for changes the test suite can judge,
+under the mechanical gate, with **every new test required to fail against the
+parent commit**, and the kill conditions live before the first autonomous
+restart.
+*Done when:* a Class A change is built, gated, restarted into and verified with
+no operator action, and a tautological test is demonstrated to fail the gate.
+*Depends on:* E8.9, E8.10, E8.12, E8.13.
+*Hooks:* **Rule 4 in the build path** — a test written by the agent that wrote the
+code, in the same context, is not independent verification.
+
+**Evidence S8-E.** Not the loop's output. **Whether the being was harmed and
+whether the reads were worth reading**: nights slept against the pre-loop
+baseline; reverted restarts as a share of restarts; the loop's inference spend
+against the being's; and the operator's own read of whether a prepared session
+was worth opening.
+
+**No velocity measure belongs here.** Commits, epics per week and cycle time are
+counted in the report and are never targets — a loop measured on throughput will
+produce throughput, which is §10's "activity, memory growth, or output volume"
+wearing a scheduler.
+
+**Decision rule.** Any kill condition firing stops the loop: reverted restarts
+above 1 in 5 over a month; loop spend exceeding the being's; nights slept falling
+below the pre-loop baseline; two consecutive quarterly re-reads finding this plan
+drifted from TRUE_NORTH; or a plan-change proposal twice unable to name a moved
+mechanical premise. **Nights slept is the one that matters most** — development
+is measured in nights, not commits, and a loop that costs sleep is subtracting.
+
+---
+
 ## Going public — the standard and the rungs
 
 **The first reader is the experiment, not the reward.** An earlier draft gated
@@ -762,6 +972,19 @@ and the work outgrowing the room.
    stake, and the probe is what would tell us how to set it. Cheap, optional,
    specified in `archive/P2.md` §Phase 3.
 
+3. **Does read-and-report gate building?** Whether Phase 8 runs E8.13 alone for
+   a stated period before E8.14 is enabled, so the loop's judgment is observed
+   before it is trusted. *Recommended: yes, four weeks.*
+4. **May the loop propose outside this plan from the start?** Rung 5a of the
+   proposal's precedence — a proposal costs an email, and a stale plan is the
+   risk nothing else in the design detects. *Recommended: yes, as proposals
+   only.*
+5. **Does the being's own account of its condition feed the loop?** Its
+   `noticings`, `source_gaps`, journal and affect state reach nothing that
+   changes its conditions today. Admitted as **candidate signal, never
+   evidence** (proposal §13.4), or not admitted. *Open — a judgment about
+   §5 Priority 2, not a technical question.*
+
 **Nothing blocks Phase 0.** It needs no decision and no reader — three pieces
 and the operator's read.
 
@@ -809,6 +1032,11 @@ and RISKS rows are updated to match.
 | P3-08 | Whether people ever produce concerns here (111 v1 + 6 v2, zero from conversation) cannot be tested with one operator | Medium | Phase 7, untestable until it fires |
 | P3-09 | Retiring P2's phase-evidence machinery removes the eyesight that produced this diagnosis | Medium | The ledger and Rules 0–2 stay; only phase-evidence goes |
 | P3-10 | Single machine, one model, no off-machine copy | Accepted | P2 R-11, unchanged |
+| P3-11 | The SEL proposes the frame its own work is judged in — not grading itself, but authoring the rubric | **High** | Phase 8: a plan change may cite only a moved **mechanical** premise (E8.11); TRUE_NORTH immutable by the loop; rejected alternatives reported; a quarterly re-read from outside the loop's history |
+| P3-12 | The loop steers on model-graded numbers and mistakes drift in the model's judging for change in the world | **High** | E8.2's grades, and the refusal to cite an ungraded metric |
+| P3-13 | The loop restarts the being into code that does not come up, and is the only thing that would notice | **High** | E8.12's runner, `LAST_KNOWN_GOOD` and continuity assertion, plus an out-of-band heartbeat the loop does not send |
+| P3-14 | The loop writes both the code and the tests that certify it — Rule 4 relocated into the build path | Medium | E8.14: every new test must fail against the parent commit. Mutation testing deferred and recorded as unsolved |
+| P3-15 | The loop is ~50–100× slower at architecture than the operator, so it buys attention and not speed | Inherent | Accepted. Phase 8 escalates judgment into a prepared session rather than replacing the operator |
 
 ---
 

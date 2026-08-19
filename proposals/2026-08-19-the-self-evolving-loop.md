@@ -1093,3 +1093,15 @@ and mostly the correct content; nothing in them is wrong. What is missing is tha
 they are stocks where steering needs flows, introspective where True North needs
 consequence, and uncomposed where the cheapest wins are ratios of what is already
 there.
+
+---
+
+## 17. Landed in the plan
+
+*2026-08-19.* This design is now **PLAN Phase 8 — the self-evolving loop**,
+fourteen epics ordered orthogonally to Phases 0–7, with `Evidence S8-E` and a
+`Decision rule` carrying §13.3.2's kill conditions. The metric alignment work of
+§15 and §16 is E8.1–E8.8 and is the phase's first work, not a by-product.
+Operator decisions 3–5 and risks P3-11…P3-15 are in the plan's own queues.
+
+The proposal remains the reasoning; PLAN is now the record of what will be built.
