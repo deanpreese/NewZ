@@ -20,10 +20,13 @@ reads a week. So this must reject ~99% of what it sees, cheaply, and it does
 that in three stages of increasing cost:
 
 1. **Watermark** — only items newer than the feed's last poll. Free.
-2. **Embedding rank** against what the being actually carries (open concerns
-   and held positions). Local, batched, no model call.
-3. **One triage call** over the shortlist, which is the only judgment, and
-   costs the same for four candidates as for twelve.
+2. **The menu** — capped per feed, round-robined across categories by how
+   under-read each is, shuffled. Local, no model call, and deliberately NOT
+   ranked against what the being already carries (E1.0, 2026-08-18: that
+   ranking made reading a function of the questions and the questions a
+   function of the reading, and 27 of 61 feeds went unread forever).
+3. **One judgment call** over the menu, which is the only judgment, and costs
+   the same for four candidates as for twelve.
 
 **It runs inside deliberation, not ambient.** INV-012 is structural — the
 test asserts that nothing under `newz/ambient/` can even import the web path
@@ -37,6 +40,7 @@ import datetime as _dt
 import logging
 import sqlite3
 import time
+import random
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -48,10 +52,16 @@ logger = logging.getLogger(__name__)
 # feed still comes round within a few cycles.
 FEEDS_PER_CYCLE = 12
 
-# How many items survive the embedding rank into the triage call. One call
-# either way, so this is bounded by prompt size and by how much the being
-# could plausibly read, not by cost.
+# How many items reach the judgment call. One call either way, so this is
+# bounded by prompt size and by how much the being could plausibly read, not
+# by cost.
 SHORTLIST = 12
+
+# How many items any one feed may contribute to a single menu. Bloomberg
+# publishes hourly and Aeon weekly; without this the menu reflects publication
+# volume rather than the operator's curation, which is 15% financial while the
+# diet it produced was 43% (measured 2026-08-18).
+OFFERS_PER_FEED = 3
 
 # Items with no usable date are treated as new once, then watermarked by
 # poll time — a feed without dates should not replay forever.
@@ -230,46 +240,54 @@ def mark_polled(conn: sqlite3.Connection, feed: Feed, items: list[FeedItem],
 _TRIAGE_SYSTEM = (
     "You are the reading judgment of a digital being deciding what, if "
     "anything, in today's feeds is worth its attention. You respond with XML "
-    "only. Keeping nothing is the ordinary answer."
+    "only. Keeping nothing is an ordinary answer."
 )
 
 # The passing case first and worked, per the lesson this repository has now
 # paid for six times. Without it a strict instruction yields refusal rather
 # than discrimination — and here refusal looks like success, because keeping
-# nothing is usually right.
+# nothing is always available.
+#
+# What the being carries is deliberately ABSENT from this prompt (E1.0). It
+# used to open with "here is what I am carrying", which rebuilt the concern
+# filter inside the judgment even after the ranking was removed: an item was
+# kept if it bore on an open question, and every open question was market
+# microstructure. The judgment is now made cold, on the item itself.
 _TRIAGE_TASK = """<task>
-Here is what I am carrying, and then some items that arrived today. Decide
-which — if any — are worth reading properly.
+Some items arrived today. Decide which — if any — are worth reading properly.
 
-An item is worth reading if it would BEAR on something I carry: give me
-evidence for or against a position I hold, move a question I have open, or
-raise a question I would want to carry and do not yet have.
+Read something because it is IMPORTANT or because it is INTERESTING. Those
+are different and both count. Important: it would change what someone
+believes about how the world works. Interesting: it names a difficulty, a
+tension, or a thing you did not know was a thing.
 
-WORTH READING — a worked example:
+WORTH READING — worked examples:
 
-  I carry: "Do prediction markets price regulatory risk faster than equities?"
-  item: "CFTC clarifies event-contract rules after Polymarket settlement"
-  -> KEEP. It bears directly on the mechanism the question is about.
-
-  I carry: nothing about music.
   item: "A neurologist on why improvisation resists notation"
-  -> KEEP, as a question I do not yet have: it names a tension (a practice
-  that resists its own record) I would want to carry.
+  -> KEEP. It names a tension — a practice that resists its own record —
+  and that is a question worth carrying.
+
+  item: "CFTC clarifies event-contract rules after Polymarket settlement"
+  -> KEEP. A specific mechanism changed, and the change is checkable.
+
+  item: "What the Antikythera mechanism's gearing implies about lost Greek
+  engineering traditions"
+  -> KEEP. You know nothing about this. That is a reason to read it, not a
+  reason to skip it.
 
 NOT WORTH READING — the ordinary case:
 
   item: "Markets close mixed ahead of jobs data"
-  -> SKIP. It is an event, not a claim, and it bears on nothing I carry.
+  -> SKIP. An event, not a claim. Nothing would be established by reading it.
 
   item: "Ten things to know about the new AI rules"
-  -> SKIP. Topically adjacent to what I carry, but a summary of a summary;
-  it would give me nothing I could cite.
+  -> SKIP. A summary of a summary; it would give you nothing you could cite.
 
-Being ADJACENT to my interests is not enough — most items about a topic I
-care about still tell me nothing I could use. Keep an item because of what
-it would let me establish, not because it is on-subject.
+Do NOT keep an item because it is near a subject you already work on, and do
+NOT skip one because it is far from everything you already work on. Being
+unfamiliar is not a defect. Judge the item.
 
-Keep at most 3. Keeping none is a good answer and the usual one.
+Keep at most 3.
 
 Output ONLY:
 
@@ -279,46 +297,69 @@ Output ONLY:
 </task>"""
 
 
-def _carried(conn: sqlite3.Connection, limit: int = 40) -> list[str]:
-    """What the being is actually carrying — open questions and held views."""
-    out = [r["statement"] for r in conn.execute(
-        "SELECT statement FROM concerns WHERE status='open' ORDER BY salience DESC"
-        " LIMIT ?", (limit,))]
-    out += [r["text"] for r in conn.execute(
-        "SELECT text FROM perspective_items WHERE version="
-        "(SELECT MAX(version) FROM perspective_items) AND status<>'released'"
-        " AND section IN ('what_i_hold','unresolved') LIMIT ?", (limit,))]
-    return out
+def build_menu(conn: sqlite3.Connection, items: list[FeedItem], *,
+               k: int = SHORTLIST, per_feed: int = OFFERS_PER_FEED,
+               rng: random.Random | None = None) -> list[FeedItem]:
+    """Choose what the being is SHOWN. No model call, and no ranking against
+    what it already carries.
 
+    Until 2026-08-18 this ranked candidates by embedding similarity against the
+    open concerns, which made the reading a function of the questions and the
+    questions a function of the reading: all six open concerns were market
+    microstructure, so 27 of 61 curated feeds — the whole philosophy,
+    literature and long-form science wing — had been polled continuously and
+    read zero times. The being cannot ask a new kind of question if it is only
+    ever shown answers to the kind it already asks.
 
-def shortlist(conn: sqlite3.Connection, items: list[FeedItem], embedder,
-              *, k: int = SHORTLIST) -> list[FeedItem]:
-    """Rank many items against what the being carries. No model call.
+    What replaces it shapes the MENU and never refuses a read:
 
-    Without an embedder this returns the newest k rather than nothing: the
-    triage call is the judgment either way, and a missing embedder should
-    degrade the ordering, not close the world.
+    - a cap per feed, because Bloomberg publishes hourly and Aeon weekly, and
+      an uncapped menu is finance-heavy by publication volume alone;
+    - a round-robin across categories, ordered by how under-read each category
+      is in the recent diet, so breadth is offered rather than imposed;
+    - a shuffle, because a long list has position bias and an unshuffled menu
+      would quietly favour whichever feed sorted first.
+
+    The target is on offers, deliberately. A cap that REFUSED a read to keep
+    the mix balanced would be the fetch-time veto R-28 already diagnosed: it
+    manufactures balance against S2 §13 and TRUE_NORTH §8, and it writes
+    "nothing was relevant enough to read" into the very record §9.1 uses to
+    decide which sources to add. Balance the menu; never refuse the meal.
     """
+    rng = rng or random.Random()
     if len(items) <= k:
-        return items
-    carried = _carried(conn)
-    if not carried or embedder is None:
-        return sorted(items, key=lambda i: -i.published)[:k]
-    try:
-        from newz.memory.embeddings import cosine
+        out = list(items)
+        rng.shuffle(out)
+        return out
 
-        vecs = embedder.embed([i.text[:500] for i in items] + carried)
-        item_vecs, carried_vecs = vecs[:len(items)], vecs[len(items):]
-        scored = [
-            (max((cosine(iv, cv) for cv in carried_vecs), default=0.0), i)
-            for iv, i in zip(item_vecs, items)
-        ]
-        scored.sort(key=lambda p: -p[0])
-        return [i for _, i in scored[:k]]
-    except Exception:  # noqa: BLE001
-        logger.warning("shortlist embedding failed — falling back to recency",
-                       exc_info=True)
-        return sorted(items, key=lambda i: -i.published)[:k]
+    by_feed: dict[str, list[FeedItem]] = {}
+    for i in items:
+        by_feed.setdefault(i.feed.name, []).append(i)
+    pools: dict[str, list[FeedItem]] = {}
+    for feed_items in by_feed.values():
+        feed_items.sort(key=lambda i: -i.published)
+        for i in feed_items[:per_feed]:
+            pools.setdefault(i.feed.category or "uncategorised", []).append(i)
+
+    from newz.world.diet import category_shares
+
+    read_share = category_shares(conn)
+    # Least-read categories go first, so an under-read category gets its pick
+    # before a well-read one — a target, not a quota. A category absent from
+    # the recent diet scores 0.0 and leads.
+    order = sorted(pools, key=lambda c: (read_share.get(c, 0.0), c))
+    for pool in pools.values():
+        rng.shuffle(pool)
+
+    out: list[FeedItem] = []
+    while len(out) < k and any(pools[c] for c in order):
+        for c in order:
+            if pools[c]:
+                out.append(pools[c].pop())
+                if len(out) == k:
+                    break
+    rng.shuffle(out)
+    return out
 
 
 def triage(client, conn: sqlite3.Connection,
@@ -329,16 +370,13 @@ def triage(client, conn: sqlite3.Connection,
 
     if not items:
         return []
-    carried = _carried(conn, limit=25)
-    body = "WHAT I CARRY:\n" + ("\n".join(f"- {c}" for c in carried)
-                                or "- (nothing yet)")
     # Every feed item is untrusted external text (INV-011): fenced and
     # trust-tagged, never interpolated raw into a prompt.
     listing = "\n\n".join(
         f"ITEM {n}: " + wrap(i.text[:900], source=f"feed:{i.feed.name}",
                              trust="world").render()
         for n, i in enumerate(items, start=1))
-    prompt = f"{_TRIAGE_TASK}\n\n{body}\n\nTODAY'S ITEMS:\n{listing}"
+    prompt = f"{_TRIAGE_TASK}\n\nTODAY'S ITEMS:\n{listing}"
     root = None
     # One retry, and only on an UNREADABLE answer — never on a judgment.
     #
@@ -386,6 +424,25 @@ def triage(client, conn: sqlite3.Connection,
     return kept[:3]
 
 
+def record_harvest(conn: sqlite3.Connection, offered: list[FeedItem],
+                   menu: list[FeedItem]) -> None:
+    """Write the menu down, not just the meal (E1.0).
+
+    Before this, the store recorded what was read and never what was offered,
+    so "is the reading narrow because the world is narrow, or because the
+    filter is?" could only be argued from the absence of reads. `was_read` is
+    set later, by harvest, for the items extraction actually kept.
+    """
+    on_menu = {id(i) for i in menu}
+    now = time.time()
+    conn.executemany(
+        "INSERT INTO harvest_log (ts, feed, category, title, url, on_menu)"
+        " VALUES (?, ?, ?, ?, ?, ?)",
+        [(now, i.feed.name, i.feed.category or "", i.title[:300], i.url or "",
+          1 if id(i) in on_menu else 0) for i in offered])
+    conn.commit()
+
+
 # ── the harvest ──────────────────────────────────────────────────────────
 
 def harvest(client, conn: sqlite3.Connection, feeds_path: Path, *,
@@ -431,9 +488,10 @@ def harvest(client, conn: sqlite3.Connection, feeds_path: Path, *,
     if not candidates:
         return out
 
-    short = shortlist(conn, candidates, embedder)
-    out.shortlisted = len(short)
-    kept = triage(client, conn, short)
+    menu = build_menu(conn, candidates)
+    out.shortlisted = len(menu)
+    record_harvest(conn, candidates, menu)
+    kept = triage(client, conn, menu)
 
     from newz.world.diet import over_share, record_read
 
@@ -450,6 +508,8 @@ def harvest(client, conn: sqlite3.Connection, feeds_path: Path, *,
         if not extraction.claims:
             continue
         out.kept.append(item)
+        conn.execute("UPDATE harvest_log SET was_read=1 WHERE url=? AND url<>''",
+                     (item.url,))
         # What was read becomes experience, with the outlet as provenance —
         # the same path research uses, so sleep and retrieval see feed
         # reading exactly as they see any other reading (INV-030).

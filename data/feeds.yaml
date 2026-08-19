@@ -576,15 +576,3 @@ web:
   max_links_per_page: 3
   same_domain_only: true
   max_items: 25
-watched_topics:
-- symbol: GC=F
-  label: Gold futures
-  category: commodities
-- symbol: CL=F
-  label: Crude oil futures
-  category: commodities
-- symbol: BTC-USD
-  label: Bitcoin
-  category: crypto
-- keyword: interest rate decision
-  category: macro

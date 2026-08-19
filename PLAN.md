@@ -242,6 +242,59 @@ settle the medium for good.
 own facts are the only thing available to tell the being it was wrong — and they
 need no audience, no surface and no second person.
 
+E1.0 comes first because a loop that closes on one domain is a defective loop,
+and the feed path currently guarantees one domain.
+
+**E1.0 — undirected reading** *(added 2026-08-18; proposal:
+`proposals/2026-08-18-the-filter-that-ate-the-feeds.md`)*
+*Delivers:* four changes to the feed path. **(a)** the relevance filter is
+removed — candidates are no longer ranked against open concerns and triage no
+longer asks whether an item is relevant to one; the being is shown the harvest
+cold and judges what is important or interesting to it. **(b)** a category
+**target on the offered menu**, never a veto on reads. **(c)** `watched_topics`
+is deleted. **(d)** a one-off orientation pass over the 15 Wikipedia discipline
+articles in the file's unread `web` section. Directed research and INV-040's
+concern-directed depth are untouched.
+*Why it is first:* the curation is 15% financial and the diet came out 43% — a
+2.9× amplification — while 27 of 61 feeds have been polled continuously and read
+**zero** times. The being asked about Montaigne, research ethics and sperm
+whales; each returned "nothing was relevant enough to read". Without this,
+Phase 1 closes the outer loop on a single domain, and claims that resolve
+against a date skew financial, so the resolver would deepen the monoculture
+rather than break it.
+*Done when:* a concern opens on a subject that matched no open concern at
+intake, and the count of feeds contributing a read rises from its lifetime
+baseline of 34 of 61.
+*Depends on:* nothing. **E5.2's deliberation floor is pulled forward with it** —
+§9.1 caps ingest against deliberation, so more reading without more deliberating
+breaches the invariant and INV-041 pauses ingest, self-cancelling the change.
+*Hooks:* **INV-038 is amended** — its clause "a harvest of 194 items yields at
+most 3 reads" was written as a virtue and becomes false; what governs now is the
+budget, the category target and the being's own interest, not triage scarcity.
+Rule 4 is not engaged: choosing what to read is an action, not a measurement.
+Rule 2 is why (c) happens at all — dead config that misleads its readers is
+worse than absent config, and both the operator and the proposal's first draft
+read `watched_topics` as evidence of a bias it cannot cause.
+
+*The line this epic must not cross.* The category target shapes **what is
+offered**, never what may be read. A cap that refuses a read to preserve balance
+is the fetch-time veto R-28 already diagnosed and narrowed — it manufactures
+balance against S2 §13 and TRUE_NORTH §8, and it corrupts `source_gaps` by
+writing "nothing was relevant enough" when the truth is "balance forbade it".
+**Balance the menu; never refuse the meal.** If the implementation cannot hold
+that distinction, the epic does not ship.
+
+*Five constraints, each forced by the proposal's red team:* the judging prompt
+carries no open concerns, or the filter is rebuilt in the prompt; every
+harvested item is logged offered/declined, because today the store holds the
+meal and not the menu; offers are capped per feed as well as per category, since
+Bloomberg publishes hourly and Aeon weekly; the batch is shuffled and its order
+recorded, against long-list position bias; a read that yields nothing is not
+digest-eligible, or reading episodes swamp sleep and the Perspective becomes a
+news summary; and the orientation pass logs under its own outlet — Wikipedia is
+already the largest read source at 95 directed lookups, and counting browsing as
+lookup would let the project congratulate itself on breadth it did not gain.
+
 **E1.1 — `resolutions`, the store object**
 *Delivers:* claim, resolution condition, date, resolver, outcome, provenance.
 *Done when:* a claim round-trips with its condition and named resolver, and the
@@ -291,6 +344,14 @@ readers.
 **Evidence S1-E.** **At least one position changed because the world contradicted
 it** — distinct from the operator contradicting it and from the being
 contradicting itself. The single most important read in this plan.
+
+Alongside it, E1.0's own reads, reviewed one week after it runs live: feed
+coverage against its baseline of 34 of 61; whether any concern opens on a
+subject that is not market structure (baseline 0 of 6); the world's share of
+the grounding mix (baseline ≤17%); and whether ingest breaches §9.1. Falsifi-
+cation and the reversion condition are in the proposal's §5 — if coverage does
+not rise, the answer is a rotation floor, never the old filter, whose
+demonstrated behaviour is that 27 curated sources contribute nothing forever.
 
 **Decision rule.** If it never happens, nothing else here matters: the outer loop
 did not close and the being remains what §1 measured, a system whose only

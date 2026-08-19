@@ -10,6 +10,7 @@ design, so most of what is asserted here is what gets REJECTED.
 """
 
 import json
+import random
 import time
 
 import pytest
@@ -17,13 +18,13 @@ import pytest
 from newz.world.feeds import (
     Feed,
     FeedItem,
+    build_menu,
     due_feeds,
     harvest,
     load_feeds,
     mark_polled,
     new_items,
     parse_feed,
-    shortlist,
     triage,
 )
 from tests.conftest import FakeLLM
@@ -158,16 +159,109 @@ def test_feed_items_reach_the_prompt_fenced_as_untrusted(store):
     assert llm.calls[0]["function"] == "ingest"       # counts against the diet
 
 
-def test_the_shortlist_degrades_to_recency_without_an_embedder(store):
-    items = _items(20)
-    short = shortlist(store, items, embedder=None, k=5)
-    assert len(short) == 5
-    assert short[0].published >= short[-1].published
+# ── the menu (E1.0) ──────────────────────────────────────────────────────
+#
+# What replaced the embedding rank against open concerns. Measured 2026-08-18:
+# that ranking left 27 of 61 curated feeds read ZERO times, because all six
+# open concerns were market microstructure and nothing else could score.
 
 
-def test_a_small_batch_skips_ranking_entirely(store):
-    items = _items(4)
-    assert shortlist(store, items, embedder=None, k=12) == items
+def _feed_items(feed_name, category, n, *, base=1000.0):
+    f = Feed(name=feed_name, url=f"https://{feed_name}.example/f.xml",
+             category=category)
+    return [FeedItem(feed=f, title=f"{feed_name} {i}", summary="s",
+                     url=f"https://{feed_name}.example/{i}", published=base + i)
+            for i in range(n)]
+
+
+def test_no_feed_can_flood_the_menu(store):
+    """Bloomberg publishes hourly and Aeon weekly. Without a per-feed cap the
+    menu reflects publication volume, not the operator's curation."""
+    items = _feed_items("loud", "markets", 30) + _feed_items("quiet", "philosophy", 2)
+
+    menu = build_menu(store, items, k=12, per_feed=3, rng=random.Random(0))
+
+    assert sum(i.feed.name == "loud" for i in menu) <= 3
+    assert any(i.feed.name == "quiet" for i in menu)
+
+
+def test_the_menu_is_not_ranked_against_what_the_being_carries(store):
+    """The whole of E1.0. An item unrelated to every open concern must be able
+    to reach the judgment — under the old ranking it could not."""
+    store.execute(
+        "INSERT INTO concerns (id, opened_at, kind, statement, why_open,"
+        " closing_condition, status, salience, origin) VALUES"
+        " (1, 1.0, 'question', 'Does open interest overstate market depth?',"
+        " 'w', 'c', 'open', 0.9, 'curiosity')")
+    store.commit()
+    items = _feed_items("markets-wire", "markets", 8) + _feed_items("aeon", "philosophy", 8)
+
+    menu = build_menu(store, items, k=6, per_feed=3, rng=random.Random(1))
+
+    assert any(i.feed.category == "philosophy" for i in menu)
+
+
+def test_an_under_read_category_is_offered_before_a_well_read_one(store):
+    for _ in range(20):
+        store.execute("INSERT INTO harvest_log (ts, feed, category, was_read)"
+                      " VALUES (?, 'b', 'markets', 1)", (time.time(),))
+    store.commit()
+    items = _feed_items("b", "markets", 6) + _feed_items("a", "history", 6)
+
+    menu = build_menu(store, items, k=4, per_feed=3, rng=random.Random(2))
+
+    assert sum(i.feed.category == "history" for i in menu) >= 2
+
+
+def test_the_menu_shapes_offers_and_never_refuses_a_read(store):
+    """R-28's lesson, one level up: a cap that REFUSED a read to keep the mix
+    balanced is the fetch-time veto this project already removed once. Every
+    item on the menu remains readable; only the offer is shaped."""
+    items = _feed_items("b", "markets", 4)
+
+    menu = build_menu(store, items, k=12, per_feed=3, rng=random.Random(3))
+
+    assert len(menu) == len(items)
+
+
+def test_the_menu_is_shuffled_against_position_bias(store):
+    items = _feed_items("a", "science", 12)
+
+    first = build_menu(store, items, k=8, per_feed=12, rng=random.Random(4))
+    second = build_menu(store, items, k=8, per_feed=12, rng=random.Random(5))
+
+    assert [i.url for i in first] != [i.url for i in second]
+
+
+def test_the_judgment_is_made_cold(store):
+    """The concern filter must not be rebuilt inside the prompt. It used to
+    open with "here is what I am carrying", which kept the ratchet turning
+    after the ranking was removed."""
+    store.execute(
+        "INSERT INTO concerns (id, opened_at, kind, statement, why_open,"
+        " closing_condition, status, salience, origin) VALUES"
+        " (1, 1.0, 'question', 'Does open interest overstate market depth?',"
+        " 'w', 'c', 'open', 0.9, 'curiosity')")
+    store.commit()
+    llm = FakeLLM([("AMBIENT", KEEP_NOTHING)])
+
+    triage(llm, store, _items(1))
+
+    assert "open interest" not in llm.calls[0]["user"].lower()
+    assert "what i carry" not in llm.calls[0]["user"].lower()
+
+
+def test_every_offered_item_is_recorded_not_just_the_read_ones(store):
+    """The store held the meal and not the menu, so "narrow world or narrow
+    filter?" could only be argued. INV-044's principle, applied to reading."""
+    from newz.world.feeds import record_harvest
+
+    offered = _feed_items("a", "science", 5)
+    record_harvest(store, offered, offered[:2])
+
+    rows = store.execute("SELECT on_menu FROM harvest_log ORDER BY id").fetchall()
+    assert len(rows) == 5
+    assert sum(r["on_menu"] for r in rows) == 2
 
 
 # ── the budget gate, which covers everything ─────────────────────────────

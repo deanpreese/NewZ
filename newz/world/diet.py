@@ -87,6 +87,32 @@ def shares(conn: sqlite3.Connection, *, window_days: int = WINDOW_DAYS) -> dict[
     return {r["outlet"]: r["n"] / total for r in rows}
 
 
+def category_shares(conn: sqlite3.Connection, *,
+                    window_days: int = WINDOW_DAYS) -> dict[str, float]:
+    """Share of recent READS by feed category, for E1.0's menu target.
+
+    The outlet cap cannot see this. `outlet_of` correctly collapses Bloomberg's
+    three feeds into one host, but seven separate financial outlets each sitting
+    under their individual cap took 43% of the diet between them while the
+    curation was 15% financial (measured 2026-08-18). Concentration by subject
+    is invisible to a per-publisher cap.
+
+    Read from `harvest_log`, which is the only place the category travels with
+    the read. An empty history returns {} — every category then scores 0.0 in
+    build_menu and the round-robin is simply fair, which is the right behaviour
+    on a cold store rather than a special case.
+    """
+    since = time.time() - window_days * 86400
+    rows = conn.execute(
+        "SELECT category, COUNT(*) n FROM harvest_log"
+        " WHERE was_read=1 AND ts >= ? AND category <> ''"
+        " GROUP BY category", (since,)).fetchall()
+    total = sum(r["n"] for r in rows)
+    if not total:
+        return {}
+    return {r["category"]: r["n"] / total for r in rows}
+
+
 def over_share(conn: sqlite3.Connection, outlet: str, *,
                window_days: int = WINDOW_DAYS) -> bool:
     # Distinct sources throughout, for the reason in shares(): a re-read is
