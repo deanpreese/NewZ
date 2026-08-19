@@ -324,6 +324,27 @@ class Deliberator:
             logger.exception("closure judge failed (the advance stands)")
             return "open"
 
+    def _settle_due_claims(self, conn) -> list:
+        """Ask the world about claims whose date has arrived (E1.3).
+
+        Fails closed and fails quietly: a resolver that raises costs the
+        settlement, never the deliberation that follows it.
+        """
+        from newz.resolutions.resolver import resolve_due_claims
+
+        # Reaching the world is opt-in for the same reason research is: the
+        # operator enables it deliberately, and with it off there is no source
+        # to settle anything against. A claim simply waits.
+        if not self._research:
+            return []
+        try:
+            return resolve_due_claims(conn, self._client,
+                                      log_path=self._log_path,
+                                      embedder=self._embedder)
+        except Exception:  # noqa: BLE001
+            logger.exception("the resolver pass failed (deliberation continues)")
+            return []
+
     def _maybe_claim(self, conn, concern, established: str) -> DoorVerdict:
         """Does what just moved commit the being to anything (E1.2)?
 
@@ -424,6 +445,13 @@ class Deliberator:
         try:
             if self.spent_today(conn) >= self._budget:
                 return DeliberationResult(skipped="daily deliberation budget spent")
+
+            # E1.3: the world answers, inside deliberation because INV-012
+            # says the web is reached nowhere else. Before the concern is
+            # chosen, so a due claim is still settled on a cycle where nothing
+            # is workable — the claim's date arrived whatever the being is
+            # thinking about. It costs no model call when nothing is due.
+            resolved = self._settle_due_claims(conn)
 
             concerns = load_active(conn)
             choice = choose_concern(concerns, now=time.time())

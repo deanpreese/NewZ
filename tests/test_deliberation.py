@@ -290,6 +290,71 @@ def test_an_accepted_advance_reaches_the_claim_door(tmp_path):
     conn.close()
 
 
+def test_a_due_claim_is_settled_inside_deliberation(tmp_path, monkeypatch):
+    """E1.3's placement. INV-012 puts the web inside deliberation and nowhere
+    else, and the pass runs BEFORE the concern is chosen so a claim whose date
+    arrived is settled even on a cycle where nothing is workable."""
+    import time as _t
+
+    from newz.resolutions.model import Claim
+    from newz.resolutions.store import get_claim, open_claim
+    from newz.world.research import ResearchOutcome
+
+    quote = "Open interest stood 14% below the exchange's published figure."
+    path, (cid,) = _store(tmp_path)
+    conn = open_db(path)
+    claim_id = open_claim(conn, Claim(
+        id=None, claim="The COT report will show open interest 10% below.",
+        resolution_condition="The COT release is published and compared.",
+        resolver="CFTC Commitments of Traders weekly report",
+        due_at=_t.time() - 86400, provenance=f"concern:{cid}"), models=set())
+    conn.commit()
+    conn.close()
+
+    found = ResearchOutcome(query="q")
+    found.claims = [(quote, 0.9)]
+    monkeypatch.setattr("newz.world.research.research", lambda *a, **k: found)
+
+    llm = FakeLLM([("DEEP", f"<verdict><settled>yes</settled>"
+                            f"<outcome>contradicted</outcome><quote>{quote}</quote>"
+                            f"<source>https://cftc.gov/cot</source>"
+                            f"<why_not></why_not></verdict>"),
+                   _reply(moved="no", summary="",
+                          blocked_on="I need the comparison data.")])
+    Deliberator(path, llm, embedder=LexicalEmbedder(), research=True,
+                log_path=tmp_path / "calls.jsonl").run_once()
+
+    conn = open_db(path, read_only=True)
+    assert get_claim(conn, claim_id).went_against_me
+    conn.close()
+
+
+def test_the_resolver_does_not_reach_the_world_with_research_off(tmp_path):
+    """Reaching the world is opt-in, exactly as research is. With it off the
+    claim waits rather than being settled by whatever is at hand."""
+    import time as _t
+
+    from newz.resolutions.model import Claim
+    from newz.resolutions.store import get_claim, open_claim
+
+    path, (cid,) = _store(tmp_path)
+    conn = open_db(path)
+    claim_id = open_claim(conn, Claim(
+        id=None, claim="Something checkable will be observed.",
+        resolution_condition="The named report says so.",
+        resolver="a named weekly report", due_at=_t.time() - 86400,
+        provenance=f"concern:{cid}"), models=set())
+    conn.commit()
+    conn.close()
+
+    Deliberator(path, FakeLLM([_reply()]), embedder=LexicalEmbedder()).run_once()
+
+    conn = open_db(path, read_only=True)
+    claim = get_claim(conn, claim_id)
+    assert claim.is_open and claim.attempts == 0
+    conn.close()
+
+
 def test_a_door_failure_never_costs_the_advance(tmp_path, monkeypatch):
     """The same discipline as the closure judge and the opener: the thinking
     is already recorded, and nothing downstream of it may undo it."""

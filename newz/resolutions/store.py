@@ -22,7 +22,8 @@ from newz.resolutions.model import OUTCOMES, Claim
 logger = logging.getLogger(__name__)
 
 _FIELDS = ("id, opened_at, claim, resolution_condition, resolver, due_at,"
-           " provenance, status, outcome, settled_at, settled_by, settled_note")
+           " provenance, status, outcome, settled_at, settled_by, settled_note,"
+           " attempts, last_attempt_at, last_failure")
 
 # Rule 4, in the only form the store can enforce it: a resolver that names the
 # being's own substrate is not a world source. Phrases first — a claim resolved
@@ -139,7 +140,9 @@ def _row(r: sqlite3.Row) -> Claim:
         resolution_condition=r["resolution_condition"], resolver=r["resolver"],
         due_at=r["due_at"], provenance=r["provenance"], opened_at=r["opened_at"],
         status=r["status"], outcome=r["outcome"], settled_at=r["settled_at"],
-        settled_by=r["settled_by"], settled_note=r["settled_note"])
+        settled_by=r["settled_by"], settled_note=r["settled_note"],
+        attempts=r["attempts"], last_attempt_at=r["last_attempt_at"],
+        last_failure=r["last_failure"])
 
 
 def get_claim(conn: sqlite3.Connection, claim_id: int) -> Claim | None:

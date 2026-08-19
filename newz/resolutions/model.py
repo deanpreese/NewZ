@@ -50,6 +50,11 @@ class Claim:
     settled_at: float | None = None
     settled_by: str | None = None      # the source actually consulted
     settled_note: str | None = None
+    # E1.3's honest bookkeeping: a claim tried and not settled is not the same
+    # as one whose date has not arrived, and both are `open`.
+    attempts: int = 0
+    last_attempt_at: float | None = None
+    last_failure: str | None = None
 
     @property
     def is_open(self) -> bool:

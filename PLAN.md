@@ -349,7 +349,7 @@ first Phase 1 diagnostic (*are its claims resolvable at all*) instead of
 measuring the door's own strictness. Caps mirror the opener's discipline: 40
 open, 4 a day, both checked before the model is called.
 
-**E1.3 — the resolver**
+**E1.3 — the resolver** *(built 2026-08-19)*
 *Delivers:* a scheduled pass inside deliberation that settles due claims against
 a world source. **Fails closed:** an unreadable source, a missing resolver or an
 ambiguous outcome leaves the claim open rather than guessing — INV-034's rule.
@@ -357,6 +357,21 @@ ambiguous outcome leaves the claim open rather than guessing — INV-034's rule.
 unreadable source leaves it open with the failure logged.
 *Depends on:* E1.2.
 *Hooks:* Rule 4, INV-012 (web access only inside deliberation).
+
+*As built:* `newz/resolutions/resolver.py`, migration 0025 (attempts,
+last_attempt_at, last_failure), 14 tests, **INV-047**. Runs inside
+`Deliberator.run_once` before the concern is chosen — a claim's date arrives
+whatever the being is thinking about — costs nothing when nothing is due, and is
+gated on the same `research` opt-in as every other reach for the world. **Rule 4
+made concrete:** the model is a reader here, never a judge of the being. It is
+given fetched material and asked only what the material says, and the verdict is
+accepted only if its quote occurs VERBATIM in what was fetched — v1's Stanford
+CRU lesson applied to being right. One claim per cycle, retried no sooner than
+20 hours, and after 4 honest failures it stops being retried and **stays open
+and unsettled** — not closed, not abandoned, not ambiguous, because nothing
+happened (INV-044's discipline). A paused diet refunds the attempt: the being is
+not charged for its own budget ceiling. A resolution writes the one episode this
+phase produces, provenance `world`, so sleep sees it whichever way it went.
 
 **E1.4 — being wrong costs the position**
 *Delivers:* a claim resolved against the being reduces confidence in the

@@ -37,6 +37,13 @@ def _render(c) -> str:
     out.append(f"  resolver     : {c.resolver}")
     out.append(f"  opened {_day(c.opened_at)}  ·  due {_day(c.due_at)}"
                f"  ·  from {c.provenance}")
+    if c.attempts:
+        # An open claim that has been tried and could not be settled is a
+        # different thing from one whose date has not arrived, and the
+        # difference is only visible here (INV-044's honesty: unmeasured
+        # reports itself as unmeasured).
+        out.append(f"  tried {c.attempts}×, last {_day(c.last_attempt_at)}"
+                   f" — {c.last_failure or 'no reason recorded'}")
     if c.status == "resolved":
         verdict = "THE WORLD SAID NO" if c.outcome == "contradicted" else "held"
         out.append(f"  → {verdict}, {_day(c.settled_at)}, by {c.settled_by}")
