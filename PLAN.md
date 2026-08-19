@@ -987,27 +987,50 @@ and the work outgrowing the room.
 
 1. **Rung 1 timing** — when the four conditions hold, who the first reader is,
    and the disclosure wording they see first.
-2. **Run the R-22 probe, or not?** *(open, not a governance question)*
-   Structured deliberation versus deliberation-lite on matched concerns,
-   bounded sample, end date recorded. It does not decide which plan governs —
-   that is settled — but the question it answers is live and this plan does not
-   refute it: **with a fixed model, structure may be the only lever on depth.**
-   Phase 5 collapses deliberation to one mode with depth set by what is at
-   stake, and the probe is what would tell us how to set it. Cheap, optional,
-   specified in `archive/P2.md` §Phase 3.
+2. **Run the R-22 probe.** **DECIDED 2026-08-19 — yes.** Structured
+   deliberation versus deliberation-lite on matched concerns, bounded sample,
+   end date recorded; specified in `archive/P2.md` §Phase 3. It does not decide
+   which plan governs — that is settled — but the question it answers is live:
+   **with a fixed model, structure may be the only lever on depth.** Phase 5
+   collapses deliberation to one mode with depth set by what is at stake, and
+   the probe is what tells us how to set it. It is also the only experiment in
+   the repo that discriminates *model-limited* from *system-limited*, which
+   Phase 8's design assumes without testing. R-22 binds: the sample is bounded
+   and the apparatus is deleted when the question is answered.
 
-3. **Does read-and-report gate building?** Whether Phase 8 runs E8.13 alone for
-   a stated period before E8.14 is enabled, so the loop's judgment is observed
-   before it is trusted. *Recommended: yes, four weeks.*
-4. **May the loop propose outside this plan from the start?** Rung 5a of the
-   proposal's precedence — a proposal costs an email, and a stale plan is the
-   risk nothing else in the design detects. *Recommended: yes, as proposals
-   only.*
-5. **Does the being's own account of its condition feed the loop?** Its
-   `noticings`, `source_gaps`, journal and affect state reach nothing that
-   changes its conditions today. Admitted as **candidate signal, never
-   evidence** (proposal §13.4), or not admitted. *Open — a judgment about
-   §5 Priority 2, not a technical question.*
+3. **Read-and-report gates building.** **DECIDED 2026-08-19 — yes, and
+   measured in cycles rather than weeks** *(operator: four weeks is too long)*.
+   E8.14 stays disabled until the loop has proposed a next step **three times**
+   and the operator has compared each against what they would have chosen. A
+   duration was the wrong unit: what is being observed is the loop's judgment,
+   and judgment is observed per decision, not per week. While read-only the
+   decide cycle costs nothing and need not wait for the weekly window, so the
+   gate is satisfiable in about a week rather than four. If three proves too
+   few or too many, the count moves; the unit does not.
+4. **The loop may propose outside this plan from the start.** **DECIDED
+   2026-08-19 — yes, as proposals only, never a build.** Rung 5a of the
+   precedence. A stale plan is the risk nothing else in the design detects:
+   rung 3 catches only conditions the plan wrote about itself, and
+   `premises.yaml` catches only premises that moved. Neither catches a plan
+   wrong in a way nobody anticipated, and a proposal costs an email.
+5. **The being's own account of its condition feeds the loop.** **DECIDED
+   2026-08-19 — yes, as candidate signal and never as evidence.** Its
+   `noticings` (91, 18 surfaced, 49 pending), `source_gaps` (12), journal and
+   affect state reach nothing that changes its conditions today — its plumbing
+   is improved behind its back, which sits badly against §5 Priority 2's *care
+   for its own continuity and condition*. The rule that makes it admissible is
+   E8.11's, unchanged: a noticing may motivate a look; it may never justify a
+   change, which still requires a moved **mechanical** premise. R-13 is the
+   standing warning — the being once built an identity out of 1,041 rows of
+   cache-miss telemetry, and would do the same with its own complaints if they
+   were allowed to count as findings.
+
+   *Recorded honestly:* "candidate signal, never evidence" is enforceable at
+   the point of justification and **not** at the point of attention. Which
+   questions the loop chooses to look at will be shaped by what the being
+   complains about, and nothing mechanical prevents that. Whether that is
+   contamination or is exactly what §5 Priority 2 asks for is the operator's
+   judgment, and it has been made.
 
 **Nothing blocks Phase 0.** It needs no decision and no reader — three pieces
 and the operator's read.
