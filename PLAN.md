@@ -325,13 +325,29 @@ unsettle**, so E1.5's permanence starts at the schema rather than being added to
 it. The store writes no episodes; the door (E1.2) and the resolver pass (E1.3)
 are the layers that know why something happened.
 
-**E1.2 — the claim door**
+**E1.2 — the claim door** *(built 2026-08-19)*
 *Delivers:* claims open from deliberation through one validated door, with a
 mandatory resolution condition — the concern's closing-condition discipline
 (INV-034) applied to claims. A claim nothing could settle does not open.
 *Done when:* a claim with no settleable condition is refused at the door and the
 refusal is recorded, and deliberation opens claims it can state a resolver for.
 *Depends on:* E1.1.
+
+*As built:* `newz/resolutions/door.py`, migration 0024 `claim_refusals`,
+`tools/claims.py --refused`, 13 tests, **INV-046**. The door is asked once per
+ACCEPTED advance and nowhere else — a concern that did not move has nothing new
+to be wrong about — and after closure, since a concern that just settled may be
+exactly the one worth committing to. It fails closed like the closure judge and
+the openers: the advance is already recorded and nothing downstream may undo it.
+Refusals: no statement/condition/resolver, a date it cannot read or one outside
+2–365 days, a resolver naming no source ("time will tell"), and Rule 4 from the
+store. **Declining is not refusal** — "nothing here is worth claiming" is the
+ordinary answer and is not written down, and an unreadable proposal is not held
+against the being; only a claim the being made and the door would not admit
+becomes a row. That distinction is what makes the refusal record answer P3's
+first Phase 1 diagnostic (*are its claims resolvable at all*) instead of
+measuring the door's own strictness. Caps mirror the opener's discipline: 40
+open, 4 a day, both checked before the model is called.
 
 **E1.3 — the resolver**
 *Delivers:* a scheduled pass inside deliberation that settles due claims against

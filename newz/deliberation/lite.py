@@ -36,6 +36,7 @@ from newz.concerns.store import (
 )
 from newz.llm.client import LLMClient
 from newz.llm.xml_parser import XMLExtractionError, extract_xml
+from newz.resolutions.door import DoorVerdict
 from newz.store.db import open_db
 
 logger = logging.getLogger(__name__)
@@ -170,6 +171,9 @@ class DeliberationResult:
     # Concerns the curiosity opener raised this cycle. A skipped cycle is no
     # longer necessarily an empty one (see Deliberator._explore).
     opened: list[str] = field(default_factory=list)
+    # What the claim door did with the advance, if one was accepted (E1.2).
+    claim_id: int | None = None
+    claim_refused: str | None = None
 
     def as_dict(self) -> dict:
         return {k: v for k, v in self.__dict__.items() if v not in (None, "", 0.0)}
@@ -319,6 +323,23 @@ class Deliberator:
         except Exception:  # noqa: BLE001
             logger.exception("closure judge failed (the advance stands)")
             return "open"
+
+    def _maybe_claim(self, conn, concern, established: str) -> DoorVerdict:
+        """Does what just moved commit the being to anything (E1.2)?
+
+        Failing closed the same way _maybe_close does: the advance is already
+        recorded, and nothing the door does may cost it. A door that raises
+        must not be able to undo the thinking that reached it.
+        """
+        from newz.resolutions.door import DoorVerdict, propose_claim
+
+        try:
+            return propose_claim(
+                conn, self._client, established=established,
+                concern_statement=concern.statement, concern_id=concern.id)
+        except Exception:  # noqa: BLE001
+            logger.exception("claim door failed (the advance stands)")
+            return DoorVerdict(declined=True)
 
     def _maybe_open_from_research(self, conn, findings: str, asking: str) -> None:
         """A finding may raise its own question (S2 §8.1).
@@ -565,6 +586,12 @@ class Deliberator:
                 # become true. Failing closed, so this can only ever end a
                 # concern that says it is finished.
                 out.status_after = self._maybe_close(conn, choice.concern.id)
+                # And the same moment is the only one at which the being has
+                # something new to be WRONG about (E1.2). Asked after closure,
+                # not before: a concern that just settled may be exactly the
+                # one whose position is worth committing to.
+                verdict = self._maybe_claim(conn, choice.concern, summary)
+                out.claim_id, out.claim_refused = verdict.claim_id, verdict.refused
             else:
                 # Blocked when the world did not answer; restated when the
                 # being circled. The distinction is the one v1 paid for.

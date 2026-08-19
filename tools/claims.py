@@ -5,6 +5,7 @@
   python tools/claims.py --due         # only what is due now — E1.3's worklist
   python tools/claims.py --resolved    # what the world has settled
   python tools/claims.py --wrong       # only where it went against the being
+  python tools/claims.py --refused     # what the door turned away, and why
 
 The last is the one that matters. S1-E asks whether at least one position
 changed because the world contradicted it — not the operator, not the being
@@ -44,8 +45,36 @@ def _render(c) -> str:
     return "\n".join(out)
 
 
+def _refusals(conn) -> int:
+    """P3's first Phase 1 diagnostic: are its claims resolvable at all?
+
+    An empty `resolutions` table has two readings — the being commits to
+    nothing checkable, or it tries and the door refuses everything — and they
+    call for opposite fixes. This is how they are told apart.
+    """
+    rows = conn.execute(
+        "SELECT ts, concern_id, reason, claim, resolver, due_text"
+        " FROM claim_refusals ORDER BY ts DESC LIMIT 100").fetchall()
+    if not rows:
+        print("no claims refused at the door.")
+        return 0
+    print(f"{len(rows)} refused claims (most recent first)\n")
+    for r in rows:
+        print("─" * 72)
+        print(f"[{_day(r['ts'])}] concern {r['concern_id']}  ·  {r['reason']}")
+        if r["claim"]:
+            print("\n".join(textwrap.wrap(r["claim"], 72, initial_indent="  ",
+                                          subsequent_indent="  ")))
+        if r["resolver"]:
+            print(f"  resolver: {r['resolver']}  ·  due {r['due_text'] or '—'}")
+    print("─" * 72)
+    return 0
+
+
 def main() -> int:
     conn = open_db(load().main_db_path)
+    if "--refused" in sys.argv:
+        return _refusals(conn)
     if "--wrong" in sys.argv:
         claims, label = contradicted_claims(conn), "claims the world contradicted"
     elif "--resolved" in sys.argv:

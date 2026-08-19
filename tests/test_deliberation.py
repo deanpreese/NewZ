@@ -259,6 +259,55 @@ def test_a_deliberation_that_reaches_claims_still_finishes(tmp_path, monkeypatch
     conn.close()
 
 
+def test_an_accepted_advance_reaches_the_claim_door(tmp_path):
+    """E1.2's wiring. The one moment the being has something new to be WRONG
+    about is the moment something new was established — so the door is asked
+    there and nowhere else."""
+    from datetime import datetime, timedelta
+
+    path, (cid,) = _store(tmp_path)
+    due = (datetime.now() + timedelta(days=45)).strftime("%Y-%m-%d")
+    closure = ("DEEP", "<closure><met>no</met><position></position>"
+               "<resolution></resolution><missing>a like-for-like comparison"
+               "</missing></closure>")
+    llm = FakeLLM([_reply(), closure, ("DEEP", f"""<claim>
+  <worth_claiming>yes</worth_claiming>
+  <statement>The CFTC COT report for the September contract will show open
+  interest at least 10% below the exchange's published figure.</statement>
+  <settles_when>The COT release is published and the two figures compared.</settles_when>
+  <resolver>CFTC Commitments of Traders weekly report</resolver>
+  <due>{due}</due>
+</claim>""")])
+
+    r = Deliberator(path, llm, embedder=LexicalEmbedder()).run_once()
+
+    assert r.moved and r.claim_id and not r.claim_refused
+    conn = open_db(path, read_only=True)
+    row = conn.execute("SELECT claim, resolver, provenance, status"
+                       " FROM resolutions").fetchone()
+    assert row["provenance"] == f"concern:{cid}" and row["status"] == "open"
+    assert row["resolver"].startswith("CFTC")
+    conn.close()
+
+
+def test_a_door_failure_never_costs_the_advance(tmp_path, monkeypatch):
+    """The same discipline as the closure judge and the opener: the thinking
+    is already recorded, and nothing downstream of it may undo it."""
+    path, (cid,) = _store(tmp_path)
+    monkeypatch.setattr("newz.resolutions.door.propose_claim",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+
+    r = Deliberator(path, FakeLLM([_reply(), (
+        "DEEP", "<closure><met>no</met><position></position><resolution>"
+        "</resolution><missing>more</missing></closure>")]),
+        embedder=LexicalEmbedder()).run_once()
+
+    assert r.moved and r.claim_id is None
+    conn = open_db(path, read_only=True)
+    assert load_dossier(conn, cid).concern.advance_count == 1
+    conn.close()
+
+
 def test_a_finding_can_open_its_own_concern(tmp_path, monkeypatch):
     from newz.concerns.store import load_active
 
