@@ -742,7 +742,7 @@ in the model's own judging and call it change in the world.
 
 ---
 
-**E8.1 — the instruments made portable and enumerated**
+**E8.1 — the instruments made portable and enumerated** *(built 2026-08-19)*
 *Delivers:* `tools/conversation_probe.py`, `tools/opener_probe.py` and
 `tools/triage_probe.py` stop hardcoding `/Users/dean/Documents/source/NewZ` and
 resolve the repo the way every other tool does; and `evolution/instruments.yaml`

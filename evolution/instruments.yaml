@@ -1,0 +1,152 @@
+# The instrument registry (PLAN E8.1).
+#
+# Every executable in tools/ appears here exactly once. An `instrument` is
+# read-only, is what the SEL and the operator may steer by, and carries the
+# fields the registry exists to make checkable: what it measures, what it
+# reads, whether a model touched ANY link in its chain, its denominator, and
+# its Rule 0 method line.
+#
+# `model_in_chain: true` does NOT mean the tool calls a model. It means a model
+# judgment sits somewhere between the world and the number — at the read, or
+# earlier, when the data it reads was labelled. PLAN Rule 4 is why the
+# distinction is recorded rather than assumed: a judge that is the being's own
+# model produces operation, never evidence.
+#
+# `canonical: true` marks the frozen set (E8.9) — changing one is an operator
+# act, because the loop steers by these while changing the being that produces
+# them.
+#
+# Writers: hand-maintained, and tests/test_instruments_registry.py fails the
+# build when a tool is added without a row.
+# Readers: tests/test_instruments_registry.py today; the SEL's state read
+# (E8.13) and the metric-to-purpose map (E8.3) next.
+
+version: 1
+
+instruments:
+
+  - tool: tools/evidence.py
+    reads: [perspective.diff_json, perspective_items, concerns, ingest_log]
+    measures: >
+      1-E: Perspective development per night — added, revised, carried,
+      released, disputed, and the pooled novelty share over the window.
+      2-E: pursuit — the advance boundary, judged advances, the stall pool,
+      and the §9.1 ingest share.
+    denominator: "1-E: developed + carried (items held after the night). 2-E: advances judged; feeds polled"
+    model_in_chain: true
+    model_where: >
+      The read itself consults no model (INV-023 — diffs are computed by
+      comparing item sets, never narrated). But `added` / `revised` / `carried`
+      are labels the model applied during consolidation, and 2-E's judged
+      counts come from judge_advance. Clean instrument, model-labelled input.
+    method: "direct reads off perspective.diff_json and perspective_items; no model consulted at read time"
+    exit_code: "0 always — it reports, it does not judge"
+    canonical: true
+
+  - tool: tools/what_shaped.py
+    reads: [perspective_items, evidence_refs, episodes, sources]
+    measures: "provenance mix behind a held position — self / operator / world — and INV-033's single-source flag"
+    denominator: "evidence references per position"
+    model_in_chain: false
+    known_bias: "R-15 — imported v1 episodes are uniformly provenance='self', so the self share is overstated for anything grounded in the import"
+    method: "provenance assigned at write time, counted at read; no model at either end"
+    canonical: true
+
+  - tool: tools/gate_report.py
+    reads: [gate_log]
+    measures: "gate verdict counts, hold rate over candidates, and the per-clause breakdown"
+    denominator: "candidates seen (stated in the tool's own docstring — 'gate health with a denominator')"
+    model_in_chain: true
+    model_where: "the gate is a model judge (newz/gate/outbound.py:226). Every verdict counted here is the being's own model judging the being"
+    method: "counts off gate_log rows"
+    canonical: true
+
+  - tool: tools/budget.py
+    reads: [logs/llm_calls.jsonl]
+    measures: "token spend by function, and the §9.1 diet ceilings it implies"
+    denominator: "total tokens in the window"
+    model_in_chain: false
+    method: "prompt+completion per call, tagged at the call site"
+    unreadable_when: "the call log is gitignored and does not travel with a clone — INV-044's case, and the reason the §9.1 ingest share reads UNREADABLE rather than zero"
+    canonical: true
+
+  - tool: tools/claims.py
+    reads: [claims, claim_costs, claim_refusals]
+    measures: "claims made, their resolution condition, resolver, verdict and cost; and claims the door refused, with the reason"
+    denominator: null
+    model_in_chain: true
+    model_where: "claim extraction and the resolver's verdict both pass through the model at write time — though INV-047 makes the resolver a reader of the world and never a judge of the being"
+    method: "direct reads off the resolutions tables"
+    canonical: true
+    note: >
+      A READER, not yet an instrument: it renders claims and computes no rate,
+      no resolution latency and no count of positions changed by a resolution.
+      S1-E — the plan's own gating read — has no reader until E8.6 promotes it.
+
+  - tool: tools/source_review.py
+    reads: [ingest_log, source_gaps, data/feeds.yaml, data/canon.yaml]
+    measures: "outlet shares against the diet caps, feeds contributing a read, and the questions no readable source answered"
+    denominator: "items ingested in the window; feeds configured"
+    model_in_chain: true
+    model_where: "triage decides what is read at all, so 'feeds contributing a read' is downstream of a model judgment even though the counting is mechanical"
+    method: "shares over a rolling window (newz/world/diet.py); gaps written by research.py when the adapters answer nothing usable"
+    canonical: true
+
+  - tool: tools/read_works.py
+    reads: [works]
+    measures: "the being's pieces, retrievable by id"
+    denominator: null
+    model_in_chain: true
+    model_where: "the pieces are model compositions"
+    method: "direct reads off works"
+    canonical: true
+
+  - tool: tools/health.py
+    reads: [main store, interior store, backups, process state, logs/llm_calls.jsonl]
+    measures: "liveness and plumbing — up, answered, backed up, migrations applied, diet line"
+    denominator: null
+    model_in_chain: false
+    method: "direct checks; exit 0 all clear, 1 warnings, 2 failures"
+    canonical: true
+    note: "explicitly NOT an evidence instrument (P2 Rule 3) — it reports liveness, never development"
+
+  - tool: tools/check_invariants.py
+    reads: [INVARIANTS.md, the tree]
+    measures: "ledger well-formedness — ids unique, statuses valid, tests and consumers resolvable"
+    denominator: "rows present"
+    model_in_chain: false
+    method: "regex parse of the ledger table; tests verified by scanning for the def"
+    canonical: true
+    note: "checks the rows it HAS, never coverage — nothing detects a table or flag that shipped without a row"
+
+# ── everything else in tools/, enumerated so the registry is complete ──
+
+not_instruments:
+
+  probes:            # call a model; produce a verdict about the system, not a measurement
+    - tools/bench_model.py
+    - tools/conversation_probe.py
+    - tools/opener_probe.py
+    - tools/redteam_ingest.py
+    - tools/triage_probe.py
+
+  mutators:          # write to the store
+    - tools/adjudicate.py
+    - tools/amend_constitution.py
+    - tools/backfill_perspective_items.py
+    - tools/embed_episodes.py
+    - tools/journal.py
+    - tools/perspective_hygiene.py
+
+  runners:           # operate the being
+    - tools/run_ambient.py
+    - tools/run_deliberation.py
+    - tools/run_first_sleep.py
+    - tools/run_import.py
+    - tools/run_orientation.py
+    - tools/run_sleep.py
+    - tools/write_piece.py
+
+  one_time:          # migrations and operations, not part of any cycle
+    - tools/backup.py
+    - tools/corpus_hygiene.py
