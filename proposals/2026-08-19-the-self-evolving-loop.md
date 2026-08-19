@@ -713,9 +713,13 @@ keeps generating judgment work nobody is consuming is manufacturing backlog.
 **Q6 — does the being's condition-reporting feed the loop?** §13.4. A design
 choice, not a technical question.
 
-**Q7 — is there a second machine?** R-11 accepted single-machine risk when the
+**Q7 — is there a second machine?** ~~R-11 accepted single-machine risk when the
 system changed by hand. Weekly automated restarts and a growing snapshot chain
-raise what a machine loss costs. Not urgent; not free either.
+raise what a machine loss costs.~~ **Decided 2026-08-19** *(operator: not
+addressed until evidence makes it needed)*. R-11's acceptance stands and now
+carries a trip-wire — the first reverted autonomous restart, any backup failing
+verification, or rung 1. PLAN E3.5 amended to close on a clean-room rebuild
+from a verified backup instead of a second-machine restore.
 
 ### 13.6 Red team — of this section
 

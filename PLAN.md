@@ -523,12 +523,36 @@ single setting.
 *Depends on:* E3.3.
 *Hooks:* **Rule 3.**
 
-**E3.5 — regeneration and portability**
-*Delivers:* the surface rebuilds from the store; the store moves machines intact.
-*Done when:* store plus generator restore on a second machine and produce a
-byte-comparable surface.
+**E3.5 — regeneration and portability** *(amended 2026-08-19)*
+*Delivers:* the surface rebuilds from the store; the store moves intact.
+*Done when:* the generator produces a **byte-comparable** surface into a clean
+directory, from a **verified backup** rather than the live store, with no state
+carried from the working tree and no absolute path outside it. **A second
+machine is not required to close this epic** *(operator, 2026-08-19: the machine
+is not addressed until evidence makes it needed)*.
 *Depends on:* E3.2.
-*Hooks:* §7 sovereignty.
+*Hooks:* §7 sovereignty; **R-11**.
+
+*Why it was amended.* The original clause required a restore on a second machine
+— a thing R-11 had already deferred as accepted risk, so the epic was written
+unclosable against a decision the plan itself had taken. The clean-room rebuild
+catches the failure this epic exists to catch: **a surface that depends on
+something not in the store.** Machine-specific state, an absolute path, a file
+left in the working tree, a config the generator quietly reads — all of them
+fail a clean-directory rebuild from a backup, and none of them needs a second
+machine to expose.
+
+*What it does not prove, recorded rather than implied* (INV-044's discipline):
+that the store survives a different filesystem, architecture or locale; that a
+backup is restorable **somewhere other than where it was made**, which is the
+actual sovereignty claim in §7; and that recovery from machine loss works at all
+(R-11).
+
+*The trip-wire that makes the machine needed.* Any of: the first reverted
+autonomous restart (Phase 8 — a bad restart plus a machine fault leaves no
+recovery path); any backup failing verification; or rung 1 exposure, when
+someone other than the operator depends on the surface being there. Until one
+fires, the machine stays deferred and this epic can close without it.
 
 **Its audience today is one person.** The phase earns its place by rendering the
 error record and the commitments with what shaped them, and by making reach a
