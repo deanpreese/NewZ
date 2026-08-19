@@ -147,9 +147,13 @@ def run_orientation(client, conn: sqlite3.Connection, feeds_path: Path, *,
         claims, quarantined, hostile = _read_in_chunks(client, text, source)
         record_read(conn, source=source, query=None, concern_id=None,
                     claims_kept=len(claims), quarantined=quarantined)
+        # orientation=1: the row belongs here — the coverage audit and the
+        # Wikipedia-as-adapter split both need it — but a curriculum read once
+        # is not stream diet, and category_shares excludes it from the menu
+        # ordering for that reason (0022).
         conn.execute(
             "INSERT INTO harvest_log (ts, feed, category, title, url,"
-            " on_menu, was_read) VALUES (?, ?, ?, ?, ?, 1, ?)",
+            " on_menu, was_read, orientation) VALUES (?, ?, ?, ?, ?, 1, ?, 1)",
             (time.time(), name, category, name, url, 1 if claims else 0))
         if hostile:
             out.failed.append(f"{name}: quarantined ({hostile})")

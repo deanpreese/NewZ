@@ -213,6 +213,23 @@ def test_an_under_read_category_is_offered_before_a_well_read_one(store):
     assert sum(i.feed.category == "history" for i in menu) >= 2
 
 
+def test_orientation_reads_do_not_push_their_categories_down_the_order(store):
+    """A stream share must answer a question about streams. Orientation rows
+    stay in harvest_log for the coverage audit, but a curriculum read once in
+    an afternoon must not out-rank a category whose feeds are genuinely
+    unread (0022)."""
+    for _ in range(14):
+        store.execute("INSERT INTO harvest_log (ts, feed, category, was_read,"
+                      " orientation) VALUES (?, 'wiki', 'history', 1, 1)",
+                      (time.time(),))
+    store.commit()
+    items = _feed_items("a", "history", 6) + _feed_items("b", "markets", 6)
+
+    menu = build_menu(store, items, k=4, per_feed=3, rng=random.Random(4))
+
+    assert sum(i.feed.category == "history" for i in menu) == 2
+
+
 def test_the_menu_shapes_offers_and_never_refuses_a_read(store):
     """R-28's lesson, one level up: a cap that REFUSED a read to keep the mix
     balanced is the fetch-time veto this project already removed once. Every

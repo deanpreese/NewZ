@@ -295,6 +295,14 @@ news summary; and the orientation pass logs under its own outlet — Wikipedia i
 already the largest read source at 95 directed lookups, and counting browsing as
 lookup would let the project congratulate itself on breadth it did not gain.
 
+*Amended the same evening* (proposal §9): the orientation pass's own reads were
+counted by the category share that orders the menu, so ten disciplines the
+curriculum had touched once sorted **behind** every finance-adjacent category
+for thirty days — the humanities feeds suppressed by the humanities curriculum.
+`harvest_log.orientation` (migration 0022) keeps the row for the coverage audit
+and excludes it from the share. The share answers a question about streams, and
+a curriculum read once is not a stream. No read was ever refused by it.
+
 **E1.1 — `resolutions`, the store object**
 *Delivers:* claim, resolution condition, date, resolver, outcome, provenance.
 *Done when:* a claim round-trips with its condition and named resolver, and the

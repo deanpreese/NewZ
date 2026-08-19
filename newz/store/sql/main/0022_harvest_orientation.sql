@@ -1,0 +1,33 @@
+-- Orientation reads are recorded, but do not vote on tomorrow's menu (E1.0
+-- amendment, 2026-08-18).
+--
+-- The orientation pass writes its fifteen discipline overviews into
+-- harvest_log with was_read=1, deliberately: §3.5.5 put them there so the
+-- feed-coverage audit and the Wikipedia-as-adapter split stay honest, and
+-- that part works. But category_shares reads the same rows over a 30-day
+-- window to order build_menu's round-robin least-read-first, and measured
+-- 19:52 the same evening the curriculum ran, ten categories it had touched
+-- once — philosophy, mathematics, anthropology, music, religion, sociology,
+-- history, psychology, economics, technology — sat at 5.0% while every
+-- finance-adjacent category sat at 0.0% and sorted ahead of them. With 19
+-- categories chasing a 12-slot menu, back of the order is rarely offered.
+--
+-- Aeon, Psyche, the Stanford Encyclopedia, The Marginalian and The Paris
+-- Review live in those categories, and they are among the 27 feeds E1.0
+-- exists to reach. The curriculum and the feeds were the same fix for the
+-- same gap; one suppressing the other for a month is the fix eating itself.
+--
+-- The target is a claim about STREAM diet — which feeds am I under-reading.
+-- A one-off curriculum is not a stream: fifteen articles read once in an
+-- afternoon should not speak for thirty days. Nothing is refused either way
+-- (a share never vetoes a read, per R-28); this corrects which direction the
+-- nudge points.
+--
+-- Writer: newz/world/orientation.py. Reader: newz/world/diet.py
+-- category_shares, which now excludes these rows.
+ALTER TABLE harvest_log ADD COLUMN orientation INTEGER NOT NULL DEFAULT 0;
+
+-- The rows already written by the 2026-08-18 pass, by the only signature that
+-- identifies them after the fact: the orientation writer sets on_menu=1 and
+-- stores the feed name as the title, which the RSS path never does.
+UPDATE harvest_log SET orientation = 1 WHERE title = feed AND title <> '';

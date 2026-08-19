@@ -73,8 +73,26 @@ def test_it_reads_the_overview_and_records_it_under_its_own_outlet(store, tmp_pa
     assert report.read == ["Wikipedia Philosophy"]
     row = store.execute("SELECT source FROM ingest_log").fetchone()
     assert row["source"].startswith(OUTLET + ":")
-    logged = store.execute("SELECT category, was_read FROM harvest_log").fetchone()
+    logged = store.execute(
+        "SELECT category, was_read, orientation FROM harvest_log").fetchone()
     assert logged["category"] == "philosophy" and logged["was_read"] == 1
+    # ...and marked, so the menu ordering does not treat a one-off curriculum
+    # as stream diet (0022).
+    assert logged["orientation"] == 1
+
+
+def test_a_curriculum_read_does_not_reorder_the_menu(store, tmp_path):
+    """The orientation pass and the humanities feeds were the same fix for the
+    same gap. Measured 2026-08-18: fifteen overviews read in one afternoon put
+    ten categories at 5% while every finance-adjacent category sat at 0.0% and
+    sorted ahead of them, for thirty days — the fix suppressing itself."""
+    llm = FakeLLM([("AMBIENT", CLAIMS)])
+
+    run_orientation(llm, store, _feeds_file(tmp_path),
+                    fetcher=_fetcher(PHILOSOPHY_ARTICLE))
+
+    from newz.world.diet import category_shares
+    assert category_shares(store) == {}
 
 
 def test_an_overview_already_read_is_not_read_again(store, tmp_path):

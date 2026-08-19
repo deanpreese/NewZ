@@ -372,3 +372,79 @@ from grepping for its reader.
   selector with a different one; it does not argue for volume.
 - **Not that the being will choose well.** That is the open question, and §6 is
   how it gets answered rather than assumed.
+
+---
+
+## 9. Amendment, 2026-08-18 evening — the curriculum was reordering the menu
+
+*Found by reading `harvest_log` two hours after the change went live, which is
+the audit §3.5.1 exists to make possible. Recorded here rather than in a new
+document because it is a correction to §3.2, not a finding of its own.*
+
+### 9.1 What was measured
+
+Three harvest cycles, 18:10–19:52. The first was the orientation pass: 15
+targets, all read. The second and third were the first cold RSS harvests — 65
+items offered down to 12 and 3 read, then 115 down to 12 and 3 read.
+
+Then `category_shares`, at 19:52:
+
+```
+philosophy, mathematics, anthropology, music, religion,
+sociology, history, psychology, economics, technology      5.0%
+world, crypto, tech, macro, business, equities, health,
+culture, green                                             0.0%
+```
+
+`build_menu` orders least-read first. So the ten categories the curriculum had
+touched **once** now sorted behind every finance-adjacent category, for the
+thirty days of the share window. Aeon, Psyche, the Stanford Encyclopedia, The
+Marginalian and The Paris Review sit in those categories, and they are among
+the 27 feeds §1.2 named. With 19 categories chasing a 12-slot menu, back of the
+order is rarely offered.
+
+The orientation pass and the humanities feeds were the same fix for the same
+gap. One suppressing the other for a month is the fix eating itself.
+
+### 9.2 Why §3.5.5 did not catch it
+
+It half-caught it. The constraint said counting browsing as lookup would corrupt
+"both the feed-coverage audit and the category shares", and the implementation
+answered the first half — the distinct `Wikipedia Philosophy` feed identity
+keeps the audit clean and the adapter's 95 directed lookups separate. The second
+half was named and not implemented. The rows went into `harvest_log` with
+`was_read=1` and `category_shares` counted them.
+
+### 9.3 The correction
+
+`harvest_log.orientation`, set by the orientation writer, excluded by
+`category_shares` (migration 0022; the 21 existing rows backfilled by the
+signature the RSS path never produces, `title = feed`).
+
+The row stays in the table. §3.5.5's reason for putting it there is sound and
+the coverage audit still needs it; what it must not do is vote on tomorrow's
+menu. **The share answers a question about streams** — which feeds am I
+under-reading — and fifteen articles read once in an afternoon are not a stream.
+
+Nothing is refused either way. A share has never been able to veto a read
+(§3.2, §5.4), and this does not change that; it changes which direction a nudge
+points. Post-correction, at 19:52: nine stream reads, no category above 22%,
+and every untouched category back at 0.0 and sorting first.
+
+### 9.4 A second, smaller deviation, not corrected
+
+`orientation_targets` excludes only `category == "social"`, so the EIA weekly
+petroleum status — one of the two commodities releases §3.4 set aside as
+"periodic and financial" — was read by the pass. §3.4 named the Reddit
+exclusion as a rule and the commodities one only as a preference, and the code
+implemented the rule. One read, financial, in a pass whose purpose was breadth.
+Left as is and recorded, because the §6 review should see it rather than have
+it quietly removed.
+
+### 9.5 What this does not settle
+
+Six cold reads is not evidence about the being's range. It read a Literary Hub
+essay on punctuation — the exact class of item the old rank buried, since no
+open concern touches semicolons — and it declined all three Colossal art pieces
+and The Paris Review's "The Catalogue of Lost Things", which is the shape §5.1
+predicted. Both are four data points. §6 stands unchanged, on its own date.

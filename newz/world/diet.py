@@ -101,11 +101,17 @@ def category_shares(conn: sqlite3.Connection, *,
     the read. An empty history returns {} — every category then scores 0.0 in
     build_menu and the round-robin is simply fair, which is the right behaviour
     on a cold store rather than a special case.
+
+    Orientation rows are excluded (0022). They are real reads and stay in the
+    table for the coverage audit, but this share answers a question about
+    STREAMS — which feeds am I under-reading — and fifteen overviews read once
+    in an afternoon should not speak for thirty days about the ten categories
+    whose feeds the curriculum was meant to open.
     """
     since = time.time() - window_days * 86400
     rows = conn.execute(
         "SELECT category, COUNT(*) n FROM harvest_log"
-        " WHERE was_read=1 AND ts >= ? AND category <> ''"
+        " WHERE was_read=1 AND orientation=0 AND ts >= ? AND category <> ''"
         " GROUP BY category", (since,)).fetchall()
     total = sum(r["n"] for r in rows)
     if not total:
