@@ -797,3 +797,160 @@ Build order reverts to §11, with §13's corrections folded in:
 Steps 1 and 4 pay before anything else in the loop exists: premise drift is the
 plan's own staleness instrument, and neither has a dependency on the loop
 running.
+
+---
+
+## 15. The instrumentation audit — done, and it corrects §5.2
+
+*2026-08-19, on the operator's question: has the current instrumentation,
+metrics, rubric and tracking been evaluated and rationalized? It had not.
+§5.2 named a "canonical instrument set" that exists nowhere in the repo — it was
+this document's assertion, not a fact about the system. Everything below is
+measured from the tree at `68060f2`.*
+
+### 15.1 Inventory — 29 tools, four kinds
+
+| Kind | Count | Which |
+|---|---|---|
+| **Instruments** — read-only, no model | **9** | `budget`, `check_invariants`, `claims`, `evidence`, `gate_report`, `health`, `read_works`, `source_review`, `what_shaped` |
+| **Probes** — call the model | 5 | `bench_model`, `conversation_probe`, `opener_probe`, `redteam_ingest`, `triage_probe` |
+| **Mutators** — write to the store | 6 | `adjudicate`, `amend_constitution`, `backfill_perspective_items`, `embed_episodes`, `journal`, `perspective_hygiene` |
+| **Runners** — operate the being | 7 | `run_ambient`, `run_deliberation`, `run_first_sleep`, `run_import`, `run_orientation`, `run_sleep`, `write_piece` |
+| One-time migrations | 2 | `corpus_hygiene`, `backup` |
+
+Supporting modules: `newz/evidence/perspective_window.py`,
+`newz/evidence/pursuit.py`, `newz/memory/provenance.py`, `newz/telemetry.py`,
+`newz/world/diet.py`.
+
+**There is no registry.** Nothing in the repo enumerates which of these is an
+instrument, what it measures, or whether it may be trusted as evidence. That
+absence is why §5.2 could assert a canonical set without anyone noticing it was
+invented.
+
+### 15.2 Finding 1 — three probes cannot run on this machine, or any other
+
+`tools/conversation_probe.py:2`, `tools/opener_probe.py:9` and
+`tools/triage_probe.py:10` each begin:
+
+```python
+sys.path.insert(0, '/Users/dean/Documents/source/NewZ')
+```
+
+A hardcoded path from the predecessor checkout. Under manual operation this
+fails loudly on a different machine. **Under the SEL it is worse than broken:**
+if that path exists and holds a different checkout, the probe silently measures
+the wrong repository and reports a number that looks fine. It is also a §7
+portability violation sitting inside the instruments — the layer that is
+supposed to tell the truth about everything else.
+
+`tools/run_import.py` resolves `../NGBeing` relatively and is correct; these
+three are not.
+
+### 15.3 Finding 2 — "novelty" names two different quantities
+
+| Where | What it is |
+|---|---|
+| `sleep/perspective.py:164` `novelty_rate` | (added + revised) / (added + revised + carried) — Perspective development share |
+| `evidence/perspective_window.py:76` `novelty` | the same formula, **recomputed** from `diff_json` rather than trusted |
+| `concerns/advance.py:79` `novelty_against_history` | embedding cosine distance of an advance against every prior advance |
+| `deliberation/lite.py:165` `novelty` | the record field carrying advance.py's value |
+
+Rows 1–2 agree by construction and are cross-checked by `novelty_drift`
+(recomputed minus stored). Rows 3–4 are an unrelated quantity wearing the same
+name. The **3.2%** quoted throughout PLAN is rows 1–2.
+
+**Consequence for §12.4:** `premises.yaml` must key on the instrument, never on
+the metric's name, or the loop will one day compare a consolidation share against
+a cosine distance and act on the difference.
+
+### 15.4 Finding 3 — the premise set mixes mechanical and model-graded numbers, unlabelled
+
+This is the finding that matters. PLAN's premises, classified:
+
+| Premise | Grade |
+|---|---|
+| operator messages, deliberations, ingest rows, persons, episodes | **mechanical** |
+| 0 outcomes the being did not grade itself | **mechanical** |
+| 34 of 61 feeds contributing a read; 12 `source_gaps` | **mechanical** |
+| concerns closed (19) | **model-graded** — `judge_closure`, INV-034 |
+| advance acceptance 28.3% → 41.1% | **model-graded** — `judge_advance`, and PLAN Rule 4 names this judge by name |
+| gate hold rate | **model-graded** — `gate/outbound.py:226` |
+| what was read at all | **model-graded** — triage selects |
+| pooled novelty 3.2% | **mixed** — the *read* consults no model (INV-023, and it says so honestly), but `added` / `revised` / `carried` are labels the model applied during consolidation. Clean instrument, model-labelled input |
+| grounding mix 50 / 33 / ≤17 | **mechanical but known-biased** — R-15: imported episodes are uniformly `provenance='self'` |
+
+**PLAN Rule 4 says a judge that is the being's own model produces operation,
+never evidence — and PLAN's own premise list then quotes advance acceptance as
+part of the evidence that produced the plan.** That is an internal inconsistency
+in the decided record, not a criticism of it: the number is real and useful, it
+simply is not evidence of development by the plan's own definition.
+
+**Consequence for §12.6.** §12 makes a moved premise the sole justification for a
+plan change. If a premise is model-graded, **drift in the model's judging
+behaviour is indistinguishable from change in the world**, and the loop would
+re-plan on the former while believing the latter. So the rule tightens:
+
+> **A plan-change proposal may cite only a mechanical premise.** Model-graded and
+> mixed premises may inform a proposal and may never justify one. Every premise
+> carries its grade in `premises.yaml`.
+
+### 15.5 Finding 4 — every rubric in the system is model-applied or operator-held
+
+| Rubric | Applied by |
+|---|---|
+| the constitution (clauses, severity `hard` / `firm`) | the model, at the gate |
+| the outbound gate | the model |
+| the three-part advance judge | the model |
+| closure against a concern's closing condition | the model (fails closed — INV-034) |
+| triage — what is worth reading | the model |
+| PLAN's phase evidence `S#-E` and `Decision rule`s | the operator (Rule 6, deliberately unquantified) |
+
+**None is mechanical.** That is not a defect — it is the honest consequence of
+the domain — but it means the SEL's gate must stay where §4 put it: tests,
+invariants, migrations and measured mechanical deltas. There is no existing
+rubric it can borrow that would not import a model judgment as a passing
+condition.
+
+### 15.6 Tracking — four systems, one machine-checked
+
+| System | Rows | Checked |
+|---|---|---|
+| `INVARIANTS.md` ledger | 48 | **yes** — `check_invariants.py`, wired into the suite. Validates the rows present; **never coverage** |
+| `RISKS.md` | 30 | no — prose statuses, no parser |
+| PLAN epics | 35 | no — prose |
+| `proposals/` | 10 | no |
+
+### 15.7 What is already right, and should be the template
+
+The discipline here is unusually good in four specific places, and the
+rationalization should extend them rather than replace anything:
+
+- **`novelty_drift`** — a stored value and an independent recomputation, with
+  their difference exposed. Every derived metric should have this.
+- **INV-044** — *a measurement whose input is missing reports itself as
+  unmeasured, never as a compliant zero.* This is the rule most systems lack.
+- **`gate_report`'s "with a denominator"** and `evidence.py`'s "every number here
+  carries its method, including the ones that cannot be produced."
+- **`evidence.py` exits 0 always** — it reports, it does not judge.
+
+### 15.8 Gaps — instruments that do not exist
+
+Operator-agreement rate (§10, and the item most likely to move under a loop
+optimising for a quiet week); loop-versus-being compute ratio (§13.3.2's cap);
+restart and continuity outcomes (§6); the per-clause gate baseline (E6.3);
+test-suite stability; premise drift itself (§12.4).
+
+### 15.9 What this adds to the build order
+
+§14's step order gains a step 0 and a correction:
+
+| | Step | Why |
+|---|---|---|
+| **0a** | Fix the three hardcoded probe paths | they are wrong now, wrong for anyone, and silently wrong under a loop |
+| **0b** | `evolution/instruments.yaml` — one row per instrument: what it measures, its input, whether a model touched any link in its chain, its denominator, its method line, canonical yes/no | this is what §5.2 asserted and the repo does not have. It is also the freeze list, so it must exist before the freeze |
+| 1 | The Watcher, with `premises.yaml` carrying `grade:` per §15.4 | unchanged, but now the premises are labelled |
+| 2 | The §10 instruments, operator-agreement first | unchanged |
+| 3 | Freeze — now meaningful, because 0b defines what is being frozen | corrected |
+
+Steps 0a and 0b are together perhaps half a day, and everything in §14 that
+follows depends on them being right.
