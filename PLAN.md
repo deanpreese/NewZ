@@ -303,12 +303,27 @@ for thirty days — the humanities feeds suppressed by the humanities curriculum
 and excludes it from the share. The share answers a question about streams, and
 a curriculum read once is not a stream. No read was ever refused by it.
 
-**E1.1 — `resolutions`, the store object**
+**E1.1 — `resolutions`, the store object** *(built 2026-08-19)*
 *Delivers:* claim, resolution condition, date, resolver, outcome, provenance.
 *Done when:* a claim round-trips with its condition and named resolver, and the
 schema forbids a claim without one.
 *Depends on:* nothing.
 *Hooks:* Rule 4 — the resolver field may not name a model.
+
+*As built:* migration 0023, `newz/resolutions/` (model + store),
+`tools/claims.py` as Rule 2's reader, 13 tests, **INV-045**. Three refusals are
+CHECK constraints — no statement, no condition, no resolver, no date — and the
+fourth is in the writer, where the configured role models are known: a resolver
+naming the being's own substrate raises `UnsettleableClaim`. The check is
+deliberately narrow, matching self-reference phrases and the model id (bare name
+as well as the full path), because over-broad matching refuses legitimate claims
+about models and teaches the being to phrase around the check rather than to
+find a source. Two decisions worth carrying forward: **there is no `ambiguous`
+outcome** — E1.3 fails closed by leaving a claim OPEN, and a third outcome would
+be a way to close one without the world having said anything — and **there is no
+unsettle**, so E1.5's permanence starts at the schema rather than being added to
+it. The store writes no episodes; the door (E1.2) and the resolver pass (E1.3)
+are the layers that know why something happened.
 
 **E1.2 — the claim door**
 *Delivers:* claims open from deliberation through one validated door, with a
