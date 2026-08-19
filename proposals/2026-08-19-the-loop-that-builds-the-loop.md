@@ -381,3 +381,44 @@ triggers firing on things worth acting on. S1 and S2 are worth doing whatever is
 decided about the rest: a gate nobody runs, that goes red twice in three runs,
 on a repo a fresh machine cannot build, is not a foundation any automation could
 stand on — and it is not much of a foundation for hand-building either.
+
+---
+
+## 11. Amendment — the recommendation is withdrawn, and superseded
+
+*2026-08-19, later the same day.*
+
+**§10's recommendation (S1–S4 now, S5–S6 deferred) is withdrawn.** A red team of
+this document found four attacks it does not survive:
+
+- **A1.** It never established the constraint it claims to relieve. §2 measured
+  that delivery is *unautomated* and substituted that for *slow*. The commit log
+  answers what §2 marked UNREADABLE: E1.1 through E1.4 landed 06:12–06:47 on
+  2026-08-19 — **four epics in 35 minutes**, by hand. Delivery is not the
+  constraint.
+- **A2.** The premise — that the model is not the system constraint — is
+  unfalsified. 3.2% novelty, 50% self-grounding and 0 non-self-graded outcomes
+  are consistent with a model limit and a topology limit alike, and no
+  experiment in the repo discriminates them. R-12's own line applies to this
+  document: *only true if measured*.
+- **A3.** Automating falsifiers is more dangerous than automating the builder.
+  A bad merge is caught by 517 tests; a bad falsifier is caught by nothing, and
+  the thresholds were authored in prose before the evidence existed.
+- **A4.** The timing was the worst available: the outer loop was thirteen hours
+  old and S1-E had never been read.
+
+Partly landing: the world-expansion idea in §7 R7's neighbourhood reintroduces
+the concern-coupling E1.0 removed; the §3.6 sovereignty line satisfies §7 but not
+§8, since a hosted agent authoring the being's cognitive machinery is an
+unexposed shaping influence; and §2.2(a)'s flake rate was measured on Python
+3.11.15 against `requires-python = ">=3.12"`, so the *rate* belongs to an
+unsupported environment even though the yield-count race is real anywhere.
+
+**What survives:** §2's findings — no runner, an unrun gate, an undeclared
+environment, a ledger that checks the rows it has and not the rows it lacks — and
+§3's hard core, which is carried forward intact.
+
+**Superseded by `proposals/2026-08-19-the-self-evolving-loop.md`**, which designs
+the loop the operator actually specified: autonomous through restart, supervised
+without a service manager, rolled back through commits, and guided by TRUE_NORTH
+and PLAN together under a stated precedence.
