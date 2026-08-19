@@ -1109,3 +1109,35 @@ fourteen epics ordered orthogonally to Phases 0–7, with `Evidence S8-E` and a
 Operator decisions 3–5 and risks P3-11…P3-15 are in the plan's own queues.
 
 The proposal remains the reasoning; PLAN is now the record of what will be built.
+
+---
+
+## 18. Regenerated as P4
+
+*2026-08-19, operator: regenerate the plan so instrumentation and metrics are
+built during Phases 2–3 in preparation for the SEL.*
+
+`PLAN.md` is now **P4**; P3 is `archive/P3.md`. **A restructure, not a
+supersession** — P2 was superseded because the diagnosis changed, and nothing
+about the diagnosis has changed here.
+
+P3's eight instrument epics moved out of Phase 8 to where their data is produced:
+**E1.6** (the reader S1-E does not have), **E2.5–E2.11** (grades, the
+metric-to-purpose map, the baseline-and-delta layer, metric revision, the
+mechanical set, `premises.yaml`, `epics.yaml`), **E3.6–E3.9** (the read rendered,
+the derivation layer, operator agreement, the canonical freeze). Every id resolves
+through P4 §"Where P3's Phase 8 epics land".
+
+Three reasons, recorded in P4 §2: a metric with no data is a guess; retrospective
+instrumentation reads what survived rather than what happened; and a loop should
+arrive to a sensor layer rather than build one — which lets Phase 8 be judged on
+whether the loop works instead of on whether its instruments were any good.
+
+**Rule 7 is new and earned rather than invented:** every measurement carries its
+grade. It is §15.4's finding turned into a standing rule, and it makes Rule 4
+checkable instead of remembered.
+
+Phase 8 is now four epics — the registry (built), the runner, the Watcher, the
+builder — plus the precedence table and the kill conditions. P3-16 records the
+risk the restructure introduces: sensors are the easier half to build, and if
+S2-E or S3-E slips while the instrument epics land, the phase was inverted.
