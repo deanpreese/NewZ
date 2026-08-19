@@ -768,3 +768,32 @@ premises stay untested is a well-argued guess.
 
 **The architecture is not what needs changing. What needs changing is that four
 revisions have gone by without Q1 or Q2 being answered, and both are cheap.**
+
+---
+
+## 14. Operator decision — accepted
+
+*2026-08-19. Operator: "the design is proven enough for me to consider this
+evolution loop."*
+
+**The SEL is approved in principle.** §13.5's Q1 (model-limited versus
+system-limited) and Q2 (has S1-E fired) are **no longer gating** — they remain
+worth answering and are recorded as open, but the design proceeds without
+waiting on them. §13.6's R-13e stands as recorded doubt, not as a blocker; it is
+the operator's judgment to make (Rule 6) and it has been made.
+
+Build order reverts to §11, with §13's corrections folded in:
+
+| | Step | Carries |
+|---|---|---|
+| 1 | The Watcher — state read, `premises.yaml`, weekly report, decision queue | §12.4, §7 |
+| 2 | The missing §10 instruments, operator-agreement first | §9 R-S1 |
+| 3 | Freeze the canonical instrument set into the hard core | §5.2 |
+| 4 | `epics.yaml` hand-derived from PLAN, with its drift check | §3.3 |
+| 5 | Runner, commit discipline, `Semantics:` trailer, continuity assertion | §6 |
+| 6 | Prepared sessions as the escalation target | §13.2 |
+| 7 | The builder — Class A, with red-first tests and the kill conditions live | §13.3 |
+
+Steps 1 and 4 pay before anything else in the loop exists: premise drift is the
+plan's own staleness instrument, and neither has a dependency on the loop
+running.
