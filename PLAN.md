@@ -373,7 +373,7 @@ happened (INV-044's discipline). A paused diet refunds the attempt: the being is
 not charged for its own budget ceiling. A resolution writes the one episode this
 phase produces, provenance `world`, so sleep sees it whichever way it went.
 
-**E1.4 — being wrong costs the position**
+**E1.4 — being wrong costs the position** *(built 2026-08-19)*
 *Delivers:* a claim resolved against the being reduces confidence in the
 position that generated it, through INV-031's existing mechanism pointed outward
 instead of inward, and the existing floor releases it if it keeps failing.
@@ -381,6 +381,24 @@ instead of inward, and the existing floor releases it if it keeps failing.
 that keeps being wrong leaves the Perspective through the ordinary release path.
 *Depends on:* E1.3.
 *Hooks:* INV-031, INV-025.
+
+*As built:* `newz/resolutions/cost.py`, migration 0026 (`claim_costs`,
+`resolutions.cost_applied_at/cost_note`), 10 tests, **INV-048**. **Who pays is
+traced, not judged** — the claim's provenance names its concern, that concern's
+episodes carry `source_ref='concern:N'`, and a Perspective item's evidence is a
+list of episode ids, so the position charged is the one whose own grounding
+includes that concern's episodes. No model chooses: Rule 4 forbids it, and a
+model asked which of the being's positions to punish would pick whichever the
+refutation was easiest to narrate against. Applied by sleep (INV-009 keeps it
+the only Perspective writer), between confrontation and decay — after, so a
+position that also earned support tonight settles first; before, so the ordinary
+floor (INV-025) carries out anything the cost takes under it. Costs are
+INV-031's own: 0.15, doubled to 0.30 when the world has refuted that position
+before. The refuting material is deliberately not added to the item's evidence.
+**A refutation that traces to no position is recorded as such** rather than
+counted as charged — the being can be wrong about something it never wrote into
+its Perspective, and that is a different finding from a refutation nobody paid
+for (INV-044).
 
 **E1.5 — the permanent record of error**
 *Delivers:* wrongness recorded permanently at store level and never quietly

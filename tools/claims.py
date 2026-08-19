@@ -52,6 +52,29 @@ def _render(c) -> str:
     return "\n".join(out)
 
 
+def _cost_lines(conn, claim_id: int) -> list[str]:
+    """What being wrong actually cost (E1.4). A refutation that reached no
+    position says so — the being can be wrong about something it never wrote
+    into its Perspective, and that is a different finding from a refutation
+    nobody charged."""
+    rows = conn.execute(
+        "SELECT item_text, section, confidence_before, confidence_after,"
+        " repeat, released FROM claim_costs WHERE claim_id=?",
+        (claim_id,)).fetchall()
+    if not rows:
+        note = conn.execute("SELECT cost_note FROM resolutions WHERE id=?",
+                            (claim_id,)).fetchone()
+        return [f"  cost: {note['cost_note']}"] if note and note["cost_note"] else []
+    out = []
+    for r in rows:
+        tail = " RELEASED" if r["released"] else ""
+        again = ", again" if r["repeat"] else ""
+        out.append(f"  cost: [{r['section']}] {r['confidence_before']:.2f} →"
+                   f" {r['confidence_after']:.2f}{again}{tail}")
+        out.append("    " + "\n    ".join(textwrap.wrap(r["item_text"], 68)))
+    return out
+
+
 def _refusals(conn) -> int:
     """P3's first Phase 1 diagnostic: are its claims resolvable at all?
 
@@ -100,6 +123,8 @@ def main() -> int:
     print(f"{len(claims)} {label}\n")
     for c in claims:
         print(_render(c))
+        if c.went_against_me:
+            print("\n".join(_cost_lines(conn, c.id)))
     print("─" * 72)
     return 0
 

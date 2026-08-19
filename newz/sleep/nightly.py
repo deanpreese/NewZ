@@ -159,6 +159,11 @@ class SleepReport:
     decayed: int = 0
     merged: int = 0
     compressed: int = 0
+    # Positions charged because the world refuted a claim they produced
+    # (E1.4). Counted separately from confrontation's verdicts: a
+    # contradiction from outside the being is the read Phase 1 turns on, and
+    # it must not be averaged into the being's arguments with itself.
+    world_costs: int = 0
     token_count: int = 0
     diff: dict = field(default_factory=dict)
     skipped_reason: str | None = None
@@ -496,6 +501,22 @@ class NightlySleep:
                 self._add_or_reinforce(
                     section, text, cand["refs"], live, added, report)
 
+    def _charge_world_costs(self, conn, items: list[Item]) -> list:
+        """Apply E1.4's costs, or lose them rather than the night.
+
+        The same discipline as every other optional step in sleep: a failure
+        here must not cost the consolidation, and the refutations stay unpaid
+        (cost_applied_at IS NULL) so the next night charges them.
+        """
+        from newz.resolutions.cost import apply_world_costs
+
+        try:
+            return apply_world_costs(conn, items)
+        except Exception:  # noqa: BLE001
+            logger.exception("charging the world's contradictions failed "
+                             "(the night continues; they stay unpaid)")
+            return []
+
     def _mature_questions(self, conn, items: list[Item],
                           report: SleepReport) -> list[Item]:
         """A question the world keeps raising becomes something to pursue.
@@ -654,6 +675,13 @@ class NightlySleep:
                 return report
 
             items = self._confront(before, observations, report)
+            # E1.4: the world's own contradictions, charged to the positions
+            # they refute. Between confrontation and decay deliberately —
+            # after, so a position that also earned support tonight has its
+            # confidence settled first; before, so a position taken under the
+            # floor is released by the ordinary path (INV-025) rather than by
+            # anything the resolver does.
+            report.world_costs = len(self._charge_world_costs(conn, items))
             items = self._mature_questions(conn, items, report)
             items, decayed_out = apply_decay(items)
             report.decayed = len(decayed_out)

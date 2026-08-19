@@ -275,6 +275,50 @@ def test_a_contradiction_costs_the_position_it_contradicts(tmp_path):
     conn.close()
 
 
+def test_the_world_s_refutation_reaches_the_position_during_sleep(tmp_path):
+    """E1.4's wiring. INV-009 keeps sleep the only writer of the Perspective,
+    so the cost has to land here — and between confrontation and decay, so the
+    ordinary release floor carries out anything it takes under."""
+    import time as _t
+
+    from newz.resolutions.model import Claim
+    from newz.resolutions.store import open_claim, settle_claim
+
+    held = "Reported open interest overstates collateralised positions."
+    path = _sleep_store(tmp_path, EPISODES, items=[
+        Item(section="what_i_hold", text=held, evidence=["4"], confidence=0.6,
+             status="carried", first_seen_version=1)])
+    conn = open_db(path)
+    conn.execute(
+        "INSERT INTO episodes (id, ts, kind, provenance, summary, source_ref,"
+        " digest_eligible, consolidated_version)"
+        " VALUES (4, 104.0, 'advance', 'self', 'I established it.',"
+        " 'concern:7', 1, 1)")
+    cid = open_claim(conn, Claim(
+        id=None, claim="The COT report will print 10% below.",
+        resolution_condition="The release is published and compared.",
+        resolver="CFTC Commitments of Traders weekly report",
+        due_at=_t.time() - 86400, provenance="concern:7"), models=set())
+    settle_claim(conn, cid, outcome="contradicted",
+                 settled_by="https://cftc.gov/cot", note="It printed above.")
+    conn.commit()
+    conn.close()
+
+    llm = FakeLLM([DIGEST, ("DEEP", "<confrontation>"
+                            "<verdict candidate=\"1\" type=\"none\"/>"
+                            "<verdict candidate=\"2\" type=\"none\"/>"
+                            "</confrontation>")])
+    report = NightlySleep(path, llm, "dean").run()
+
+    assert report.world_costs == 1
+    conn = open_db(path, read_only=True)
+    item = [i for i in load_items(conn, report.version) if i.text == held][0]
+    assert item.confidence == 0.45 and item.status == "disputed"
+    cost = conn.execute("SELECT claim_id, released FROM claim_costs").fetchone()
+    assert cost["claim_id"] == cid and not cost["released"]
+    conn.close()
+
+
 def test_a_repeated_contradiction_costs_double_and_eventually_releases(tmp_path):
     # The tension already stands in `unresolved`, so tonight's filing
     # restates it: the position is failing, not having one odd night.
