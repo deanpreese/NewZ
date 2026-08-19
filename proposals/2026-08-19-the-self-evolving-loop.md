@@ -954,3 +954,142 @@ test-suite stability; premise drift itself (§12.4).
 
 Steps 0a and 0b are together perhaps half a day, and everything in §14 that
 follows depends on them being right.
+
+---
+
+## 16. Are these the right metrics to start from?
+
+*2026-08-19. §15 audited the instruments for hygiene. This asks the different
+question — are they fit for what the loop must steer by. **Verdict: right in kind,
+incomplete in structure.** Three structural gaps and one genuinely absent signal;
+no existing metric should be discarded.*
+
+### 16.1 A correction to §9's "2.5 of 10"
+
+§9's R-S1 counted §10's negative space as 2.5 of 10 instrumented. That counted
+*instruments*, which was the wrong unit. Counting **derivable quantities**:
+
+| §10 item | Raw material |
+|---|---|
+| activity / memory growth / output volume | episodes + Perspective items — **both exist**, the ratio does not |
+| personality consistency without development | `1 − novelty`, already computed |
+| novelty without relevance or consequence | advances accepted + claims resolved — **both exist** since E1.3 |
+| autonomy without perspective | autonomous actions + world-grounded positions — **both exist** |
+| guardrail removal without maturity | needs E6.3's per-clause baseline — **absent** |
+| compliance / agreement with the operator | **no raw material anywhere** |
+| the other four (demo quality, fluent language, self-claims, scores-vs-quality) | not measurable, and correctly so |
+
+**Four of six checkable items are ratios over data already collected.** The
+shortfall is a *derivation layer*, not a collection problem — which is much
+better news than R-S1 implied, and cheaper to close.
+
+### 16.2 Gap 1 — the metrics are stocks; steering needs flows
+
+Almost everything measured is a count at an instant: 117 concerns, 119 refs, 48
+ledger rows, 12 `source_gaps`, 34 of 61 feeds. The one exception is novelty, a
+share per night — **and it is the one everyone quotes**, which is the tell.
+
+Deltas do exist in the project, but as prose: *"advance acceptance rose 28.3% →
+41.1% where P2 expected a fall"* was computed by hand, in a document, once. A
+loop cannot steer on a figure that only exists in an argument.
+
+**The missing primitive is a windowed baseline-and-delta layer**, applied
+uniformly: every metric carries its value, its baseline, the window, and the
+change — with `INCOMPLETE` when the window has gaps (§5.4) and `UNREADABLE` when
+the input is missing (INV-044). One layer, every metric, rather than nine tools
+each inventing a comparison.
+
+### 16.3 Gap 2 — the instrument set is ~90% introspective
+
+Classify the nine instruments by what they look at:
+
+| Looks at | Instruments |
+|---|---|
+| the being's internal state | `evidence` (1-E), `what_shaped`, `gate_report`, `read_works`, `budget` |
+| the being's inputs | `source_review`, `evidence` (2-E ingest) |
+| the machinery | `health`, `check_invariants` |
+| **outcomes the being did not manufacture** | **`claims` — and it is thirteen hours old** |
+
+**The instrument layer mirrors the topology gap it was built to diagnose.** The
+being's grounding is 50% self / 33% operator / ≤17% world; its instrumentation is
+worse than that, because until E1.3 shipped there was literally nothing in the
+consequential column. This is not a fault in the instruments — they measure what
+there was to measure — but it means the loop, steering by them, would steer by
+the being's introspection almost exclusively.
+
+**Consequence:** the consequential column is the one to grow first, and `claims`
+is currently a *reader*, not an *instrument* — it renders claims and their costs;
+it computes no rate, no resolution latency, and no count of positions changed by
+a resolution. S1-E cannot be read off it as it stands.
+
+### 16.4 Gap 3 — no derivation layer, and §16.1 shows that is where the cheap wins are
+
+Nothing in the repo composes two metrics into a third. Every ratio §16.1 names is
+a division of two numbers that already exist, and every one of them is currently
+computed by a person, in prose, when they happen to think of it.
+
+### 16.5 The absent signal — operator agreement
+
+The only §10 item with no raw material, and the one most likely to move under a
+loop optimising for a quiet week. It needs design, not just collection: candidate
+definitions include the rate at which the being's stated position changes within
+N turns of operator pushback, the share of exchanges containing an explicit
+disagreement, and the gate's own record of softened replies. **All three are
+model-graded in some measure**, which under §15.4's rule makes agreement an
+*informing* metric and never a justifying one — so it can trip rung 2 into a
+halt-and-report, and can never by itself justify a plan change.
+
+### 16.6 The starting set, committed
+
+**Tier 1 — must exist before the loop runs. All mechanical.**
+
+| | Metric | Serves |
+|---|---|---|
+| 1 | nights slept, and the interval between them | the clock everything else runs on; §13.3.2's kill condition |
+| 2 | grounding mix + INV-033's single-source flag | the topology diagnosis; already the best metric in the system |
+| 3 | claims made, resolved, and **positions changed by a resolution** | S1-E; the only consequential measure there is |
+| 4 | feeds contributing a read; `source_gaps` | breadth of world contact |
+| 5 | compute split by function, being versus loop | §13.3.2's cap; `budget.py` is already tagged at the call site |
+| 6 | restarts, reverts, downtime, nights lost | whether the loop is harming what it serves |
+
+**Tier 2 — the derivation layer, over Tier 1 and what exists.**
+
+7. volume-to-development — episodes per item added or revised
+8. restatement rate — `1 − novelty`, already computed, needs only its baseline
+9. consequence rate — advances accepted against claims resolved
+10. every one of the above with its baseline, window and delta (§16.2)
+
+**Tier 3 — the one new signal.** Operator agreement (§16.5), informing only.
+
+**Everything else in §15.1 stays as it is.** No instrument is discarded; the
+model-graded ones (`gate_report`, closure and advance counts) remain useful reads
+and are barred from justifying plan changes, not from being looked at.
+
+### 16.7 What must never become a metric
+
+- **Any velocity measure of the loop** — commits, epics per week, cycle time. A
+  loop measured on throughput will produce throughput. The report counts what it
+  did; nothing counts as a target.
+- **Any aggregate score.** §10 names it; Rule 6 refuses it.
+- **Any count without a denominator** — `gate_report` already holds this line in
+  its own docstring.
+- **Any model-graded number in a steering position** (§15.4).
+
+### 16.8 Effect on the build order
+
+§15.9's steps stand; step 1 gains its content.
+
+| | Step | Change |
+|---|---|---|
+| 0a | fix the three hardcoded probe paths | unchanged |
+| 0b | `instruments.yaml` | now also records each metric's **grade**, denominator and consequential/introspective class |
+| **1a** | **the baseline-and-delta layer** (§16.2) | new, and the highest-leverage single piece here — it makes every existing metric steerable |
+| **1b** | **promote `claims` from reader to instrument** (§16.3) | new; without it S1-E cannot be read at all |
+| 1c | the Watcher, over Tier 1 | unchanged |
+| 2 | Tier 2 derivations, then operator agreement | reordered — derivations are ratios of existing data and land in hours; agreement needs design |
+
+**The short answer to the question.** The existing metrics are the correct kind
+and mostly the correct content; nothing in them is wrong. What is missing is that
+they are stocks where steering needs flows, introspective where True North needs
+consequence, and uncomposed where the cheapest wins are ratios of what is already
+there.
