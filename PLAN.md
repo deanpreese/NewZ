@@ -649,7 +649,7 @@ premise Phase 1 exists for, E1.4 began falsifying it on 2026-08-19, and no part
 of this system remarked on it. That is the failure this epic is for, and it has
 already happened once.
 
-**E2.11 — `epics.yaml` and its drift check**
+**E2.11 — `epics.yaml` and its drift check** *(built 2026-08-20)*
 *Delivers:* this plan's epics in machine-readable form — id, depends-on,
 `Done when` and its class (**mechanical / in-life / operator-judgment**), bound
 risks and invariants, falsifier — plus a check that every row still matches

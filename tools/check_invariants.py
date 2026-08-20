@@ -99,6 +99,16 @@ def check(repo: Path) -> list[str]:
 def main() -> int:
     repo = Path(__file__).resolve().parent.parent
     errors = check(repo)
+    # E2.11: the machine-readable plan must still agree with the plan. A copy
+    # of a document is a liability the moment it stops matching it, and this
+    # one is the queue an autonomous builder would work from.
+    try:
+        sys.path.insert(0, str(repo))
+        from newz.evidence.epics import drift
+
+        errors.extend(f"EPICS: {e}" for e in drift())
+    except Exception as e:  # noqa: BLE001
+        errors.append(f"EPICS: could not run the drift check ({e})")
     for e in errors:
         print(f"INVARIANTS: {e}", file=sys.stderr)
     if errors:
