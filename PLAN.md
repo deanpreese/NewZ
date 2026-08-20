@@ -490,6 +490,26 @@ mechanical, and the claim's extraction is not.
 at all. Deferring its instrument to Phase 8 would mean building Phases 2 through
 6 on a foundation nobody had checked.
 
+**E1.7 — a concern with a terminus something can reach** *(built 2026-08-19; R-33)*
+*Delivers:* the closing-condition standard at the opener — the claim door's
+discipline applied one layer up. The three openers refuse a condition that
+closes on the being's own state or on research nobody will commission, record
+the refusal (0027) the way the claim door records one, and their prompts state
+the standard rather than implying it.
+*Done when:* a proposed concern whose terminus nothing could reach is refused
+and written down, a condition naming a source that publishes is admitted, and
+the opener's own worked example no longer closes on a study.
+*Depends on:* E1.6.
+*Hooks:* **R-33**, INV-034, and INV-046's move. Measured before: **123 of 123**
+concerns carried a terminus nothing could reach — 111 self-graded, 12 awaiting
+an uncommissioned study. Measured after, on a live probe: 2 of 2 opened on *"the
+venue's next quarterly reconciliation report"* and *"the next annual report from
+the national phenology network"*.
+*What the probe does not show.* Both cases were fed material that named a
+publishing source. It demonstrates the being will **use** a terminus when the
+material offers one; it does not show it will find one when the material does
+not. That is what the week in life tests.
+
 **No audience required.** The world's facts settle claims whether or not anyone
 is watching. This is the one phase that closes the loop with one operator and no
 readers.

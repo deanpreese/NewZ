@@ -70,6 +70,12 @@ class ResolutionRead:
 
 
 @dataclass
+class OpenerRead:
+    refused: int = 0
+    reasons: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass
 class PositionsChanged:
     by_world: int = 0                    # mechanical — claim_costs rows
     by_operator: int = 0                 # mixed — dominant provenance human:*
@@ -87,6 +93,7 @@ class Consequence:
     door: DoorRead
     resolution: ResolutionRead
     positions: PositionsChanged
+    opener: OpenerRead = field(default_factory=OpenerRead)
 
     @property
     def met(self) -> bool:
@@ -177,4 +184,15 @@ def read(conn: sqlite3.Connection, repo_root: Path, *, now: float,
             lat.append((settled_at - opened_at) / DAY)
     res.median_latency_days = statistics.median(lat) if lat else None
 
-    return Consequence(hours, door, res, _positions(conn, since))
+    op = OpenerRead()
+    try:
+        rows = conn.execute(
+            "SELECT reason FROM concern_refusals WHERE ts >= ?", (since,)).fetchall()
+    except sqlite3.OperationalError:
+        rows = []            # pre-0027 store; no refusals to read
+    op.refused = len(rows)
+    for (reason,) in rows:
+        head = re.split(r"[—:-]", reason or "", 1)[0].strip()[:52] or "?"
+        op.reasons[head] = op.reasons.get(head, 0) + 1
+
+    return Consequence(hours, door, res, _positions(conn, since), op)

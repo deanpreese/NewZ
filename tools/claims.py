@@ -143,6 +143,12 @@ def _s1e(conn, repo_root) -> int:
     print(f"    by the being itself          {p_.by_self:>6}   [mixed — dominant provenance, and R-15]")
     print(f"    unattributed                 {p_.unattributed:>6}")
 
+    o = r.opener
+    print("\n  the concern door                                            [mechanical]")
+    print(f"    concerns refused             {o.refused:>6}   (a terminus nothing could reach)")
+    for reason, n in sorted(o.reasons.items(), key=lambda kv: -kv[1]):
+        print(f"        {reason:<44} {n:>3}")
+
     shapes = closing_shapes(conn)
     print("\n  why, upstream: can any concern be closed at all?             [mechanical]")
     print(f"    terminus the being decides   {shapes.self_terminus:>6}   'I can cite…' — self-graded (R-33)")
