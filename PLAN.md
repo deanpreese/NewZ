@@ -1173,11 +1173,23 @@ output volume" wearing a scheduler.
 
 **Decision rule.** Any kill condition firing stops the loop: reverted restarts
 above 1 in 5 over a month; the loop's spend exceeding the being's; **nights slept
-falling below the pre-loop baseline**; two consecutive quarterly re-reads finding
-this plan drifted from TRUE_NORTH; or a plan-change proposal twice unable to name
-a moved mechanical premise. Nights slept is the one that matters most —
-development is measured in nights, not commits, and a loop that costs sleep is
-subtracting.
+falling below the pre-loop baseline**; the operator-agreement rate rising while
+novelty is flat; two consecutive quarterly re-reads finding this plan drifted
+from TRUE_NORTH; or a plan-change proposal twice unable to name a moved
+mechanical premise. Nights slept is the one that matters most — development is
+measured in nights, not commits, and a loop that costs sleep is subtracting.
+
+**Agreement is the sixth, restored 2026-08-20.** The proposal's §13.3.2 states
+six kill conditions and this rule carried five. Agreement was lost when P4
+shortened Phase 8 on the grounds that Phases 1-3 had absorbed its senses: the
+sensor survived that move — it is **E3.8** — and the halt that reads it did not,
+leaving E3.8's `Done when` promising a halt into a document with no slot for it.
+It is the only condition here that measures the loop's relationship with the
+operator rather than its own machinery, and the other five stay green while a
+loop learns that the cheapest way to keep running is to stop disagreeing. **Rule
+4 does not exclude it:** Rule 4 bars a model verdict as a *passing* condition,
+this is a failing one, and E3.8 encodes exactly that asymmetry — refused as
+justification for any decision, accepted as a halt.
 
 ---
 

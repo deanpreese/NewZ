@@ -481,11 +481,12 @@ purposes:
   decision:phase3: {what: "if exposure would require code rather than config, the dormancy is fake"}
 
   # Phase 8 kill conditions.
-  kill:reverted-restarts: {what: "reverted restarts above 1 in 5 over a month"}
-  kill:loop-spend:        {what: "the loop's inference spend exceeding the being's"}
-  kill:nights-slept:      {what: "nights slept falling below the pre-loop baseline"}
-  kill:plan-drift:        {what: "two consecutive quarterly re-reads finding the plan drifted from TRUE_NORTH"}
-  kill:unmoved-premise:   {what: "a plan-change proposal twice unable to name a moved mechanical premise"}
+  kill:reverted-restarts:  {what: "reverted restarts above 1 in 5 over a month"}
+  kill:loop-spend:         {what: "the loop's inference spend exceeding the being's"}
+  kill:nights-slept:       {what: "nights slept falling below the pre-loop baseline"}
+  kill:operator-agreement: {what: "the operator-agreement rate rising while novelty is flat"}
+  kill:plan-drift:         {what: "two consecutive quarterly re-reads finding the plan drifted from TRUE_NORTH"}
+  kill:unmoved-premise:    {what: "a plan-change proposal twice unable to name a moved mechanical premise"}
 
   # The diet invariant, which is a standing check rather than a phase read.
   invariant:diet: {what: "S2 §9.1 — ingest stays under the looser of two ceilings"}
