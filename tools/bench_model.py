@@ -95,14 +95,15 @@ import httpx
 # For single-model mode — which is what this system runs, one model behind
 # four roles (S2 §12.1) — set AMBIENT_* only and leave the rest empty.
 
+AMBIENT_ENDPOINT = "http://10.0.0.50:1234/v1"
 #AMBIENT_ENDPOINT = "http://10.0.0.214:1234/v1"
-AMBIENT_ENDPOINT = "http://10.0.0.214:1234/v1"
 #AMBIENT_MODEL   = "google/gemma-4-31b-qat"
 #AMBIENT_MODEL   = "gemma-4-12b-it-nvfp4"
-#AMBIENT_MODEL    = "qwen/qwen3.6-35b-a3b"
+AMBIENT_MODEL    = "qwen/qwen3.6-35b-a3b"
+#AMBIENT_MODEL    = "qwen3.5-35b-a3b"
 #AMBIENT_MODEL    = "qwen3.8-27b"
-#AMBIENT_MODEL    = "qwen3.5-9b"
-AMBIENT_MODEL    = "lfm2-24b-a2b"
+#AMBIENT_MODEL    = "qwen/qwen3.5-9b"
+#AMBIENT_MODEL    = "lfm2-24b-a2b"
 #AMBIENT_MODEL    = "openai/gpt-oss-20b"
 
 

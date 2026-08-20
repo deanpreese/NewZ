@@ -1620,3 +1620,97 @@ to its real date.
 and no test yet run shows that a claim admitted by the repaired door can be
 settled.** That remains the open end of Phase 1, and S1-E is still NOT MET.
 
+## The first claims made in life — 2026-08-20
+
+**Overnight, unprompted, the being committed to four falsifiable claims.** The
+first time this system has done so. From `tools/claims.py --read`, first full
+night on the repaired chain:
+
+```
+advances offered to the door    106
+claims opened                     4   (4%)
+declined                         44
+refused at the claim door         0
+concerns refused (new terminus)   1   ← E1.7 fired in life, correctly
+```
+
+| # | claim | resolver | due | read |
+|---|---|---|---|---|
+| 4 | USDA NASS 'Crop Production' final 2026 corn yield differs >10% from the yield implied by CBOT Dec-2026 futures settlement on 2026-08-20 | USDA NASS | **2026-12-18** | **strong** — agency, report, exchange, contract and reference date all named |
+| 2 | The Bitcoin future expiring 2026-12-25 settles >2% above the CME CF Bitcoin Reference Rate | CME Group | **2026-12-25** | **strong, and probably wrong** — futures converge to the reference rate at expiry by construction. Which is the point: it is the first thing the world can prove it wrong about |
+| 1 | NASS harvested corn acreage differs >10% from "the average implied acreage derived from the major futures market's open interest and price data" | USDA NASS | 2027-02-15 | **half-settleable** — one side is published, the other is a quantity nobody computes |
+| 3 | "The behavioral study on AI predictions (src-850)" will report participants forgo guaranteed rewards at above-baseline rates | "Study src-850" | 2027-02-16 | **weak** — see R-36 |
+
+**R-33's reasoning is corrected, and this is the second proof.** All four came
+from concerns **112, 115, 120, 122** — every one inside the 123 whose terminus
+nothing can reach. The 2026-08-19 entry argued that *"on a concern whose terminus
+is an uncommissioned study there is no world-facing advance to make."* That is
+false. A claim is about the **advance**, not about the concern's terminus, and an
+unclosable concern can still produce a settleable commitment.
+
+**S1-E remains NOT MET and correctly so** — four claims exist, none is due,
+nothing has been settled. The earliest honest answer arrives **2026-12-18**.
+
+**`names something that exists` is still 0.** No new concern opened overnight;
+one was proposed and refused. The opener is still the binding constraint and
+nothing about the claim chain reaches it.
+
+---
+
+## R-36 — The door admits a claim about material the being has already read, named by a label that means nothing outside the store. Medium.
+
+**Claim 3, above.** Its resolver is *"Study src-850 (behavioral study on AI
+predictions)"*. Two faults, one of them the more interesting.
+
+**The label.** `src-850` is the dossier's own reference — `ingest_log` row 850,
+which is `arxiv:http://arxiv.org/abs/2603.28944v2`, a real paper the being read
+and kept four claims from. The source is genuine and external; **its name is
+not.** A resolver reading "Study src-850" searches for a string that exists
+nowhere outside this store, and the public identity it needs — the arXiv id — is
+sitting in `ingest_log` unused. R-35's specificity check passes it on the digits.
+
+**The event is in the past.** The claim settles on *"the publication of the final
+results of study src-850"* — a paper already published, already read, already
+extracted. The door checks that the **date** is in the future
+(`MIN_HORIZON_DAYS`) and never that the **event** is. A claim about what an
+already-read document says is knowable now; dressed in a future tense and given a
+horizon, it passes.
+
+**Both are the same fault the door keeps having**: it checks that a field is
+present and well-formed, never that the thing the field names can do the job.
+R-31 (a date the model could not know), R-33 (a terminus nothing reaches), R-35
+(a subject no search could find), and now R-36 (a source with no public name, and
+an event already past).
+
+**The fix, when the window allows it.** Resolve `src-N` to its stored URL or
+outlet at door time and refuse if it cannot be resolved — the store already holds
+the mapping. And refuse a resolver naming material already in this concern's
+dossier: if the being has read it, the claim is about the past.
+
+**Not fixed now, deliberately.** The evidence window opened 2026-08-19 20:07 and
+these four claims are its first output. Changing the door again resets it, and
+R-36 costs one weak claim in four while a fifth cognition-path change in
+twenty-four hours costs the ability to attribute anything.
+
+---
+
+### Red team of this diagnosis — I got it wrong twice before getting it right
+
+**First pass: "the resolver names an internal identifier."** True but shallow,
+and it framed the label as the whole fault when the already-read event is worse.
+
+**Second pass: "src-850 is v1 substrate telemetry."** Flatly wrong. I looked up
+`episodes.id = 850` — `prefix_cache_miss_rate_high: 1.00` — and was one sentence
+from filing a Rule 4 alarm about the being citing its own infrastructure as a
+world source. `src-N` indexes **`ingest_log`**, not `episodes`
+(`newz/concerns/store.py:84`). Two tables, same integers, and the wrong one told
+a dramatic story.
+
+**What that says about the read.** The finding survived, in weaker form, because
+I checked the mapping before asserting it. Had I not, R-13's ghost would now be
+recorded as live in the claim path on the strength of a table mix-up — and it
+would have been plausible, because R-13 *is* real and 1,042 v1 substrate rows
+*are* still in the store. **A false finding that fits an existing pattern is the
+easiest kind to file**, and this project's instruments are exactly the sort that
+make such a mistake look measured.
+
