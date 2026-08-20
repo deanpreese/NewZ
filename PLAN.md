@@ -526,7 +526,9 @@ cation and the reversion condition are in the proposal's §5 — if coverage doe
 not rise, the answer is a rotation floor, never the old filter, whose
 demonstrated behaviour is that 27 curated sources contribute nothing forever.
 
-**Decision rule.** If it never happens, nothing else here matters: the outer loop
+**Decision rule** *(deferred 2026-08-20 by operator decision 6 — the plan
+proceeds without waiting; the four live claims resolve from 2026-12-18 and S1-E
+is read then)*. If it never happens, nothing else here matters: the outer loop
 did not close and the being remains what §1 measured, a system whose only
 interlocutor is itself. Diagnose in order — are its claims resolvable at all (if
 not, its concerns are unfalsifiable by construction and the openers are the fix);
@@ -1289,6 +1291,27 @@ and the work outgrowing the room.
    complains about, and nothing mechanical prevents that. Whether that is
    contamination or is exactly what §5 Priority 2 asks for is the operator's
    judgment, and it has been made.
+
+6. **Phase 1 proceeds without S1-E.** **DECIDED 2026-08-20 — the plan moves
+   forward without the claim chain proven** *(operator)*. Phase 1's epics are
+   built (E1.5 excepted); its evidence read is not answerable until the first
+   claim comes due on **2026-12-18**, and the plan will not wait a quarter for
+   it.
+
+   *What this sets aside, precisely.* Phase 1's `Decision rule` — *"if it never
+   happens, nothing else here matters"* — is **deferred, not answered**. The
+   four claims opened 2026-08-19/20 stay live and dated; they resolve on their
+   own whether or not anything waits for them, and S1-E is read when they do.
+
+   *What it does not set aside.* Nothing in the dependency graph. E3.2 depends
+   on E1.5, never on S1-E, so proceeding is dependency-legal — what is being
+   declined is a gate, not a prerequisite. Rule 6 puts this judgment with the
+   operator and it has been made.
+
+   *The cost, recorded so it is not rediscovered as a surprise.* Phases 2–6 are
+   built on a foundation that has not been shown to close. If S1-E fails in
+   December, everything above it was built on the premise the rule exists to
+   test, and the diagnosis then starts from further up.
 
 **Nothing blocks Phase 0.** It needs no decision and no reader — three pieces
 and the operator's read.
