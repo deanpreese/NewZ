@@ -1,5 +1,12 @@
+"""Does the conversation opener fire on exchanges that should produce a concern?
+
+Read-only against the live store — open_from_conversation only SELECTs.
+Cases chosen before the answers were known (the R-27 method).
+"""
 import sys
-sys.path.insert(0, '/Users/dean/Documents/source/NewZ')
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from newz.config import load
 from newz.llm.client import LLMClient
 from newz.store.db import open_db

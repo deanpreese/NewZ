@@ -6,7 +6,7 @@ created. Four cases, chosen before the answers were known.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, '/Users/dean/Documents/source/NewZ')
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from newz.config import load
 from newz.llm.client import LLMClient

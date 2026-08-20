@@ -231,6 +231,21 @@ Recorded as your decision (PLAN §Decisions): deferred until success warrants it
 Noted here so the acceptance stays visible rather than forgotten. Note that R-01
 is *not* covered by this acceptance.
 
+**Reaffirmed 2026-08-19** *(operator: "this will not be addressed until evidence
+makes it needed")*, and PLAN E3.5 amended to match — it had been written
+requiring a second-machine restore, which is a thing this risk had already
+deferred, so the epic was unclosable against the plan's own decision. E3.5 now
+closes on a clean-room rebuild from a verified backup, and records what that
+does not prove.
+
+**The acceptance now carries a trip-wire**, so it is deferred rather than
+forgotten: the first reverted autonomous restart under Phase 8, any backup
+failing verification, or rung 1 exposure. Phase 8 raises the stake — a loop that
+restarts the being weekly makes a machine fault costlier than it was when every
+change was made by hand — and that is precisely why the acceptance is recorded
+with the condition that would end it rather than left standing on its original
+reasoning.
+
 ## R-12 — The model still does most of the work. Inherent, tracked.
 
 ~20KB of identity context shapes each generation; the rest is the model. This is
