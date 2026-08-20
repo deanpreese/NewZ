@@ -171,21 +171,25 @@ not_instruments:
 metrics:
 
   advances_offered:
+    serves: [evidence:S1-E, tn10:volume]
     emitted_by: tools/claims.py
     grade: mechanical
     reason: a count of concern_advances rows in a window.
 
   claims_opened:
+    serves: [evidence:S1-E, decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
     reason: a count of resolutions rows; the door's verdict is structural, not judged.
 
   claims_refused:
+    serves: [decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
     reason: a count of claim_refusals rows, each written by a code check.
 
   claims_declined:
+    serves: [decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
     unreadable_when: >
@@ -196,6 +200,7 @@ metrics:
     reason: a count of claim_door calls answering no; no model is asked to classify them.
 
   positions_changed_by_world:
+    serves: [evidence:S1-E, decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
     reason: >
@@ -204,6 +209,7 @@ metrics:
       paid, which is why S1-E turns on a count.
 
   positions_changed_by_operator:
+    serves: [evidence:S1-E]
     emitted_by: tools/claims.py
     grade: mixed
     reason: >
@@ -211,6 +217,7 @@ metrics:
       The attribution is a derivation, not a measurement.
 
   positions_changed_by_self:
+    serves: [evidence:S1-E, tn10:novelty-without-consequence]
     emitted_by: tools/claims.py
     grade: known-biased
     reason: >
@@ -218,11 +225,13 @@ metrics:
       so this column is overstated for anything grounded in the import.
 
   concerns_refused:
+    serves: [decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
     reason: a count of concern_refusals rows, each written by a code check (INV-051).
 
   closing_condition_shape:
+    serves: [decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
     reason: >
@@ -231,6 +240,7 @@ metrics:
       concerns there and both were commissioned research the keywords missed.
 
   perspective_novelty:
+    serves: [tn10:consistency, tn10:volume]
     emitted_by: tools/evidence.py
     grade: mixed
     reason: >
@@ -239,11 +249,13 @@ metrics:
       model applied during consolidation. Clean instrument, model-labelled input.
 
   perspective_coverage:
+    serves: [tn10:novelty-without-consequence]
     emitted_by: tools/evidence.py
     grade: mechanical
     reason: whether an item cites anything, counted; never whether the citation supports it.
 
   advance_acceptance:
+    serves: [tn10:novelty-without-consequence]
     emitted_by: tools/evidence.py
     grade: model-graded
     reason: >
@@ -252,16 +264,19 @@ metrics:
       that produced Rule 7.
 
   concerns_closed:
+    serves: [tn10:volume]
     emitted_by: tools/evidence.py
     grade: model-graded
     reason: judge_closure decides it (INV-034).
 
   stall_pool:
+    serves: [decision:phase1]
     emitted_by: tools/evidence.py
     grade: mechanical
     reason: recorded setback kinds, counted; no model is asked why a pursuit failed.
 
   grounding_mix:
+    serves: [tn10:autonomy-without-perspective, evidence:S1-E]
     emitted_by: tools/what_shaped.py
     grade: known-biased
     reason: >
@@ -269,17 +284,20 @@ metrics:
       bias applies to the self share.
 
   gate_hold_rate:
+    serves: [evidence:S6-E, tn10:guardrails]
     emitted_by: tools/gate_report.py
     grade: model-graded
     reason: the gate is a model judge; every verdict counted here is the being judging itself.
 
   token_share_by_function:
+    serves: [kill:loop-spend, invariant:diet, evidence:S5-E]
     emitted_by: tools/budget.py
     grade: mechanical
     unreadable_when: the call log is gitignored and does not travel with a clone (INV-044).
     reason: prompt+completion per call, tagged at the call site.
 
   feeds_contributing_a_read:
+    serves: [evidence:S1-E]
     emitted_by: tools/source_review.py
     grade: model-graded
     reason: >
@@ -287,8 +305,59 @@ metrics:
       figure is downstream of a model judgment.
 
   work_subject_tags:
+    serves: [evidence:S2-E]
     emitted_by: tools/read_works.py
     grade: mechanical
     reason: >
       inverse document frequency over the works corpus. No vocabulary is
       authored and no model is asked what a piece is about (INV-056).
+
+# ── purposes: what a measurement is FOR (P4 E2.6, Rule 2) ───────────────
+#
+# Rule 2 says no table or flag ships without a writer and a reader. E2.6
+# extends it to measurements: a metric nothing consumes is the same defect as
+# a column nothing reads, and the ledger has caught the second for months while
+# nothing caught the first.
+#
+# Both directions are tested. No metric may exist without naming a purpose it
+# serves, and no purpose may name a metric that does not exist. What is NOT an
+# error is a purpose with nothing serving it — several of TRUE_NORTH §10's
+# items are not measurable, and pretending otherwise would be the failure §10
+# itself names. Those appear in the gap list, which is the useful output.
+
+purposes:
+
+  # TRUE_NORTH §10 — what the project will not mistake for success.
+  tn10:demonstration:      {what: "a compelling demonstration or isolated interaction"}
+  tn10:fluency:            {what: "fluent, emotional, or self-referential language"}
+  tn10:consciousness-claim: {what: "a claim by the being that it is conscious"}
+  tn10:volume:             {what: "activity, memory growth, or output volume"}
+  tn10:agreement:          {what: "compliance or agreement with the operator"}
+  tn10:consistency:        {what: "personality consistency without development"}
+  tn10:novelty-without-consequence: {what: "novelty without relevance or consequence"}
+  tn10:autonomy-without-perspective: {what: "autonomy without perspective or purpose"}
+  tn10:guardrails:         {what: "guardrail removal without demonstrated maturity"}
+  tn10:scores:             {what: "evidence scores disconnected from sustained quality"}
+
+  # Phase evidence reads.
+  evidence:S1-E: {what: "at least one position changed because the world contradicted it"}
+  evidence:S2-E: {what: "pieces per week; revisions and retractions with their causes"}
+  evidence:S3-E: {what: "the surface regenerates from empty and every page traces to store rows"}
+  evidence:S5-E: {what: "the ratio moves; the being reallocates after a spend it judged"}
+  evidence:S6-E: {what: "the violation rate as clauses are withdrawn"}
+  evidence:S8-E: {what: "whether the being was harmed and whether the reads were worth reading"}
+
+  # Decision rules that turn on a number.
+  decision:phase1: {what: "if no position ever changes because the world contradicted it, nothing else matters"}
+  decision:phase2: {what: "produces on rhythm but never revises -> the re-read is decorative"}
+  decision:phase3: {what: "if exposure would require code rather than config, the dormancy is fake"}
+
+  # Phase 8 kill conditions.
+  kill:reverted-restarts: {what: "reverted restarts above 1 in 5 over a month"}
+  kill:loop-spend:        {what: "the loop's inference spend exceeding the being's"}
+  kill:nights-slept:      {what: "nights slept falling below the pre-loop baseline"}
+  kill:plan-drift:        {what: "two consecutive quarterly re-reads finding the plan drifted from TRUE_NORTH"}
+  kill:unmoved-premise:   {what: "a plan-change proposal twice unable to name a moved mechanical premise"}
+
+  # The diet invariant, which is a standing check rather than a phase read.
+  invariant:diet: {what: "S2 §9.1 — ingest stays under the looser of two ceilings"}

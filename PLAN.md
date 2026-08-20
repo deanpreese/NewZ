@@ -592,7 +592,7 @@ cannot be cited by anything downstream — tested in both directions.
 *Depends on:* E8.1.
 *Hooks:* **Rule 7**, and Rule 4, which this is the mechanism for.
 
-**E2.6 — the metric-to-purpose map**
+**E2.6 — the metric-to-purpose map** *(built 2026-08-20)*
 *Delivers:* every metric names what it is *for* — a §10 item, a phase Evidence
 read, a `Decision rule`, or a Phase 8 kill condition — and every one of those
 names the metrics that serve it.

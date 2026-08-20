@@ -5,6 +5,7 @@
     python tools/evidence.py 1e        # Perspective diffs (Phase 1)
     python tools/evidence.py 2e        # pursuit (Phase 2)
     python tools/evidence.py 2e --stalls   # every stall, with its cause
+    python tools/evidence.py purposes      # what each metric is for, and the gaps
 
 Read-only, and no model is consulted. P2 Rule 0: every number here carries
 its method, including the ones that cannot be produced.
@@ -45,6 +46,36 @@ def head(title: str) -> None:
 
 def when(ts: float) -> str:
     return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
+
+
+def report_purposes() -> None:
+    """The metric-to-purpose map, and what nothing measures (E2.6).
+
+    The gap list is the point. Six of TRUE_NORTH §10's ten items are not
+    measurable and manufacturing a proxy for them would be §10's own failure
+    mode — so this says which parts of the direction the project is steering by
+    faith rather than by instrument, instead of implying it measures all of it.
+    """
+    from newz.evidence.purpose import check, metrics, purposes, served_by, unserved
+
+    head("Metric-to-purpose map (P4 E2.6, Rule 2 for measurements)")
+    errors = check()
+    print(f"  {len(metrics())} metrics, {len(purposes())} purposes, "
+          f"map {'CLEAN' if not errors else 'BROKEN'}")
+    for e in errors:
+        print(f"    ERROR {e}")
+
+    print("\n  what each purpose is measured by:")
+    for pid, row in sorted(purposes().items()):
+        ms = served_by(pid)
+        mark = " " if ms else "!"
+        print(f"   {mark} {pid:<36} {', '.join(ms) if ms else '— nothing measures this'}")
+
+    gaps = unserved()
+    print(f"\n  {len(gaps)} of {len(purposes())} purposes have no metric.")
+    print("  Not an error. Some are unmeasurable by nature and a proxy would be")
+    print("  the failure §10 names. Others are simply not built yet — those are")
+    print("  the ones worth reading twice.")
 
 
 def report_1e(conn) -> None:
@@ -201,7 +232,8 @@ def report_2e(conn, repo_root: Path, *, show_stalls: bool = False) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("which", nargs="?", default="all", choices=["1e", "2e", "all"])
+    ap.add_argument("which", nargs="?", default="all",
+                    choices=["1e", "2e", "purposes", "all"])
     ap.add_argument("--stalls", action="store_true",
                     help="list every stalled concern with its cause")
     args = ap.parse_args()
@@ -209,6 +241,10 @@ def main() -> int:
     cfg = load()
     conn = open_db(cfg.main_db_path, read_only=True)
     try:
+        if args.which == "purposes":
+            report_purposes()
+            print()
+            return 0
         if args.which in ("1e", "all"):
             report_1e(conn)
         if args.which in ("2e", "all"):
