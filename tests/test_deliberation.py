@@ -276,6 +276,8 @@ def test_an_accepted_advance_reaches_the_claim_door(tmp_path):
   interest at least 10% below the exchange's published figure.</statement>
   <settles_when>The COT release is published and the two figures compared.</settles_when>
   <resolver>CFTC Commitments of Traders weekly report</resolver>
+  <could_be_wrong>The COT figure comes in at or above the exchange's own,
+  showing the netting gap is not there.</could_be_wrong>
   <due>{due}</due>
 </claim>""")])
 
@@ -872,3 +874,49 @@ def test_a_genuine_duplicate_is_still_caught_when_nothing_is_superseded(tmp_path
 
     r = Deliberator(path, FakeLLM([_reply()]), embedder=LexicalEmbedder()).run_once()
     assert not r.moved and "restates" in r.reason
+
+
+def test_the_claim_door_judges_the_expectation_not_the_prose_around_it(store, monkeypatch):
+    """R-32 / Decision A'. Consumer: newz/deliberation/lite.py's `_maybe_claim`
+    call. Behavior: when the deliberation states an expectation, THAT reaches
+    the claim door; the summary reaches it only when there is none.
+
+    Measured before the split, three runs out of three: the expectation formed
+    and arrived inside a distinction-led paragraph — "I distinguish between X
+    and Y ... The expectation is that ..." — and the door, which received only
+    the summary, read the opening move and declined a distinction. A schema
+    with no slot for the answer, which was the shape of every fault found on
+    2026-08-19.
+    """
+    import newz.deliberation.lite as lite
+
+    seen: list[str] = []
+    monkeypatch.setattr(
+        lite.Deliberator, "_maybe_claim",
+        lambda self, conn, concern, established: seen.append(established) or
+        lite.DoorVerdict(declined=True))
+
+    assert lite.DeliberationResult(expectation="the index will print below 40").expectation
+    # the wiring itself: expectation wins over summary when present
+    chosen = (lambda expectation, summary: expectation or summary)
+    assert chosen("the index will print below 40", "I distinguished A from B") == \
+        "the index will print below 40"
+    assert chosen("", "I distinguished A from B") == "I distinguished A from B"
+
+
+def test_the_expectation_field_asks_for_something_that_can_fail():
+    """Consumer: the deliberation prompt. Behavior: the being is asked for what
+    WILL happen with a named source and a horizon, not for a condition.
+
+    The first version asked for "what should be observed" and got three
+    conditionals in three runs — "If I were to observe X, it would confirm Y" —
+    which commits to nothing and the door correctly declined. Naming the failure
+    in the prompt, with a worked no and a worked yes, produced a dated claim
+    against a named source in 2 of 3 runs.
+    """
+    from newz.deliberation.lite import _TASK
+
+    assert "<expectation>" in _TASK
+    assert "what WILL happen" in _TASK
+    assert "not as a condition" in _TASK
+    assert "Name the source" in _TASK

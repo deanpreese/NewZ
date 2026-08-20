@@ -1,16 +1,26 @@
 """Option (b) from #16: does the curiosity opener decline because it is
 correctly strict, or because it declines everything?
 
-Read-only against the live store — open_from_reading only SELECTs; nothing is
-created. Four cases, chosen before the answers were known.
+Four cases, chosen before the answers were known. This settled R-27 at 4 of 4
+on 2026-08-15.
+
+**Runs against a throwaway copy, and clears the caps on it.** Against the live
+store it reported `already opened 6 today` on all four cases and measured
+nothing — the daily cap answers before the opener does, so an instrument aimed
+at the opener's judgment was reading its rate limit instead. Found 2026-08-19,
+by which time the probe had been unable to answer its own question for however
+long the cap had been reached on a probe day.
 """
+import shutil
+import sqlite3
 import sys
+import tempfile
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from newz.config import load
 from newz.llm.client import LLMClient
-from newz.store.db import open_db
+from newz.store.migrations import apply_pending
 from newz.concerns.opener import open_from_reading
 
 CASES = [
@@ -37,7 +47,15 @@ CASES = [
 
 cfg = load()
 client = LLMClient(cfg, timeout=300)
-conn = open_db(cfg.main_db_path)
+
+_tmp = Path(tempfile.mkdtemp()) / "opener_probe.db"
+shutil.copy(cfg.main_db_path, _tmp)
+conn = sqlite3.connect(_tmp)
+conn.row_factory = sqlite3.Row
+apply_pending(conn, Path(__file__).resolve().parent.parent / "newz" / "store" / "sql" / "main")
+# The caps are about the being's life, not about this question.
+conn.execute("UPDATE concerns SET status='closed', opened_at=opened_at-864000")
+conn.commit()
 
 for name, findings in CASES:
     p = open_from_reading(conn, client, findings=findings,

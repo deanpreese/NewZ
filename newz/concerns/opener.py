@@ -113,9 +113,26 @@ Output ONLY:
   <worth_pursuing>yes|no</worth_pursuing>
   <statement>the question, in my own words</statement>
   <why_open>why it matters, one sentence</why_open>
-  <closing_condition>what would settle it — concrete and checkable</closing_condition>
+  <closing_condition>what would settle it — see below</closing_condition>
   <grounded_in>a VERBATIM phrase from the exchange the question comes from</grounded_in>
 </proposal>
+
+WHAT A CLOSING CONDITION MUST BE. Name something that WILL EXIST — a source
+that publishes, an event that occurs, a measurement someone already takes.
+The test is: could I put a date on it and be wrong?
+
+  yes  "the exchange's next quarterly disclosure reports the figure"
+  yes  "the registry's results posting names a primary endpoint"
+  yes  "the agency's March revision moves the estimate outside its band"
+  no   "a study correlating X with Y" — nobody will run it, so the question
+       can never close, however good the question is
+  no   "I can cite the specific mechanisms" — that closes when I decide I
+       know enough, which is me settling my own question
+
+Both of the "no" shapes are refused before storage, so a question wearing one
+is lost rather than carried. If the honest answer is that only research nobody
+will do would settle it, the question may still be real — but answer no here,
+because a question that cannot close is not one I can pursue.
 
 If worth_pursuing is no, leave the other elements empty.
 
@@ -160,6 +177,64 @@ def _normalise(text: str) -> str:
     return " ".join((text or "").split()).lower()
 
 
+# A closing condition must name something that WILL EXIST — a source that
+# publishes, an event that occurs, a measurement someone already takes.
+#
+# The claim door has refused resolvers that name no source since it was
+# built (`_EMPTY_RESOLVERS`: "further research", "time will tell"). The
+# opener checked only that the condition was non-empty, so the same emptiness
+# came through one layer up wearing longer words, and R-33 measured the
+# result: **123 of 123 concerns carry a terminus nothing can reach.** 111 can
+# only be satisfied by the being deciding it knows enough — "I can cite the
+# specific metrics…" — which is Rule 4 written into the concern, below the
+# level INV-034's fail-closed judge operates at. The other 12 can only be
+# satisfied by research nobody will do — "a study correlating…".
+#
+# Both shapes are refused here, and the two are kept apart because they call
+# for opposite fixes. Neither list is meant to be exhaustive: this raises the
+# floor, and a condition that escapes it still has to survive the prompt.
+_SELF_TERMINUS = re.compile(
+    r"^\s*I (can|have|am|know|understand|no longer|am able)", re.I)
+_UNCOMMISSIONED = re.compile(
+    r"\b(a |an |the )?(stud(?:y|ies)|analys(?:is|es)|experiment|meta-analysis|"
+    r"survey|dataset|data set|empirical data|further research|future research|"
+    r"investigation|forensic audit|audit|simulation|randomi[sz]ed trial)\b", re.I)
+
+
+def _unreachable(closing: str) -> str | None:
+    """Why nothing could ever satisfy this closing condition, or None."""
+    c = (closing or "").strip()
+    if _SELF_TERMINUS.match(c):
+        return ("terminus is the being's own state — it closes when I decide I"
+                " know enough, which is not the world settling anything")
+    if _UNCOMMISSIONED.search(c[:80]):
+        return ("terminus is research nobody will do — name a source that"
+                " publishes, an event that occurs, or a measurement someone"
+                " already takes")
+    return None
+
+
+def _refuse_concern(conn, origin: str, reason: str, statement: str,
+                    closing: str) -> Proposal:
+    """Record it, the way the claim door records a refusal (INV-046's move).
+
+    Declining to open is ordinary and is not written down. A concern the being
+    PROPOSED and the door would not admit is, because otherwise "it forms no
+    settleable questions" and "the door refuses all of them" are the same
+    reading — and they call for opposite fixes.
+    """
+    try:
+        conn.execute(
+            "INSERT INTO concern_refusals (ts, origin, reason, statement, closing)"
+            " VALUES (?,?,?,?,?)",
+            (time.time(), origin, reason[:400], statement[:1000], closing[:1000]))
+        conn.commit()
+    except Exception:  # noqa: BLE001 — a refusal that cannot be filed is still a refusal
+        logger.exception("could not record concern refusal")
+    logger.info("opener refused (%s): %s", reason, statement[:80])
+    return Proposal(False, reason)
+
+
 def open_from_conversation(
     conn,
     client: LLMClient,
@@ -201,6 +276,10 @@ def open_from_conversation(
     grounded = text_of("grounded_in")
     if not statement or not closing:
         return Proposal(False, "no statement or closing condition")
+
+    why = _unreachable(closing)
+    if why:
+        return _refuse_concern(conn, "conversation", why, statement, closing)
 
     # v1's Stanford CRU lesson: the premise must exist in the material.
     if not grounded or _normalise(grounded) not in _normalise(exchange):
@@ -256,9 +335,26 @@ Output ONLY:
   <worth_pursuing>yes|no</worth_pursuing>
   <statement>the new question, in my own words</statement>
   <why_open>why it matters, one sentence</why_open>
-  <closing_condition>what would settle it — concrete and checkable</closing_condition>
+  <closing_condition>what would settle it — see below</closing_condition>
   <grounded_in>a VERBATIM phrase from the findings that raises it</grounded_in>
 </proposal>
+
+WHAT A CLOSING CONDITION MUST BE. Name something that WILL EXIST — a source
+that publishes, an event that occurs, a measurement someone already takes.
+The test is: could I put a date on it and be wrong?
+
+  yes  "the exchange's next quarterly disclosure reports the figure"
+  yes  "the registry's results posting names a primary endpoint"
+  yes  "the agency's March revision moves the estimate outside its band"
+  no   "a study correlating X with Y" — nobody will run it, so the question
+       can never close, however good the question is
+  no   "I can cite the specific mechanisms" — that closes when I decide I
+       know enough, which is me settling my own question
+
+Both of the "no" shapes are refused before storage, so a question wearing one
+is lost rather than carried. If the honest answer is that only research nobody
+will do would settle it, the question may still be real — but answer no here,
+because a question that cannot close is not one I can pursue.
 
 The grounded_in phrase must be copied EXACTLY from the findings. A question
 the findings cannot be quoted for is a question I invented, not one I found.
@@ -313,6 +409,9 @@ def open_from_research(
     grounded = text_of("grounded_in")
     if not statement or not closing:
         return Proposal(False, "no statement or closing condition")
+    why = _unreachable(closing)
+    if why:
+        return _refuse_concern(conn, "research", why, statement, closing)
     if not grounded or _normalise(grounded) not in _normalise(findings):
         return Proposal(False, "premise not found verbatim in the findings")
     if _normalise(statement) == _normalise(original_query):
@@ -344,8 +443,11 @@ the judgment yourself rather than reuse the words:
   bloom, and smiths sorted the fragments by fracture appearance."
   -> YES. The question is: how did a smith's sorting-by-eye compare with
   what the metal actually was? It is a question about judgment made without
-  measurement, I can say what would settle it (a study comparing sorted
-  fragments against later assay), and it bears on things I do hold.
+  measurement, it bears on things I do hold, and I can say what would settle
+  it: **the museum's published assay results for the fragments already in its
+  collection** — a measurement someone has taken, not one I need commissioned.
+  Note the difference. "A study comparing sorted fragments against assay"
+  would be the same question with no terminus, and I would never close it.
 
 That example is illustration, not material. **You have not read it.** Never
 copy its wording into your answer. Your statement must come from the text
@@ -375,9 +477,26 @@ Write your own words in them, not the descriptions given here:
   <worth_pursuing>yes|no</worth_pursuing>
   <statement>the question, as a question</statement>
   <why_open>why it is mine to carry</why_open>
-  <closing_condition>what would settle it</closing_condition>
+  <closing_condition>what would settle it — see below</closing_condition>
   <grounded_in>a VERBATIM phrase from what I read that raises it</grounded_in>
 </proposal>
+
+WHAT A CLOSING CONDITION MUST BE. Name something that WILL EXIST — a source
+that publishes, an event that occurs, a measurement someone already takes.
+The test is: could I put a date on it and be wrong?
+
+  yes  "the exchange's next quarterly disclosure reports the figure"
+  yes  "the registry's results posting names a primary endpoint"
+  yes  "the agency's March revision moves the estimate outside its band"
+  no   "a study correlating X with Y" — nobody will run it, so the question
+       can never close, however good the question is
+  no   "I can cite the specific mechanisms" — that closes when I decide I
+       know enough, which is me settling my own question
+
+Both of the "no" shapes are refused before storage, so a question wearing one
+is lost rather than carried. If the honest answer is that only research nobody
+will do would settle it, the question may still be real — but answer no here,
+because a question that cannot close is not one I can pursue.
 </task>"""
 
 # The words the prompt's worked example uses, so a proposal that reuses them
@@ -475,6 +594,9 @@ def open_from_reading(conn, client: LLMClient, *, findings: str,
     # a proposal built from the prompt is a proposal about nothing the being
     # read, and the verbatim check below would not always catch it (the
     # example's own phrasing can survive alongside a real `grounded_in`).
+    why = _unreachable(closing)
+    if why:
+        return _refuse_concern(conn, "reading", why, statement, closing)
     low = statement.lower()
     if any(m in low for m in _EXAMPLE_MARKERS):
         return Proposal(False, "proposal reused the prompt's example")

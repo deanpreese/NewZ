@@ -102,10 +102,28 @@ Output ONLY:
   <statement>what will be observed, specifically</statement>
   <settles_when>what exactly would show it true or false</settles_when>
   <resolver>the named source that will show it</resolver>
-  <due>YYYY-MM-DD</due>
+  <due_in_days>a whole number of days from today, between 2 and 365</due_in_days>
+  <could_be_wrong>what the OTHER outcome looks like — what I would see if this
+                  turns out false</could_be_wrong>
 </claim>
 
 If worth_claiming is no, leave the other elements empty.
+
+<could_be_wrong> is the check on whether this is a claim at all. If I cannot
+describe the world in which it comes out false, I have not predicted anything —
+I have described something already settled, or something that could not have
+gone otherwise. Say what the source would show instead. "It would not happen"
+is not an answer; say what WOULD.
+
+**Name what you are talking about.** A claim the reader cannot look up cannot
+be checked: the source will be searched for, and a statement with no name, no
+place, no date and no identifier gives it nothing to search. "The agency's
+figure will differ from the market's value" names neither agency nor market and
+is refused. "The BLS September Employment Situation Summary" names one.
+
+`due_in_days` is a HORIZON, not a date: how long until the source will have
+spoken. Today's date is given to you above — use it when the statement itself
+needs to name a period, and never guess one.
 
 Worked examples, in fields I do not work in, so you have to do the judgment
 rather than reuse the words.
@@ -119,7 +137,7 @@ rather than reuse the words.
      settles_when: The COT release for that week is published and the two
      figures are compared.
      resolver: CFTC Commitments of Traders weekly report
-     due: a date about six weeks out
+     due_in_days: 42
      Being wrong here costs me the position that produced it. That is the
      point.
 
@@ -153,6 +171,10 @@ class DoorVerdict:
         return self.claim_id is not None
 
 
+def _normalised(text: str) -> str:
+    return " ".join((text or "").split()).lower()
+
+
 def _record_refusal(conn: sqlite3.Connection, concern_id: int | None,
                     reason: str, *, claim: str = "", condition: str = "",
                     resolver: str = "", due_text: str = "") -> None:
@@ -165,16 +187,73 @@ def _record_refusal(conn: sqlite3.Connection, concern_id: int | None,
     logger.info("claim door refused (%s): %s", reason, claim[:80])
 
 
+# A resolver settles a claim only by finding a VERBATIM quote in material it
+# fetched (INV-047), so a claim that gives a search nothing to key on cannot be
+# settled however well-formed it is. R-35 measured this: the door admitted
+#
+#   "The official agency's final published figure for the wildfire acreage will
+#    differ from the prediction market's resolved value by more than 5%."
+#
+# — which names no agency, no fire, no market and no year. The resolver ran,
+# read a document in full, and reported it could not find "the specific
+# official agency's final published figure ... for the specific event in
+# question". Settleable in grammar, unsettleable in fact.
+#
+# The test is deliberately crude and is a floor, not a wall: a proper noun, a
+# year, or an identifier — something a search can be built around. Refusals are
+# recorded, so over-firing is visible rather than silent.
+_STOPCAPS = {"The", "A", "An", "I", "If", "In", "On", "By", "This", "That",
+             "There", "When", "Where", "While", "It", "Its", "My", "We"}
+_IDENTIFIER = re.compile(r"\b(?:\d{4}|[A-Z]{2,}[-\s]?\d+|\$[\d,.]+)\b")
+
+
+def _names_something(claim: str) -> bool:
+    """Could a search be built from this? A proper noun, a year, an id."""
+    if _IDENTIFIER.search(claim):
+        return True
+    for tok in re.findall(r"\b[A-Z][A-Za-z&.\-]{1,}\b", claim[1:]):
+        if tok not in _STOPCAPS:
+            return True
+    return False
+
+
 def _parse_due(text: str, now: float) -> tuple[float | None, str | None]:
-    """A date, or the reason it is not usable as one."""
-    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", text)
-    if not m:
-        return None, "no readable date — a claim without one is 'I was right eventually'"
-    try:
-        due = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3))).timestamp()
-    except ValueError:
-        return None, f"unreadable date: {text[:40]}"
-    days = (due - now) / DAY
+    """A horizon in days, or the reason it is not usable as one.
+
+    **Why a horizon and not a date** (R-31, 2026-08-19). This asked for an
+    absolute `YYYY-MM-DD` and never told the model what today was. Asked
+    directly, at temperature 0, every role answers "I do not have access to
+    real-time information, so I cannot provide today's date" — so a `yes`
+    verdict had no compliant way to fill the field, and filled it from the
+    training prior instead: `<due>2024-12-31</due>` against a real date of
+    2026-08-19. Every well-formed claim the being ever made was then refused
+    for being ~600 days in the past, and recorded against it as though it had
+    committed to something already settled.
+
+    The schema, not the model, was the fault. It compelled the fabrication of
+    a fact the model had explicitly disclaimed — which the constitution's own
+    calibration-001 and don't-fabricate-memory-001 forbid, leaving no legal
+    answer. A horizon is a judgment the model can actually make.
+
+    A full date is still accepted, because a local model asked for a number
+    will sometimes give a date anyway, and one that is genuinely in range
+    should not be thrown away. Its bounds check is the same.
+    """
+    date = re.search(r"(\d{4})-(\d{2})-(\d{2})", text)
+    if date:
+        try:
+            due = datetime(int(date.group(1)), int(date.group(2)),
+                           int(date.group(3))).timestamp()
+        except ValueError:
+            return None, f"unreadable date: {text[:40]}"
+        days = (due - now) / DAY
+    else:
+        num = re.search(r"(\d+(?:\.\d+)?)", text)
+        if not num:
+            return None, ("no readable horizon — a claim without one is"
+                          " 'I was right eventually'")
+        days = float(num.group(1))
+        due = now + days * DAY
     if days < MIN_HORIZON_DAYS:
         return None, (f"due in {days:.1f} days — a claim about what has already"
                       " happened is not a prediction")
@@ -211,7 +290,8 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
     if opened_today(conn, now=now) >= MAX_OPENED_PER_DAY:
         return DoorVerdict(declined=True)
 
-    body = (f"<concern>{concern_statement}</concern>\n"
+    body = (f"<today>{datetime.fromtimestamp(now):%Y-%m-%d}</today>\n"
+            f"<concern>{concern_statement}</concern>\n"
             f"<established>{established}</established>")
     try:
         result = client.complete("DEEP", _SYSTEM, f"{_TASK}\n\n{body}",
@@ -234,7 +314,8 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
     statement = text_of("statement")
     condition = text_of("settles_when")
     resolver = text_of("resolver")
-    due_text = text_of("due")
+    alternative = text_of("could_be_wrong")
+    due_text = text_of("due_in_days") or text_of("due")
 
     def refuse(reason: str) -> DoorVerdict:
         _record_refusal(conn, concern_id, reason, claim=statement,
@@ -252,6 +333,16 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
         if empty in low:
             return refuse(f"resolver names no source: {resolver!r} ({empty!r})")
 
+    if not _names_something(statement):
+        return refuse(
+            "claim names nothing a source could be searched for — no entity,"
+            " place, period or identifier, so no quote could ever settle it")
+
+    if not alternative or _normalised(alternative) == _normalised(statement):
+        return refuse(
+            "cannot say what being wrong would look like — a claim whose other"
+            " outcome I cannot describe is not a prediction")
+
     due, why = _parse_due(due_text, now)
     if due is None:
         return refuse(why or "no date")
@@ -260,11 +351,13 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
         claim_id = open_claim(conn, Claim(
             id=None, claim=statement, resolution_condition=condition,
             resolver=resolver, due_at=due, opened_at=now,
+            could_be_wrong=alternative,
             provenance=provenance or (f"concern:{concern_id}" if concern_id
                                       else "deliberation")))
     except UnsettleableClaim as e:
         return refuse(str(e))
 
-    logger.info("claim %d opened from concern %s, due %s: %s", claim_id,
-                concern_id, due_text, statement[:80])
+    logger.info("claim %d opened from concern %s, due %s (%s): %s", claim_id,
+                concern_id, datetime.fromtimestamp(due).strftime("%Y-%m-%d"),
+                due_text, statement[:80])
     return DoorVerdict(claim_id=claim_id)

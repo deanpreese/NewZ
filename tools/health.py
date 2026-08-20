@@ -56,12 +56,16 @@ def main() -> int:
     # ── process ──────────────────────────────────────────────────────────
     section("process")
     ps = subprocess.run(["ps", "-Ao", "pid,etime,command"], capture_output=True, text=True)
-    procs = [l for l in ps.stdout.splitlines() if "run_ambient.py" in l and "grep" not in l]
+    # Renamed from run_ambient.py 2026-08-19. Both are matched: a machine
+    # mid-rename must not read as "the being is down", and an old process
+    # still holding the deleted script must not read as "the being is up".
+    procs = [l for l in ps.stdout.splitlines()
+             if ("run_newz.py" in l or "run_ambient.py" in l) and "grep" not in l]
     if procs:
         pid, etime = procs[0].split()[0], procs[0].split()[1]
         line(OK, "ambient loop", f"pid {pid}, up {etime}")
     else:
-        line(FAIL, "ambient loop", "not running — start tools/run_ambient.py")
+        line(FAIL, "ambient loop", "not running — start tools/run_newz.py")
 
     # ── model endpoints ──────────────────────────────────────────────────
     section("substrate")

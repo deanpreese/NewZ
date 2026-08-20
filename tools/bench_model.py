@@ -102,8 +102,8 @@ AMBIENT_ENDPOINT = "http://10.0.0.214:1234/v1"
 #AMBIENT_MODEL    = "qwen/qwen3.6-35b-a3b"
 #AMBIENT_MODEL    = "qwen3.8-27b"
 #AMBIENT_MODEL    = "qwen3.5-9b"
-#AMBIENT_MODEL    = "lfm2-24b-a2b"
-AMBIENT_MODEL    = "openai/gpt-oss-20b"
+AMBIENT_MODEL    = "lfm2-24b-a2b"
+#AMBIENT_MODEL    = "openai/gpt-oss-20b"
 
 
 

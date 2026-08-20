@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections import Counter
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -252,3 +253,69 @@ def ingest_read(repo_root: Path, *, hours: float = 168.0) -> IngestRead:
             f"nothing ran, so there is no share to read"
         ))
     return IngestRead(report=report)
+
+
+# ── closing-condition shape (P4 E1.6, R-33) ─────────────────────────────
+#
+# A concern needs a closing condition or it is not pursuable (INV-034), and
+# the opener enforces only that it is non-empty. R-33 measured what got
+# through: 111 of 111 v1 concerns close on the being's own epistemic state
+# ("I can cite...", "I can state a view..."), and 12 of 12 v2 concerns close
+# on a study nobody will run. Neither can be reached, which is why
+# `resolutions` is empty and S1-E has never fired.
+#
+# Read, never judged: a regex on the opening clause. The buckets are meant to
+# be argued with, which is why the method ships next to the number (Rule 0).
+#
+# **`reachable` is a lower bound on nothing, and an upper bound on something.**
+# The first run of this classifier put 2 of 123 concerns in `reachable`; reading
+# them by hand, both were commissioned research the keywords had missed — "a
+# forensic audit comparing..." and "empirical data comparing...". Those two
+# terms are now caught, and the lesson generalises: a concern this calls
+# reachable has only escaped a keyword list, so treat `reachable` as a queue to
+# read rather than as a count to trust. `unreachable` is the honest figure.
+
+SELF_TERMINUS = re.compile(r"^\s*I (can|have|am|know|understand|no longer)", re.I)
+COMMISSIONED = re.compile(
+    r"\b(a |an |the )?(study|studies|analysis|analyses|experiment|meta-analysis|"
+    r"survey|dataset|data set|empirical data|research|investigation|audit|"
+    r"simulation|trial)\b", re.I)
+
+
+@dataclass
+class ClosingShapes:
+    self_terminus: int = 0      # closes when the being decides it knows enough
+    commissioned: int = 0       # closes on research nobody will do
+    reachable: int = 0          # names something that will exist
+    missing: int = 0
+
+    @property
+    def total(self) -> int:
+        return self.self_terminus + self.commissioned + self.reachable + self.missing
+
+    @property
+    def unreachable(self) -> int:
+        """Neither the being nor the world can close these."""
+        return self.self_terminus + self.commissioned + self.missing
+
+
+def closing_shapes(conn: sqlite3.Connection, *, since: float | None = None) -> ClosingShapes:
+    """How many concerns have a terminus anything could reach?"""
+    sql = "SELECT closing_condition FROM concerns"
+    args: tuple = ()
+    if since is not None:
+        sql += " WHERE opened_at >= ?"
+        args = (since,)
+    s = ClosingShapes()
+    for (cc,) in conn.execute(sql, args):
+        cc = (cc or "").strip()
+        if not cc:
+            s.missing += 1
+        elif SELF_TERMINUS.match(cc):
+            s.self_terminus += 1
+        elif COMMISSIONED.search(cc[:60]):
+            s.commissioned += 1
+        else:
+            s.reachable += 1
+    return s
+

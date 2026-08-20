@@ -872,3 +872,751 @@ R-28 narrowed the share cap on §13's own "target" wording, #33 sized the diet
 on §9.1's own "≤50% of tokens", v5/v6 moved two clauses on adjudicated hold
 records. The pattern only stays honest if the departures are as visible as
 the compliance. A deviation recorded late reads as a rationalisation.
+
+---
+
+## R-31 — The claim door cannot admit a claim, because the model does not know what year it is. **Critical for S1-E.**
+
+**Found 2026-08-19 by `tools/claim_door_probe.py`**, the R-27 method applied to
+E1.2: real material, expected verdicts written down before the calls, run
+against the live model.
+
+**The read that prompted it.** Between 06:26 and 18:07 the door was called 27
+times — once per accepted advance — and returned `worth_claiming: no` 27 times
+out of 27. `resolutions`, `claim_refusals` and `claim_costs` are all empty. The
+store cannot distinguish that from "never called", because INV-046 records
+refusals and deliberately not declines; only `logs/llm_calls.jsonl` could tell
+them apart, and it does not travel with a clone (INV-044's case).
+
+**Two faults, stacked, and the second was invisible behind the first.**
+
+**Fault 1 — the advances are not claimable, and the door is right about them.**
+All 28 of today's advances, and all 84 of v2's, are `kind='reasoning'`. Every
+one of today's opens with a first-person cognition verb — *"I distinguished…"*,
+*"I identified…"*, *"I realized…"*. Those are restatements of what the being now
+thinks, which is the door prompt's own worked NO example. The probe replayed all
+28 and the door declined all 28, matching the expectation recorded before the
+run. **Deliberation establishes distinctions, never a position the world could
+settle.** That is upstream of the door and is the larger problem.
+
+**Fault 2 — when the model DOES say yes, the door refuses it for a date it was
+never given.** Both passing controls — a dated, sourced statistical-revision
+consequence and a registry-versus-press-release contradiction, chosen outside
+the being's subjects — returned `worth_claiming: yes` with a well-formed claim,
+a real resolver and a real settling condition. Both were then refused:
+
+```
+due in -621.7 days — a claim about what has already happened is not a prediction
+due in -596.7 days — a claim about what has already happened is not a prediction
+```
+
+Raw output, captured directly: `<due>2024-12-31</due>`, and a statement about
+*"the September 2024 Employment Situation Summary"*. Today is **2026-08-19**.
+
+**The cause is one omission.** `propose_claim` builds its body as
+
+```python
+body = (f"<concern>{concern_statement}</concern>\n"
+        f"<established>{established}</established>")
+```
+
+— and `_TASK` asks for an absolute `<due>YYYY-MM-DD</due>` while **never stating
+what today is**. The model anchors on its training-era present, emits a date
+roughly 600 days in the past, and `_parse_due` correctly refuses it. The refusal
+logic is right; the input to it is impossible.
+
+**Why this matters more than its size.** S1-E — *"at least one position changed
+because the world contradicted it"* — is the read P4's Phase 1 decision rule
+says everything else depends on. **With Fault 2 present, S1-E cannot be met even
+if Fault 1 is fixed tomorrow.** Every claim the being ever proposes is refused
+for being backdated, and the refusal is recorded against the being as though it
+had committed to something already settled.
+
+**The fix.** Inject the current date into the body, and prefer a horizon in days
+over an absolute date so the model is never asked for something it cannot know.
+The horizon bounds already exist (`MIN_HORIZON_DAYS = 2`, `MAX_HORIZON_DAYS =
+365`); the prompt should state them and take `<due_in_days>` instead. Re-run the
+probe after: the controls must pass before any conclusion is drawn about the
+advances.
+
+**What is not yet known.** Whether Fault 1 survives Fault 2's repair — the two
+were measured together and only Fault 2 has a demonstrated cause. And whether
+other prompts that ask for a date have the same omission; a grep found no date
+injection anywhere in `newz/`, so the answer is probably yes wherever one is
+asked for.
+
+### R-31 amended — red team of the probe, and the corrected fix *(2026-08-19, same day)*
+
+**The diagnosis in the section above is right about the symptom and wrong about
+the cause.** Four corrections, from red-teaming the probe that produced it.
+
+**1. The root cause is a forced field, not a missing input.** Asked directly, at
+`temperature=0.0`, both roles answer:
+
+> *"I do not have access to real-time information, so I cannot provide today's
+> date."*
+
+The model is not confused about the year. It knows it does not know. The door's
+schema **requires** `<due>YYYY-MM-DD</due>`, so when it says yes it fills the
+field from its training prior. This is a prompt that compels confabulation of a
+fact the model has explicitly disclaimed — which also makes it a
+constitution-adjacent fault, since `calibration-001` and
+`don't-fabricate-memory-001` ask the being not to assert what it cannot ground,
+and here the schema leaves it no legal way to comply.
+
+**So the fix is not "tell it the date." It is "stop asking for one."** Take
+`<due_in_days>` — a horizon is a judgment the model can actually make ("this
+settles in about six weeks"), the bounds already exist as `MIN_HORIZON_DAYS = 2`
+and `MAX_HORIZON_DAYS = 365`, and `_parse_due` becomes `now + days * DAY` with
+no parsing and no timezone. Inject the date as well, for the statement text —
+"the September 2024 report" is wrong even when the horizon is right — but the
+horizon is the load-bearing half.
+
+**2. The blast radius was speculated and is now measured: the claim door only.**
+The resolver's body is `<claim>/<settles_when>/<resolver>/<material>` and asks
+for no date. The openers use `today` for daily caps, never in a prompt. The
+earlier note — *"probably yes wherever one is asked for"* — was wrong.
+Unverified and worth a look separately: prompts that reason about *recency*
+without emitting a date, such as feed triage and the sleep digest.
+
+**3. The probe's controls were weak, and the passing pair especially.** Both
+were written after reading the door's prompt, and both landed inside its worked
+examples — C2 is close to a paraphrase of the prompt's own registry-versus-press-
+release example, and C1 shares the statistical-reporting domain of its CFTC one.
+They demonstrate the model can follow a template. They do **not** show it can
+judge, so they cannot support any claim about the door's calibration beyond the
+date fault. Replacements must sit outside every domain the prompt exemplifies.
+
+**4. Fault 1 is a hypothesis, not a finding.** The probe's real-case expectation
+— decline all 28 — was recorded after reading the advances, so that half could
+not fail. What actually supports Fault 1 is the count: **84 of 84 v2 advances are
+`kind='reasoning'`**, and all 28 of today's open with a first-person cognition
+verb. Its real test is to repair Fault 2 and watch a week of life.
+
+**Order of work.**
+
+1. Replace `<due>` with `<due_in_days>` in the door, state the bounds in the
+   prompt, and inject the current date for the statement text.
+2. Rewrite the probe's controls outside the prompt's exemplified domains, and
+   add a fourth verdict branch for "refused a control for a reason unrelated to
+   judgment" — the probe currently calls this R-27's shape and it is not.
+3. Re-run. **The controls must pass before anything is concluded about Fault 1.**
+4. Then a week in life, and read whether any advance produces a claim. That is
+   Fault 1's only real test, and S1-E's.
+
+**Not yet done.** This changes a prompt in the being's cognition path, which is
+a deliberate act and the operator's.
+
+### R-31 — Fault 2 **CLOSED 2026-08-19**; Fault 1 confirmed and reclassified as R-32
+
+**The door now asks for a horizon, not a date.** `<due>YYYY-MM-DD</due>` became
+`<due_in_days>`, the bounds (2–365) are stated in the prompt rather than left to
+be guessed, the body carries `<today>`, and `_parse_due` still accepts a full
+date because a local model asked for a number will sometimes answer with one —
+a date in range is not thrown away, and one in the past is still refused.
+
+**Proven by the probe, with controls rebuilt outside the prompt's own worked
+domains** (the first set's flaw, recorded in the amendment above):
+
+```
+controls  4/4 as expected      ← was 2/4, both failures on the date
+real      0 of 28 advances produced a claim
+```
+
+Both passing controls opened a claim with a real resolver — USA-NPN's
+phenology database, and NVD for a CVE score — and the date injection is visible
+in the output: the statement now reads *"in the current year (2026)"* where the
+same probe produced *"the September 2024 Employment Situation Summary"* an hour
+earlier.
+
+**With the controls passing, the read on the real advances is now worth
+something, and it says the door was right about them all along.** 0 of 28, with
+the controls proving the door can and does admit a claim. So Fault 1 stands on
+its own evidence rather than behind Fault 2, and it is no longer a fault of the
+door. It is promoted to its own risk.
+
+---
+
+## R-32 — Deliberation establishes distinctions, never positions the world could settle. **High. This is what blocks S1-E.**
+
+**Opened 2026-08-19**, from R-31's repair. With the claim door proven working —
+4/4 controls, two claims opened against real resolvers — it declined **all 28**
+advances the being produced today, and the reason is visible in the advances
+themselves.
+
+**Every v2 advance ever recorded is `kind='reasoning'`: 84 of 84.** All 28 of
+today's open with a first-person cognition verb — *"I distinguished…"*,
+*"I identified…"*, *"I realized…"*. A representative one, verbatim:
+
+> *"I distinguished the 'Forer effect' (subjective belief in accuracy) from the
+> 'epistemic opacity' of the interaction process itself…"*
+
+That is a restatement of what the being now thinks. It is the claim prompt's own
+worked NO example, and the door is correct to decline it. **The being is
+producing conceptual refinement at a healthy rate and never producing a position
+about the world.**
+
+**Why this is the Phase 1 blocker.** S1-E asks for one position to change
+because the world contradicted it. Nothing can contradict a distinction. The
+outer loop is built, the door works, the resolver works — and there is nothing
+for them to act on, because the thing upstream never commits.
+
+**Where to look, in order.** The advance judge's own prompt and the `kind`
+vocabulary it can assign: if `reasoning` is the only kind ever recorded across
+84 advances, either the schema offers no alternative or the prompt never asks
+for one. Then the deliberation prompt that produces the summary — the phrasing
+is strikingly uniform, and R-27's lesson was that uniform output means the
+prompt is answering, not the material.
+
+**Falsifier.** If the advance vocabulary is widened and the deliberation prompt
+is asked for what follows *in the world* rather than what the being now holds,
+and 28 advances still yield 0 claims over a week in life, then the constraint is
+the model rather than the prompt — and that is Decision 2's R-22 question,
+arriving from a direction nobody planned.
+
+### R-32 — first half answered 2026-08-19: the vocabulary is not the problem; the label is wrong
+
+**The `kind` vocabulary exists and is adequate.** `newz/concerns/advance.py`
+offers `evidence | reasoning | rejected`, and the demotion rule is sound:
+`kind='evidence'` requires refs that actually reached the dossier, and an
+evidence claim without them is relabelled rather than rejected, because
+"parametric knowledge is not invention" (S2 §8.3).
+
+**What is actually happening is the opposite of what the code guards against.**
+Measured from `logs/llm_calls.jsonl` since 06:26:
+
+| | |
+|---|---|
+| deliberation responses carrying `<kind>` | **38** |
+| of those, claiming `<kind>evidence</kind>` | **0** |
+| of those, claiming `<kind>reasoning</kind>` | **38** |
+| citing 1–3 dossier refs anyway | **32 of 38** |
+| advances stored with non-empty `evidence_json` | **27 of 29** |
+
+**The being reads sources, cites them correctly, and then labels its own work
+ungrounded every single time.** The demotion path never fires because nothing is
+ever over-claimed; and **there is no promotion path** — `judge_advance` never
+asks whether a `reasoning` claim carrying grounded refs should have been
+`evidence`. Its final line reads:
+
+```python
+return AdvanceVerdict(True, "reasoning", "reasoning without sources, labelled",
+                      novelty, grounded)
+```
+
+— a reason string that says *without sources* while carrying a non-empty list of
+sources into the verdict.
+
+**The cause is a one-sided prompt**, and it is R-27's shape exactly:
+
+```
+<kind>evidence</kind> requires refs that appear in the dossier above.
+Reasoning without sources is legitimate — label it <kind>reasoning</kind>
+rather than dressing it as evidence.
+```
+
+Both sentences warn against over-claiming; neither says that under-claiming is
+also wrong. The claim door's prompt has this lesson written into a comment —
+*"Passing case first and worked, per the lesson this repository has paid for
+repeatedly: with a strict-only frame the model refuses everything"* — and the
+deliberation prompt never received it.
+
+**Severity, measured rather than assumed: low, for now.** A grep finds **no
+consumer anywhere** that branches on `kind == 'evidence'`. Nothing downstream is
+gated by the label today, and `tools/what_shaped.py` reads the evidence refs
+themselves rather than the kind, so the grounding mix is unaffected. What is
+damaged is the being's own record of its work — 27 of 29 grounded advances
+recorded as ungrounded — and any future reader of that record, including the
+S8-E instruments and E2.9's mechanical set.
+
+**The fix, and it is two lines plus a prompt.** Balance the prompt the way the
+claim door's was balanced, and add the missing promotion: when `claimed_kind` is
+`reasoning` and `grounded` is non-empty, say so — either promote, or record
+"reasoning, grounded in N refs" instead of "without sources". Do not silently
+promote without deciding which: the distinction between *thinking with sources
+in view* and *concluding from them* is real, and the label should be able to
+carry it.
+
+**What this does NOT answer.** R-32's substance stands: 0 of 28 advances were
+claimable, and mislabelling grounded work does not make it a position the world
+could settle. The next place to look is the deliberation prompt's own framing of
+what an advance is — line 119, *"Establishing that something is NOT the case,
+that two things differ in kind…"* — which invites exactly the distinction-drawing
+the claim door correctly declines.
+
+## R-33 — The concerns are unfalsifiable by construction: 10 of 10 close on a study that does not exist. **High. This is the root of R-32 and the actual S1-E blocker.**
+
+**Opened 2026-08-19**, from red-teaming two proposed fixes to R-32 and finding
+both aimed a layer too low.
+
+**The read.** Every open concern's closing condition, verbatim in shape:
+
+| concern | closes when |
+|---|---|
+| 112 | *"A detailed analysis of historical liquidity events…"* |
+| 114 | *"A study correlating the prevalence of order-splitting algorithms…"* |
+| 115 | *"A numerical experiment showing…"* |
+| 116 | *"A study showing that…"* |
+| 118 | *"A study that compares the companies' reported usage statistics…"* |
+| 119 | *"A study demonstrating that participants…"* |
+| 120 | *"A study demonstrating that participants…"* |
+| 121 | *"A comparative study showing…"* |
+| 122 | *"A study mapping specific gaps…"* |
+| 123 | *"Empirical data comparing self-reported AI usage rates…"* |
+
+**Ten of ten close on a study that does not exist and that the being cannot
+commission.** These are not questions the world will answer on a date. They are
+research programmes, and no source will publish "the study" by any deadline.
+
+**This explains the whole chain, and exonerates every layer below it.**
+
+```
+concern      closing condition nothing will ever satisfy
+   ↓
+advance      distinctions — the only movement available on such a question
+   ↓
+claim door   declines, correctly: nothing here is observable by a date
+   ↓
+S1-E         never fires
+```
+
+The advance judge is behaving correctly. The claim door is behaving correctly —
+proven 4/4 on controls after R-31's repair. **The fault is at the opener, and
+P4's Phase 1 decision rule named this possibility first**: *"are its claims
+resolvable at all (if not, its concerns are unfalsifiable by construction and
+the openers are the fix)"*.
+
+**The asymmetry that let it through.** The claim door refuses a resolver that
+names no source, and its list is explicit:
+
+```python
+_EMPTY_RESOLVERS = ("time will tell", "the future", "future events",
+                    "eventually", "the news", "the internet",
+                    "further research", "future research", ...)
+```
+
+**`"further research"` is refused at the claim door and admitted at the concern
+opener** — where it wears the phrase *"a study correlating…"*. The opener checks
+only that a closing condition is **non-empty** (`opener.py:202`, `:314`, `:471`);
+it never asks whether anything will ever satisfy it. INV-034 is satisfied to the
+letter — every concern has a closing condition — and defeated in substance.
+
+**Why this outranks the two fixes it was found by.**
+
+- **Rejected: widening the advance definition** to include a world-facing option.
+  On a concern whose terminus is an uncommissioned study, there is no
+  world-facing advance to make, so the prompt would produce the *appearance* of
+  commitment — manufactured claims on unanswerable questions. The claim door's
+  own prompt says why that is worse than none: *"a bad claim… will be settled and
+  the settlement will mean nothing."* It also risks R-27's mechanism a third
+  time: the being returns the prompt's newest example.
+- **Demoted: the `kind` label fix** (R-32's first half). Still worth doing —
+  27 of 29 grounded advances are recorded as ungrounded — but it is tidying. No
+  consumer branches on the label, and fixing it moves S1-E not at all.
+
+**The fix, and it is the opener's standard.** A closing condition should have to
+name something that will **exist**: a source that publishes, an event that
+occurs, a measurement someone already takes. The claim door's discipline, applied
+one layer up — the same move S2 §8.1 made when it gave concerns a mandatory
+closing condition in the first place. A concern that can only be settled by
+research nobody will do is a concern the being cannot pursue to a terminus, and
+INV-034's "a concern can reach its own terminus" is false for all ten.
+
+**What is not yet known.** Whether the being *can* form such concerns — the
+opener's prompt may be as one-sided as the deliberation prompt was, or the
+reading may genuinely support nothing more concrete. The 86 stalled concerns
+should be read the same way before any prompt is touched: if their closing
+conditions have the same shape, the stall pool has a cause nobody has named.
+
+### R-33 extended — the stall pool read, and the correction that overshot
+
+**The read R-33 asked for, done 2026-08-19.** Classifying every concern's
+closing condition by the shape of its opening clause — a regex, no model
+consulted, argue with the buckets:
+
+| era | n | self-referential (*"I can…"*) | world-referential |
+|---|---|---|---|
+| **v1 inherited** | 111 | **111 (100%)** | 0 |
+| **v2 lived** | 12 | 0 | **12 (100%)** |
+
+**A perfectly clean split, and it names two different faults, one per era.**
+
+**v1 — the terminus was inside the being.** All 111 close on the being's own
+epistemic state: *"I can cite the specific metrics major cloud providers cited in
+their recent earnings calls"*, *"I can identify the specific technical
+mechanisms…"*, *"I can state a view on this that is grounded in sources I have
+actually read."* A concern that closes when the being decides it knows enough is
+**self-graded by construction** — Rule 4 written into the concern itself, below
+the level INV-034's fail-closed judge operates at. Their fate: 84 stalled, 8
+abandoned, **19 closed**. Those 19 closures were the being grading its own
+terminus, and by P4 Rule 4 they are operation and not evidence.
+
+**v2 — the terminus moved outside the being, and overshot.** All 12 point at the
+world, which is the right direction and a deliberate correction at the import
+boundary. But all 12 point at *a study that does not exist* (see the table
+above). Their fate: 10 open, 2 stalled, **0 closed**.
+
+**So the openers were corrected between eras, and the correction changed which
+way the terminus points rather than whether anything can reach it.** v1's
+concerns could be closed but only by the being; v2's can only be closed by the
+world, and the world will not do it. Neither can produce a claim, which is why
+`resolutions` is empty and S1-E has never fired.
+
+**This makes the fix precise.** The v2 direction is right and should be kept. It
+needs one further constraint, and it is the claim door's, applied one layer up:
+a closing condition must name something that **will exist** — a source that
+publishes, an event that occurs, a measurement someone already takes — rather
+than merely something outside the being. Concern 49's *"I can cite the metrics
+cloud providers cited in their recent earnings calls"* is the tell: earnings
+calls **do** exist and **are** published, so that concern was one rephrasing away
+from settleable, in the era whose termini pointed the wrong way.
+
+**Not yet decided.** What to do with the 111 inherited concerns. Rewriting a
+closing condition changes what the being is pursuing and why, and the 19 already
+closed on a self-graded terminus are part of its record. R-13's precedent applies:
+this edits the self-model and is a deliberate operator act, not maintenance.
+
+### R-33 — E1.7 measured on real material, 2026-08-19: it works, and the volume will fall
+
+**The week of life was compressed into an hour** on a throwaway copy, against the
+being's own ingested reading rather than material chosen to be answerable.
+
+**The first reachable concern this system has produced.** Probe case B, run three
+times:
+
+> closes when: *"the publication of the official agency's final fire-acreage
+> figure and the platform's subsequent resolution"*
+
+`_unreachable` admits it. That is the target shape, and nothing in 123 prior
+concerns had it.
+
+**The other two runs of the same case were refused** — *"terminus is research
+nobody will do"* — and recorded. Before E1.7 both would have been stored as
+concerns nothing could close. **So the door is doing its job at roughly 1 in 3.**
+
+**The consequence to expect: fewer concerns.** The being opened ~1 a day; a check
+that refuses two of three reachable-adjacent proposals will cut that. That is
+intended — a concern that cannot close is worse than none — but it means the
+concern rate is now a thing to watch rather than a thing to ignore, and
+`tools/claims.py --read` reports both halves so the trade is visible.
+
+**Two findings that are not E1.7's, and predate it.**
+
+**1. The reading opener declines more than R-27's snapshot implies.** On the
+being's real material, production input shape: **0 concerns from 10 readings**,
+all *"nothing worth carrying"* — no unreadable proposals, no refusals. On R-27's
+own four cases, **2 of 4** where 2026-08-15 recorded 4 of 4, and case A declines
+3 times out of 3. **The pre-change prompt scores the same 2 of 4**, so this is
+not E1.7's doing; it regressed somewhere between 2026-08-15 and now, and nothing
+was watching. E1.0's feed-path rewrite on 08-18 is the obvious suspect and is
+not evidence.
+
+**2. `tools/opener_probe.py` could not answer its own question.** Run against the
+live store it returned `already opened 6 today` on all four cases — the daily cap
+answering before the opener does. An instrument aimed at the opener's judgment
+was reading its rate limit, and had been for however long a probe day hit the
+cap. Now runs on a copy with the caps cleared, like the claim-door probe.
+
+**The last untested link.** Whether an advance on a *reachable* concern produces a
+claim the door admits. Every claim-door reading so far — 0 of 28 — was taken on
+advances from unreachable concerns, so it tested nothing about this. That is one
+deliberation against case B's concern, and it is the only thing between here and
+knowing whether Phase 1's chain closes.
+
+### R-32 CONFIRMED INDEPENDENT of R-33, 2026-08-19 — and the red team that rejected the fix was wrong
+
+**The last link, tested end to end** on a throwaway copy: a concern with a
+**reachable** terminus, seeded from the probe's own output, deliberated with
+research on, and the claim door watched.
+
+```
+concern 124   closes when: the publication of the official agency's final
+              fire-acreage figure and the platform's subsequent resolution
+research      read Prediction market in full — 7 chunks, 30 claims
+advance       ACCEPTED, novelty 1.00
+summary       "I distinguished between the ontological fact of the acreage
+               and the epistemic resolution of the bet..."
+closure       correctly kept open — the publication has not occurred
+claim door    0 opened, 0 refused
+```
+
+**Same shape.** *"I distinguished…"*, on a concern whose terminus is a
+publication event with a date attached. Repairing the concern changed nothing
+about what the advance looks like.
+
+**So the two faults are independent, and R-33 was necessary but not
+sufficient.** E1.7 gives the being a question the world can close; deliberation
+still answers it with a distinction, and the door still correctly declines.
+
+**The red team of 2026-08-19 rejected the fix for this, and it was wrong.** It
+rejected widening the advance definition on the grounds that *"on a concern
+whose terminus is an uncommissioned study there is no world-facing advance to
+make"* — so the fix was aimed a layer too low. That reasoning was sound and its
+premise is now falsified: **there is a reachable terminus here, and the advance
+is still a distinction.** The evidence that would have settled it did not exist
+at the time, and now does. The advance definition is back on the table as the
+live fix, and it is the last unexplained link in Phase 1's chain.
+
+**Also visible in the same run, both already recorded and both confirmed live.**
+The advance was labelled *"reasoning without sources, labelled"* immediately
+after reading a document that yielded 30 claims — R-32's first half, in a single
+deliberation. And the closure judge held the concern open **because its closing
+condition had not occurred yet**, which is E1.7 doing exactly what it was built
+for: a terminus that can be waited on rather than one nothing will ever satisfy.
+
+---
+
+## R-34 — A research deliberation with no call log crashes instead of reporting the budget unreadable. Low, and trivially fixed.
+
+Found 2026-08-19 while testing R-32's last link. `Deliberator(..., research=True)`
+defaults `log_path=None`; `research()` passes it to `budget_permits_ingest`,
+which reaches `Path(None)` and raises `TypeError`. The deliberation dies before
+it begins.
+
+This is INV-044's rule broken in the other direction: a measurement whose input
+is missing should report itself unmeasured, and this neither reports nor
+measures — it throws. The production runner passes a real path, so the live
+being never hits it; anything else constructing a Deliberator does. Guard
+`log_path is None` and return the unreadable verdict the invariant already
+specifies.
+
+### R-32 — Decision A shipped and FAILED, 2026-08-19, and the failure names the real cause
+
+**What was done.** The deliberation prompt's definition of an advance was widened
+to lead with a world-facing option — *"an expectation about the world — something
+that should turn out a particular way if what I now hold is right, and that I
+would be wrong about if it does not. This is the one that costs me something"* —
+placed **first**, because the being had been returning the list's first item 28
+times out of 28. It also names the under-production directly (*"84 of 84 were
+distinctions, and a distinction is safe: nothing in the world will ever show it
+wrong"*), points at the concern's own closing condition, and warns against
+manufacturing one, because a forced expectation is worse than none.
+
+**The retest, same harness, three runs against a reachable concern:**
+
+```
+run 1   "I distinguish between the platform's resolution criteria and the
+         factual reality of the event..."                    claims: 0
+run 2   "I distinguish between the platform's resolution mechanism ... The
+         expectation is that if the platform resolves early..."  claims: 0
+run 3   "I distinguish between the 'settlement' of a market's internal
+         contract and the 'establishment' of the underlying fact..."  claims: 0
+```
+
+**3 of 3 still distinctions. The fix did not work, and run 2 says why.** The
+expectation *formed* — the prompt landed — and it arrived **inside a
+distinction-led paragraph**. The claim door receives `established=summary` and
+nothing else, so it judged the opening move and correctly declined a
+distinction.
+
+**The cause is structural and it is the same one as every other fault found
+today.** `<summary>` asks for *"what moved, in one or two sentences"* — there is
+**no field for an expectation**. So none is recorded as such, so the door never
+sees one, so no claim is ever proposed. Compare:
+
+| fault | the schema could not express |
+|---|---|
+| R-31 | a horizon — it demanded a date the model had disclaimed knowing |
+| R-32 first half | a grounded reasoning advance — no promotion path from `reasoning` to `evidence` |
+| R-33 | a reachable terminus — the only check was non-empty |
+| **R-32 now** | **an expectation — there is no field for one** |
+
+Four faults in one day, all the same shape: **a schema with no slot for the right
+answer, and a prompt asked to make up the difference.**
+
+**Decision A′ — the fix that follows.** Give the expectation its own element in
+the deliberation schema, optional, and when it is present pass **it** to the
+claim door instead of the summary. Then an advance can be a distinction *and*
+carry a commitment, the door judges the commitment rather than the prose around
+it, and the being is not asked to smuggle one into a sentence about something
+else.
+
+**The prompt change is kept.** It is not wrong — run 2 shows it produced the
+expectation the schema then had nowhere to put — and it is what A′ needs in
+order to have anything to record. Kept, and recorded as insufficient on its own.
+
+### R-32 — Decision A′ works. The chain closes. 2026-08-19.
+
+**The change.** `<expectation>` is its own element in the deliberation schema,
+and when it is present **it** goes to the claim door instead of the summary. A
+distinction and a commitment are different things and the schema was collapsing
+them.
+
+**First retest — the slot filled, and the door still declined 3 of 3.** The
+expectations were real but *conditional*: *"If I were to observe a market
+resolving against its own internal proxy data … it would confirm that the
+platform prioritises its operational criteria."* A conditional commits to
+nothing; it is the reasoning wearing the word "observe", and the door was right.
+
+**So the field's own guidance was tightened** — ask for what **will** happen,
+naming the source and roughly when, with the failure worked as an explicit no
+beside a worked yes. This is what A′ bought: once the expectation had a slot of
+its own, its guidance could be tuned without fighting the summary's.
+
+**Second retest, 2 of 3 runs opened a claim:**
+
+```
+claim   : The official agency's final published figure for the wildfire
+          acreage will differ from the prediction market's resolved value
+          by more than 5%.
+settles : The official agency's post-season report is published and the two
+          figures are compared.
+resolver: The official agency's post-season report
+due     : 2027-02-15
+```
+
+**That is the first dated, falsifiable claim against a named external source
+this system has produced.** The chain runs end to end: a concern with a
+reachable terminus (E1.7) → an advance that faces the world (Decision A) → an
+expectation recorded as one (A′) → a claim the door admits (E1.2, repaired by
+R-31) → a `resolutions` row carrying a resolver and a date.
+
+**What is still untested, and honestly.** The resolver settling a claim against
+real material, and the cost reaching the position (INV-047, INV-048). Both have
+unit tests; neither has run in life, because both need a due date to arrive.
+S1-E remains **NOT MET** — a claim that exists is not a position the world has
+changed, and this claim is due in 2027.
+
+**And the whole run stands on one seeded concern.** The being has not yet
+produced a reachable concern from its own feed material in life — the opener
+managed it once in three probe attempts, and its real-material rate was 0 of 10.
+That is the next constraint, and it is R-33's remainder rather than R-32's.
+
+## R-35 — The claim door checks form, not settleability. The chain does NOT close. **High.**
+
+**Found 2026-08-19 by red-teaming the same evening's result.** The claim A′
+produced passed every check the door makes — statement, resolution condition,
+named resolver, horizon in range — and was then handed to the real resolver with
+its due date backdated by an hour:
+
+```
+claim    The official agency's final published figure for the wildfire acreage
+         will differ from the prediction market's resolved value by more than 5%.
+resolver ran, searched, read a document in full, 18 claims extracted
+verdict  NOT SETTLED — "does not provide the specific official agency's final
+         published figure for wildfire acreage nor the prediction market's
+         resolved value for the specific event in question"
+status   open, attempts 1, failure recorded
+```
+
+**The resolver is right and the door was wrong.** The claim names no agency, no
+fire, no market and no year. It is settleable in grammar and unsettleable in
+fact. The resolver failed closed exactly as INV-047 requires — the claim stays
+open, the failure is recorded, nothing is invented — so the *system* behaved
+well; what failed is the door's standard.
+
+**The earlier entry's headline was wrong and is corrected here.** "The chain
+closes" was written on a claim that had passed the door, not on one that had
+been settled. It closes from concern to *claim*. It does not close from claim to
+*outcome*, and that is the half S1-E is about.
+
+**The missing check is specificity, and it is a fourth instance of the same
+shape.** The door has `_EMPTY_RESOLVERS` for resolvers that name no source; it
+has no equivalent for a claim that names no *subject*. A resolver can only match
+a verbatim quote in fetched material, so a claim without a named entity, place
+or period cannot be settled by construction — the same way a closing condition
+reading "a study" could not be reached by construction (R-33), and for the same
+reason: **the check tested the field's presence rather than what it has to do.**
+
+**And a second gap the same test exposes: nothing checks whether the claim could
+lose.** The door's own prompt says *"I could be wrong. If nothing would surprise
+me, there is no claim here"* — and then asks for no such judgment in the schema
+and applies no check. A >5% divergence between a market's resolved value and an
+agency's final figure may well be near-certain; nothing in the door can tell a
+prediction from a formality.
+
+**The fix, in the door's existing idiom.** Require the claim to name at least one
+concrete referent — an entity, a place, a period, an identifier — and refuse it
+otherwise, recording the refusal the way every other refusal is recorded. Add a
+`<could_be_wrong>` element asking what the other outcome would look like, and
+refuse a claim whose alternative the being cannot state. Both are checks on what
+the field must accomplish rather than on whether it is filled in.
+
+---
+
+### Red team of 2026-08-19's work, recorded against it
+
+**1. The concern was seeded, and it was seeded to be answerable.** Concern 124
+was written by hand from the probe's own output, on a topic with an obvious
+dated public resolution. Every downstream success inherits that. The being has
+produced no reachable concern from its own material in life: 0 of 10.
+
+**2. Every run used the same concern.** Six deliberations, n=1 in concerns. What
+was measured is model sampling on one input, not the system's behaviour.
+
+**3. The prompt was tuned until the metric moved.** The expectation guidance was
+changed twice, judged each time by whether a claim appeared. That is optimising
+a prompt against the number it is scored on — the failure §10 names, committed
+while red-teaming other people's versions of it all day. The discipline that was
+skipped: state what a good claim looks like *before* tuning, not after.
+
+**4. Four changes to the being's cognition path in one evening** — the claim
+door's schema and prompt, the opener's prompt and check, the deliberation prompt
+twice. P4 §Phase 8 sets one Class B change per evidence window, written the same
+day. Nothing that happens in the live system tomorrow can now be attributed.
+
+**5. Everything was measured on copies with the caps cleared** — daily opener
+caps, concern carrying capacity, the diet invariant, R-25's started-ceiling. A
+configuration arranged not to interfere is also a configuration that cannot show
+interference.
+
+**6. "Four schema faults, all the same shape" is a tidy story.** R-33 is a
+missing *check*, not a missing *slot*; it was folded into the pattern because
+the pattern was already there. The pattern is probably real and it is not as
+clean as it was stated.
+
+**7. The `kind` label bug is still live** and now compounds: advances are still
+recorded as "reasoning without sources" while grounded, and they now also carry
+expectations. The record of what the being did today is wrong in a new way.
+
+### R-35 — fixed, measurably, and settleability remains unproven for a reason that is my test's fault
+
+**Two checks added to the door**, both refusing and recording in the existing
+idiom:
+
+- **specificity** — a claim naming no entity, place, period or identifier is
+  refused, because a resolver settles only by matching a verbatim quote in
+  fetched material (INV-047) and such a claim gives a search nothing to key on.
+  Six-case unit check, 6 of 6, including the exact claim R-35 was found on
+  (refused) and both probe controls that resolved to real sources (admitted).
+- **`could_be_wrong`** — the being states what the other outcome looks like, and
+  a claim whose alternative it cannot describe is refused. The door's prompt has
+  said *"if nothing would surprise me, there is no claim here"* since it was
+  built and never asked for the judgment. Stored on the claim (0028) so a
+  settlement can be read against what was actually predicted.
+
+**The claim got materially better.** Before:
+
+> *"The official agency's final published figure for the wildfire acreage will
+> differ from the prediction market's resolved value by more than 5%."*
+
+After:
+
+> *"The **National Interagency Fire Center's (NIFC)** final annual summary report
+> for the **2026 fire season** will list the total acreage burned for the
+> specific large fire in question as differing from…"*
+> — if wrong: *"The NIFC's final figure is within 5% of the prediction market's
+> resolved outcome, or the market resolves based on the NIFC's own data."*
+
+A named agency, a named period, and a stated alternative, where there had been
+none of the three.
+
+**The resolver still did not settle it, and that result means nothing.** Its
+complaint changed from *"does not provide the specific official agency's figure
+for the specific event"* to *"does not contain the NIFC's final annual summary
+report for the 2026 fire season"* — **because that report does not exist yet.**
+It is August 2026 and the season is running. I forced the due date on a claim
+about a future event, so the resolver was asked to check something that has not
+happened. Its refusal is correct and tests nothing.
+
+**That is a flaw in my test, not in the door.** The previous claim was
+unsettleable *in principle*; this one is unsettleable *yet*, and the two look
+identical through a backdated due date. **Settleability cannot be proven by
+backdating.** It needs a claim whose resolution has genuinely arrived — either
+one the being makes about something already published, or a real claim carried
+to its real date.
+
+**So, stated plainly: R-35's checks demonstrably improve what the door admits,
+and no test yet run shows that a claim admitted by the repaired door can be
+settled.** That remains the open end of Phase 1, and S1-E is still NOT MET.
+

@@ -421,3 +421,60 @@ def test_each_opener_frame_names_its_own_material(store):
     assert "exchange" in _PROPOSE_SYSTEM
     assert "read" in _READING_SYSTEM and "exchange" not in _READING_SYSTEM
     assert "findings" in _RESEARCH_SYSTEM and "exchange" not in _RESEARCH_SYSTEM
+
+
+def test_a_closing_condition_only_the_being_could_reach_is_refused_and_recorded(store):
+    """R-33. Consumer: newz/concerns/opener.py's door. Behavior: a concern that
+    closes when the being decides it knows enough is refused before storage and
+    written to concern_refusals, so 'it forms no settleable questions' is
+    distinguishable from 'the door refuses all of them'.
+
+    111 of v1's 111 concerns had exactly this shape — "I can cite the specific
+    metrics major cloud providers gave in their earnings calls" — and every one
+    passed, because the only check was that the field was non-empty. That is
+    Rule 4 written into the concern, below the level INV-034's judge sees.
+    """
+    from newz.concerns.opener import _unreachable
+
+    why = _unreachable("I can cite the specific mechanisms that allowed it")
+
+    assert why and "know enough" in why
+
+
+def test_a_closing_condition_nobody_will_ever_run_is_refused():
+    """R-33's other shape, kept apart because it calls for the opposite fix: the
+    terminus points at the world and the world will not do it. All 12 v2
+    concerns had this shape."""
+    from newz.concerns.opener import _unreachable
+
+    why = _unreachable("A study correlating order-splitting with slippage")
+
+    assert why and "nobody will do" in why
+
+
+def test_a_closing_condition_naming_something_that_exists_is_admitted():
+    """The passing case, and the one that matters — the check must not refuse
+    everything, which is the failure this repository has paid for three times
+    (R-21, R-27, R-31)."""
+    from newz.concerns.opener import _unreachable
+
+    for good in ("The exchange's next quarterly disclosure reports the figure",
+                 "The registry's results posting names a primary endpoint",
+                 "The agency's March revision moves the estimate outside its band"):
+        assert _unreachable(good) is None, good
+
+
+def test_the_prompts_state_the_standard_rather_than_implying_it():
+    """Consumer: all three opener prompts. Behavior: the being is told what a
+    closing condition must be, and shown a worked example whose terminus exists.
+
+    The reading prompt's own worked YES used to close on "a study comparing
+    sorted fragments against later assay" — so the being was doing exactly what
+    it had been shown, which is R-27's mechanism a third time."""
+    from newz.concerns import opener
+
+    assert opener._PROPOSE_TASK.count("WHAT A CLOSING CONDITION MUST BE") == 1
+    assert opener._RESEARCH_TASK.count("WHAT A CLOSING CONDITION MUST BE") == 1
+    assert opener._READING_TASK.count("WHAT A CLOSING CONDITION MUST BE") == 1
+    assert "a study comparing sorted fragments" not in opener._READING_TASK
+    assert "published assay results" in opener._READING_TASK
