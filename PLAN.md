@@ -560,7 +560,7 @@ a deletion.
 version and the reason both retrievable.
 *Depends on:* E2.1.
 
-**E2.3 — self-echo containment**
+**E2.3 — self-echo containment** *(built 2026-08-20)*
 *Delivers:* works, revisions and the error record are excluded from
 EVIDENCE-scope retrieval. They are the being's own output — the same trap
 INV-026 already caught once, in a new medium, in a system already 50%
