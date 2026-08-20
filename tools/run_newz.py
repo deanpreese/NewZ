@@ -106,6 +106,7 @@ def main() -> int:
     from newz.works.rhythm import WritingScheduler
     from newz.works.reread import RereadScheduler
     from newz.evidence.baseline import MetricScheduler
+    from newz.memory.index import EmbeddingScheduler
 
     backups = BackupScheduler(cfg.main_db_path, cfg.interior_db_path, cfg.backups_dir)
     sleeper = SleepScheduler(cfg.main_db_path, client, cfg.operator_id or "operator",
@@ -143,6 +144,10 @@ def main() -> int:
     # written on a cadence and never on read, because a series written when
     # someone happens to look is a record of when they looked.
     metrics = MetricScheduler(cfg.main_db_path, cfg.repo_root)
+    # The index was never maintained: 0 of 653 reading episodes carried a
+    # vector, so retrieval — which conversation already queries — could not
+    # see anything the being had read.
+    indexer = EmbeddingScheduler(cfg.main_db_path, cfg)
 
     logging.info(
         "ambient loop up: constitution v%d (%d clauses), perspective present, "
@@ -161,7 +166,8 @@ def main() -> int:
                       asyncio.create_task(surface.run()),
                       asyncio.create_task(writing.run()),
                       asyncio.create_task(reread.run()),
-                      asyncio.create_task(metrics.run())]
+                      asyncio.create_task(metrics.run()),
+                      asyncio.create_task(indexer.run())]
         try:
             await loop.run()
         finally:
