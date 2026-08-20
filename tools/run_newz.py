@@ -91,6 +91,7 @@ def main() -> int:
     from newz.store.backup import BackupScheduler
     from newz.world.substrate import SubstrateScheduler
     from newz.ambient.noticing import SurfaceScheduler
+    from newz.works.rhythm import WritingScheduler
 
     backups = BackupScheduler(cfg.main_db_path, cfg.interior_db_path, cfg.backups_dir)
     sleeper = SleepScheduler(cfg.main_db_path, client, cfg.operator_id or "operator",
@@ -116,6 +117,11 @@ def main() -> int:
         cfg.main_db_path, client, channel, cfg.operator_id or "operator",
         gate_factory=lambda c: OutboundGate(client, constitution, c))
 
+    # E2.1, Rule 5: production is a rhythm, not an initiative. It writes on
+    # cadence the way it sleeps on cadence, and stands off sleep's window for
+    # the same reason deliberation does (R-20).
+    writing = WritingScheduler(cfg.main_db_path, client)
+
     logging.info(
         "ambient loop up: constitution v%d (%d clauses), perspective present, "
         "operator=%s — rehearsal (operator-only)",
@@ -130,7 +136,8 @@ def main() -> int:
                       asyncio.create_task(sleeper.run()),
                       asyncio.create_task(thinker.run()),
                       asyncio.create_task(substrate.run()),
-                      asyncio.create_task(surface.run())]
+                      asyncio.create_task(surface.run()),
+                      asyncio.create_task(writing.run())]
         try:
             await loop.run()
         finally:

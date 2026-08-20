@@ -542,7 +542,7 @@ does the resolver actually run; does the cost reach the position.
 matters most under one operator — let it encounter its own past self as an
 external object.
 
-**E2.1 — writing as a rhythm**
+**E2.1 — writing as a rhythm** *(built 2026-08-20)*
 *Delivers:* scheduled composition (Rule 5), budgeted, interruptible, a lost
 session harmless — sleep's own shape. A **started-ceiling**, never an
 outcome-based budget.
