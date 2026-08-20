@@ -154,12 +154,39 @@ Output ONLY:
 <deliberation>
   <moved>yes|no</moved>
   <summary>what moved, in one or two sentences, first person</summary>
+  <expectation>what WILL happen, if what moved is right — naming the source
+               that will show it and roughly when. Empty if nothing
+               observable follows, which is often true</expectation>
   <kind>evidence|reasoning</kind>
   <evidence>comma-separated refs from the dossier, or empty</evidence>
   <supersedes>if this REPLACES something under "what I have established",
               its adv-N label; otherwise empty</supersedes>
   <blocked_on>if nothing moved: what I would need in order to move it</blocked_on>
 </deliberation>
+
+<expectation> is separate from <summary> on purpose. A distinction and a
+commitment are different things and I was collapsing them: I would state the
+distinction and mention what I expected inside the same sentence, and only the
+sentence was carried forward, so the expectation was never recorded as one.
+Put the distinction in <summary>. Put what the world should show in
+<expectation>, in its own words, as if nobody had read the summary.
+
+**Write it as something that will happen, not as a condition.** "If I were to
+observe X, it would confirm Y" commits me to nothing — it is a restatement of
+the reasoning wearing the word "observe". The test is whether someone could go
+and look, on a stated date, and find me wrong.
+
+  no   "If the platform resolved on proxy data diverging from the agency's
+        figure, that would confirm it prioritises its criteria."
+  yes  "The platform's posted resolution for this market will differ from the
+        agency's final acreage figure by more than 10%, and the agency
+        publishes that figure in its end-of-season report."
+
+Name the source. Say roughly when. Make it specific enough that it can fail.
+
+Leave <expectation> empty when what moved implies nothing observable. That is
+the ordinary case and it costs nothing. A manufactured expectation is worse
+than an empty one: it will be checked, and the check will mean nothing.
 
 <kind>evidence</kind> requires refs that appear in the dossier above.
 Reasoning without sources is legitimate — label it <kind>reasoning</kind>
@@ -179,6 +206,7 @@ class DeliberationResult:
     concern_id: int | None = None
     statement: str = ""
     moved: bool = False
+    expectation: str = ""
     kind: str = ""
     summary: str = ""
     novelty: float = 0.0
@@ -594,6 +622,7 @@ class Deliberator:
 
             moved = text_of("moved").lower() == "yes"
             summary = text_of("summary")
+            expectation = text_of("expectation")
             refs = [r.strip() for r in text_of("evidence").split(",") if r.strip()]
             blocked_on = text_of("blocked_on")
 
@@ -616,6 +645,7 @@ class Deliberator:
             out = DeliberationResult(
                 concern_id=choice.concern.id, statement=choice.concern.statement,
                 moved=verdict.accepted, kind=verdict.kind, summary=summary,
+                expectation=expectation,
                 novelty=round(verdict.novelty, 3), reason=verdict.reason,
                 blocked_on=blocked_on or None, considered=choice.considered,
                 opened=feed_opened,
@@ -637,7 +667,14 @@ class Deliberator:
                 # something new to be WRONG about (E1.2). Asked after closure,
                 # not before: a concern that just settled may be exactly the
                 # one whose position is worth committing to.
-                verdict = self._maybe_claim(conn, choice.concern, summary)
+                # The door judges the COMMITMENT when there is one, and the
+                # summary only when there is not. Before 2026-08-19 it always
+                # got the summary, so an expectation stated inside a
+                # distinction-led paragraph was read as a distinction and
+                # declined — measured 3 times out of 3, the run that produced
+                # A' (R-32).
+                verdict = self._maybe_claim(
+                    conn, choice.concern, expectation or summary)
                 out.claim_id, out.claim_refused = verdict.claim_id, verdict.refused
             else:
                 # Blocked when the world did not answer; restated when the

@@ -1435,3 +1435,50 @@ else.
 expectation the schema then had nowhere to put — and it is what A′ needs in
 order to have anything to record. Kept, and recorded as insufficient on its own.
 
+### R-32 — Decision A′ works. The chain closes. 2026-08-19.
+
+**The change.** `<expectation>` is its own element in the deliberation schema,
+and when it is present **it** goes to the claim door instead of the summary. A
+distinction and a commitment are different things and the schema was collapsing
+them.
+
+**First retest — the slot filled, and the door still declined 3 of 3.** The
+expectations were real but *conditional*: *"If I were to observe a market
+resolving against its own internal proxy data … it would confirm that the
+platform prioritises its operational criteria."* A conditional commits to
+nothing; it is the reasoning wearing the word "observe", and the door was right.
+
+**So the field's own guidance was tightened** — ask for what **will** happen,
+naming the source and roughly when, with the failure worked as an explicit no
+beside a worked yes. This is what A′ bought: once the expectation had a slot of
+its own, its guidance could be tuned without fighting the summary's.
+
+**Second retest, 2 of 3 runs opened a claim:**
+
+```
+claim   : The official agency's final published figure for the wildfire
+          acreage will differ from the prediction market's resolved value
+          by more than 5%.
+settles : The official agency's post-season report is published and the two
+          figures are compared.
+resolver: The official agency's post-season report
+due     : 2027-02-15
+```
+
+**That is the first dated, falsifiable claim against a named external source
+this system has produced.** The chain runs end to end: a concern with a
+reachable terminus (E1.7) → an advance that faces the world (Decision A) → an
+expectation recorded as one (A′) → a claim the door admits (E1.2, repaired by
+R-31) → a `resolutions` row carrying a resolver and a date.
+
+**What is still untested, and honestly.** The resolver settling a claim against
+real material, and the cost reaching the position (INV-047, INV-048). Both have
+unit tests; neither has run in life, because both need a due date to arrive.
+S1-E remains **NOT MET** — a claim that exists is not a position the world has
+changed, and this claim is due in 2027.
+
+**And the whole run stands on one seeded concern.** The being has not yet
+produced a reachable concern from its own feed material in life — the opener
+managed it once in three probe attempts, and its real-material rate was 0 of 10.
+That is the next constraint, and it is R-33's remainder rather than R-32's.
+
