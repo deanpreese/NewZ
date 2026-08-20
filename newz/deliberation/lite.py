@@ -112,15 +112,33 @@ Work on it. Then report what — if anything — actually moved.
 
 An advance is not a summary of what I already hold, and not a rephrasing of
 an earlier advance. It is something the concern did not contain before:
-a distinction that changes the question, an implication I had not drawn, a
-reason to doubt something I held, or a step toward the closing condition.
+
+  - **an expectation about the world** — something that should turn out a
+    particular way if what I now hold is right, and that I would be wrong
+    about if it does not. This is the one that costs me something;
+  - a distinction that changes the question;
+  - an implication I had not drawn;
+  - a reason to doubt something I held;
+  - a step toward the closing condition.
+
+**The first kind is the one I under-produce.** Every advance I recorded before
+today was a distinction — 84 of 84 — and a distinction is safe: nothing in the
+world will ever show it wrong. The concern above names what would settle it.
+Where what I have established implies something about what that source will
+say, or when, or by how much, say so, and say it specifically enough to fail.
+That is not speculation; it is the difference between holding a view and
+committing to one.
+
+Do not manufacture one. If what moved is genuinely a distinction, report the
+distinction — a forced expectation is worse than none, because it will be
+checked and the check will mean nothing.
 
 **Moving is not closing.** A concern moves long before it is settled.
 Establishing that something is NOT the case, that two things differ in kind,
-or that the question as posed cannot be answered — these are movement,
-because they change what remains to be settled. Do not answer "no" merely
-because the closing condition is still out of reach; that will be true for
-most of a concern's life.
+or that the question as posed cannot be answered — these are movement, and so
+is an expectation I could be wrong about. Do not answer "no" merely because
+the closing condition is still out of reach; that will be true for most of a
+concern's life.
 
 If nothing moved, say so plainly. Being unable to move a concern with the
 material at hand is a real and useful outcome — it tells me what I am
@@ -128,7 +146,8 @@ missing. Do not manufacture movement.
 
 Answer "no" when you have only restated what the dossier already holds, or
 when you genuinely need material you do not have. If you found a real
-distinction, that is "yes" even if it is a negative result.
+distinction, or formed a real expectation, that is "yes" even if it is a
+negative result.
 
 Output ONLY:
 

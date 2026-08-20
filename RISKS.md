@@ -1380,3 +1380,58 @@ being never hits it; anything else constructing a Deliberator does. Guard
 `log_path is None` and return the unreadable verdict the invariant already
 specifies.
 
+### R-32 — Decision A shipped and FAILED, 2026-08-19, and the failure names the real cause
+
+**What was done.** The deliberation prompt's definition of an advance was widened
+to lead with a world-facing option — *"an expectation about the world — something
+that should turn out a particular way if what I now hold is right, and that I
+would be wrong about if it does not. This is the one that costs me something"* —
+placed **first**, because the being had been returning the list's first item 28
+times out of 28. It also names the under-production directly (*"84 of 84 were
+distinctions, and a distinction is safe: nothing in the world will ever show it
+wrong"*), points at the concern's own closing condition, and warns against
+manufacturing one, because a forced expectation is worse than none.
+
+**The retest, same harness, three runs against a reachable concern:**
+
+```
+run 1   "I distinguish between the platform's resolution criteria and the
+         factual reality of the event..."                    claims: 0
+run 2   "I distinguish between the platform's resolution mechanism ... The
+         expectation is that if the platform resolves early..."  claims: 0
+run 3   "I distinguish between the 'settlement' of a market's internal
+         contract and the 'establishment' of the underlying fact..."  claims: 0
+```
+
+**3 of 3 still distinctions. The fix did not work, and run 2 says why.** The
+expectation *formed* — the prompt landed — and it arrived **inside a
+distinction-led paragraph**. The claim door receives `established=summary` and
+nothing else, so it judged the opening move and correctly declined a
+distinction.
+
+**The cause is structural and it is the same one as every other fault found
+today.** `<summary>` asks for *"what moved, in one or two sentences"* — there is
+**no field for an expectation**. So none is recorded as such, so the door never
+sees one, so no claim is ever proposed. Compare:
+
+| fault | the schema could not express |
+|---|---|
+| R-31 | a horizon — it demanded a date the model had disclaimed knowing |
+| R-32 first half | a grounded reasoning advance — no promotion path from `reasoning` to `evidence` |
+| R-33 | a reachable terminus — the only check was non-empty |
+| **R-32 now** | **an expectation — there is no field for one** |
+
+Four faults in one day, all the same shape: **a schema with no slot for the right
+answer, and a prompt asked to make up the difference.**
+
+**Decision A′ — the fix that follows.** Give the expectation its own element in
+the deliberation schema, optional, and when it is present pass **it** to the
+claim door instead of the summary. Then an advance can be a distinction *and*
+carry a commitment, the door judges the commitment rather than the prose around
+it, and the being is not asked to smuggle one into a sentence about something
+else.
+
+**The prompt change is kept.** It is not wrong — run 2 shows it produced the
+expectation the schema then had nowhere to put — and it is what A′ needs in
+order to have anything to record. Kept, and recorded as insufficient on its own.
+
