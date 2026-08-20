@@ -945,3 +945,65 @@ other prompts that ask for a date have the same omission; a grep found no date
 injection anywhere in `newz/`, so the answer is probably yes wherever one is
 asked for.
 
+### R-31 amended — red team of the probe, and the corrected fix *(2026-08-19, same day)*
+
+**The diagnosis in the section above is right about the symptom and wrong about
+the cause.** Four corrections, from red-teaming the probe that produced it.
+
+**1. The root cause is a forced field, not a missing input.** Asked directly, at
+`temperature=0.0`, both roles answer:
+
+> *"I do not have access to real-time information, so I cannot provide today's
+> date."*
+
+The model is not confused about the year. It knows it does not know. The door's
+schema **requires** `<due>YYYY-MM-DD</due>`, so when it says yes it fills the
+field from its training prior. This is a prompt that compels confabulation of a
+fact the model has explicitly disclaimed — which also makes it a
+constitution-adjacent fault, since `calibration-001` and
+`don't-fabricate-memory-001` ask the being not to assert what it cannot ground,
+and here the schema leaves it no legal way to comply.
+
+**So the fix is not "tell it the date." It is "stop asking for one."** Take
+`<due_in_days>` — a horizon is a judgment the model can actually make ("this
+settles in about six weeks"), the bounds already exist as `MIN_HORIZON_DAYS = 2`
+and `MAX_HORIZON_DAYS = 365`, and `_parse_due` becomes `now + days * DAY` with
+no parsing and no timezone. Inject the date as well, for the statement text —
+"the September 2024 report" is wrong even when the horizon is right — but the
+horizon is the load-bearing half.
+
+**2. The blast radius was speculated and is now measured: the claim door only.**
+The resolver's body is `<claim>/<settles_when>/<resolver>/<material>` and asks
+for no date. The openers use `today` for daily caps, never in a prompt. The
+earlier note — *"probably yes wherever one is asked for"* — was wrong.
+Unverified and worth a look separately: prompts that reason about *recency*
+without emitting a date, such as feed triage and the sleep digest.
+
+**3. The probe's controls were weak, and the passing pair especially.** Both
+were written after reading the door's prompt, and both landed inside its worked
+examples — C2 is close to a paraphrase of the prompt's own registry-versus-press-
+release example, and C1 shares the statistical-reporting domain of its CFTC one.
+They demonstrate the model can follow a template. They do **not** show it can
+judge, so they cannot support any claim about the door's calibration beyond the
+date fault. Replacements must sit outside every domain the prompt exemplifies.
+
+**4. Fault 1 is a hypothesis, not a finding.** The probe's real-case expectation
+— decline all 28 — was recorded after reading the advances, so that half could
+not fail. What actually supports Fault 1 is the count: **84 of 84 v2 advances are
+`kind='reasoning'`**, and all 28 of today's open with a first-person cognition
+verb. Its real test is to repair Fault 2 and watch a week of life.
+
+**Order of work.**
+
+1. Replace `<due>` with `<due_in_days>` in the door, state the bounds in the
+   prompt, and inject the current date for the statement text.
+2. Rewrite the probe's controls outside the prompt's exemplified domains, and
+   add a fourth verdict branch for "refused a control for a reason unrelated to
+   judgment" — the probe currently calls this R-27's shape and it is not.
+3. Re-run. **The controls must pass before anything is concluded about Fault 1.**
+4. Then a week in life, and read whether any advance produces a claim. That is
+   Fault 1's only real test, and S1-E's.
+
+**Not yet done.** This changes a prompt in the being's cognition path, which is
+a deliberate act and the operator's.
+
