@@ -154,6 +154,7 @@ not_instruments:
                      # than to Rule 7's grades.
     - tools/generate_surface.py
     - tools/serve_surface.py
+    - tools/rebuild_check.py
 
   one_time:          # migrations and operations, not part of any cycle
     - tools/backup.py

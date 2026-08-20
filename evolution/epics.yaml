@@ -217,7 +217,7 @@ epics:
   E3.5:
     title: 'regeneration and portability'
     phase: 3
-    status: open
+    status: built
     depends_on: [E3.2]
     done_when: mechanical
     binds: [R-11]

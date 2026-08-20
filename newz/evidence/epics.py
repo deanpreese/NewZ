@@ -44,8 +44,12 @@ def from_plan(text: str | None = None) -> dict:
     out: dict[str, dict] = {}
     for eid, title, body in re.findall(
             r'^\*\*(E\d+\.\d+) — (.*?)\*\*(.*?)(?=^\*\*E\d+\.\d+ —|\Z)', t, re.M | re.S):
-        built = bool(re.search(r'\((built|closed) 20', title)
-                     or re.search(r'\((built|closed) 20', body[:120]))
+        # `built`/`closed` anywhere in the epic's own parenthetical, not only
+        # immediately after the paren: E3.5 is marked
+        # "(amended 2026-08-19; built 2026-08-20)" and an epic carrying two
+        # facts about itself is the ordinary case, not an exception.
+        built = bool(re.search(r'\b(built|closed) 20\d\d-', title)
+                     or re.search(r'\b(built|closed) 20\d\d-', body[:120]))
         m = re.search(r'^\*Depends on:\*(.*?)$', body, re.M)
         raw = m.group(1) if m else ""
         deps = ([] if raw.strip().lower().startswith("nothing")

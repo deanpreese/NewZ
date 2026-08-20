@@ -713,7 +713,7 @@ single setting.
 *Depends on:* E3.3.
 *Hooks:* **Rule 3.**
 
-**E3.5 — regeneration and portability** *(amended 2026-08-19)*
+**E3.5 — regeneration and portability** *(amended 2026-08-19; built 2026-08-20)*
 *Delivers:* the surface rebuilds from the store; the store moves intact.
 *Done when:* the generator produces a **byte-comparable** surface into a clean
 directory, from a **verified backup** rather than the live store, with no state
