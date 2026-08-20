@@ -1124,7 +1124,7 @@ sleep, the diet, openers, gate clauses, budgets. Class A runs at the suite's
 cadence; Class B runs one per evidence window, because at n=1 more than one
 change per window is confounding and the reads stop meaning anything.
 
-**Phase 3 is the loop's proving ground.** Its five epics are the only ones in
+**Phase 3 is the loop's proving ground.** Its nine epics are the only ones in
 this plan whose `Done when` clauses are all mechanical, its evidence read is
 mechanical, and it is Class A throughout. If the loop can deliver Phase 3, that
 is real evidence about its judgment before it touches anything that alters the
