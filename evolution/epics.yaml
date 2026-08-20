@@ -248,7 +248,7 @@ epics:
   E3.9:
     title: 'the canonical freeze'
     phase: 3
-    status: open
+    status: built
     depends_on: [E2.6, E3.6, E3.7, E3.8]
     done_when: mechanical
 

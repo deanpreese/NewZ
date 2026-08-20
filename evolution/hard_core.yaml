@@ -76,7 +76,16 @@ derived_from:
   canonical_instruments:
     rule: >-
       every `tools/*.py` marked `canonical: true` in evolution/instruments.yaml,
-      PLUS every newz/evidence/*.py module those tools import.
+      PLUS every newz/evidence/*.py module those tools import, **transitively**.
+    widened_2026_08_20: >-
+      The closure was one level deep and that left derived.py, agreement.py,
+      authority.py and definitions.py writable — all measurement code, reached
+      through baseline.py and premises.py rather than directly from a tool.
+      A frozen tool whose measurement code is writable is not frozen, and that
+      is as true two hops out as one. Widened while building E3.9's enforcer,
+      which means the boundary was widened by the party building the thing that
+      enforces it — recorded here rather than done quietly, because that is the
+      shape of act this registry exists to make visible.
     why_the_modules: >-
       §5.2 names ten instruments, of which eight are tools and two —
       perspective_window and pursuit — are newz/evidence modules. That was not a

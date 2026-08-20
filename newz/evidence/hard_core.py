@@ -71,10 +71,30 @@ def _evidence_imports(tool: str) -> set[str]:
 
 def canonical_paths() -> list[str]:
     """The frozen instrument set: canonical tools plus the evidence modules
-    that compute their numbers."""
+    that compute their numbers, **transitively**.
+
+    Widened 2026-08-20 while building E3.9's enforcer, and the widening is the
+    finding. One level from the tools left `derived.py`, `agreement.py`,
+    `authority.py` and `definitions.py` writable — all measurement code, all
+    reached through `baseline.py` and `premises.py` rather than directly. A
+    frozen tool whose measurement code is writable is not frozen, and that is
+    just as true two hops out as one: the file stays byte-identical while the
+    number changes.
+
+    The closure stops at `newz/evidence` by the rule's own boundary. Measurement
+    code living elsewhere is still named by hand in `paths`, and nothing detects
+    a failure to do so — `known_incomplete` in the registry, unchanged.
+    """
     paths = set(canonical_tools())
+    frontier = set()
     for tool in canonical_tools():
-        paths |= _evidence_imports(tool)
+        frontier |= _evidence_imports(tool)
+    while frontier:
+        paths |= frontier
+        nxt: set[str] = set()
+        for mod in frontier:
+            nxt |= _evidence_imports(mod)
+        frontier = nxt - paths
     return sorted(p for p in paths if (REPO / p).exists())
 
 

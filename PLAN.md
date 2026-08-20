@@ -788,7 +788,7 @@ refused as justification for any decision while accepted as a halt.
 optimising for a quiet week, which is precisely why it may never justify
 anything on its own.
 
-**E3.9 — the canonical freeze**
+**E3.9 — the canonical freeze** *(built 2026-08-20)*
 *Delivers:* the instrument set frozen — changing any canonical instrument becomes
 an operator act.
 *Done when:* a diff touching a canonical instrument is refused, and a test
