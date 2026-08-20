@@ -1031,20 +1031,7 @@ makes a circuit breaker, not a controller.
 
 ---
 
-**E8.1 — the instruments made portable and enumerated** *(built 2026-08-19)*
-*Delivers:* the three probes that hardcoded an absolute path from the predecessor
-checkout resolve the repo the way every other tool does; and
-`evolution/instruments.yaml` enumerates every tool exactly once, each instrument
-carrying what it measures, what it reads, whether a model touched any link in its
-chain, its denominator and its method line.
-*Done when:* no tool holds an absolute path outside the repo, every tool is
-classified exactly once, and both are tested. **Done.**
-*Depends on:* nothing.
-*Hooks:* §7 portability — a probe that runs on one machine is a local habit, not
-an instrument. Under a loop it is worse than broken: a path that happens to exist
-makes it measure a different repository and report a number that looks fine.
-
-**E8.5 — the gate made runnable and trustworthy**
+**E8.0 — the gate made runnable and trustworthy**
 *Delivers:* a declared environment a clean machine can reproduce; the test suite
 and `check_invariants.py` run on every push; and the order-dependent race in
 `tests/test_reply_queue.py::test_drainer_survives_a_transient_store_error` fixed
@@ -1059,9 +1046,22 @@ cannot even collect it (`requires-python = ">=3.12"`; five runtime dependencies
 installed by hand) and the suite was red in two of three full runs on 2026-08-19.
 A gate that flaps teaches its operator to ignore it, and an automated builder
 that runs a subset for speed sees a red that is not there.
-*Numbered last, sequenced first.* Epic numbers in this plan are identifiers;
-`Depends on` carries the order (§"Standing rules"). This one precedes every
-build the loop ever attempts.
+*Numbered `.0` for the same reason E1.0 is:* it was found after the phase was
+written and it precedes everything in it. A note explaining away a misleading
+number is worse than the right number.
+
+**E8.1 — the instruments made portable and enumerated** *(built 2026-08-19)*
+*Delivers:* the three probes that hardcoded an absolute path from the predecessor
+checkout resolve the repo the way every other tool does; and
+`evolution/instruments.yaml` enumerates every tool exactly once, each instrument
+carrying what it measures, what it reads, whether a model touched any link in its
+chain, its denominator and its method line.
+*Done when:* no tool holds an absolute path outside the repo, every tool is
+classified exactly once, and both are tested. **Done.**
+*Depends on:* nothing.
+*Hooks:* §7 portability — a probe that runs on one machine is a local habit, not
+an instrument. Under a loop it is worse than broken: a path that happens to exist
+makes it measure a different repository and report a number that looks fine.
 
 **E8.2 — the runner, the commit discipline, and the continuity assertion**
 *Delivers:* a repo-local runner in the hard core — no service manager — that
@@ -1107,7 +1107,7 @@ the hard core, and the epic's own `Done when` as an executable check — with
 conditions live before the first autonomous restart.
 *Done when:* a Class A change is built, gated, restarted into and verified with
 no operator action, **and** a tautological test is demonstrated to fail the gate.
-*Depends on:* E3.9, E2.11, E8.2, E8.3, E8.5.
+*Depends on:* E8.0, E8.2, E8.3, E2.11, E3.9.
 *Hooks:* **Rule 4 in the build path.** A test written by the agent that wrote the
 code, in the same context, minutes later, is not independent verification. The
 red-first rule is mechanical and needs no model judgment; it is also defeatable
@@ -1202,7 +1202,7 @@ produced. No epic was dropped; every id resolves.
 | E8.12 runner and continuity | **E8.2** | the loop |
 | E8.13 Watcher, report, session | **E8.3** | the loop |
 | E8.14 the builder | **E8.4** | the loop |
-| *(nothing — P3 assumed it)* | **E8.5** the gate made runnable | E8.4's gate is "the suite green twice", and P3 named no epic that makes the suite runnable. Found by walking P4's graph on 2026-08-19 |
+| *(nothing — P3 assumed it)* | **E8.0** the gate made runnable | E8.4's gate is "the suite green twice", and P3 named no epic that makes the suite runnable. Found by walking P4's graph on 2026-08-19; renumbered from E8.5 to E8.0 on 2026-08-20 because a number that had to be explained away was misleading its readers |
 
 ---
 
