@@ -58,34 +58,41 @@ from newz.store.db import open_db
 DOOR_SHIPPED = datetime(2026, 8, 19, 6, 26).timestamp()
 
 # ── Controls. Expected verdicts fixed before any call was made. ──────────
-# Deliberately outside the being's subjects (market microstructure, AI usage
-# data) so it must do the judgment rather than recognise the words.
+#
+# **Chosen outside every domain the door's prompt exemplifies** — the first
+# version of this probe was not, and that was its worst flaw (R-31 amended).
+# The prompt's worked YES cases are a CFTC open-interest claim and a clinical
+# trial registry contradiction; its worked NO cases are improvisation-versus-
+# notation and a liquidity-freeze restatement. A control drawn from any of
+# those tests whether the model can copy a template, not whether it can judge.
+# These four avoid all of them, and avoid the being's own subjects (market
+# microstructure, AI usage data) as well.
 CONTROLS = [
-    ("C1 PASS — a dated, sourced consequence about the world", True,
-     "Concern: what makes a national statistical revision predictable?",
-     "The initial employment print for a month diverges from the revised figure by more "
-     "than the agency's own stated confidence band whenever the household and "
-     "establishment surveys disagree in sign at first release, because the birth-death "
-     "model is applied before the discrepancy is reconciled."),
+    ("C1 PASS — ecology, a dated observation with a named recorder", True,
+     "Concern: what makes phenological records diverge from climate averages?",
+     "Spring emergence at this site is tracking soil temperature rather than air "
+     "temperature, and soil has been warming faster than air here for a decade, so "
+     "the first-bloom date recorded this season should fall well ahead of the "
+     "long-run mean rather than within its usual spread."),
 
-    ("C2 PASS — a checkable contradiction with a deadline", True,
-     "Concern: do drug trial registries and their press releases agree?",
-     "The registry entry for this trial names overall survival as the primary endpoint "
-     "while the sponsor's release reports progression-free survival as the headline "
-     "result, so the trial's own results posting will show a primary endpoint that does "
-     "not match what was announced."),
+    ("C2 PASS — software security, a published score with a deadline", True,
+     "Concern: how are severity scores set for dependency vulnerabilities?",
+     "This flaw is reachable without authentication and yields code execution in the "
+     "default configuration, which is the combination that has driven the highest "
+     "severity bands in this component's past advisories, so the scoring body should "
+     "land it in the critical range when the record is published."),
 
-    ("C3 DECLINE — a conceptual distinction, correctly not a claim", False,
-     "Concern: what does it mean for a translation to be faithful?",
-     "I distinguished between fidelity to sense and fidelity to register, and established "
-     "that the tension is not a defect of translation but constitutive of it — the choice "
-     "cannot be deferred, only made."),
+    ("C3 DECLINE — a conceptual distinction in linguistics", False,
+     "Concern: what makes a sound change count as phonemic?",
+     "I distinguished between a contrast that carries meaning and one that merely "
+     "varies with position, and established that the boundary is not a property of "
+     "the sounds themselves but of what speakers are able to hear as different."),
 
-    ("C4 DECLINE — true or false, but nothing will announce it", False,
-     "Concern: why does improvisation resist notation?",
-     "I realized that recorded practice is a poor guide to live practice because notation "
-     "captures the decision and not the deciding, which is where the improvisation "
-     "actually lives."),
+    ("C4 DECLINE — a reading of a field, with nothing to announce it", False,
+     "Concern: how should a legal code be read?",
+     "I realized that codes are better read as narrative than as rule-sets, because "
+     "the ordering of provisions carries an argument that the provisions taken "
+     "individually do not."),
 ]
 
 EXPECTED_REAL = False   # recorded before the calls: decline all
@@ -116,7 +123,7 @@ def run(name, expected, concern, established, conn, client, cid=None):
             print(f"         claim:    {c[0]}")
             print(f"         settles:  {c[1]}")
             print(f"         resolver: {c[2]}  due {datetime.fromtimestamp(c[3]):%Y-%m-%d}")
-    return agree, got
+    return agree, got, v.refused
 
 
 def main() -> int:
@@ -140,17 +147,19 @@ def main() -> int:
 
     print("CONTROLS — these decide whether the door is over-strict")
     print("─" * 74)
-    c_ok = 0
+    c_ok, refused_controls = 0, []
     for name, exp, concern, est in CONTROLS:
-        ok, _ = run(name, exp, concern, est, conn, client)
+        ok, _, refused = run(name, exp, concern, est, conn, client)
         c_ok += ok
+        if refused and exp:
+            refused_controls.append(f"{name.split(chr(32))[0]}: {refused}")
 
     print(f"\nREAL — every advance the door saw since it shipped ({len(reals)})")
     print(f"expectation recorded before running: decline all\n" + "─" * 74)
     r_ok = r_claim = 0
     for r in reals:
         label = f"adv {r['id']} · concern {r['concern_id']} · {datetime.fromtimestamp(r['ts']):%H:%M}"
-        ok, got = run(label, EXPECTED_REAL, r["statement"], r["summary"], conn, client, r["concern_id"])
+        ok, got, _ = run(label, EXPECTED_REAL, r["statement"], r["summary"], conn, client, r["concern_id"])
         r_ok += ok
         r_claim += got
 
@@ -159,10 +168,18 @@ def main() -> int:
     print(f"real      {r_claim} of {len(reals)} advances produced a claim")
     passing = sum(1 for n, e, *_ in CONTROLS if e)
     print()
-    if c_ok < len(CONTROLS):
-        print("  H1 — the door is MISCALIBRATED. It disagreed with a control, so its")
-        print("       declines on real advances say nothing about the advances.")
-        print("       This is R-27's shape: fix the prompt, then re-run.")
+    if refused_controls:
+        print("  H0 — a control was REFUSED for a reason unrelated to judgment.")
+        print("       The model said yes and produced a well-formed claim; the door")
+        print("       turned it away on a field. That is not R-27's shape — R-27 was")
+        print("       a judgment failure, and here the judgment was sound. Nothing")
+        print("       about the real advances can be read until this is repaired:")
+        for why in refused_controls:
+            print(f"         · {why}")
+    elif c_ok < len(CONTROLS):
+        print("  H1 — the door is MISCALIBRATED on judgment. It declined a control it")
+        print("       should have claimed, or claimed one it should have declined, with")
+        print("       no refusal involved. This IS R-27's shape: fix the prompt, re-run.")
     elif r_claim == 0:
         print("  H2 — the door is CORRECT and the advances are not claimable.")
         print(f"       It passed {passing}/{passing} passing controls and still declined")

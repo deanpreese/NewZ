@@ -10,6 +10,7 @@ world, which is the whole of Phase 1.
 from __future__ import annotations
 
 import time
+import inspect
 from datetime import datetime, timedelta
 
 from newz.resolutions.door import (
@@ -39,14 +40,15 @@ def _proposal(**kw) -> str:
         settles_when="The COT release for that week is published and the two"
                      " figures compared.",
         resolver="CFTC Commitments of Traders weekly report",
-        due=_due(),
+        due="40",
+        tag="due_in_days",
     )
     f.update(kw)
     return (f"<claim><worth_claiming>{f['worth_claiming']}</worth_claiming>"
             f"<statement>{f['statement']}</statement>"
             f"<settles_when>{f['settles_when']}</settles_when>"
             f"<resolver>{f['resolver']}</resolver>"
-            f"<due>{f['due']}</due></claim>")
+            f"<{f['tag']}>{f['due']}</{f['tag']}></claim>")
 
 
 def _refusals(store) -> list[tuple[str, str]]:
@@ -111,15 +113,15 @@ def test_the_being_may_not_resolve_its_own_claim(store):
     assert _refusals(store)
 
 
-def test_a_claim_with_no_readable_date_is_refused(store):
+def test_a_claim_with_no_readable_horizon_is_refused(store):
     verdict = _ask(store, _proposal(due="soon"))
 
-    assert verdict.refused and "date" in verdict.refused
+    assert verdict.refused and "horizon" in verdict.refused
     assert claims_by_status(store) == []
 
 
 def test_a_date_already_past_is_not_a_prediction(store):
-    verdict = _ask(store, _proposal(due=_due(-3)))
+    verdict = _ask(store, _proposal(due=_due(-3), tag="due"))
 
     assert verdict.refused and "already happened" in verdict.refused
 
@@ -127,7 +129,7 @@ def test_a_date_already_past_is_not_a_prediction(store):
 def test_a_date_beyond_the_horizon_costs_nothing(store):
     """S1-E needs a position to change BECAUSE the world contradicted it. A
     claim due in three years cannot do that within the life of the project."""
-    verdict = _ask(store, _proposal(due=_due(900)))
+    verdict = _ask(store, _proposal(due="900"))
 
     assert verdict.refused and "beyond" in verdict.refused
 
@@ -170,3 +172,40 @@ def test_the_carrying_cap_stops_the_door_before_it_spends(store):
                             concern_statement=CONCERN, concern_id=7)
 
     assert verdict.declined
+
+
+def test_the_door_asks_for_a_horizon_and_tells_the_being_what_day_it_is():
+    """R-31. Consumer: newz/resolutions/door.py's prompt body. Behavior: the
+    model is never asked for a fact it has disclaimed.
+
+    Asked directly, every role answers "I do not have access to real-time
+    information, so I cannot provide today's date." The door used to require
+    <due>YYYY-MM-DD</due> anyway, so a `yes` verdict filled it from the
+    training prior — 2024-12-31 against a real date of 2026-08-19 — and every
+    well-formed claim was refused for being ~600 days past. The schema, not
+    the model, was the fault.
+    """
+    from newz.resolutions import door
+
+    assert "<due_in_days>" in door._TASK
+    assert "YYYY-MM-DD" not in door._TASK
+    assert "2 and 365" in door._TASK          # the bounds are stated, not guessed
+    assert "<today>" in inspect.getsource(door.propose_claim)
+
+
+def test_a_horizon_in_days_opens_a_claim_dated_from_today(store):
+    """Consumer: tools/claims.py. Behavior: due_at lands `days` from now, so a
+    claim the being makes is settleable within the life of the project."""
+    verdict = _ask(store, _proposal(due="30"))
+
+    assert verdict.claim_id, verdict.refused
+    claim = claims_by_status(store)[0]
+    assert 29 * 86400 < claim.due_at - time.time() < 31 * 86400
+
+
+def test_a_date_still_works_when_the_model_gives_one_anyway(store):
+    """A local model asked for a number will sometimes answer with a date. One
+    genuinely in range is not thrown away; one in the past is still refused."""
+    verdict = _ask(store, _proposal(due=_due(40), tag="due"))
+
+    assert verdict.claim_id, verdict.refused

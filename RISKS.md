@@ -1007,3 +1007,70 @@ verb. Its real test is to repair Fault 2 and watch a week of life.
 **Not yet done.** This changes a prompt in the being's cognition path, which is
 a deliberate act and the operator's.
 
+### R-31 — Fault 2 **CLOSED 2026-08-19**; Fault 1 confirmed and reclassified as R-32
+
+**The door now asks for a horizon, not a date.** `<due>YYYY-MM-DD</due>` became
+`<due_in_days>`, the bounds (2–365) are stated in the prompt rather than left to
+be guessed, the body carries `<today>`, and `_parse_due` still accepts a full
+date because a local model asked for a number will sometimes answer with one —
+a date in range is not thrown away, and one in the past is still refused.
+
+**Proven by the probe, with controls rebuilt outside the prompt's own worked
+domains** (the first set's flaw, recorded in the amendment above):
+
+```
+controls  4/4 as expected      ← was 2/4, both failures on the date
+real      0 of 28 advances produced a claim
+```
+
+Both passing controls opened a claim with a real resolver — USA-NPN's
+phenology database, and NVD for a CVE score — and the date injection is visible
+in the output: the statement now reads *"in the current year (2026)"* where the
+same probe produced *"the September 2024 Employment Situation Summary"* an hour
+earlier.
+
+**With the controls passing, the read on the real advances is now worth
+something, and it says the door was right about them all along.** 0 of 28, with
+the controls proving the door can and does admit a claim. So Fault 1 stands on
+its own evidence rather than behind Fault 2, and it is no longer a fault of the
+door. It is promoted to its own risk.
+
+---
+
+## R-32 — Deliberation establishes distinctions, never positions the world could settle. **High. This is what blocks S1-E.**
+
+**Opened 2026-08-19**, from R-31's repair. With the claim door proven working —
+4/4 controls, two claims opened against real resolvers — it declined **all 28**
+advances the being produced today, and the reason is visible in the advances
+themselves.
+
+**Every v2 advance ever recorded is `kind='reasoning'`: 84 of 84.** All 28 of
+today's open with a first-person cognition verb — *"I distinguished…"*,
+*"I identified…"*, *"I realized…"*. A representative one, verbatim:
+
+> *"I distinguished the 'Forer effect' (subjective belief in accuracy) from the
+> 'epistemic opacity' of the interaction process itself…"*
+
+That is a restatement of what the being now thinks. It is the claim prompt's own
+worked NO example, and the door is correct to decline it. **The being is
+producing conceptual refinement at a healthy rate and never producing a position
+about the world.**
+
+**Why this is the Phase 1 blocker.** S1-E asks for one position to change
+because the world contradicted it. Nothing can contradict a distinction. The
+outer loop is built, the door works, the resolver works — and there is nothing
+for them to act on, because the thing upstream never commits.
+
+**Where to look, in order.** The advance judge's own prompt and the `kind`
+vocabulary it can assign: if `reasoning` is the only kind ever recorded across
+84 advances, either the schema offers no alternative or the prompt never asks
+for one. Then the deliberation prompt that produces the summary — the phrasing
+is strikingly uniform, and R-27's lesson was that uniform output means the
+prompt is answering, not the material.
+
+**Falsifier.** If the advance vocabulary is widened and the deliberation prompt
+is asked for what follows *in the world* rather than what the being now holds,
+and 28 advances still yield 0 claims over a week in life, then the constraint is
+the model rather than the prompt — and that is Decision 2's R-22 question,
+arriving from a direction nobody planned.
+
