@@ -159,3 +159,39 @@ def judge_closure(client: LLMClient, dossier) -> ClosureVerdict:
 
     return ClosureVerdict(closed=True, position=position,
                           resolution=text_of("resolution") or position)
+
+
+def attempt_closure(client: LLMClient, conn, concern_id: int) -> str:
+    """Judge one concern against its own condition and close it if met.
+
+    **One implementation, two callers.** This was `Deliberator._maybe_close`,
+    reachable only from the moment after an advance was recorded. The sweep
+    (E-sweep, `newz/concerns/sweep.py`) needs the same act at a moment when
+    there is no advance, and a second implementation of "decide whether a
+    concern is finished" would be two things that must agree and eventually
+    would not — the E2.11 problem, in the one place where disagreement means
+    the being both holds and does not hold a position.
+
+    Returns the concern's status afterwards. Failing closed in every sense: a
+    judge that errors, a verdict that will not parse, or a closure carrying no
+    position all leave the concern as it was, and any exception here costs the
+    closure rather than anything already recorded.
+    """
+    from newz.concerns.store import close_concern, load_dossier
+
+    try:
+        dossier = load_dossier(conn, concern_id)
+        verdict = judge_closure(client, dossier)
+        if not verdict.closed:
+            if verdict.reason not in ("too little established to ask",):
+                logger.info("concern %d stays open: %s", concern_id,
+                            verdict.missing or verdict.reason)
+            return "open"
+        close_concern(conn, concern_id, position=verdict.position,
+                      resolution=verdict.resolution)
+        logger.info("concern %d CLOSED — position: %s",
+                    concern_id, verdict.position[:100])
+        return "closed"
+    except Exception:  # noqa: BLE001
+        logger.exception("closure judge failed (nothing already recorded is lost)")
+        return "open"

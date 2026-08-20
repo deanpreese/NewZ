@@ -345,31 +345,14 @@ class Deliberator:
     def _maybe_close(self, conn, concern_id: int) -> str:
         """Judge the concern against its own closing condition (S2 §8.4).
 
-        Returns the concern's status afterwards. Failing closed in every
-        sense: a judge that errors, a verdict that will not parse, or a
-        closure carrying no position all leave the concern open, and any
-        exception here costs the closure rather than the advance that was
-        already recorded.
+        Delegates: the judgement itself lives in `closure.attempt_closure`,
+        because the sweep needs the same act at a moment when no advance has
+        just been recorded, and two implementations of "is this concern
+        finished" would eventually disagree.
         """
-        from newz.concerns.closure import judge_closure
-        from newz.concerns.store import close_concern
+        from newz.concerns.closure import attempt_closure
 
-        try:
-            dossier = load_dossier(conn, concern_id)
-            verdict = judge_closure(self._client, dossier)
-            if not verdict.closed:
-                if verdict.reason not in ("too little established to ask",):
-                    logger.info("concern %d stays open: %s", concern_id,
-                                verdict.missing or verdict.reason)
-                return "open"
-            close_concern(conn, concern_id, position=verdict.position,
-                          resolution=verdict.resolution)
-            logger.info("concern %d CLOSED — position: %s",
-                        concern_id, verdict.position[:100])
-            return "closed"
-        except Exception:  # noqa: BLE001
-            logger.exception("closure judge failed (the advance stands)")
-            return "open"
+        return attempt_closure(self._client, conn, concern_id)
 
     def _settle_due_claims(self, conn) -> list:
         """Ask the world about claims whose date has arrived (E1.3).
