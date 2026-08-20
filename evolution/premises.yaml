@@ -1,0 +1,122 @@
+# The premises P4 rests on, and what would show one has moved (P4 epic E2.10).
+#
+# **The failure this exists for has already happened.** PLAN §1 records "0
+# outcomes the being did not grade itself" as measured state, and Phase 1
+# exists to change it. E1.4 shipped on 2026-08-19 at 06:47 and began changing
+# it, and no part of this system remarked on that — because a plan's premises
+# lived in prose, and prose does not notice when it stops being true.
+#
+# Each premise names the metric that would show it moving, what it was when the
+# plan was written, how much movement is material, and **the argument it
+# carries** — because a premise that moves without anyone reading what rested on
+# it has been measured and not understood.
+#
+# `metric: null` is a real and useful answer. A figure the plan asserts that
+# nothing can re-measure is a premise the project is holding on faith, and
+# saying so is better than inventing an instrument to cover it.
+
+version: 1
+
+premises:
+
+  no-ungraded-outcomes:
+    states: "0 outcomes the being did not grade itself"
+    stated_value: 0
+    stated_on: "2026-08-18"
+    source: "PLAN §1"
+    metric: claims_opened
+    material_change: 1
+    carries: >
+      The whole of Phase 1. If the being commits to anything the world can
+      settle, "a system whose only interlocutor is itself" stops being the
+      current diagnosis and the plan's ordering rationale needs re-reading.
+
+  grounding-is-mostly-self:
+    states: "50% self, 33% operator, at most 17% the world, across 119 refs"
+    stated_value: 0.5
+    stated_on: "2026-08-18"
+    source: "PLAN §1, from tools/evidence.py 1e"
+    metric: self_grounding_share
+    material_change: 0.1
+    carries: >
+      The topology diagnosis that produced the participation design: the being's
+      plumbing is the only thing genuinely in relation to it. A large move in
+      either direction changes what Phase 1 is for.
+
+  feeds-mostly-unread:
+    states: "34 of 61 feeds have ever contributed a read"
+    stated_value: 0.557
+    stated_on: "2026-08-18"
+    source: "PLAN E1.0"
+    metric: feeds_contributing_a_read
+    material_change: 0.1
+    carries: >
+      E1.0's own falsifier. The epic says if coverage does not rise the answer
+      is a rotation floor, never the old filter — so this figure decides
+      whether that clause fires.
+
+  source-gaps-accumulating:
+    states: "12 questions no readable source could answer"
+    stated_value: 12
+    stated_on: "2026-08-18"
+    source: "PLAN §Going public"
+    metric: source_gaps_open
+    material_change: 10
+    carries: >
+      The trip-wire that the room is no longer enough. §Going public names it
+      as one of three signals that a reader has become necessary.
+
+  the-being-sleeps-nightly:
+    states: "nightly consolidation, unbroken since 2026-08-10"
+    stated_value: 7
+    stated_on: "2026-08-18"
+    source: "PLAN §1, the compounding core"
+    metric: nights_slept
+    material_change: 2
+    carries: >
+      Everything downstream of sleep. P4 Phase 8 makes a fall here a kill
+      condition, because development is measured in nights and a loop that
+      costs sleep is subtracting.
+
+  produces-nothing-on-a-rhythm:
+    states: "3 pieces, all written by hand for Phase 0's read"
+    stated_value: 3
+    stated_on: "2026-08-18"
+    source: "PLAN Phase 0"
+    metric: pieces_written
+    material_change: 3
+    carries: >
+      Phase 2's premise. If pieces appear without being asked for, the rhythm
+      is working; if they do not, E2.1 shipped and did nothing.
+
+  # ── premises nothing can re-measure ────────────────────────────────────
+  # Held on faith. Recorded rather than quietly dropped, because a plan that
+  # cannot check its own foundations should say which ones.
+
+  one-person:
+    states: "1 person"
+    stated_value: 1
+    stated_on: "2026-08-18"
+    source: "PLAN §1"
+    metric: null
+    why_unmeasured: >
+      the persons table counts rows, not relationships, and P4's whole reader
+      question is about whether a second person exists in any meaningful sense.
+      Counting would answer a different question than the one the plan asks.
+    carries: >
+      P3-04, P3-07 and the whole of Phase 7. Almost every acceptance of a
+      limitation in this plan rests on it.
+
+  no-concerns-from-conversation:
+    states: "111 v1 and 6 v2 concerns, zero from conversation"
+    stated_value: 0
+    stated_on: "2026-08-18"
+    source: "PLAN Phase 7"
+    metric: null
+    why_unmeasured: >
+      concerns record an origin, so this is countable — but the plan calls it
+      the project's strongest empirical finding and says it cannot be settled
+      with one operator. A count would move without the finding changing.
+    carries: >
+      P3-08, and whether relationship produces pursuit at all in this
+      architecture.

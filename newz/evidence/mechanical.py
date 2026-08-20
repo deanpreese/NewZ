@@ -137,6 +137,27 @@ def single_source_positions(conn: sqlite3.Connection) -> Value:
     return Value(round(flagged / len(grounded), 4))
 
 
+def self_grounding_share(conn: sqlite3.Connection) -> Value:
+    """The share of all supporting episodes whose provenance is the being itself.
+
+    Exactly what PLAN §1 states — "50% self, 33% operator, at most 17% the
+    world, across 119 refs" — and deliberately NOT single_source_positions,
+    which counts positions with a dominant source and is a different quantity.
+    Pointing a premise at a near-neighbour metric is the "novelty" mistake
+    (E2.8) in a new place, and it was made and caught here on 2026-08-20.
+    """
+    from newz.memory.provenance import corpus_concentration
+
+    try:
+        counts = corpus_concentration(conn)
+    except sqlite3.OperationalError as e:
+        return Value(unreadable=f"{e} — the store has not taken this migration yet")
+    total = sum(counts.values())
+    if not total:
+        return Value(unreadable="no held position carries resolvable evidence")
+    return Value(round(counts.get("self", 0) / total, 4))
+
+
 def compute_split(repo_root: Path, *, hours: float) -> dict[str, Value]:
     """Token share by function — the compute the being spent on what."""
     from newz.telemetry import read_budget
@@ -166,6 +187,7 @@ def all_values(conn: sqlite3.Connection, repo_root: Path, *, now: float,
         "works_retracted": works_retracted(conn, since=since),
         "source_gaps_open": source_gaps_open(conn),
         "single_source_positions": single_source_positions(conn),
+        "self_grounding_share": self_grounding_share(conn),
         "feeds_contributing_a_read": feeds_contributing_a_read(
             conn, repo_root / "data" / "feeds.yaml"),
     }

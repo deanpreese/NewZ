@@ -49,6 +49,28 @@ def when(ts: float) -> str:
     return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
 
 
+def report_premises(conn, repo_root) -> None:
+    """Whether the plan still rests on what it says it rests on (E2.10).
+
+    Printed unprompted with every evidence read. A premise that moves is news
+    on its own — waiting until someone is drafting a change before checking is
+    how a plan goes stale between drafts, and it is how "0 outcomes the being
+    did not grade itself" stopped being true on 2026-08-19 with nothing said.
+    """
+    import time as _t
+
+    from newz.evidence.premises import check
+
+    drifts = check(conn, repo_root, now=_t.time())
+    movers = [d for d in drifts if d.moved]
+    head(f"P4's premises — {len(movers)} moved of {len(drifts)}")
+    if movers:
+        print("  A moved premise is not an error. It is the plan's own")
+        print("  measured state no longer matching what it was written on.\n")
+    for d in drifts:
+        print(d.render())
+
+
 def report_s2e(conn, repo_root) -> None:
     """S2-E, read off the mechanical set rather than assembled by hand (E2.9).
 
@@ -269,7 +291,7 @@ def report_2e(conn, repo_root: Path, *, show_stalls: bool = False) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("which", nargs="?", default="all",
-                    choices=["1e", "2e", "s2e", "purposes", "all"])
+                    choices=["1e", "2e", "s2e", "premises", "purposes", "all"])
     ap.add_argument("--stalls", action="store_true",
                     help="list every stalled concern with its cause")
     args = ap.parse_args()
@@ -277,6 +299,10 @@ def main() -> int:
     cfg = load()
     conn = open_db(cfg.main_db_path, read_only=True)
     try:
+        if args.which == "premises":
+            report_premises(conn, cfg.repo_root)
+            print()
+            return 0
         if args.which == "s2e":
             report_s2e(conn, cfg.repo_root)
             print()
@@ -289,6 +315,9 @@ def main() -> int:
             report_1e(conn)
         if args.which in ("2e", "all"):
             report_2e(conn, cfg.repo_root, show_stalls=args.stalls)
+        if args.which == "all":
+            # Unprompted, per E2.10: nobody has to think to ask.
+            report_premises(conn, cfg.repo_root)
         print()
         return 0
     finally:

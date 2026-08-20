@@ -418,6 +418,19 @@ metrics:
       positions grounded in the import are flagged for a reason that is partly
       an artefact of the import.
 
+  self_grounding_share:
+    definition_version: 1
+    baselined: true
+    serves: [tn10:autonomy-without-perspective, evidence:S1-E]
+    emitted_by: newz/evidence/mechanical.py
+    grade: known-biased
+    reason: >
+      the share of all supporting episodes whose provenance is 'self'. This is
+      the figure PLAN §1 states as 50%, and it is NOT single_source_positions,
+      which counts positions with a dominant source — a different quantity, and
+      pointing a premise at the near-neighbour is E2.8's "novelty" mistake in a
+      new place. R-15 applies: imported v1 episodes are uniformly self.
+
   deliberation_token_share:
     definition_version: 1
     baselined: true

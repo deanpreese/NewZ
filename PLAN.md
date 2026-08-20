@@ -637,7 +637,7 @@ off them rather than assembled by hand.
 *Depends on:* E2.7, E2.2.
 *Hooks:* E1.6 supplies the claims half; this supplies the rest.
 
-**E2.10 — `premises.yaml`, this plan's staleness instrument**
+**E2.10 — `premises.yaml`, this plan's staleness instrument** *(built 2026-08-20)*
 *Delivers:* this plan's stated premises extracted with their instrument, their
 grade, and the argument each carries; re-measured on a cadence; drift reported
 whether or not anything is proposed.
