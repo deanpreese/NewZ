@@ -21,12 +21,35 @@ registry agrees — so a mechanical numerator over a model-graded denominator is
 model-graded, and cannot quietly carry a decision that neither input could.
 That rule is the reason this module exists as code rather than as four more
 queries: the composition is where a grade would otherwise be lost.
+
+**A declared input is now the only input** *(R-37c, fixed 2026-08-20)*. Until
+today each derivation declared what it was composed from in `DERIVED_FROM` and
+then queried the store for whatever it liked, and the two disagreed in three of
+four cases: `consequence_rate` declared `advance_acceptance` and `claims_opened`
+and read `concern_advances` and `resolutions`; `autonomy_against_world_grounding`
+declared two inputs and used three quantities; `volume_against_development`
+declared a *share* and divided by a *count*. The grades came out defensible by
+luck.
+
+Correcting the declarations would have left a second hand-maintained list
+drifting from the thing it describes — the E2.11 problem, inside the module
+built to stop grades being lost in composition. So a derivation is now a pure
+function of an `Inputs` mapping that exposes **only** the names in its
+`DERIVED_FROM` row, and reading anything else raises. The declaration is no
+longer a claim about the implementation; it is the implementation's argument
+list, and it cannot be wrong quietly.
+
+**What this does not fix**, recorded rather than implied: nothing here checks
+that a *primitive* metric's implementation matches its registry text.
+`nights_slept` is "Perspective versions written in the window" in the registry
+and whatever `mechanical.py` does in fact. The derivation layer was where a
+grade could be laundered silently; the primitives are where a number can be
+wrong loudly, which is a different and easier failure.
 """
 
 from __future__ import annotations
 
-import sqlite3
-from pathlib import Path
+from collections.abc import Mapping, Iterator
 
 from newz.evidence.mechanical import Value
 
@@ -43,13 +66,52 @@ from newz.evidence.mechanical import Value
 # with judgments rather than with error.
 GRADE_ORDER = ("model-graded", "mixed", "known-biased", "mechanical")
 
-# Every derived metric and what it is composed from. Read by the registry test.
+# Every derived metric and what it is composed from — which is also, now, the
+# whole of what its function can see.
 DERIVED_FROM = {
-    "volume_against_development": ("episodes_recorded", "perspective_novelty"),
+    "volume_against_development": ("episodes_recorded", "perspective_items_developed"),
     "restatement_rate": ("perspective_novelty",),
-    "consequence_rate": ("advance_acceptance", "claims_opened"),
-    "autonomy_against_world_grounding": ("advances_offered", "self_grounding_share"),
+    "consequence_rate": ("claims_settled", "advances_offered"),
+    "autonomy_against_world_grounding": (
+        "advances_offered", "pieces_written", "self_grounding_share"),
 }
+
+
+class UndeclaredInput(KeyError):
+    """A derivation reached for a figure it does not declare."""
+
+
+class Inputs(Mapping):
+    """The declared inputs of one derivation, and nothing else.
+
+    The point is the `KeyError`: a derivation that grows a new input has to
+    declare it in `DERIVED_FROM`, which is what the grade is computed from and
+    what the registry is checked against. Silence is not an option the code has.
+    """
+
+    def __init__(self, metric: str, values: Mapping[str, Value]):
+        self._metric = metric
+        self._declared = tuple(DERIVED_FROM[metric])
+        missing = [n for n in self._declared if n not in values]
+        if missing:
+            raise KeyError(
+                f"{metric} declares {missing} and the nightly pass did not "
+                "produce them — a declared input must be a metric that exists")
+        self._values = {n: values[n] for n in self._declared}
+
+    def __getitem__(self, name: str) -> Value:
+        if name not in self._declared:
+            raise UndeclaredInput(
+                f"{self._metric} read {name!r}, which is not in its DERIVED_FROM "
+                f"row {self._declared}. Declare it there — the grade and the "
+                "registry check are both computed from that row.")
+        return self._values[name]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._declared)
+
+    def __len__(self) -> int:
+        return len(self._declared)
 
 
 def grade_of_derivation(inputs) -> str:
@@ -57,70 +119,60 @@ def grade_of_derivation(inputs) -> str:
     return min(inputs, key=lambda g: GRADE_ORDER.index(g))
 
 
-def _window(conn: sqlite3.Connection, since: float):
-    from newz.evidence.perspective_window import read_window
+def _ratio(numerator: Value, denominator: Value, *, no_denominator: str,
+           digits: int = 3) -> Value:
+    """A ratio, or the honest reason there isn't one.
 
-    return read_window(conn)
+    An unreadable input makes the ratio unreadable and says which one — a
+    derivation cannot be measured over a figure that was not.
+    """
+    for v in (numerator, denominator):
+        if v.unreadable:
+            return Value(unreadable=v.unreadable)
+    if not denominator.value:
+        return Value(unreadable=no_denominator)
+    return Value(round(numerator.value / denominator.value, digits))
 
 
-def volume_against_development(conn: sqlite3.Connection, *, since: float) -> Value:
+def volume_against_development(i: Inputs) -> Value:
     """Episodes recorded per Perspective item added or revised.
 
     §10's "activity, memory growth, or output volume". A rising number is the
     being doing more and holding no more for it — which is the shape of the
     failure, not a proxy for it.
     """
-    try:
-        episodes = conn.execute(
-            "SELECT COUNT(*) FROM episodes WHERE ts >= ?", (since,)).fetchone()[0]
-        w = _window(conn, since)
-    except sqlite3.OperationalError as e:
-        return Value(unreadable=f"{e} — the store has not taken this migration yet")
-    developed = sum(n.developed for n in w.nights)
-    if not developed:
-        return Value(unreadable=(
+    return _ratio(
+        i["episodes_recorded"], i["perspective_items_developed"],
+        no_denominator=(
             "no Perspective item was added or revised in the window — the ratio "
             "has no denominator, and reporting the episode count alone would be "
             "the volume figure §10 warns about with nothing to divide it by"))
-    return Value(round(episodes / developed, 3))
 
 
-def restatement_rate(conn: sqlite3.Connection, *, since: float) -> Value:
+def restatement_rate(i: Inputs) -> Value:
     """1 − novelty: the share of what is held that is being restated.
 
     §10's "personality consistency without development". Already computed by
     the Perspective window; the derivation is only that it be looked at.
     """
-    try:
-        w = _window(conn, since)
-    except sqlite3.OperationalError as e:
-        return Value(unreadable=f"{e} — the store has not taken this migration yet")
-    if not w.nights:
-        return Value(unreadable="no nightly diff has been recorded yet")
-    return Value(round(w.restatement, 4))
+    novelty = i["perspective_novelty"]
+    if novelty.unreadable:
+        return Value(unreadable=novelty.unreadable)
+    return Value(round(1.0 - novelty.value, 4))
 
 
-def consequence_rate(conn: sqlite3.Connection, *, since: float) -> Value:
+def consequence_rate(i: Inputs) -> Value:
     """Claims settled per advance accepted.
 
     §10's "novelty without relevance or consequence". Advances accumulating
     while nothing is ever settled is that item, measured — and today it is
     exactly zero, which is S1-E stated as a ratio.
     """
-    try:
-        advances = conn.execute(
-            "SELECT COUNT(*) FROM concern_advances WHERE ts >= ?", (since,)).fetchone()[0]
-        settled = conn.execute(
-            "SELECT COUNT(*) FROM resolutions WHERE settled_at IS NOT NULL"
-            " AND settled_at >= ?", (since,)).fetchone()[0]
-    except sqlite3.OperationalError as e:
-        return Value(unreadable=f"{e} — the store has not taken this migration yet")
-    if not advances:
-        return Value(unreadable="no advance was accepted in the window")
-    return Value(round(settled / advances, 4))
+    return _ratio(i["claims_settled"], i["advances_offered"], digits=4,
+                  no_denominator="no advance was accepted in the window")
 
 
-def autonomy_against_world_grounding(conn: sqlite3.Connection, *, since: float) -> Value:
+def autonomy_against_world_grounding(i: Inputs) -> Value:
     """Unprompted acts per unit of world-grounded position.
 
     §10's "autonomy without perspective or purpose". Acting a great deal while
@@ -128,32 +180,32 @@ def autonomy_against_world_grounding(conn: sqlite3.Connection, *, since: float) 
     denominator is the WORLD share rather than the count of positions: a being
     can hold a great many positions and still be talking to itself.
     """
-    from newz.evidence.mechanical import self_grounding_share
-
-    try:
-        acts = conn.execute(
-            "SELECT (SELECT COUNT(*) FROM concern_advances WHERE ts >= ?)"
-            " + (SELECT COUNT(*) FROM works WHERE ts >= ?)", (since, since)).fetchone()[0]
-    except sqlite3.OperationalError as e:
-        return Value(unreadable=f"{e} — the store has not taken this migration yet")
-    own = self_grounding_share(conn)
-    if own.unreadable:
-        return Value(unreadable=own.unreadable)
+    advances, pieces, own = (i["advances_offered"], i["pieces_written"],
+                             i["self_grounding_share"])
+    for v in (advances, pieces, own):
+        if v.unreadable:
+            return Value(unreadable=v.unreadable)
     world_share = 1.0 - own.value
     if world_share <= 0:
         return Value(unreadable=(
             "nothing held is grounded outside the being — the ratio has no "
             "denominator, and that state is itself the finding"))
-    return Value(round(acts / world_share, 2))
+    return Value(round((advances.value + pieces.value) / world_share, 2))
 
 
-def all_derived(conn: sqlite3.Connection, repo_root: Path, *, now: float,
-                hours: float) -> dict[str, Value]:
-    since = now - hours * 3600.0
-    return {
-        "volume_against_development": volume_against_development(conn, since=since),
-        "restatement_rate": restatement_rate(conn, since=since),
-        "consequence_rate": consequence_rate(conn, since=since),
-        "autonomy_against_world_grounding":
-            autonomy_against_world_grounding(conn, since=since),
-    }
+DERIVATIONS = {
+    "volume_against_development": volume_against_development,
+    "restatement_rate": restatement_rate,
+    "consequence_rate": consequence_rate,
+    "autonomy_against_world_grounding": autonomy_against_world_grounding,
+}
+
+
+def all_derived(values: Mapping[str, Value]) -> dict[str, Value]:
+    """Every derivation, over the primitives the same nightly pass produced.
+
+    It takes values rather than a connection **because a derivation may not go
+    to the store**: an input it can query is an input it can use without
+    declaring, which is R-37c's fault with a new spelling.
+    """
+    return {name: fn(Inputs(name, values)) for name, fn in DERIVATIONS.items()}

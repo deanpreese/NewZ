@@ -274,14 +274,26 @@ metrics:
       concerns there and both were commissioned research the keywords missed.
 
   perspective_novelty:
-    definition_version: 1
+    definition_version: 2
+    baselined: true
     serves: [tn10:consistency, tn10:volume]
-    emitted_by: tools/evidence.py
+    emitted_by: newz/evidence/mechanical.py
     grade: mixed
     reason: >
-      the read consults no model (INV-023 — diffs are computed by comparing item
+      pooled development share across the window's nights — developed over held.
+      The read consults no model (INV-023 — diffs are computed by comparing item
       sets, never narrated). Its inputs, added/revised/carried, are labels the
       model applied during consolidation. Clean instrument, model-labelled input.
+    definition_history:
+      - version: 2
+        why: >
+          windowed and filed nightly, where version 1 was whatever
+          `tools/evidence.py` printed for the era it was asked about. The
+          quantity is unchanged — pooled developed/held — but a figure over all
+          history and a figure over 168 hours are not two points on one series,
+          and `restatement_rate` derives from this. E3.7 also passed a `since`
+          into a helper that dropped it, so the old derivation divided a
+          seven-day numerator by an all-time denominator (R-37c).
 
   perspective_coverage:
     definition_version: 1
@@ -486,14 +498,47 @@ metrics:
     definition_version: 1
     baselined: true
     serves: [tn10:volume]
-    emitted_by: newz/evidence/derived.py
+    emitted_by: newz/evidence/mechanical.py
     grade: mechanical
-    reason: a count of episodes rows in the window; nothing judges what becomes one.
+    reason: >
+      a count of episodes rows in the window; nothing judges what becomes one.
+      The emitter was `derived.py` and the code was an inline query inside
+      `record_all` — a declaration nothing could be loudly wrong about, which is
+      R-37c's shape at its smallest. It is a function in `mechanical.py` now.
 
-  volume_against_development:
+  claims_settled:
     definition_version: 1
     baselined: true
-    derived_from: [episodes_recorded, perspective_novelty]
+    serves: [evidence:S1-E, tn10:novelty-without-consequence]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mixed
+    reason: >
+      a count of `resolutions` rows the resolver settled in the window —
+      `consequence_rate`'s numerator, which had no registered metric behind it
+      at all until 2026-08-20 (the derivation queried the table while declaring
+      it derived from `claims_opened`, a different quantity). Mixed rather than
+      mechanical: a settlement is a model's verdict, but one E1.3 constrains
+      mechanically — the verdict is accepted only if its quote occurs VERBATIM
+      in the fetched material. A judgment behind a mechanical gate is neither
+      `mechanical` nor plainly `model-graded`, and `mixed` is the grade that
+      says so.
+
+  perspective_items_developed:
+    definition_version: 1
+    baselined: true
+    serves: [tn10:volume, tn10:consistency]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mixed
+    reason: >
+      items added or revised across the window's nights —
+      `volume_against_development`'s denominator, which the derivation declared
+      as `perspective_novelty`: a share where it used a count (R-37c). Mixed
+      because added/revised are labels the model applied at consolidation.
+
+  volume_against_development:
+    definition_version: 2
+    baselined: true
+    derived_from: [episodes_recorded, perspective_items_developed]
     serves: [tn10:volume]
     emitted_by: newz/evidence/derived.py
     grade: mixed
@@ -502,9 +547,18 @@ metrics:
       memory growth, or output volume" — a rising number is the being doing
       more and holding no more for it. Mixed because the denominator's
       added/revised labels are the model's, applied at consolidation.
+    definition_history:
+      - version: 2
+        why: >
+          the denominator is named correctly and is now windowed. It declared
+          `perspective_novelty`, a share, while dividing by a count of
+          developed items — and that count came from a helper that discarded
+          the window, so a seven-day numerator was divided by an all-time
+          denominator (R-37c). Both halves of the ratio now cover the window
+          the reading is filed under.
 
   restatement_rate:
-    definition_version: 1
+    definition_version: 2
     baselined: true
     derived_from: [perspective_novelty]
     serves: [tn10:consistency]
@@ -514,11 +568,16 @@ metrics:
       1 − novelty: the share of what is held that is being restated. §10's
       "personality consistency without development", and mixed for the same
       reason novelty is.
+    definition_history:
+      - version: 2
+        why: >
+          its input is windowed (see `perspective_novelty` v2). The arithmetic
+          is unchanged; what it is 1 − novelty *of* is not.
 
   consequence_rate:
-    definition_version: 1
+    definition_version: 2
     baselined: true
-    derived_from: [advances_offered, claims_opened]
+    derived_from: [claims_settled, advances_offered]
     serves: [tn10:novelty-without-consequence, evidence:S1-E]
     emitted_by: newz/evidence/derived.py
     grade: model-graded
@@ -527,14 +586,31 @@ metrics:
       consequence" — advances accumulating while nothing is ever settled is
       that item, and today it is exactly zero, which is S1-E stated as a ratio.
       Model-graded because the denominator counts what judge_advance accepted.
+    definition_history:
+      - version: 2
+        why: >
+          the inputs are the ones it actually computes. It declared
+          `advance_acceptance` and `claims_opened` and read `concern_advances`
+          and settled `resolutions` (R-37c) — so the numerator was a quantity
+          with no registered metric, and the declared denominator was a rate
+          rather than the count it divides by. The number this produces is
+          unchanged; what can be said about it is not, and the declaration is
+          now the function's argument list rather than a claim about it.
 
   autonomy_against_world_grounding:
-    definition_version: 1
+    definition_version: 2
     baselined: true
-    derived_from: [advances_offered, self_grounding_share]
+    derived_from: [advances_offered, pieces_written, self_grounding_share]
     serves: [tn10:autonomy-without-perspective]
     emitted_by: newz/evidence/derived.py
     grade: model-graded
+    definition_history:
+      - version: 2
+        why: >
+          `pieces_written` is declared. The numerator was advances **plus
+          works** while the row named two inputs (R-37c) — the third was
+          invisible to the grade computation, and a derivation whose grade is
+          computed from an incomplete input list is only accidentally right.
     reason: >
       unprompted acts per unit of world-grounded position. §10's "autonomy
       without perspective or purpose". The denominator is the WORLD share

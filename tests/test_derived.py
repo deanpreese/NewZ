@@ -10,6 +10,7 @@ made the gap look larger than it was.
 
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 
@@ -17,8 +18,11 @@ import pytest
 import yaml
 
 from newz.evidence import derived as D
+from newz.evidence import mechanical as M
 from newz.evidence.baseline import baselined_metrics, record_all
 from newz.evidence.grades import grade_of
+from newz.evidence.mechanical import Value
+from newz.evidence.perspective_window import read_window
 from newz.evidence.purpose import served_by
 from newz.store.db import open_db
 from newz.store.migrations import apply_pending
@@ -88,47 +92,112 @@ def test_each_derivation_reports_through_the_baseline_layer(store, tmp_path):
     assert produced == set(baselined_metrics())
 
 
-def test_a_ratio_with_no_denominator_is_unreadable_not_zero(store):
+def test_a_ratio_with_no_denominator_is_unreadable_not_zero():
     """INV-044 in the place it is easiest to get wrong. Behavior: no
     development in the window means the volume ratio has no denominator —
     reporting the episode count alone would be exactly the volume figure §10
     warns about, with nothing to divide it by."""
-    now = time.time()
-    store.execute("INSERT INTO episodes (ts, kind, provenance, summary,"
-                  " digest_eligible) VALUES (?,?,?,?,1)",
-                  (now, "reading", "world:arxiv", "something read"))
-    store.commit()
-
-    v = D.volume_against_development(store, since=now - 7 * DAY)
+    v = D.volume_against_development(D.Inputs("volume_against_development", {
+        "episodes_recorded": Value(41.0),
+        "perspective_items_developed": Value(0.0),
+    }))
 
     assert v.value is None
     assert "no denominator" in v.unreadable
 
 
-def test_consequence_rate_is_s1e_stated_as_a_ratio(store):
+def test_an_unreadable_input_makes_the_derivation_unreadable_and_says_which():
+    """Behavior: a ratio over a figure that was not measured was not measured
+    either — and the reason travels, so the read says what is missing rather
+    than that something is."""
+    v = D.consequence_rate(D.Inputs("consequence_rate", {
+        "claims_settled": Value(2.0),
+        "advances_offered": Value(unreadable="the door's log is absent"),
+    }))
+
+    assert v.value is None
+    assert v.unreadable == "the door's log is absent"
+
+
+def test_a_derivation_cannot_read_an_input_it_does_not_declare():
+    """R-37c's fix, as a behavior rather than a promise: the declaration is the
+    function's argument list. Reaching past it raises — which is what makes the
+    grade computed from that row trustworthy."""
+    i = D.Inputs("restatement_rate", {
+        "perspective_novelty": Value(0.2),
+        "advances_offered": Value(9.0),
+    })
+
+    assert D.restatement_rate(i).value == 0.8
+    with pytest.raises(D.UndeclaredInput):
+        i["advances_offered"]
+
+
+def test_a_declared_input_the_nightly_pass_does_not_produce_is_refused():
+    """The other direction. Behavior: a derivation cannot declare a figure
+    nobody computes — the Rule 2 discipline E2.6 applies to purposes, applied
+    to composition."""
+    with pytest.raises(KeyError):
+        D.Inputs("consequence_rate", {"claims_settled": Value(1.0)})
+
+
+def test_consequence_rate_is_s1e_stated_as_a_ratio():
     """Behavior: claims settled per advance accepted. Advances accumulating
     while nothing is settled is §10's third item, and it is what the live store
     reads today."""
-    now = time.time()
-    store.execute("INSERT INTO concerns (id, opened_at, kind, statement,"
-                  " why_open, closing_condition, status, salience, origin)"
-                  " VALUES (1,?,?,?,?,?,?,?,?)",
-                  (now, "inquiry", "q", "w", "c", "open", 0.5, "reading"))
-    store.execute("INSERT INTO concern_advances (concern_id, ts, kind, summary,"
-                  " evidence_json) VALUES (1,?,?,?,'[]')", (now, "reasoning", "s"))
-    store.commit()
-
-    v = D.consequence_rate(store, since=now - 7 * DAY)
+    v = D.consequence_rate(D.Inputs("consequence_rate", {
+        "claims_settled": Value(0.0),
+        "advances_offered": Value(110.0),
+    }))
 
     assert v.value == 0.0, "an advance with nothing settled is a consequence rate of zero"
 
 
-def test_autonomy_is_measured_against_the_world_share_not_a_position_count(store):
+def test_autonomy_is_measured_against_the_world_share_not_a_position_count():
     """Behavior: the denominator is what came from outside, because a being can
     hold a great many positions and still be talking to itself — which is the
-    §10 item, not a proxy for it."""
-    src = (REPO / "newz" / "evidence" / "derived.py").read_text()
-    fn = src[src.index("def autonomy_against_world_grounding"):src.index("def all_derived")]
+    §10 item, not a proxy for it. Halving the world share doubles the ratio;
+    the count of positions held does not enter it."""
+    def read(self_share):
+        return D.autonomy_against_world_grounding(
+            D.Inputs("autonomy_against_world_grounding", {
+                "advances_offered": Value(8.0),
+                "pieces_written": Value(2.0),
+                "self_grounding_share": Value(self_share),
+            })).value
 
-    assert "self_grounding_share" in fn
-    assert "1.0 - own.value" in fn
+    assert read(0.5) == 20.0
+    assert read(0.75) == 40.0
+
+
+def test_nothing_grounded_outside_the_being_is_unreadable_not_infinite():
+    """Behavior: a world share of zero is the finding itself, not a division."""
+    v = D.autonomy_against_world_grounding(
+        D.Inputs("autonomy_against_world_grounding", {
+            "advances_offered": Value(8.0),
+            "pieces_written": Value(2.0),
+            "self_grounding_share": Value(1.0),
+        }))
+
+    assert v.value is None
+    assert "itself the finding" in v.unreadable
+
+
+def test_the_window_reaches_the_perspective_read(store):
+    """The half of R-37c that produced a wrong number rather than a wrong
+    declaration. Behavior: a night outside the window is not in the window —
+    `read_window` took a `since` from its caller and dropped it, so both
+    Perspective-derived metrics were all-time figures filed nightly under a
+    168-hour label."""
+    now = time.time()
+    for version, ts in ((1, now - 30 * DAY), (2, now - DAY)):
+        store.execute(
+            "INSERT INTO perspective (version, ts, content, diff_json,"
+            " token_count) VALUES (?,?,?,?,?)",
+            (version, ts, "p", json.dumps(
+                {"carried": 10, "added": ["a"], "revised": []}), 100))
+    store.commit()
+
+    assert read_window(store).nights and len(read_window(store).nights) == 2
+    assert len(read_window(store, since=now - 7 * DAY).nights) == 1
+    assert M.perspective_items_developed(store, since=now - 7 * DAY).value == 1.0

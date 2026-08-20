@@ -192,31 +192,29 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
     from newz.evidence.derived import all_derived
     from newz.evidence.mechanical import all_values
 
+    from newz.evidence.agreement import disagreement_rate
+    from newz.evidence.mechanical import Value
+
     now = now or time.time()
     c = read_consequence(conn, repo_root, now=now, hours=window_hours)
-    values: dict[str, tuple] = {
-        "advances_offered": (c.door.advances, None),
-        "claims_opened": (c.door.opened, None),
-        "claims_refused": (c.door.refused, None),
-        "claims_declined": (c.door.declined, c.door.unreadable),
-        "positions_changed_by_world": (c.positions.by_world, None),
-        "positions_changed_by_operator": (c.positions.by_operator, None),
-        "positions_changed_by_self": (c.positions.by_self, None),
-        "concerns_refused": (c.opener.refused, None),
+    values: dict[str, Value] = {
+        "advances_offered": Value(c.door.advances),
+        "claims_opened": Value(c.door.opened),
+        "claims_refused": Value(c.door.refused),
+        "claims_declined": Value(c.door.declined, unreadable=c.door.unreadable),
+        "positions_changed_by_world": Value(c.positions.by_world),
+        "positions_changed_by_operator": Value(c.positions.by_operator),
+        "positions_changed_by_self": Value(c.positions.by_self),
+        "concerns_refused": Value(c.opener.refused),
     }
     # E2.9's mechanical set, in the same pass and the same window.
-    for name, v in all_values(conn, repo_root, now=now, hours=window_hours).items():
-        values[name] = (v.value, v.unreadable)
-    # E3.7's derivations, in the same pass and the same window as their inputs.
-    for name, v in all_derived(conn, repo_root, now=now, hours=window_hours).items():
-        values[name] = (v.value, v.unreadable)
-    from newz.evidence.agreement import disagreement_rate
+    values.update(all_values(conn, repo_root, now=now, hours=window_hours))
+    values["operator_disagreement_rate"] = disagreement_rate(
+        conn, since=now - window_hours * 3600.0)
+    # E3.7's derivations, over the values above rather than over the store —
+    # so a declared input is the only input a derivation can have (R-37c).
+    values.update(all_derived(values))
 
-    v = disagreement_rate(conn, since=now - window_hours * 3600.0)
-    values["operator_disagreement_rate"] = (v.value, v.unreadable)
-    values["episodes_recorded"] = (
-        float(conn.execute("SELECT COUNT(*) FROM episodes WHERE ts >= ?",
-                           (now - window_hours * 3600.0,)).fetchone()[0]), None)
     missing = set(baselined_metrics()) - set(values)
     if missing:
         raise KeyError(
@@ -229,8 +227,9 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
         if sync(conn, metric, now=now):
             logger.info("metric %s: definition changed; the series starts again", metric)
 
-    return [take(conn, name, v, window_hours=window_hours, unreadable=why, now=now)
-            for name, (v, why) in values.items()]
+    return [take(conn, name, v.value, window_hours=window_hours,
+                 unreadable=v.unreadable, now=now)
+            for name, v in values.items()]
 
 
 class MetricScheduler:

@@ -158,6 +158,64 @@ def self_grounding_share(conn: sqlite3.Connection) -> Value:
     return Value(round(counts.get("self", 0) / total, 4))
 
 
+def episodes_recorded(conn: sqlite3.Connection, *, since: float) -> Value:
+    """Episodes written in the window. Nothing judges what becomes one.
+
+    It lived inline in `record_all` while the registry named `derived.py` as its
+    emitter — a small instance of the fault E3.7's whole layer had (R-37c): a
+    declaration that nobody could be wrong about loudly.
+    """
+    return _scalar(conn, "SELECT COUNT(*) FROM episodes WHERE ts >= ?", (since,))
+
+
+def claims_settled(conn: sqlite3.Connection, *, since: float) -> Value:
+    """Claims the resolver settled in the window.
+
+    `consequence_rate`'s numerator, which had no registered metric behind it
+    until now — the derivation queried `resolutions` directly while declaring
+    it derived from `claims_opened`, which is a different quantity entirely.
+    """
+    return _scalar(conn, "SELECT COUNT(*) FROM resolutions"
+                         " WHERE settled_at IS NOT NULL AND settled_at >= ?", (since,))
+
+
+def perspective_items_developed(conn: sqlite3.Connection, *, since: float) -> Value:
+    """Items added or revised across the window's nights.
+
+    `volume_against_development`'s denominator. The derivation declared
+    `perspective_novelty` — a *share* — and divided by this, a *count*.
+    """
+    from newz.evidence.perspective_window import read_window
+
+    try:
+        w = read_window(conn, since=since)
+    except sqlite3.OperationalError as e:
+        return Value(unreadable=f"{e} — the store has not taken this migration yet")
+    return Value(float(sum(n.developed for n in w.nights)))
+
+
+def perspective_novelty(conn: sqlite3.Connection, *, since: float) -> Value:
+    """Pooled development share across the window's nights: developed / held.
+
+    The quantity `tools/evidence.py` prints per era; here it is windowed and
+    filed nightly, which is what gives it a series. Pooled rather than averaged
+    for the reason `perspective_window` states — a night carrying twelve
+    positions does not deserve the same vote as one carrying two hundred.
+    """
+    from newz.evidence.perspective_window import read_window
+
+    try:
+        w = read_window(conn, since=since)
+    except sqlite3.OperationalError as e:
+        return Value(unreadable=f"{e} — the store has not taken this migration yet")
+    weighed = sum(n.weighed for n in w.nights)
+    if not weighed:
+        return Value(unreadable=(
+            "no night in the window held anything — the share has no "
+            "denominator, and 0.0 would read as 'restated everything'"))
+    return Value(round(w.novelty, 4))
+
+
 def compute_split(repo_root: Path, *, hours: float) -> dict[str, Value]:
     """Token share by function — the compute the being spent on what."""
     from newz.telemetry import read_budget
@@ -190,6 +248,13 @@ def all_values(conn: sqlite3.Connection, repo_root: Path, *, now: float,
         "self_grounding_share": self_grounding_share(conn),
         "feeds_contributing_a_read": feeds_contributing_a_read(
             conn, repo_root / "data" / "feeds.yaml"),
+        # The four E3.7 derives from. They are primitives rather than inline
+        # queries inside the derivations so that a declared input is a real
+        # metric with a grade, a series and a definition version (R-37c).
+        "episodes_recorded": episodes_recorded(conn, since=since),
+        "claims_settled": claims_settled(conn, since=since),
+        "perspective_items_developed": perspective_items_developed(conn, since=since),
+        "perspective_novelty": perspective_novelty(conn, since=since),
     }
     out.update(compute_split(repo_root, hours=hours))
     return out

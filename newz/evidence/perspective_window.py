@@ -149,8 +149,20 @@ class Window:
         return len(self.nights) >= nights
 
 
-def read_window(conn: sqlite3.Connection) -> Window:
-    """Read every recorded Perspective version. Plain SQL — no model."""
+def read_window(conn: sqlite3.Connection, *, since: float | None = None) -> Window:
+    """Read recorded Perspective versions. Plain SQL — no model.
+
+    `since` bounds the window to nights at or after a timestamp. It defaults to
+    None — every night — because Evidence 1-E asks about the whole history and
+    that is what this module was built for.
+
+    **It exists because a caller was silently getting the whole history.**
+    E3.7's derivations passed a `since` into a helper that dropped it, so
+    `volume_against_development` divided episodes over seven days by
+    development over all time, and `restatement_rate` was an all-time figure
+    filed nightly under a 168-hour window. A window argument nothing applies is
+    worse than none: the reading carries the window in its own row.
+    """
     items: dict[int, tuple[int, int]] = {}
     for version, total, grounded in conn.execute(
         "SELECT version, COUNT(*), SUM(CASE WHEN evidence_json IS NOT NULL"
@@ -162,7 +174,7 @@ def read_window(conn: sqlite3.Connection) -> Window:
     window = Window()
     for version, ts, diff_json, tokens in conn.execute(
         "SELECT version, ts, diff_json, token_count FROM perspective"
-        " ORDER BY version"
+        " WHERE ts >= ? ORDER BY version", (since if since is not None else 0.0,)
     ):
         try:
             diff = json.loads(diff_json) if diff_json else {}
