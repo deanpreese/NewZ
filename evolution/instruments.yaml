@@ -135,6 +135,7 @@ not_instruments:
     - tools/adjudicate.py
     - tools/amend_constitution.py
     - tools/backfill_perspective_items.py
+    - tools/closure_sweep.py     # judges stalled concerns; closes the finished ones
     - tools/embed_episodes.py
     - tools/journal.py
     - tools/perspective_hygiene.py
