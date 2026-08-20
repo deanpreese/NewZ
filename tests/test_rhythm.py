@@ -146,3 +146,39 @@ def test_the_rhythm_stands_off_sleep(store, tmp_path):
 
     assert s._in_quiet_window(dt.datetime(2026, 8, 20, 3, 30))
     assert not s._in_quiet_window(dt.datetime(2026, 8, 20, 5, 0))
+
+
+def test_writing_a_piece_recomputes_what_the_corpus_is_about(store):
+    """E2.4's writer. Consumer: newz/works/subjects.py's work_tags, read by
+    tools/read_works.py --subjects. Behavior: a new piece changes what is
+    distinctive across the corpus, so the tags are recomputed when one lands —
+    which keeps the reader a reader.
+
+    Asserted as agreement between the stored table and a fresh computation,
+    not as a tag count: in a corpus of one nothing is distinctive, and zero
+    tags is the correct answer rather than a failure."""
+    from newz.works.subjects import compute
+
+    write_once(store, FakeLLM())
+
+    stored = {(r["work_id"], r["tag"]) for r in
+              store.execute("SELECT work_id, tag FROM work_tags")}
+    fresh = {(wid, tag) for wid, tags in compute(store).tags.items()
+             for tag, _ in tags}
+
+    assert stored == fresh
+
+
+def test_a_failed_tag_recompute_does_not_cost_the_piece(store, monkeypatch):
+    """Behavior: tags are a read of the work, never the point of it. If the
+    computation fails the piece still stands, because losing a piece to a
+    bookkeeping error would be the tail wagging the dog."""
+    import newz.works.subjects as subjects
+
+    monkeypatch.setattr(subjects, "recompute",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+
+    r = write_once(store, FakeLLM())
+
+    assert r.wrote
+    assert store.execute("SELECT COUNT(*) FROM works").fetchone()[0] == 1

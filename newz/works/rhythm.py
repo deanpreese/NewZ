@@ -112,6 +112,15 @@ def write_once(conn: sqlite3.Connection, client, *,
         conn.commit()
         raise
 
+    # A new piece changes what is distinctive across the corpus, so the tags
+    # are a property of the corpus and not of the piece (E2.4). Recomputed
+    # here rather than on read, so the reader stays a reader.
+    try:
+        from newz.works.subjects import recompute
+        recompute(conn)
+    except Exception:  # noqa: BLE001 — tags are a read, never the point
+        logger.exception("tag recompute failed; the piece stands")
+
     conn.execute(
         "UPDATE work_attempts SET outcome='wrote', subject_kind=?,"
         " subject_ref=?, work_id=? WHERE id=?",

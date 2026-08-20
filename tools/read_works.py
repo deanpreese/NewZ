@@ -19,6 +19,7 @@ but it removes the smaller tell of knowing which subject produced which piece.
 from __future__ import annotations
 
 import random
+import sqlite3
 import sys
 import textwrap
 from datetime import datetime
@@ -54,26 +55,52 @@ def _subjects(conn) -> int:
     this corpus, and a subject is a tag more than one piece shares — so the
     being's subjects are read off what it wrote rather than chosen for it
     (TRUE_NORTH §8).
-    """
-    from newz.works.subjects import recompute
 
-    c = recompute(conn)
-    if not c.pieces:
-        print("no pieces yet.")
+    Reads the stored computation. The writing rhythm recomputes after every
+    new piece, because distinctiveness is a property of the corpus and a new
+    piece changes it.
+    """
+    from newz.works.subjects import MIN_PIECES_FOR_STABLE_TAGS
+
+    try:
+        rows = list(conn.execute(
+            "SELECT work_id, tag, weight FROM work_tags ORDER BY work_id, weight DESC"))
+    except sqlite3.OperationalError:
+        print("work_tags does not exist in this store yet — it arrives with"
+              " migration 0033, applied when the being next starts.")
         return 0
-    print(f"{c.pieces} piece(s)")
-    if c.caveat:
-        print(f"  UNSTABLE: {c.caveat}\n")
-    subs = c.subjects()
+
+    pieces = conn.execute("SELECT COUNT(*) FROM works").fetchone()[0]
+    if not rows:
+        print(f"{pieces} piece(s), no tags computed yet — the writing rhythm"
+              " computes them when it next writes something.")
+        return 0
+
+    tagged = {}
+    for r in rows:
+        tagged.setdefault(r["work_id"], []).append((r["tag"], r["weight"]))
+
+    print(f"{pieces} piece(s)")
+    if pieces < MIN_PIECES_FOR_STABLE_TAGS:
+        print(f"  UNSTABLE: below {MIN_PIECES_FOR_STABLE_TAGS} pieces almost"
+              " every term is distinctive and these mean little\n")
+
+    shared = {}
+    for tags in tagged.values():
+        for tag, _ in tags:
+            shared[tag] = shared.get(tag, 0) + 1
+    subs = sorted(((t, n) for t, n in shared.items() if n >= 2),
+                  key=lambda kv: -kv[1])
     print("\nsubjects — tags more than one piece shares:")
     if not subs:
         print("    none yet: no term is distinctive in more than one piece")
     for tag, n in subs:
         print(f"    {tag:<24} {n} pieces")
+
     print("\nper piece:")
-    for wid, tags in sorted(c.tags.items()):
-        title = conn.execute("SELECT title FROM works WHERE id=?", (wid,)).fetchone()[0]
-        print(f"    [{wid}] {title[:52]}")
+    for wid, tags in sorted(tagged.items()):
+        row = conn.execute("SELECT title FROM works WHERE id=?", (wid,)).fetchone()
+        print(f"    [{wid}] {(row['title'] if row else '?')[:52]}")
         print("        " + ", ".join(f"{t} ({w:.3f})" for t, w in tags))
     return 0
 
