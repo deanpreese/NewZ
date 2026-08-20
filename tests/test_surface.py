@@ -243,3 +243,117 @@ def test_disclosure_survives_regeneration_byte_for_byte(store, tmp_path):
     generate(store, b, now=2.0)
 
     assert (a / "index.html").read_bytes() == (b / "index.html").read_bytes()
+
+
+# ── the read, rendered (E3.6) ───────────────────────────────────────────
+
+def _body(page: Path) -> str:
+    """The rendered content, without the stylesheet.
+
+    Asserting against a whole HTML document catches the CSS: an earlier version
+    of the no-aggregate test matched a word in the stylesheet, and the
+    ungraded-metric test matched `max-width: 42rem` while looking for the
+    number 42.
+    """
+    text = page.read_text()
+    # After </nav>, not after <nav>: the nav marks the current page with
+    # <strong>, which counts as content if the split is one tag too early.
+    return text.split("</nav>", 1)[1].split("<footer>", 1)[0]
+
+
+def _reading(conn, metric, value, *, ts, status="ok", note="", window=168.0, dv=1):
+    conn.execute(
+        "INSERT INTO metric_readings (ts, metric, status, value, window_hours,"
+        " note, definition_version) VALUES (?,?,?,?,?,?,?)",
+        (ts, metric, status, value, window, note, dv))
+    conn.commit()
+
+
+def test_the_read_regenerates_from_empty_with_the_rest(store, tmp_path):
+    """E3.6's Done-when. Behavior: the read is a page like any other — same
+    generator, same manifest, same clean-directory rebuild."""
+    _reading(store, "nights_slept", 7.0, ts=time.time())
+
+    out, manifest = _generate(store, tmp_path)
+
+    assert (out / "read.html").exists()
+    assert manifest["pages"]["read"]["metric_readings"]
+    assert "nights slept" in (out / "read.html").read_text()
+
+
+def test_the_read_shows_unreadable_and_incomplete_where_they_apply(store, tmp_path):
+    """E3.6's second clause, and INV-044 on the surface. Behavior: a window
+    nothing measured says so; it does not appear as a number and it does not
+    disappear."""
+    now = time.time()
+    _reading(store, "claims_declined", None, ts=now, status="unreadable",
+             note="no call log; declines are not in the store by design")
+    _reading(store, "pieces_written", None, ts=now, status="incomplete",
+             note="the input begins 96h into a 168h window")
+
+    out, _ = _generate(store, tmp_path)
+    text = (out / "read.html").read_text()
+
+    assert "UNREADABLE" in text and "not in the store by design" in text
+    assert "INCOMPLETE" in text and "96h into a 168h window" in text
+
+
+def test_the_read_computes_no_aggregate_score(store, tmp_path):
+    """The hardest clause in Phase 3, and the one §10 names. Behavior: one line
+    per reading and nothing that spans them.
+
+    Metrics measure different things in different units with different grades.
+    A number combining them would assert they are commensurable, and none of
+    them is — which is exactly how "evidence scores disconnected from sustained
+    human-quality interaction" gets built by accident."""
+    now = time.time()
+    for name, v in (("nights_slept", 7.0), ("pieces_written", 4.0),
+                    ("claims_opened", 2.0)):
+        _reading(store, name, v, ts=now)
+
+    out, _ = _generate(store, tmp_path)
+    text = _body(out / "read.html").lower()
+
+    for word in ("score", "overall", "health:", "total:", "average",
+                 "out of", "% healthy", "summary:"):
+        assert word not in text, f"the read has grown an aggregate: {word!r}"
+    assert text.count("<strong>") == 3, "one line per reading, and no more"
+
+
+def test_an_ungraded_metric_is_not_shown_at_all(store, tmp_path):
+    """Rule 7 on the surface. Behavior: a measurement nobody graded is omitted
+    rather than displayed without its provenance — the page cannot be the place
+    the grading discipline leaks."""
+    _reading(store, "a_number_nobody_graded", 42.0, ts=time.time())
+
+    out, _ = _generate(store, tmp_path)
+
+    assert "42" not in _body(out / "read.html")
+
+
+def test_the_read_shows_the_delta_only_within_one_definition(store, tmp_path):
+    """E2.8 carried onto the surface. Behavior: a metric redefined between
+    readings shows no baseline, because comparing a figure to one computed a
+    different way is two numbers subtracted."""
+    now = time.time()
+    _reading(store, "nights_slept", 5.0, ts=now - 20 * DAY, dv=1)
+    _reading(store, "nights_slept", 7.0, ts=now, dv=2)
+
+    out, _ = _generate(store, tmp_path)
+    text = _body(out / "read.html")
+
+    assert "no baseline yet" in text
+    assert "+2" not in text
+
+
+def test_the_read_is_taken_from_recorded_readings_and_not_recomputed(store, tmp_path):
+    """Behavior: the page renders what the nightly cadence wrote. A page that
+    computed its own numbers would be a second implementation of every metric,
+    drifting quietly from the one the loop steers by."""
+    src = (Path(__file__).resolve().parent.parent / "newz" / "surface"
+           / "generate.py").read_text()
+    read_fn = src[src.index("def _read("):src.index("def _commitments(")]
+
+    assert "metric_readings" in read_fn
+    for computed in ("all_values", "read_consequence", "record_all"):
+        assert computed not in read_fn, f"the read recomputes via {computed}"

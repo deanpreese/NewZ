@@ -755,7 +755,7 @@ remaining instruments land here. **All four are Class A**, and Phase 3 is where
 the loop is meant to prove itself — so these are also the epics that let it be
 judged when it does.
 
-**E3.6 — the read, rendered**
+**E3.6 — the read, rendered** *(built 2026-08-20)*
 *Delivers:* the daily state read — every canonical instrument, through E2.7's
 baseline-and-delta layer — generated as a page like any other, tracing to store
 rows like any other.

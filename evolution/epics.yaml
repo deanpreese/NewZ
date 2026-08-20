@@ -227,7 +227,7 @@ epics:
   E3.6:
     title: 'the read, rendered'
     phase: 3
-    status: open
+    status: built
     depends_on: [E2.7, E2.9, E3.2]
     done_when: mechanical
 

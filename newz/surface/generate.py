@@ -112,7 +112,7 @@ def _check_disclosure(text: str) -> str:
     return text.strip()
 
 
-PAGES = ("index", "work", "questions", "errors", "commitments")
+PAGES = ("index", "work", "questions", "errors", "commitments", "read")
 
 
 @dataclass
@@ -149,7 +149,7 @@ def _page(title: str, body: str, *, here: str, disclosure: str = DISCLOSURE) -> 
         f'<a href="{"index.html" if p == "index" else p + ".html"}">'
         f'{"the work" if p == "index" else p}</a>' if p != here else
         f'<strong>{"the work" if p == "index" else p}</strong>'
-        for p in ("index", "questions", "errors", "commitments"))
+        for p in ("index", "questions", "errors", "commitments", "read"))
     return (f"<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
             f"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
             f"<meta name=\"disclosure\" content=\"{_e(disclosure)}\">\n"
@@ -267,6 +267,74 @@ def _errors(conn: sqlite3.Connection, m: Manifest) -> str:
     return "\n".join(out)
 
 
+def _read(conn: sqlite3.Connection, m: Manifest) -> str:
+    """The state read, rendered as a page like any other (E3.6).
+
+    **No aggregate score, and that is the whole difficulty of this page.**
+    §10 names "evidence scores disconnected from sustained human-quality
+    interaction" as something the project will not mistake for success, and a
+    page is exactly where one appears — a single number at the top, a
+    percentage, a count of how many metrics are "healthy". So there is one line
+    per reading and nothing that spans them. Metrics measure different things
+    in different units with different grades; a number combining them would be
+    an assertion that they are commensurable, and none of them is.
+
+    Read from what the nightly cadence recorded (E2.7), never computed here.
+    A page that computed its own numbers would be a second implementation of
+    every metric, drifting quietly from the one the loop steers by.
+    """
+    from newz.evidence.grades import UngradedMetric, grade_of
+
+    try:
+        latest = list(conn.execute(
+            "SELECT r.* FROM metric_readings r JOIN (SELECT metric, MAX(ts) t"
+            " FROM metric_readings GROUP BY metric) x"
+            " ON x.metric = r.metric AND x.t = r.ts ORDER BY r.metric"))
+    except sqlite3.OperationalError:
+        return ("<h1>The read</h1>\n<p class=dim>No readings yet — the nightly "
+                "cadence records them, and this store has not taken the "
+                "migration that holds them.</p>")
+    m.record("read", "metric_readings", [r["id"] for r in latest])
+    if not latest:
+        return ("<h1>The read</h1>\n<p class=dim>No readings recorded yet. "
+                "The cadence writes one of each a night.</p>")
+
+    out = ["<h1>The read</h1>",
+           "<p class=dim>What the instruments say, as of the last nightly "
+           "reading. One line per measurement, and deliberately nothing that "
+           "adds them up: these measure different things in different units, "
+           "and a number combining them would assert they are comparable.</p>"]
+    for r in latest:
+        try:
+            grade = grade_of(r["metric"])
+        except UngradedMetric:
+            # Rule 7: a measurement nobody graded is not shown at all rather
+            # than shown without its provenance.
+            continue
+        label = _e(r["metric"].replace("_", " "))
+        if r["status"] != "ok":
+            out.append(f"<p><strong>{label}</strong> — "
+                       f"<em>{_e(r['status']).upper()}</em><br>"
+                       f"<span class=dim>{_e(r['note'])}</span></p>")
+            continue
+        base = conn.execute(
+            "SELECT value FROM metric_readings WHERE metric=? AND status='ok'"
+            " AND definition_version=? AND ts <= ? ORDER BY ts DESC LIMIT 1",
+            (r["metric"], r["definition_version"],
+             r["ts"] - r["window_hours"] * 3600.0)).fetchone()
+        if base is None:
+            move = "no baseline yet"
+        elif abs(r["value"] - base["value"]) < 1e-12:
+            move = "unchanged"
+        else:
+            move = f"{r['value'] - base['value']:+.4g} from {base['value']:.4g}"
+        out.append(f"<p><strong>{label}</strong> {r['value']:.4g}"
+                   f" <span class=tag>{_e(grade)}</span>"
+                   f"<br><span class=dim>{_e(move)}"
+                   f" · over {r['window_hours'] / 24:.0f} days</span></p>")
+    return "\n".join(out)
+
+
 def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
     """Generated from an empty query until E4.1 exists.
 
@@ -335,6 +403,7 @@ def generate(conn: sqlite3.Connection, out_dir: Path, *, now: float) -> Manifest
         "questions.html": ("Open questions", _questions(conn, m), "questions"),
         "errors.html": ("What it was wrong about", _errors(conn, m), "errors"),
         "commitments.html": ("Commitments", _commitments(conn, m), "commitments"),
+        "read.html": ("The read", _read(conn, m), "read"),
     }
     for name, (title, body, here) in pages.items():
         (out_dir / name).write_text(_page(title, body, here=here), encoding="utf-8")
