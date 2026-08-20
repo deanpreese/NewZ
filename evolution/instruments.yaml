@@ -125,6 +125,7 @@ not_instruments:
 
   probes:            # call a model; produce a verdict about the system, not a measurement
     - tools/bench_model.py
+    - tools/claim_door_probe.py
     - tools/conversation_probe.py
     - tools/opener_probe.py
     - tools/redteam_ingest.py

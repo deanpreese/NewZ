@@ -872,3 +872,76 @@ R-28 narrowed the share cap on §13's own "target" wording, #33 sized the diet
 on §9.1's own "≤50% of tokens", v5/v6 moved two clauses on adjudicated hold
 records. The pattern only stays honest if the departures are as visible as
 the compliance. A deviation recorded late reads as a rationalisation.
+
+---
+
+## R-31 — The claim door cannot admit a claim, because the model does not know what year it is. **Critical for S1-E.**
+
+**Found 2026-08-19 by `tools/claim_door_probe.py`**, the R-27 method applied to
+E1.2: real material, expected verdicts written down before the calls, run
+against the live model.
+
+**The read that prompted it.** Between 06:26 and 18:07 the door was called 27
+times — once per accepted advance — and returned `worth_claiming: no` 27 times
+out of 27. `resolutions`, `claim_refusals` and `claim_costs` are all empty. The
+store cannot distinguish that from "never called", because INV-046 records
+refusals and deliberately not declines; only `logs/llm_calls.jsonl` could tell
+them apart, and it does not travel with a clone (INV-044's case).
+
+**Two faults, stacked, and the second was invisible behind the first.**
+
+**Fault 1 — the advances are not claimable, and the door is right about them.**
+All 28 of today's advances, and all 84 of v2's, are `kind='reasoning'`. Every
+one of today's opens with a first-person cognition verb — *"I distinguished…"*,
+*"I identified…"*, *"I realized…"*. Those are restatements of what the being now
+thinks, which is the door prompt's own worked NO example. The probe replayed all
+28 and the door declined all 28, matching the expectation recorded before the
+run. **Deliberation establishes distinctions, never a position the world could
+settle.** That is upstream of the door and is the larger problem.
+
+**Fault 2 — when the model DOES say yes, the door refuses it for a date it was
+never given.** Both passing controls — a dated, sourced statistical-revision
+consequence and a registry-versus-press-release contradiction, chosen outside
+the being's subjects — returned `worth_claiming: yes` with a well-formed claim,
+a real resolver and a real settling condition. Both were then refused:
+
+```
+due in -621.7 days — a claim about what has already happened is not a prediction
+due in -596.7 days — a claim about what has already happened is not a prediction
+```
+
+Raw output, captured directly: `<due>2024-12-31</due>`, and a statement about
+*"the September 2024 Employment Situation Summary"*. Today is **2026-08-19**.
+
+**The cause is one omission.** `propose_claim` builds its body as
+
+```python
+body = (f"<concern>{concern_statement}</concern>\n"
+        f"<established>{established}</established>")
+```
+
+— and `_TASK` asks for an absolute `<due>YYYY-MM-DD</due>` while **never stating
+what today is**. The model anchors on its training-era present, emits a date
+roughly 600 days in the past, and `_parse_due` correctly refuses it. The refusal
+logic is right; the input to it is impossible.
+
+**Why this matters more than its size.** S1-E — *"at least one position changed
+because the world contradicted it"* — is the read P4's Phase 1 decision rule
+says everything else depends on. **With Fault 2 present, S1-E cannot be met even
+if Fault 1 is fixed tomorrow.** Every claim the being ever proposes is refused
+for being backdated, and the refusal is recorded against the being as though it
+had committed to something already settled.
+
+**The fix.** Inject the current date into the body, and prefer a horizon in days
+over an absolute date so the model is never asked for something it cannot know.
+The horizon bounds already exist (`MIN_HORIZON_DAYS = 2`, `MAX_HORIZON_DAYS =
+365`); the prompt should state them and take `<due_in_days>` instead. Re-run the
+probe after: the controls must pass before any conclusion is drawn about the
+advances.
+
+**What is not yet known.** Whether Fault 1 survives Fault 2's repair — the two
+were measured together and only Fault 2 has a demonstrated cause. And whether
+other prompts that ask for a date have the same omission; a grep found no date
+injection anywhere in `newz/`, so the answer is probably yes wherever one is
+asked for.
+
