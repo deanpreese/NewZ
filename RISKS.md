@@ -1276,3 +1276,50 @@ closing condition changes what the being is pursuing and why, and the 19 already
 closed on a self-graded terminus are part of its record. R-13's precedent applies:
 this edits the self-model and is a deliberate operator act, not maintenance.
 
+### R-33 — E1.7 measured on real material, 2026-08-19: it works, and the volume will fall
+
+**The week of life was compressed into an hour** on a throwaway copy, against the
+being's own ingested reading rather than material chosen to be answerable.
+
+**The first reachable concern this system has produced.** Probe case B, run three
+times:
+
+> closes when: *"the publication of the official agency's final fire-acreage
+> figure and the platform's subsequent resolution"*
+
+`_unreachable` admits it. That is the target shape, and nothing in 123 prior
+concerns had it.
+
+**The other two runs of the same case were refused** — *"terminus is research
+nobody will do"* — and recorded. Before E1.7 both would have been stored as
+concerns nothing could close. **So the door is doing its job at roughly 1 in 3.**
+
+**The consequence to expect: fewer concerns.** The being opened ~1 a day; a check
+that refuses two of three reachable-adjacent proposals will cut that. That is
+intended — a concern that cannot close is worse than none — but it means the
+concern rate is now a thing to watch rather than a thing to ignore, and
+`tools/claims.py --read` reports both halves so the trade is visible.
+
+**Two findings that are not E1.7's, and predate it.**
+
+**1. The reading opener declines more than R-27's snapshot implies.** On the
+being's real material, production input shape: **0 concerns from 10 readings**,
+all *"nothing worth carrying"* — no unreadable proposals, no refusals. On R-27's
+own four cases, **2 of 4** where 2026-08-15 recorded 4 of 4, and case A declines
+3 times out of 3. **The pre-change prompt scores the same 2 of 4**, so this is
+not E1.7's doing; it regressed somewhere between 2026-08-15 and now, and nothing
+was watching. E1.0's feed-path rewrite on 08-18 is the obvious suspect and is
+not evidence.
+
+**2. `tools/opener_probe.py` could not answer its own question.** Run against the
+live store it returned `already opened 6 today` on all four cases — the daily cap
+answering before the opener does. An instrument aimed at the opener's judgment
+was reading its rate limit, and had been for however long a probe day hit the
+cap. Now runs on a copy with the caps cleared, like the claim-door probe.
+
+**The last untested link.** Whether an advance on a *reachable* concern produces a
+claim the door admits. Every claim-door reading so far — 0 of 28 — was taken on
+advances from unreachable concerns, so it tested nothing about this. That is one
+deliberation against case B's concern, and it is the only thing between here and
+knowing whether Phase 1's chain closes.
+
