@@ -210,6 +210,10 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
     # E3.7's derivations, in the same pass and the same window as their inputs.
     for name, v in all_derived(conn, repo_root, now=now, hours=window_hours).items():
         values[name] = (v.value, v.unreadable)
+    from newz.evidence.agreement import disagreement_rate
+
+    v = disagreement_rate(conn, since=now - window_hours * 3600.0)
+    values["operator_disagreement_rate"] = (v.value, v.unreadable)
     values["episodes_recorded"] = (
         float(conn.execute("SELECT COUNT(*) FROM episodes WHERE ts >= ?",
                            (now - window_hours * 3600.0,)).fetchone()[0]), None)

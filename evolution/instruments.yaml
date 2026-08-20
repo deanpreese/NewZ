@@ -455,6 +455,25 @@ metrics:
     unreadable_when: the call log is gitignored and does not travel with a clone (INV-044).
     reason: deliberation tokens over all tokens in the window, tagged at the call site.
 
+  operator_disagreement_rate:
+    definition_version: 1
+    baselined: true
+    serves: [tn10:agreement]
+    emitted_by: newz/evidence/agreement.py
+    grade: model-graded
+    reason: >
+      the share of exchanges that put a position at stake in which the being
+      pushed back rather than moved to the operator's view. A model classifies
+      each exchange, so the judgement is a model's — and the judged party is
+      the being while the configuring party is the operator, which is why this
+      may halt and may never justify (newz/evidence/authority.py). §10's
+      "compliance or agreement with the operator" had no raw material anywhere
+      until E3.8, and it is the item most likely to move under a process
+      optimising for a quiet week.
+    unreadable_when: >
+      no exchange in the window put a position at stake. A rate of 0 would read
+      as "never disagrees" when it means "was never asked to".
+
   # ── the derivation layer (E3.7) ───────────────────────────────────────
   # Four of TRUE_NORTH §10's six checkable items, as ratios of what the store
   # already holds. A derived metric takes the WEAKEST grade among its inputs:

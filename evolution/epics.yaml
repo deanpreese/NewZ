@@ -241,7 +241,7 @@ epics:
   E3.8:
     title: 'operator agreement'
     phase: 3
-    status: open
+    status: built
     depends_on: [E2.5, E2.6]
     done_when: mechanical
 

@@ -778,7 +778,7 @@ through E2.7 with a baseline.
 never collection, and counting instruments rather than derivable quantities is
 what made the gap look larger than it is.
 
-**E3.8 — operator agreement**
+**E3.8 — operator agreement** *(built 2026-08-20)*
 *Delivers:* the one §10 item with no raw material anywhere — a measured
 agreement-or-disagreement signal in the operator exchange.
 *Done when:* the signal exists, is graded **model-graded**, and is tested to be
