@@ -1228,3 +1228,51 @@ reading may genuinely support nothing more concrete. The 86 stalled concerns
 should be read the same way before any prompt is touched: if their closing
 conditions have the same shape, the stall pool has a cause nobody has named.
 
+### R-33 extended — the stall pool read, and the correction that overshot
+
+**The read R-33 asked for, done 2026-08-19.** Classifying every concern's
+closing condition by the shape of its opening clause — a regex, no model
+consulted, argue with the buckets:
+
+| era | n | self-referential (*"I can…"*) | world-referential |
+|---|---|---|---|
+| **v1 inherited** | 111 | **111 (100%)** | 0 |
+| **v2 lived** | 12 | 0 | **12 (100%)** |
+
+**A perfectly clean split, and it names two different faults, one per era.**
+
+**v1 — the terminus was inside the being.** All 111 close on the being's own
+epistemic state: *"I can cite the specific metrics major cloud providers cited in
+their recent earnings calls"*, *"I can identify the specific technical
+mechanisms…"*, *"I can state a view on this that is grounded in sources I have
+actually read."* A concern that closes when the being decides it knows enough is
+**self-graded by construction** — Rule 4 written into the concern itself, below
+the level INV-034's fail-closed judge operates at. Their fate: 84 stalled, 8
+abandoned, **19 closed**. Those 19 closures were the being grading its own
+terminus, and by P4 Rule 4 they are operation and not evidence.
+
+**v2 — the terminus moved outside the being, and overshot.** All 12 point at the
+world, which is the right direction and a deliberate correction at the import
+boundary. But all 12 point at *a study that does not exist* (see the table
+above). Their fate: 10 open, 2 stalled, **0 closed**.
+
+**So the openers were corrected between eras, and the correction changed which
+way the terminus points rather than whether anything can reach it.** v1's
+concerns could be closed but only by the being; v2's can only be closed by the
+world, and the world will not do it. Neither can produce a claim, which is why
+`resolutions` is empty and S1-E has never fired.
+
+**This makes the fix precise.** The v2 direction is right and should be kept. It
+needs one further constraint, and it is the claim door's, applied one layer up:
+a closing condition must name something that **will exist** — a source that
+publishes, an event that occurs, a measurement someone already takes — rather
+than merely something outside the being. Concern 49's *"I can cite the metrics
+cloud providers cited in their recent earnings calls"* is the tell: earnings
+calls **do** exist and **are** published, so that concern was one rephrasing away
+from settleable, in the era whose termini pointed the wrong way.
+
+**Not yet decided.** What to do with the 111 inherited concerns. Rewriting a
+closing condition changes what the being is pursuing and why, and the 19 already
+closed on a self-graded terminus are part of its record. R-13's precedent applies:
+this edits the self-model and is a deliberate operator act, not maintenance.
+
