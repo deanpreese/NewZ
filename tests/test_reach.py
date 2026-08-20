@@ -173,3 +173,60 @@ def test_a_piece_keeps_its_address_when_it_is_revised(tmp_path):
 
     assert (out / "work" / "1.html").exists()
     assert "Revised title" in (out / "work" / "1.html").read_text()
+
+
+# ── attested against a pin, not read from a diff (R-37b) ────────────────
+
+def test_the_file_reach_lives_in_is_invisible_to_every_path_guard():
+    """R-37b, measured rather than asserted. `.env` is gitignored, so it is in
+    neither `git diff` nor `git ls-files --others --exclude-standard` — and
+    those two commands are the whole of `freeze.changed_paths()`.
+
+    So the loop could have set NEWZ_SURFACE_REACH=open and no freeze check,
+    drift check or gate would have refused anything, because there would have
+    been no diff to refuse. This test pins the blindness in place so the
+    compensating check below is never mistaken for redundant."""
+    import subprocess
+
+    from newz.evidence import freeze, hard_core
+
+    ignored = subprocess.run(["git", "check-ignore", ".env"],
+                             cwd=freeze.REPO, capture_output=True, text=True)
+    assert ignored.returncode == 0, "this test is about a gitignored .env"
+    assert ".env" not in freeze.changed_paths()
+    assert not hard_core.contains(".env")
+    assert freeze.refusals([".env"]) == []
+
+
+def test_reach_is_attested_against_the_hard_core_at_process_start():
+    """The compensating check: compare the value **in effect** against what the
+    operator recorded, since the file it comes from cannot be read by a diff.
+
+    Flipping reach therefore takes two acts and one of them is tracked."""
+    from newz.evidence import hard_core
+    from newz.evidence.reach import ReachUnattested, attest, breach, pinned
+
+    assert pinned() == "local", "Rule 3: public-ready, left unpublished"
+    assert hard_core.contains("evolution/hard_core.yaml"), (
+        "the pin is only a boundary because the loop cannot edit the file it "
+        "is written in")
+
+    assert attest("local") == "local"
+    assert breach("local") is None
+
+    with pytest.raises(ReachUnattested, match="pins it to 'local'"):
+        attest("open")
+    assert "exposed" in breach("open")
+
+
+def test_a_guard_that_cannot_find_its_pin_does_not_pass(monkeypatch):
+    """INV-044's discipline applied to a guard. A missing reference value means
+    nothing was checked, and a check that reports success on no input is worse
+    than no check — it is a guard that reads as enforced."""
+    from newz.evidence import hard_core, reach
+
+    with monkeypatch.context() as m:
+        m.setattr(hard_core, "pins", lambda: [])
+        with pytest.raises(hard_core.PinMissing, match="not pinned"):
+            reach.attest("local")
+

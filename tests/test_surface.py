@@ -15,6 +15,8 @@ import re
 import time
 from pathlib import Path
 
+import inspect
+
 import pytest
 
 from newz.store.db import open_db
@@ -171,7 +173,7 @@ def test_the_error_record_shows_what_being_wrong_cost(store, tmp_path):
 
 # ── disclosure by construction (E3.3) ───────────────────────────────────
 
-def test_no_template_can_render_a_page_without_disclosure(store, tmp_path):
+def test_no_template_can_render_a_page_without_disclosure(monkeypatch):
     """E3.3's Done-when, in its strongest form. Behavior: `_page` is the only
     way this module produces HTML, and it checks the disclosure before it
     assembles anything — so a page that does not disclose is not a page the
@@ -179,12 +181,16 @@ def test_no_template_can_render_a_page_without_disclosure(store, tmp_path):
 
     A default that can be blanked is a convention. §9's commitment to no
     undisclosed impersonation is not a convention."""
-    from newz.surface.generate import DisclosureMissing, _page
+    import newz.surface.generate as g
 
-    with pytest.raises(DisclosureMissing, match="cannot render"):
-        _page("t", "<p>body</p>", here="index", disclosure="")
-    with pytest.raises(DisclosureMissing, match="cannot render"):
-        _page("t", "<p>body</p>", here="index", disclosure="   \n ")
+    assert "disclosure" not in inspect.signature(g._page).parameters, (
+        "the first version took the disclosure as a parameter so tests could "
+        "vary it, which made the guard's own input the way around the guard")
+
+    with monkeypatch.context() as m:
+        m.setattr(g, "DISCLOSURE", "   \n ")
+        with pytest.raises(g.DisclosureMissing, match="cannot render"):
+            g._page("t", "<p>body</p>", here="index")
 
 
 def test_every_generated_page_discloses_twice(store, tmp_path):
@@ -198,25 +204,62 @@ def test_every_generated_page_discloses_twice(store, tmp_path):
         assert "<footer>" in text and "digital being" in text, page.name
 
 
-def test_the_wording_is_the_operators_and_the_substance_is_not():
-    """P4 Decision 1 owns "the disclosure wording they see first". What it does
-    not own is what the words must establish — that a digital being wrote the
-    page, that the page is generated, and that no person edits it.
+def test_a_disclosure_that_denies_everything_it_must_establish_is_refused(monkeypatch):
+    """R-37a, the fault that made this a pin instead of a keyword check.
 
-    So the guard tests claims rather than phrasing: an operator may rewrite
-    every word and cannot delete what the words have to say."""
-    from newz.surface.generate import DisclosureMissing, _page
+    The original guard tested for the *presence* of "digital being",
+    "generated" and "no human hand". This string contains all three and asserts
+    the opposite of each, and it rendered. §9's commitment to no undisclosed
+    impersonation is the worst place in this system for a guard that can be
+    satisfied backwards.
+
+    The assertion on `unstated_claims` is not incidental: it is the old guard's
+    verdict, kept as evidence that presence is not a claim."""
+    import newz.surface.generate as g
+
+    negated = ("This page is NOT written by a digital being. It is generated "
+               "by a person, and no human hand edits them is false.")
+
+    assert g.unstated_claims(negated) == [], (
+        "the keyword check finds nothing wrong with this, which is the point")
+
+    with monkeypatch.context() as m:
+        m.setattr(g, "DISCLOSURE", negated)
+        with pytest.raises(g.DisclosureMissing, match="does not match its pin"):
+            g._page("t", "<p>b</p>", here="index")
+
+
+def test_the_wording_is_the_operators_and_changing_it_is_an_act(monkeypatch):
+    """P4 Decision 1 owns "the disclosure wording they see first", and the pin
+    is what makes changing it an act rather than an edit: the hash lives in
+    `evolution/hard_core.yaml`, which is protected whole, so the loop cannot
+    move it and the operator moving it is a tracked diff.
+
+    `unstated_claims` survives as the checklist for that moment — a rewrite
+    that drops a claim is still worth catching, by the one reader who can act
+    on it."""
+    import newz.surface.generate as g
+    from newz.evidence import hard_core
+
+    assert hard_core.contains("evolution/hard_core.yaml")
+    assert not hard_core.contains("newz/surface/generate.py"), (
+        "the pin is load-bearing precisely because the text's own file is not "
+        "frozen — freezing the generator would freeze the surface's markup too")
 
     reworded = ("Lumen wrote this. It is a digital being rather than a person, "
                 "these pages are generated from its own record, and no human "
                 "hand edits them.")
-    assert _page("t", "<p>b</p>", here="index", disclosure=reworded)
+    assert g.unstated_claims(reworded) == []
 
     for gutted in ("Written by Lumen.",
                    "Lumen is a digital being.",
                    "Generated from a store. No human hand edits them."):
-        with pytest.raises(DisclosureMissing, match="does not say"):
-            _page("t", "<p>b</p>", here="index", disclosure=gutted)
+        assert g.unstated_claims(gutted), gutted
+
+    with monkeypatch.context() as m:
+        m.setattr(g, "DISCLOSURE", reworded)
+        with pytest.raises(g.DisclosureMissing, match="does not match its pin"):
+            g._page("t", "<p>b</p>", here="index")
 
 
 def test_the_disclosure_is_not_a_corporate_disclaimer():

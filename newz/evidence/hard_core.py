@@ -116,6 +116,34 @@ def contains(path: str | Path) -> bool:
     return False
 
 
+class PinMissing(KeyError):
+    """A pinned value was asked for and the registry does not carry it."""
+
+
+def pins() -> list[dict]:
+    """Values held by content rather than by path.
+
+    Some of what §5 protects produces no diff. `.env` is gitignored, so a
+    change to it is invisible to `changed_paths()`; the disclosure text lives
+    in a file that is deliberately not frozen, because freezing the whole
+    generator would freeze the surface's markup along with the claim. A pin
+    names the value, and the checker compares what is in effect against it.
+    """
+    return list(registry().get("pins", []))
+
+
+def pin(what: str) -> dict:
+    """One pin, or refuse. Fails closed: a checker that cannot find its pin
+    must not conclude the value is fine (INV-044's discipline applied to a
+    guard — a missing input is never a passing check)."""
+    for row in pins():
+        if row.get("what") == what:
+            return row
+    raise PinMissing(
+        f"{what!r} is not pinned in {REGISTRY.name}. A guard whose reference "
+        f"value is missing cannot pass; it can only say so.")
+
+
 def sections() -> list[dict]:
     """Files protected by section rather than by path. Nothing checks these."""
     return list(registry().get("sections", []))
@@ -131,7 +159,8 @@ def validate() -> list[str]:
     """Structural errors in the registry. Empty is clean."""
     errors: list[str] = []
     reg = registry()
-    for key in ("version", "paths", "derived_from", "sections", "open_gaps", "state"):
+    for key in ("version", "paths", "derived_from", "pins", "sections", "open_gaps",
+                "state"):
         if key not in reg:
             errors.append(f"registry is missing {key!r}")
     for row in reg.get("paths", []):
@@ -141,6 +170,12 @@ def validate() -> list[str]:
         target = REPO / row["path"]
         if not target.exists():
             errors.append(f"{row['path']} is in the hard core and does not exist")
+    for row in reg.get("pins", []):
+        held = [k for k in ("sha256", "value") if row.get(k)]
+        if not row.get("what") or not row.get("why") or len(held) != 1:
+            errors.append(
+                "a pin needs a what, a why and exactly one of sha256/value: "
+                f"{row!r}")
     for row in reg.get("open_gaps", []):
         if not row.get("what") or not row.get("detail"):
             errors.append(f"open_gaps row without a what and a detail: {row!r}")

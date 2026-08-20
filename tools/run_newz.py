@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from newz.ambient.loop import AmbientLoop
 from newz.channels.telegram import TelegramChannel
 from newz.config import load
+from newz.evidence.reach import ReachUnattested, attest
 from newz.gate.constitution import load_active_constitution
 from newz.gate.outbound import OutboundGate
 from newz.llm.client import LLMClient
@@ -48,6 +49,17 @@ def main() -> int:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     cfg = load()
+
+    # Before anything else runs. A being that has been up for a day with an
+    # unattested reach has been reachable for a day, and `.env` is invisible to
+    # every path-based guard in the freeze (R-37b) — this is the only place the
+    # effective value is compared against what the operator recorded.
+    try:
+        logging.info("reach attested: %s", attest(cfg.surface_reach))
+    except ReachUnattested as e:
+        print(f"REFUSING TO START\n\n{e}", file=sys.stderr)
+        return 1
+
     if not cfg.telegram_bot_token or not cfg.telegram_chat_id:
         print("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not configured", file=sys.stderr)
         return 1

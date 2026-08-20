@@ -18,6 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from newz.config import load
+from newz.evidence.reach import ReachUnattested, attest
 from newz.surface.serve import host_for, is_open, serve
 
 
@@ -28,6 +29,15 @@ def main() -> int:
     if not out.exists() or not (out / "index.html").exists():
         print("nothing generated yet — run tools/generate_surface.py first")
         return 1
+
+    # `.env` is gitignored, so setting NEWZ_SURFACE_REACH produces no diff and
+    # no freeze check can see it (R-37b). Exposure takes a second act, in a
+    # tracked file, which is what makes it the operator's.
+    try:
+        attest(cfg.surface_reach)
+    except ReachUnattested as e:
+        print(f"REFUSING TO SERVE\n\n{e}")
+        return 2
 
     if is_open(cfg.surface_reach):
         print("REACH IS OPEN. This binds every interface; anyone who can route")

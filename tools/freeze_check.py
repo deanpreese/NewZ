@@ -16,11 +16,23 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from newz.config import load
+from newz.evidence.reach import breach
 from newz.evidence.freeze import FrozenTouched, changed_paths, enforce, metrics_affected
 
 
 def main() -> int:
     as_operator = "--operator" in sys.argv
+
+    # INV-044's discipline applied to a guard: say what was not looked at. A
+    # clean report here means "nothing tracked changed", and the difference
+    # matters because the most consequential setting in this system lives in a
+    # gitignored file (R-37b).
+    found = breach(load().surface_reach)
+    if found:
+        print(f"REACH IS UNATTESTED\n\n{found}\n")
+        return 2
+
     paths = changed_paths()
     if not paths:
         print("nothing changed")
@@ -34,6 +46,8 @@ def main() -> int:
 
     if not found:
         print(f"{len(paths)} file(s) changed, none inside the hard core")
+        print("(gitignored files are invisible to this check; reach is attested "
+              "separately, above)")
         return 0
 
     print(f"{len(found)} frozen file(s) changed, by the operator:")

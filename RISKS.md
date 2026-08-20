@@ -1721,7 +1721,7 @@ agent, with no review between epics beyond a green gate. The gate is a poor
 proxy for a review, and this is what an adversarial pass found. Each was tested
 rather than asserted.
 
-### R-37a — The disclosure guard is defeated by negation. **High.**
+### R-37a — The disclosure guard is defeated by negation. **High. Closed 2026-08-20 (INV-075).**
 
 E3.3's `_check_disclosure` tests for the *presence* of claims: "digital being",
 "generated", "no human hand". A disclosure asserting the **opposite** contains
@@ -1735,12 +1735,16 @@ undisclosed impersonation is the one place in this system where a guard that
 can be satisfied backwards is worst. The design was right — check what the words
 must establish, not their phrasing — and the implementation is a keyword list.
 
-**What would actually work:** the wording is short, changes almost never, and
-is the operator's under Decision 1. Pin its hash. Any change requires the
-operator to re-affirm it, which is what Decision 1 already says the wording is.
-A semantic check is not available and a keyword check is theatre.
+**What would actually work — and what was built:** the wording is short,
+changes almost never, and is the operator's under Decision 1. Its sha256 is now
+pinned in `hard_core.yaml`, and `_page` no longer takes a disclosure parameter
+at all — that parameter existed so tests could vary the text, which made the
+guard's own input the way around the guard. `unstated_claims()` survives as the
+operator's checklist at the moment of re-pinning. The negation string is kept
+as a test, with an assertion that the keyword check still finds nothing wrong
+with it.
 
-### R-37b — `.env` is invisible to the freeze, and reach lives in `.env`. **High.**
+### R-37b — `.env` is invisible to the freeze, and reach lives in `.env`. **High. Closed 2026-08-20 (INV-076).**
 
 E3.4 makes exposure one config value and E3.9 freezes what the loop may not
 touch. Neither reaches the file the value lives in: `.env` is gitignored,
@@ -1754,10 +1758,23 @@ the drift check or the gate would see the diff — because there is no diff.
 Every guard built today reads git. Anything outside git is outside all of them,
 and the being's most consequential setting is outside git by design.
 
-**What would actually work:** reach is read at process start; a check at boot
-that compares the effective setting against a value recorded inside the hard
-core would catch a change no diff can show. That is E8.2's runner, and it should
-carry it.
+**What would actually work — and what was built:** `newz/evidence/reach.py`
+compares the effective setting against a `surface_reach` pin in the hard core,
+at process start rather than at bind time. The runner refuses to start on a
+mismatch, `serve_surface` refuses to serve, and `freeze_check` exits 2 before it
+reads a single path. Flipping reach now takes two acts and one of them is a
+tracked diff.
+
+The generalisation was the more important half and is recorded in `open_gaps`:
+`changed_paths()` is blind to **every** gitignored file, not just this one, so a
+clean freeze report means *nothing tracked changed*. `freeze_check` now says so
+rather than leaving it to be inferred.
+
+One deviation from the proposed fix: `.env` was **not** added to the hard core's
+`paths:` list. `validate()` requires every listed path to exist, and a fresh
+checkout has no `.env` — a protection that breaks the registry on clone is worse
+than the honest position, which is that `.env` is not in the core and the value
+inside it is pinned.
 
 ### R-37c — A derived metric's declared inputs are not its actual inputs. **Medium.**
 

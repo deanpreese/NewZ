@@ -92,7 +92,17 @@ def enforce(paths, *, actor: str = "loop") -> list[Refusal]:
 
 
 def changed_paths(base: str = "HEAD") -> list[str]:
-    """What this working tree changes, as git sees it."""
+    """What the working tree has changed, tracked files only.
+
+    **What this cannot see, stated rather than implied.** Both commands below
+    read git, so a gitignored file appears in neither and every guard built on
+    this function is blind to it. `.env` is the case that matters: reach lives
+    there, and the loop could flip it without producing a diff for anything
+    here to refuse (R-37b). `newz.evidence.reach` is the compensating check and
+    it compares the effective value against its pin instead of reading a file.
+
+    A clean result from this function means *nothing tracked changed*.
+    """
     out = subprocess.run(
         ["git", "diff", "--name-only", base],
         cwd=REPO, capture_output=True, text=True, check=False)

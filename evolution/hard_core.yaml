@@ -162,6 +162,55 @@ open_gaps:
       no gate refuses a diff against this file. E8.0 delivers the gate; E8.4's
       builder is the first consumer that would be stopped by it.
 
+  - what: gitignored files
+    detail: >-
+      `changed_paths()` reads `git diff` and `git ls-files --others
+      --exclude-standard`, so an ignored file appears in neither and every
+      path-based guard here is blind to it. `.env` is the case that matters and
+      `pins` is the compensating check — but the blindness is general, and a
+      clean freeze report means "nothing tracked changed" rather than "nothing
+      changed".
+
+# ── pins ────────────────────────────────────────────────────────────────
+#
+# Values the loop may never change, held by **content** rather than by path.
+#
+# The path list above is checked against a diff, and a diff is exactly what
+# some of the most consequential things here do not produce. `.env` is
+# gitignored, so a change to it appears in neither `git diff` nor `git ls-files
+# --others --exclude-standard` — the loop could flip the surface's reach and no
+# freeze check would see anything, because there would be nothing to see. And
+# the disclosure text lives in `newz/surface/generate.py`, which is not in the
+# hard core: protecting the whole generator would freeze the surface's markup
+# against the loop, which is not the point. The claim is what must not move.
+#
+# So a pin names the value and the checker compares what is **in effect**
+# against it. Recorded here because this file is protected whole: the loop
+# cannot change a pin, and the operator changing one is a tracked diff.
+pins:
+
+  - what: surface_disclosure
+    sha256: "5322f65c6405a5037bb810bd92b67cd5fcfcb6a93643fc717826d82e7792995d"
+    why: >-
+      §9's commitment to no undisclosed impersonation, held against the one
+      attack a keyword check cannot see. The original guard tested for the
+      *presence* of "digital being", "generated" and "no human hand", which a
+      disclosure asserting the opposite satisfies word for word — "This page is
+      NOT written by a digital being" contains the phrase (R-37a, confirmed by
+      rendering it). Substring presence is not a claim. The wording stays the
+      operator's under Decision 1, and changing it now means updating this
+      hash, which is the act Decision 1 already describes.
+
+  - what: surface_reach
+    value: local
+    why: >-
+      §5.3 says reach stays a config value the operator sets, and Rule 3 leaves
+      the system public-ready and unpublished. The value lives in `.env`, which
+      no diff check can read (R-37b), so it is attested at process start
+      against this pin instead. Flipping reach therefore takes two acts and one
+      of them is visible in git — which is what makes it the operator's rather
+      than something that can become true quietly.
+
 # State the loop may never touch (§5.3). Recorded for completeness; these are
 # properties of the loop's design rather than paths a diff check can read.
 state:
