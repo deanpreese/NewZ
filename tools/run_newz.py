@@ -93,6 +93,7 @@ def main() -> int:
     from newz.ambient.noticing import SurfaceScheduler
     from newz.works.rhythm import WritingScheduler
     from newz.works.reread import RereadScheduler
+    from newz.evidence.baseline import MetricScheduler
 
     backups = BackupScheduler(cfg.main_db_path, cfg.interior_db_path, cfg.backups_dir)
     sleeper = SleepScheduler(cfg.main_db_path, client, cfg.operator_id or "operator",
@@ -126,6 +127,10 @@ def main() -> int:
     # operator this is the cheapest genuine outcome it did not grade at the
     # time — meeting what it wrote as something someone else wrote.
     reread = RereadScheduler(cfg.main_db_path, client)
+    # E2.7: one reading of every baselined metric a night. The series is
+    # written on a cadence and never on read, because a series written when
+    # someone happens to look is a record of when they looked.
+    metrics = MetricScheduler(cfg.main_db_path, cfg.repo_root)
 
     logging.info(
         "ambient loop up: constitution v%d (%d clauses), perspective present, "
@@ -143,7 +148,8 @@ def main() -> int:
                       asyncio.create_task(substrate.run()),
                       asyncio.create_task(surface.run()),
                       asyncio.create_task(writing.run()),
-                      asyncio.create_task(reread.run())]
+                      asyncio.create_task(reread.run()),
+                      asyncio.create_task(metrics.run())]
         try:
             await loop.run()
         finally:

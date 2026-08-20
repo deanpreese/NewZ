@@ -14,6 +14,7 @@ itself — and this is where that becomes countable rather than asserted.
 
 from __future__ import annotations
 
+import sqlite3
 import sys
 import time
 import textwrap
@@ -24,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from newz.config import load
 from newz.evidence.consequence import read as read_consequence
+from newz.evidence.baseline import peek
 from newz.evidence.grades import tag
 from newz.evidence.pursuit import closing_shapes
 from newz.resolutions.store import claims_by_status, contradicted_claims, due_claims
@@ -106,6 +108,12 @@ def _refusals(conn) -> int:
 
 
 def _s1e(conn, repo_root) -> int:
+    try:
+        conn.execute("SELECT 1 FROM metric_readings LIMIT 1")
+    except sqlite3.OperationalError:
+        print("\nmetric_readings does not exist in this store yet — it arrives"
+              " with migration 0034, applied when the being next starts."
+              "\nValues below have no baseline until then.\n")
     """The S1-E read (P4 E1.6). Every figure carries its grade (Rule 7)."""
     hours = 168.0
     r = read_consequence(conn, repo_root, now=time.time(), hours=hours)
@@ -117,19 +125,15 @@ def _s1e(conn, repo_root) -> int:
     print("  a metric nobody graded cannot be printed here at all (Rule 7).\n")
 
     d = r.door
-    print(f"  the door{' ' * 52}{tag('claims_opened')}")
-    print(f"    advances offered to it       {d.advances:>6}")
-    print(f"    claims opened                {d.opened:>6}"
-          + (f"   ({d.per_advance:.0%} of advances)" if d.per_advance is not None else ""))
-    print(f"    refused at the door          {d.refused:>6}")
+    print("  the door")
+    print(peek(conn, "advances_offered", d.advances, window_hours=hours).render())
+    print(peek(conn, "claims_opened", d.opened, window_hours=hours).render(
+        note=f"{d.per_advance:.0%} of advances" if d.per_advance is not None else ""))
+    print(peek(conn, "claims_refused", d.refused, window_hours=hours).render())
     for reason, n in sorted(d.refusal_reasons.items(), key=lambda kv: -kv[1]):
         print(f"        {reason:<44} {n:>3}")
-    if d.declined is None:
-        print(f"    declined                     UNREADABLE   {tag('claims_declined')}")
-        print(f"        {d.unreadable}")
-    else:
-        print(f"    declined                     {d.declined:>6}   "
-          f"{tag('claims_declined', note='from the call log')}")
+    print(peek(conn, "claims_declined", d.declined, window_hours=hours,
+               unreadable=d.unreadable).render(note="from the call log"))
 
     s = r.resolution
     print(f"\n  resolution{' ' * 50}{tag('claims_opened')}")
@@ -141,17 +145,18 @@ def _s1e(conn, repo_root) -> int:
 
     p_ = r.positions
     print("\n  positions changed")
-    print(f"    by the WORLD                 {p_.by_world:>6}   "
-          f"{tag('positions_changed_by_world', note='traced, INV-048')}")
-    print(f"    by the operator              {p_.by_operator:>6}   "
-          f"{tag('positions_changed_by_operator', note='dominant provenance')}")
-    print(f"    by the being itself          {p_.by_self:>6}   "
-          f"{tag('positions_changed_by_self', note='dominant provenance, and R-15')}")
+    print(peek(conn, "positions_changed_by_world", p_.by_world,
+               window_hours=hours).render(note="traced, INV-048"))
+    print(peek(conn, "positions_changed_by_operator", p_.by_operator,
+               window_hours=hours).render(note="dominant provenance"))
+    print(peek(conn, "positions_changed_by_self", p_.by_self,
+               window_hours=hours).render(note="dominant provenance, and R-15"))
     print(f"    unattributed                 {p_.unattributed:>6}")
 
     o = r.opener
-    print(f"\n  the concern door{' ' * 44}{tag('concerns_refused')}")
-    print(f"    concerns refused             {o.refused:>6}   (a terminus nothing could reach)")
+    print("\n  the concern door")
+    print(peek(conn, "concerns_refused", o.refused, window_hours=hours).render(
+        note="a terminus nothing could reach"))
     for reason, n in sorted(o.reasons.items(), key=lambda kv: -kv[1]):
         print(f"        {reason:<44} {n:>3}")
 

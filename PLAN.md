@@ -603,7 +603,7 @@ metric that does not exist. Both directions tested.
 nothing consumes is the same defect as a column nothing reads, and the ledger
 has caught the second for months while nothing caught the first.
 
-**E2.7 — the baseline-and-delta layer**
+**E2.7 — the baseline-and-delta layer** *(built 2026-08-20)*
 *Delivers:* one windowed comparison used by every metric — value, baseline,
 window, delta — replacing the per-tool comparison each instrument invents now.
 `INCOMPLETE` when the window has gaps; `UNREADABLE` when the input is missing.

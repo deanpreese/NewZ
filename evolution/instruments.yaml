@@ -171,24 +171,28 @@ not_instruments:
 metrics:
 
   advances_offered:
+    baselined: true
     serves: [evidence:S1-E, tn10:volume]
     emitted_by: tools/claims.py
     grade: mechanical
     reason: a count of concern_advances rows in a window.
 
   claims_opened:
+    baselined: true
     serves: [evidence:S1-E, decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
     reason: a count of resolutions rows; the door's verdict is structural, not judged.
 
   claims_refused:
+    baselined: true
     serves: [decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
     reason: a count of claim_refusals rows, each written by a code check.
 
   claims_declined:
+    baselined: true
     serves: [decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
@@ -200,6 +204,7 @@ metrics:
     reason: a count of claim_door calls answering no; no model is asked to classify them.
 
   positions_changed_by_world:
+    baselined: true
     serves: [evidence:S1-E, decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
@@ -209,6 +214,7 @@ metrics:
       paid, which is why S1-E turns on a count.
 
   positions_changed_by_operator:
+    baselined: true
     serves: [evidence:S1-E]
     emitted_by: tools/claims.py
     grade: mixed
@@ -217,6 +223,7 @@ metrics:
       The attribution is a derivation, not a measurement.
 
   positions_changed_by_self:
+    baselined: true
     serves: [evidence:S1-E, tn10:novelty-without-consequence]
     emitted_by: tools/claims.py
     grade: known-biased
@@ -225,6 +232,7 @@ metrics:
       so this column is overstated for anything grounded in the import.
 
   concerns_refused:
+    baselined: true
     serves: [decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
