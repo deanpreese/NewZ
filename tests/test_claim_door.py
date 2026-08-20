@@ -40,6 +40,8 @@ def _proposal(**kw) -> str:
         settles_when="The COT release for that week is published and the two"
                      " figures compared.",
         resolver="CFTC Commitments of Traders weekly report",
+        could_be_wrong="the COT figure comes in at or below the exchange's own,"
+                       " showing the netting gap I claimed is not there",
         due="40",
         tag="due_in_days",
     )
@@ -48,6 +50,7 @@ def _proposal(**kw) -> str:
             f"<statement>{f['statement']}</statement>"
             f"<settles_when>{f['settles_when']}</settles_when>"
             f"<resolver>{f['resolver']}</resolver>"
+            f"<could_be_wrong>{f['could_be_wrong']}</could_be_wrong>"
             f"<{f['tag']}>{f['due']}</{f['tag']}></claim>")
 
 
@@ -209,3 +212,47 @@ def test_a_date_still_works_when_the_model_gives_one_anyway(store):
     verdict = _ask(store, _proposal(due=_due(40), tag="due"))
 
     assert verdict.claim_id, verdict.refused
+
+
+def test_a_claim_naming_nothing_searchable_is_refused_and_recorded(store):
+    """R-35. Consumer: newz/resolutions/resolver.py. Behavior: a claim the
+    resolver could never key a search on is refused at the door rather than
+    admitted and left open forever.
+
+    Measured 2026-08-19: the door admitted "the official agency's final
+    published figure for the wildfire acreage will differ from the prediction
+    market's resolved value by more than 5%" — no agency, no fire, no market,
+    no year. The resolver ran, read a document in full, and reported it could
+    not find the specific figures "for the specific event in question".
+    Settleable in grammar, unsettleable in fact.
+    """
+    verdict = _ask(store, _proposal(
+        statement="The official agency's final published figure will differ from"
+                  " the prediction market's resolved value by more than 5%."))
+
+    assert verdict.refused and "names nothing" in verdict.refused
+    assert _refusals(store)
+
+
+def test_a_claim_whose_other_outcome_cannot_be_stated_is_refused(store):
+    """R-35. Consumer: the claim door's own standard. Behavior: the prompt has
+    always said "if nothing would surprise me, there is no claim here" and never
+    asked for the judgment; now it does, and a claim without it is refused.
+
+    Nothing in the system could previously tell a prediction from a formality.
+    """
+    verdict = _ask(store, _proposal(could_be_wrong=""))
+
+    assert verdict.refused and "being wrong would look like" in verdict.refused
+
+
+def test_the_alternative_is_stored_with_the_claim(store):
+    """Consumer: tools/claims.py. Behavior: what the being said the other
+    outcome looks like survives to the moment the claim is settled, so a
+    resolution can be read against what was actually predicted."""
+    verdict = _ask(store, _proposal())
+
+    assert verdict.claim_id, verdict.refused
+    row = store.execute("SELECT could_be_wrong FROM resolutions WHERE id=?",
+                        (verdict.claim_id,)).fetchone()
+    assert row[0] and "below" in row[0]

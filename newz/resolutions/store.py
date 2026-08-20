@@ -89,10 +89,11 @@ def open_claim(conn: sqlite3.Connection, claim: Claim, *,
     try:
         cur = conn.execute(
             "INSERT INTO resolutions (opened_at, claim, resolution_condition,"
-            " resolver, due_at, provenance, status)"
-            " VALUES (?, ?, ?, ?, ?, ?, 'open')",
+            " resolver, due_at, provenance, status, could_be_wrong)"
+            " VALUES (?, ?, ?, ?, ?, ?, 'open', ?)",
             (claim.opened_at or now, claim.claim, claim.resolution_condition,
-             claim.resolver, claim.due_at, claim.provenance))
+             claim.resolver, claim.due_at, claim.provenance,
+             claim.could_be_wrong))
     except sqlite3.IntegrityError as e:
         # The schema's refusals, given back in the language of the failure
         # rather than as "CHECK constraint failed" — the door (E1.2) has to

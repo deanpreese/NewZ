@@ -1569,3 +1569,54 @@ clean as it was stated.
 recorded as "reasoning without sources" while grounded, and they now also carry
 expectations. The record of what the being did today is wrong in a new way.
 
+### R-35 — fixed, measurably, and settleability remains unproven for a reason that is my test's fault
+
+**Two checks added to the door**, both refusing and recording in the existing
+idiom:
+
+- **specificity** — a claim naming no entity, place, period or identifier is
+  refused, because a resolver settles only by matching a verbatim quote in
+  fetched material (INV-047) and such a claim gives a search nothing to key on.
+  Six-case unit check, 6 of 6, including the exact claim R-35 was found on
+  (refused) and both probe controls that resolved to real sources (admitted).
+- **`could_be_wrong`** — the being states what the other outcome looks like, and
+  a claim whose alternative it cannot describe is refused. The door's prompt has
+  said *"if nothing would surprise me, there is no claim here"* since it was
+  built and never asked for the judgment. Stored on the claim (0028) so a
+  settlement can be read against what was actually predicted.
+
+**The claim got materially better.** Before:
+
+> *"The official agency's final published figure for the wildfire acreage will
+> differ from the prediction market's resolved value by more than 5%."*
+
+After:
+
+> *"The **National Interagency Fire Center's (NIFC)** final annual summary report
+> for the **2026 fire season** will list the total acreage burned for the
+> specific large fire in question as differing from…"*
+> — if wrong: *"The NIFC's final figure is within 5% of the prediction market's
+> resolved outcome, or the market resolves based on the NIFC's own data."*
+
+A named agency, a named period, and a stated alternative, where there had been
+none of the three.
+
+**The resolver still did not settle it, and that result means nothing.** Its
+complaint changed from *"does not provide the specific official agency's figure
+for the specific event"* to *"does not contain the NIFC's final annual summary
+report for the 2026 fire season"* — **because that report does not exist yet.**
+It is August 2026 and the season is running. I forced the due date on a claim
+about a future event, so the resolver was asked to check something that has not
+happened. Its refusal is correct and tests nothing.
+
+**That is a flaw in my test, not in the door.** The previous claim was
+unsettleable *in principle*; this one is unsettleable *yet*, and the two look
+identical through a backdated due date. **Settleability cannot be proven by
+backdating.** It needs a claim whose resolution has genuinely arrived — either
+one the being makes about something already published, or a real claim carried
+to its real date.
+
+**So, stated plainly: R-35's checks demonstrably improve what the door admits,
+and no test yet run shows that a claim admitted by the repaired door can be
+settled.** That remains the open end of Phase 1, and S1-E is still NOT MET.
+

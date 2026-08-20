@@ -50,6 +50,7 @@ class Claim:
     settled_at: float | None = None
     settled_by: str | None = None      # the source actually consulted
     settled_note: str | None = None
+    could_be_wrong: str | None = None   # what the other outcome looks like (R-35)
     # E1.3's honest bookkeeping: a claim tried and not settled is not the same
     # as one whose date has not arrived, and both are `open`.
     attempts: int = 0
