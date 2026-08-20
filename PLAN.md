@@ -465,7 +465,7 @@ counted as charged — the being can be wrong about something it never wrote int
 its Perspective, and that is a different finding from a refutation nobody paid
 for (INV-044).
 
-**E1.5 — the permanent record of error**
+**E1.5 — the permanent record of error** *(built 2026-08-20)*
 *Delivers:* wrongness recorded permanently at store level and never quietly
 dropped. The rendering comes later (E3.2); the record starts here because
 Phase 1 is what produces it.
