@@ -32,6 +32,8 @@ a piece per subject, which the unique index enforces.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import sqlite3
 import time
@@ -64,6 +66,59 @@ class Subject:
     ref: int
     text: str
     context: str       # why it is open / what section it sits in
+
+
+def signature_of(subject_kind: str, subject_ref: int, title: str, body: str) -> str:
+    """What this piece is, as one value (E3.1).
+
+    Over the subject and the text as written, so a stored piece is
+    tamper-evident and E3.5's byte-comparable regeneration has something to
+    compare against. Not over the timestamp or the model: the same piece about
+    the same subject is the same piece.
+    """
+    h = hashlib.sha256()
+    for part in (subject_kind, str(subject_ref), title, body):
+        h.update(part.encode("utf-8"))
+        h.update(b"\x00")
+    return h.hexdigest()
+
+
+def _identity_at(conn: sqlite3.Connection) -> tuple[int | None, int | None]:
+    """What the being had committed to and what it held, at this moment.
+
+    A piece read a year later is read against the self that wrote it rather
+    than the self reading it, which is what makes E2.2's re-reading a meeting
+    and not a proofread.
+    """
+    con = conn.execute(
+        "SELECT version FROM constitution WHERE approval_status='active'"
+        " ORDER BY version DESC LIMIT 1").fetchone()
+    per = conn.execute("SELECT MAX(version) FROM perspective").fetchone()
+    return (con[0] if con else None, per[0] if per else None)
+
+
+def evidence_for(conn: sqlite3.Connection, subject: "Subject") -> list[str]:
+    """The refs the subject rested on, captured now.
+
+    A concern's advances move and a position's evidence decays; what grounded
+    THIS piece does not, so it is copied rather than pointed at.
+    """
+    rows = []
+    if subject.kind == "concern":
+        rows = conn.execute(
+            "SELECT evidence_json FROM concern_advances WHERE concern_id=?"
+            " AND superseded_by IS NULL", (subject.ref,)).fetchall()
+    elif subject.kind == "position":
+        rows = conn.execute(
+            "SELECT evidence_json FROM perspective_items WHERE id=?",
+            (subject.ref,)).fetchall()
+    refs: list[str] = []
+    for (blob,) in rows:
+        try:
+            refs.extend(json.loads(blob or "[]") or [])
+        except (TypeError, ValueError):
+            continue
+    return sorted({str(r) for r in refs})
 
 
 @dataclass(frozen=True)
@@ -221,11 +276,18 @@ def compose_piece(client, conn: sqlite3.Connection, subject: Subject, because: s
 
 
 def write_work(conn: sqlite3.Connection, piece: Piece) -> int:
-    """The writer half of P3 Rule 2. Reader: tools/read_works.py."""
+    """The writer half of P3 Rule 2. Reader: tools/read_works.py.
+
+    E3.1: the piece lands signed, with the identity that wrote it and the
+    evidence its subject rested on — every field written here, and read back by
+    tools/read_works.py and by the generator (E3.2).
+    """
+    constitution_version, perspective_version = _identity_at(conn)
     cur = conn.execute(
         "INSERT INTO works (ts, subject_kind, subject_ref, subject_text,"
-        " chosen_because, title, body, word_count, model, completion_tokens)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " chosen_because, title, body, word_count, model, completion_tokens,"
+        " signature, constitution_version, perspective_version, evidence_json)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             time.time(),
             piece.subject.kind,
@@ -237,6 +299,11 @@ def write_work(conn: sqlite3.Connection, piece: Piece) -> int:
             piece.word_count,
             piece.model,
             piece.completion_tokens,
+            signature_of(piece.subject.kind, piece.subject.ref,
+                         piece.title, piece.body),
+            constitution_version,
+            perspective_version,
+            json.dumps(evidence_for(conn, piece.subject)),
         ),
     )
     conn.commit()

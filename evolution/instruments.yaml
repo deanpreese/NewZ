@@ -148,6 +148,12 @@ not_instruments:
     - tools/run_sleep.py
     - tools/write_piece.py
 
+  generators:        # read the store, write files, never write the store.
+                     # Not instruments: they produce the surface rather than a
+                     # measurement, so they answer to E3.2's manifest rather
+                     # than to Rule 7's grades.
+    - tools/generate_surface.py
+
   one_time:          # migrations and operations, not part of any cycle
     - tools/backup.py
     - tools/corpus_hygiene.py

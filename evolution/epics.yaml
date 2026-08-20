@@ -186,14 +186,14 @@ epics:
   E3.1:
     title: '`works` first-class'
     phase: 3
-    status: open
+    status: built
     depends_on: [E2.2]
     done_when: mechanical
 
   E3.2:
     title: 'the generator'
     phase: 3
-    status: open
+    status: built
     depends_on: [E1.5, E3.1]
     done_when: mechanical
 

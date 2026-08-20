@@ -108,3 +108,24 @@ def test_the_registry_is_valid_yaml_with_reasons_on_every_path():
     assert reg["version"] == 1
     for row in reg["paths"]:
         assert row["why"].strip(), f"{row['path']} is in the core with no reason given"
+
+
+def test_measurement_code_outside_newz_evidence_is_named_by_hand():
+    """The derivation reaches `newz/evidence` and stops, which was too narrow
+    the day it was written. `newz/telemetry.py` computes §9.1's ceilings for
+    two canonical tools and `newz/memory/provenance.py` computes the grounding
+    mix; neither is an evidence module, and either could be rewritten while
+    every frozen file stayed byte-identical and every canonical number moved."""
+    assert hard_core.contains("newz/telemetry.py")
+    assert hard_core.contains("newz/memory/provenance.py")
+
+
+def test_mechanisms_stay_outside_the_core():
+    """The line is measurement in, mechanism out. `newz/world/diet.py` is
+    imported by two canonical tools and is not frozen: it shapes what the being
+    reads, and R-28 is the record of that cap being narrowed on evidence — work
+    the freeze must not put out of reach. The store and config are
+    infrastructure for the same reason."""
+    assert not hard_core.contains("newz/world/diet.py")
+    assert not hard_core.contains("newz/store/db.py")
+    assert not hard_core.contains("newz/config.py")

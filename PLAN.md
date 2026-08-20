@@ -686,14 +686,14 @@ Phase 4's commitments are the missing constraint before touching prompts.
 record are rendered as one thing — and Rule 3's guarantee that reach later is a
 config change, never a redesign.
 
-**E3.1 — `works` first-class**
+**E3.1 — `works` first-class** *(built 2026-08-20)*
 *Delivers:* the full store object — piece, revisions, retraction, signature,
 subject tags, evidence refs. E0.1's minimal row grows up here.
 *Done when:* every field has a writer and a reader (Rule 2) and the generator
 consumes them.
 *Depends on:* E2.2.
 
-**E3.2 — the generator**
+**E3.2 — the generator** *(built 2026-08-20)*
 *Delivers:* static generation from the store — its work, its open questions, its
 commitments, its record of error. One generator, no hand-authored pages.
 *Done when:* the surface regenerates into an empty directory and every page
@@ -1226,6 +1226,32 @@ loop learns that the cheapest way to keep running is to stop disagreeing. **Rule
 4 does not exclude it:** Rule 4 bars a model verdict as a *passing* condition,
 this is a failing one, and E3.8 encodes exactly that asymmetry — refused as
 justification for any decision, accepted as a halt.
+
+**The spend condition is kept as written and is not expected to bind**
+*(operator decision, 2026-08-20)*. It compares the loop's inference against the
+being's, and the two are not in one unit. The being runs a **local** model on
+the operator's own hardware — 1,334,839 tokens in the 24h to 2026-08-20, at the
+cost of electricity — while §5.3 permits the build path a **hosted** model
+precisely because it never touches identity-bearing state. Counted in tokens the
+cap hands the loop a frontier budget the size of a local model's daily churn and
+never fires; counted in money the being's inference is ~free and the cap fires on
+the first call. It is kept rather than re-based on an imputed cost for the
+being's hardware, because inventing a denominator so that a kill condition can
+fire is the failure §10 names. **So this list is four binding conditions and one
+reported figure**, and that is written down here so the list is not read as five.
+E8.3 reports the ratio; nothing halts on it.
+
+**Where the loop's spend is recorded** *(operator decision, 2026-08-20)*.
+`logs/sel_calls.jsonl` — its own file, the being's format, written by the
+existing `CallRecorder` and read by the existing `read_budget`, so the choice
+costs no new instrument. **It is never merged into `logs/llm_calls.jsonl` and
+never enters the diet denominator** (INV-065). S2 §9.1's ingest ceiling is a
+share of all cognition read from that file, so a merged log would let the loop
+raise the being's reading limit by thinking harder — a self-serving path through
+the one invariant that constrains ingest, available to the process that writes
+the log. On the fixture in `tests/test_sel_spend.py` the merge lifts the ceiling
+eleven-fold. E8.2's runner constructs the recorder; until it exists the file is
+absent and the read is zero rather than an error.
 
 ---
 

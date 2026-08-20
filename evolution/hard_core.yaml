@@ -53,6 +53,21 @@ paths:
       §5.2's freeze. The registry decides which instruments are canonical, so
       it is inside the core for the same reason the instruments are.
 
+  - path: newz/telemetry.py
+    why: >-
+      measurement code the derivation does not reach. It computes S2 §9.1's
+      diet — the ingest ceiling, the share ceiling, the token split — for
+      tools/budget.py and tools/health.py, both canonical. The derived rule
+      picks up newz/evidence modules only, so this file could be rewritten
+      while every frozen file stayed byte-identical and every canonical number
+      changed.
+
+  - path: newz/memory/provenance.py
+    why: >-
+      the same hole, second instance. It is the S2 §13 traceability
+      instrument behind tools/what_shaped.py and tools/evidence.py, and it
+      computes the grounding mix and the diversity figures PLAN §1 rests on.
+
 # The frozen instrument set (§5.2), derived rather than copied. A second
 # hand-maintained list is the liability E2.11 exists to prevent, so this names
 # the derivation and `newz/evidence/hard_core.py` computes it.
@@ -71,6 +86,24 @@ derived_from:
       freeze — the file stays byte-identical while the measurement changes.
       The derivation is a superset of §5.2 and loses nothing from it, which is
       asserted in tests/test_hard_core.py.
+    known_incomplete: >-
+      The rule reaches `newz/evidence` and stops there, and that was found to
+      be too narrow the same day it was written: `newz/telemetry.py` and
+      `newz/memory/provenance.py` compute canonical numbers and are not
+      evidence modules. They are named by hand in `paths` above. Widening the
+      rule to every `newz.*` import was rejected — it would pull in
+      `newz/store/db.py`, `newz/config.py` and the resolutions store, which
+      are infrastructure the loop must be able to change. **The line is that
+      measurement code is frozen wherever it lives and mechanisms are not**,
+      and that line cannot be drawn by an import graph. Measurement code added
+      outside `newz/evidence` must be named here by hand, and nothing detects
+      a failure to do so.
+    deliberately_outside: >-
+      `newz/world/diet.py` is imported by two canonical tools and is NOT
+      frozen. It is a mechanism — per-outlet share caps that shape what the
+      being reads — not a measurement, and R-28 is the record of that cap
+      being narrowed on evidence. Freezing it would put a tunable behaviour
+      out of reach to protect a number it does not compute.
     not_in_5_2: >-
       tools/read_works.py is canonical in the registry and unnamed in §5.2. It
       postdates the proposal (E0.2's blind reader). The registry is the

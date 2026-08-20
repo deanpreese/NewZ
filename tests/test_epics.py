@@ -26,15 +26,21 @@ def test_the_registry_matches_the_plan():
 
 
 def test_a_registry_that_falls_behind_the_plan_fails_the_build():
-    """Behavior: the check is not decorative. An epic marked built in the
-    registry and not in PLAN is caught, which is the drift that would let a
-    builder skip work it had not done."""
+    """Behavior: the check is not decorative. An epic PLAN marks built while
+    the registry still calls it open is caught — the drift that would let a
+    builder skip work it had not done.
+
+    The subject is chosen at runtime rather than named: an earlier version
+    hardcoded E3.1 and broke the day E3.1 shipped, which in a repo whose queue
+    moves daily is a test that fails for being right."""
+    victim = next(e for e, r in E.epics().items() if r["status"] == "open")
+    title = E.epics()[victim]["title"]
     plan = REPO.joinpath("PLAN.md").read_text().replace(
-        "**E3.1 — `works` first-class**", "**E3.1 — `works` first-class** *(built 2026-08-20)*", 1)
+        f"**{victim} — {title}**", f"**{victim} — {title}** *(built 2026-08-20)*", 1)
 
     errors = E.drift(plan)
 
-    assert any("E3.1" in e and "built" in e for e in errors)
+    assert any(victim in e and "built" in e for e in errors)
 
 
 def test_a_dependency_the_plan_does_not_state_is_caught():
@@ -70,8 +76,11 @@ def test_the_queue_is_the_epics_whose_dependencies_are_built():
     three times on 2026-08-19, now standing."""
     ready = set(E.ready())
 
-    assert "E3.1" in ready, "E2.2 is built, so works-first-class is available"
-    assert "E3.2" not in ready, "E3.2 waits on E3.1"
+    assert ready, "no epic is available, which cannot be true mid-plan"
+    blocked = {e for e, r in E.epics().items()
+               if r["status"] == "open"
+               and any(E.epics()[d]["status"] != "built" for d in r["depends_on"])}
+    assert not (ready & blocked), "an epic with an unbuilt dependency is not ready"
     for eid in ready:
         assert E.epics()[eid]["status"] == "open"
         assert all(E.epics()[d]["status"] == "built"

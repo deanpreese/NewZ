@@ -19,6 +19,7 @@ but it removes the smaller tell of knowing which subject produced which piece.
 from __future__ import annotations
 
 import random
+import json
 import sqlite3
 import sys
 import textwrap
@@ -46,6 +47,64 @@ def _render(row, *, blind: bool = False, label: str | None = None) -> str:
     for para in row["body"].split("\n"):
         out.append(textwrap.fill(para, width=78) if para.strip() else "")
     return "\n".join(out)
+
+
+def _verify(conn) -> int:
+    """Is every piece still what it was when it was written? (E3.1)
+
+    Recomputes each signature from the stored subject, title and body. A piece
+    that no longer matches has been edited since it was written, which for a
+    body of work is the thing a signature exists to catch.
+
+    Pieces written before E3.1 read as unsigned and say so. They are not
+    backfilled: a signature computed now would attest to the row as it stands
+    rather than to what was written, which is precisely the assurance it is
+    supposed to give.
+    """
+    from newz.works.compose import signature_of
+
+    try:
+        rows = list(conn.execute(
+            "SELECT id, ts, subject_kind, subject_ref, title, body, signature,"
+            " constitution_version, perspective_version, evidence_json, status"
+            " FROM works ORDER BY id"))
+    except sqlite3.OperationalError:
+        print("this store has not taken migration 0036 yet — it arrives when"
+              " the being next starts, and pieces written before it read as"
+              " unsigned.")
+        return 0
+    if not rows:
+        print("no pieces yet.")
+        return 0
+
+    unsigned = intact = altered = 0
+    for r in rows:
+        when = datetime.fromtimestamp(r["ts"]).strftime("%Y-%m-%d")
+        try:
+            refs = json.loads(r["evidence_json"] or "[]")
+        except (TypeError, ValueError):
+            refs = []
+        head = (f"[{r['id']}] {when}  {r['title'][:46]}"
+                f"  ({r['status'] if 'status' in r.keys() else 'standing'})")
+        if not r["signature"]:
+            unsigned += 1
+            print(f"{head}\n     UNSIGNED — written before E3.1; not backfilled,"
+                  " because a signature computed now would attest to the row"
+                  " rather than to what was written")
+            continue
+        want = signature_of(r["subject_kind"], r["subject_ref"], r["title"], r["body"])
+        ok = want == r["signature"]
+        intact += ok
+        altered += not ok
+        print(f"{head}\n     {'INTACT ' if ok else 'ALTERED'} {r['signature'][:16]}…"
+              f"   written under constitution v{r['constitution_version']}"
+              f", perspective v{r['perspective_version']}"
+              f"   {len(refs)} evidence ref(s)")
+        if not ok:
+            print(f"     recomputes to {want[:16]}… — this piece is not what it was")
+
+    print(f"\n{intact} intact · {altered} altered · {unsigned} unsigned")
+    return 2 if altered else 0
 
 
 def _subjects(conn) -> int:
@@ -137,6 +196,8 @@ def main() -> int:
     cfg = load()
     conn = open_db(cfg.main_db_path, read_only=True)
 
+    if "--verify" in sys.argv:
+        return _verify(conn)
     if "--history" in sys.argv:
         return _history(conn)
     if "--subjects" in sys.argv:
