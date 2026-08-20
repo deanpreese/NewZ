@@ -1144,3 +1144,87 @@ what an advance is — line 119, *"Establishing that something is NOT the case,
 that two things differ in kind…"* — which invites exactly the distinction-drawing
 the claim door correctly declines.
 
+## R-33 — The concerns are unfalsifiable by construction: 10 of 10 close on a study that does not exist. **High. This is the root of R-32 and the actual S1-E blocker.**
+
+**Opened 2026-08-19**, from red-teaming two proposed fixes to R-32 and finding
+both aimed a layer too low.
+
+**The read.** Every open concern's closing condition, verbatim in shape:
+
+| concern | closes when |
+|---|---|
+| 112 | *"A detailed analysis of historical liquidity events…"* |
+| 114 | *"A study correlating the prevalence of order-splitting algorithms…"* |
+| 115 | *"A numerical experiment showing…"* |
+| 116 | *"A study showing that…"* |
+| 118 | *"A study that compares the companies' reported usage statistics…"* |
+| 119 | *"A study demonstrating that participants…"* |
+| 120 | *"A study demonstrating that participants…"* |
+| 121 | *"A comparative study showing…"* |
+| 122 | *"A study mapping specific gaps…"* |
+| 123 | *"Empirical data comparing self-reported AI usage rates…"* |
+
+**Ten of ten close on a study that does not exist and that the being cannot
+commission.** These are not questions the world will answer on a date. They are
+research programmes, and no source will publish "the study" by any deadline.
+
+**This explains the whole chain, and exonerates every layer below it.**
+
+```
+concern      closing condition nothing will ever satisfy
+   ↓
+advance      distinctions — the only movement available on such a question
+   ↓
+claim door   declines, correctly: nothing here is observable by a date
+   ↓
+S1-E         never fires
+```
+
+The advance judge is behaving correctly. The claim door is behaving correctly —
+proven 4/4 on controls after R-31's repair. **The fault is at the opener, and
+P4's Phase 1 decision rule named this possibility first**: *"are its claims
+resolvable at all (if not, its concerns are unfalsifiable by construction and
+the openers are the fix)"*.
+
+**The asymmetry that let it through.** The claim door refuses a resolver that
+names no source, and its list is explicit:
+
+```python
+_EMPTY_RESOLVERS = ("time will tell", "the future", "future events",
+                    "eventually", "the news", "the internet",
+                    "further research", "future research", ...)
+```
+
+**`"further research"` is refused at the claim door and admitted at the concern
+opener** — where it wears the phrase *"a study correlating…"*. The opener checks
+only that a closing condition is **non-empty** (`opener.py:202`, `:314`, `:471`);
+it never asks whether anything will ever satisfy it. INV-034 is satisfied to the
+letter — every concern has a closing condition — and defeated in substance.
+
+**Why this outranks the two fixes it was found by.**
+
+- **Rejected: widening the advance definition** to include a world-facing option.
+  On a concern whose terminus is an uncommissioned study, there is no
+  world-facing advance to make, so the prompt would produce the *appearance* of
+  commitment — manufactured claims on unanswerable questions. The claim door's
+  own prompt says why that is worse than none: *"a bad claim… will be settled and
+  the settlement will mean nothing."* It also risks R-27's mechanism a third
+  time: the being returns the prompt's newest example.
+- **Demoted: the `kind` label fix** (R-32's first half). Still worth doing —
+  27 of 29 grounded advances are recorded as ungrounded — but it is tidying. No
+  consumer branches on the label, and fixing it moves S1-E not at all.
+
+**The fix, and it is the opener's standard.** A closing condition should have to
+name something that will **exist**: a source that publishes, an event that
+occurs, a measurement someone already takes. The claim door's discipline, applied
+one layer up — the same move S2 §8.1 made when it gave concerns a mandatory
+closing condition in the first place. A concern that can only be settled by
+research nobody will do is a concern the being cannot pursue to a terminus, and
+INV-034's "a concern can reach its own terminus" is false for all ten.
+
+**What is not yet known.** Whether the being *can* form such concerns — the
+opener's prompt may be as one-sided as the deliberation prompt was, or the
+reading may genuinely support nothing more concrete. The 86 stalled concerns
+should be read the same way before any prompt is touched: if their closing
+conditions have the same shape, the stall pool has a cause nobody has named.
+
