@@ -47,6 +47,37 @@ def _render(row, *, blind: bool = False, label: str | None = None) -> str:
     return "\n".join(out)
 
 
+def _subjects(conn) -> int:
+    """What the work turned out to be about (E2.4).
+
+    Nothing here was assigned. A tag is a term distinctive to a piece within
+    this corpus, and a subject is a tag more than one piece shares — so the
+    being's subjects are read off what it wrote rather than chosen for it
+    (TRUE_NORTH §8).
+    """
+    from newz.works.subjects import recompute
+
+    c = recompute(conn)
+    if not c.pieces:
+        print("no pieces yet.")
+        return 0
+    print(f"{c.pieces} piece(s)")
+    if c.caveat:
+        print(f"  UNSTABLE: {c.caveat}\n")
+    subs = c.subjects()
+    print("\nsubjects — tags more than one piece shares:")
+    if not subs:
+        print("    none yet: no term is distinctive in more than one piece")
+    for tag, n in subs:
+        print(f"    {tag:<24} {n} pieces")
+    print("\nper piece:")
+    for wid, tags in sorted(c.tags.items()):
+        title = conn.execute("SELECT title FROM works WHERE id=?", (wid,)).fetchone()[0]
+        print(f"    [{wid}] {title[:52]}")
+        print("        " + ", ".join(f"{t} ({w:.3f})" for t, w in tags))
+    return 0
+
+
 def _history(conn) -> int:
     """What each piece used to say, and why it changed (E2.2's reader half).
 
@@ -81,6 +112,8 @@ def main() -> int:
 
     if "--history" in sys.argv:
         return _history(conn)
+    if "--subjects" in sys.argv:
+        return _subjects(conn)
     rows = list(conn.execute("SELECT * FROM works ORDER BY ts"))
     if not rows:
         print("no pieces yet — python tools/write_piece.py")

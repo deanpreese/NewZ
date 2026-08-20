@@ -570,7 +570,7 @@ regression test names the leak it prevents.
 *Depends on:* E2.1.
 *Hooks:* **R-24 binding**, INV-026.
 
-**E2.4 — subjects emerge**
+**E2.4 — subjects emerge** *(built 2026-08-20)*
 *Delivers:* subject tags derived from the work rather than assigned, so a
 subject can emerge without being prescribed (§8).
 *Done when:* tags are computed from the corpus and no tag vocabulary is
