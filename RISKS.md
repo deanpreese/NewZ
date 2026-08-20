@@ -1482,3 +1482,90 @@ produced a reachable concern from its own feed material in life — the opener
 managed it once in three probe attempts, and its real-material rate was 0 of 10.
 That is the next constraint, and it is R-33's remainder rather than R-32's.
 
+## R-35 — The claim door checks form, not settleability. The chain does NOT close. **High.**
+
+**Found 2026-08-19 by red-teaming the same evening's result.** The claim A′
+produced passed every check the door makes — statement, resolution condition,
+named resolver, horizon in range — and was then handed to the real resolver with
+its due date backdated by an hour:
+
+```
+claim    The official agency's final published figure for the wildfire acreage
+         will differ from the prediction market's resolved value by more than 5%.
+resolver ran, searched, read a document in full, 18 claims extracted
+verdict  NOT SETTLED — "does not provide the specific official agency's final
+         published figure for wildfire acreage nor the prediction market's
+         resolved value for the specific event in question"
+status   open, attempts 1, failure recorded
+```
+
+**The resolver is right and the door was wrong.** The claim names no agency, no
+fire, no market and no year. It is settleable in grammar and unsettleable in
+fact. The resolver failed closed exactly as INV-047 requires — the claim stays
+open, the failure is recorded, nothing is invented — so the *system* behaved
+well; what failed is the door's standard.
+
+**The earlier entry's headline was wrong and is corrected here.** "The chain
+closes" was written on a claim that had passed the door, not on one that had
+been settled. It closes from concern to *claim*. It does not close from claim to
+*outcome*, and that is the half S1-E is about.
+
+**The missing check is specificity, and it is a fourth instance of the same
+shape.** The door has `_EMPTY_RESOLVERS` for resolvers that name no source; it
+has no equivalent for a claim that names no *subject*. A resolver can only match
+a verbatim quote in fetched material, so a claim without a named entity, place
+or period cannot be settled by construction — the same way a closing condition
+reading "a study" could not be reached by construction (R-33), and for the same
+reason: **the check tested the field's presence rather than what it has to do.**
+
+**And a second gap the same test exposes: nothing checks whether the claim could
+lose.** The door's own prompt says *"I could be wrong. If nothing would surprise
+me, there is no claim here"* — and then asks for no such judgment in the schema
+and applies no check. A >5% divergence between a market's resolved value and an
+agency's final figure may well be near-certain; nothing in the door can tell a
+prediction from a formality.
+
+**The fix, in the door's existing idiom.** Require the claim to name at least one
+concrete referent — an entity, a place, a period, an identifier — and refuse it
+otherwise, recording the refusal the way every other refusal is recorded. Add a
+`<could_be_wrong>` element asking what the other outcome would look like, and
+refuse a claim whose alternative the being cannot state. Both are checks on what
+the field must accomplish rather than on whether it is filled in.
+
+---
+
+### Red team of 2026-08-19's work, recorded against it
+
+**1. The concern was seeded, and it was seeded to be answerable.** Concern 124
+was written by hand from the probe's own output, on a topic with an obvious
+dated public resolution. Every downstream success inherits that. The being has
+produced no reachable concern from its own material in life: 0 of 10.
+
+**2. Every run used the same concern.** Six deliberations, n=1 in concerns. What
+was measured is model sampling on one input, not the system's behaviour.
+
+**3. The prompt was tuned until the metric moved.** The expectation guidance was
+changed twice, judged each time by whether a claim appeared. That is optimising
+a prompt against the number it is scored on — the failure §10 names, committed
+while red-teaming other people's versions of it all day. The discipline that was
+skipped: state what a good claim looks like *before* tuning, not after.
+
+**4. Four changes to the being's cognition path in one evening** — the claim
+door's schema and prompt, the opener's prompt and check, the deliberation prompt
+twice. P4 §Phase 8 sets one Class B change per evidence window, written the same
+day. Nothing that happens in the live system tomorrow can now be attributed.
+
+**5. Everything was measured on copies with the caps cleared** — daily opener
+caps, concern carrying capacity, the diet invariant, R-25's started-ceiling. A
+configuration arranged not to interfere is also a configuration that cannot show
+interference.
+
+**6. "Four schema faults, all the same shape" is a tidy story.** R-33 is a
+missing *check*, not a missing *slot*; it was folded into the pattern because
+the pattern was already there. The pattern is probably real and it is not as
+clean as it was stated.
+
+**7. The `kind` label bug is still live** and now compounds: advances are still
+recorded as "reasoning without sources" while grounded, and they now also carry
+expectations. The record of what the being did today is wrong in a new way.
+
