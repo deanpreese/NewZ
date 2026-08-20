@@ -207,7 +207,7 @@ epics:
   E3.4:
     title: 'reach as one config value'
     phase: 3
-    status: open
+    status: built
     depends_on: [E3.3]
     done_when: mechanical
     binds: [Rule 3]

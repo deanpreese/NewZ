@@ -153,6 +153,7 @@ def _page(title: str, body: str, *, here: str, disclosure: str = DISCLOSURE) -> 
     return (f"<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
             f"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
             f"<meta name=\"disclosure\" content=\"{_e(disclosure)}\">\n"
+            f"<meta name=\"robots\" content=\"noindex, nofollow\">\n"
             f"<title>{_e(title)}</title>\n<style>{STYLE}</style>\n</head>\n<body>\n"
             f"<nav>{nav}</nav>\n{body}\n"
             f"<footer><p class=dim>{_e(disclosure)}</p></footer>\n"
@@ -189,7 +190,7 @@ def _works(conn: sqlite3.Connection, m: Manifest) -> str:
         status = (r["status"] if "status" in r.keys() else None) or "standing"
         klass = " class=retracted" if status == "retracted" else ""
         out.append(f"<article{klass}>")
-        out.append(f"<h2>{_e(r['title'])}</h2>")
+        out.append(f"<h2><a href=\"work/{r['id']}.html\">{_e(r['title'])}</a></h2>")
         out.append(f"<p class=dim>{_day(r['ts'])}"
                    + (" · <strong>retracted</strong>" if status == "retracted" else "")
                    + f" · on: {_e(r['subject_text'])}</p>")
@@ -289,6 +290,41 @@ def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
     return "\n".join(out)
 
 
+def _one_work(conn: sqlite3.Connection, row, m: Manifest) -> tuple[str, str]:
+    """A piece at its own stable address (E3.4).
+
+    Keyed by the row id, not by the signature or the title: a revised piece is
+    the same piece and must keep its address, or every revision breaks whatever
+    pointed at it. Stability is what makes an identifier worth citing, and it
+    is a separate question from whether anyone may crawl it.
+    """
+    page = f"work/{row['id']}.html"
+    m.record(page, "works", [row["id"]])
+    keys = row.keys()
+    sig = row["signature"] if "signature" in keys else None
+    status = (row["status"] if "status" in keys else None) or "standing"
+    body = [f"<article{' class=retracted' if status == 'retracted' else ''}>",
+            f"<h1>{_e(row['title'])}</h1>",
+            f"<p class=dim>{_day(row['ts'])}"
+            + (" · <strong>retracted</strong>" if status == "retracted" else "")
+            + f" · on: {_e(row['subject_text'])}</p>",
+            f"<div class=body>{_e(row['body'])}</div>"]
+    try:
+        for rev in conn.execute(
+                "SELECT * FROM work_revisions WHERE work_id=? ORDER BY ts",
+                (row["id"],)):
+            m.record(page, "work_revisions", [rev["id"]])
+            body.append(f"<p class=dim><strong>{_e(rev['kind'])}</strong> "
+                        f"{_day(rev['ts'])} — {_e(rev['reason'])}</p>")
+    except sqlite3.OperationalError:
+        pass
+    body.append("<p class=dim>" + (
+        f"signed {_e(sig[:16])}…" if sig
+        else "unsigned — written before pieces were signed") + "</p>")
+    body.append("</article>")
+    return page, _page(row["title"], "\n".join(body), here="index")
+
+
 def generate(conn: sqlite3.Connection, out_dir: Path, *, now: float) -> Manifest:
     """Write the whole surface. The directory is emptied of what this writes."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -302,6 +338,17 @@ def generate(conn: sqlite3.Connection, out_dir: Path, *, now: float) -> Manifest
     }
     for name, (title, body, here) in pages.items():
         (out_dir / name).write_text(_page(title, body, here=here), encoding="utf-8")
+
+    # One stable address per piece, so a piece can be pointed at (E3.4).
+    (out_dir / "work").mkdir(exist_ok=True)
+    for row in conn.execute("SELECT * FROM works ORDER BY id"):
+        name, page = _one_work(conn, row, m)
+        (out_dir / name).write_text(page, encoding="utf-8")
+
+    # No index, ever. A request rather than a permission — what actually keeps
+    # the surface private is the bind address (newz/surface/serve.py).
+    (out_dir / "robots.txt").write_text(
+        "User-agent: *\nDisallow: /\n", encoding="utf-8")
 
     (out_dir / "manifest.json").write_text(
         json.dumps(m.as_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")

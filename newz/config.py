@@ -50,6 +50,21 @@ class Config:
     # Sovereign adapter identity. Wikipedia requires a reachable contact and
     # returns 403 without one (verified 2026-08-12).
     user_agent: str = ""
+    # ── reach (P4 E3.4, Rule 3) ────────────────────────────────────────
+    # The one value that decides who can reach the surface. `local` binds the
+    # loopback and nothing outside this machine can connect; `open` binds every
+    # interface and the surface is reachable by anyone who can route to it.
+    #
+    # Rule 3: outward capabilities are built public-ready and left unpublished,
+    # so reach is a config change and never a redesign. The corollary is that
+    # this value carries the whole weight of that decision — which is why the
+    # default is local, why nothing in the codebase writes it, and why the hard
+    # core records it as the operator's alone to set.
+    #
+    # P4 Decision 1 — when, who the first reader is, and what they read first —
+    # is unmade. Until it is made this stays `local`.
+    surface_reach: str = "local"
+    surface_port: int = 8731
 
 
 def _role_value(env: dict[str, str | None], kind: str, role: str) -> str | None:
@@ -98,4 +113,10 @@ def load(repo_root: Path | None = None, env_file: str | os.PathLike | None = Non
         quiet_hours_end=env.get("QUIET_HOURS_END"),
         sleep_hour=int(env.get("NEWZ_SLEEP_HOUR") or 3),
         user_agent=env.get("NEWZ_USER_AGENT") or DEFAULT_USER_AGENT,
+        # Anything other than the literal "open" is local. A typo must fail
+        # closed: the failure mode of this setting is not a broken page, it is
+        # an unintended reader.
+        surface_reach=("open" if (env.get("NEWZ_SURFACE_REACH") or "").strip().lower()
+                       == "open" else "local"),
+        surface_port=int(env.get("NEWZ_SURFACE_PORT") or 8731),
     )

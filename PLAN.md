@@ -706,7 +706,7 @@ traces to store rows.
 *Depends on:* E3.2.
 *Hooks:* §2 (quality, never concealment).
 
-**E3.4 — reach as one config value**
+**E3.4 — reach as one config value** *(built 2026-08-20)*
 *Delivers:* stable identifiers, no index, served locally, exposure behind a
 single setting.
 *Done when:* flipping the setting exposes the surface with **no code change**.

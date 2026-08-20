@@ -64,9 +64,13 @@ def test_the_surface_regenerates_into_an_empty_directory(store, tmp_path):
     is already there, no state outside the store."""
     out, _ = _generate(store, tmp_path)
 
-    assert {p.name for p in out.iterdir()} == {
-        "index.html", "questions.html", "errors.html", "commitments.html",
-        "manifest.json"}
+    # The four pages the surface must always have, asserted as a subset: an
+    # earlier version pinned the exact file set and broke the hour E3.4 added
+    # robots.txt and the per-piece pages. A surface that is expected to grow
+    # should not be asserted as a snapshot.
+    required = {"index.html", "questions.html", "errors.html",
+                "commitments.html", "manifest.json"}
+    assert required <= {p.name for p in out.iterdir()}
     assert "On rolling over" in (out / "index.html").read_text()
 
 
