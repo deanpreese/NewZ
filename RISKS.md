@@ -1074,3 +1074,73 @@ and 28 advances still yield 0 claims over a week in life, then the constraint is
 the model rather than the prompt — and that is Decision 2's R-22 question,
 arriving from a direction nobody planned.
 
+### R-32 — first half answered 2026-08-19: the vocabulary is not the problem; the label is wrong
+
+**The `kind` vocabulary exists and is adequate.** `newz/concerns/advance.py`
+offers `evidence | reasoning | rejected`, and the demotion rule is sound:
+`kind='evidence'` requires refs that actually reached the dossier, and an
+evidence claim without them is relabelled rather than rejected, because
+"parametric knowledge is not invention" (S2 §8.3).
+
+**What is actually happening is the opposite of what the code guards against.**
+Measured from `logs/llm_calls.jsonl` since 06:26:
+
+| | |
+|---|---|
+| deliberation responses carrying `<kind>` | **38** |
+| of those, claiming `<kind>evidence</kind>` | **0** |
+| of those, claiming `<kind>reasoning</kind>` | **38** |
+| citing 1–3 dossier refs anyway | **32 of 38** |
+| advances stored with non-empty `evidence_json` | **27 of 29** |
+
+**The being reads sources, cites them correctly, and then labels its own work
+ungrounded every single time.** The demotion path never fires because nothing is
+ever over-claimed; and **there is no promotion path** — `judge_advance` never
+asks whether a `reasoning` claim carrying grounded refs should have been
+`evidence`. Its final line reads:
+
+```python
+return AdvanceVerdict(True, "reasoning", "reasoning without sources, labelled",
+                      novelty, grounded)
+```
+
+— a reason string that says *without sources* while carrying a non-empty list of
+sources into the verdict.
+
+**The cause is a one-sided prompt**, and it is R-27's shape exactly:
+
+```
+<kind>evidence</kind> requires refs that appear in the dossier above.
+Reasoning without sources is legitimate — label it <kind>reasoning</kind>
+rather than dressing it as evidence.
+```
+
+Both sentences warn against over-claiming; neither says that under-claiming is
+also wrong. The claim door's prompt has this lesson written into a comment —
+*"Passing case first and worked, per the lesson this repository has paid for
+repeatedly: with a strict-only frame the model refuses everything"* — and the
+deliberation prompt never received it.
+
+**Severity, measured rather than assumed: low, for now.** A grep finds **no
+consumer anywhere** that branches on `kind == 'evidence'`. Nothing downstream is
+gated by the label today, and `tools/what_shaped.py` reads the evidence refs
+themselves rather than the kind, so the grounding mix is unaffected. What is
+damaged is the being's own record of its work — 27 of 29 grounded advances
+recorded as ungrounded — and any future reader of that record, including the
+S8-E instruments and E2.9's mechanical set.
+
+**The fix, and it is two lines plus a prompt.** Balance the prompt the way the
+claim door's was balanced, and add the missing promotion: when `claimed_kind` is
+`reasoning` and `grounded` is non-empty, say so — either promote, or record
+"reasoning, grounded in N refs" instead of "without sources". Do not silently
+promote without deciding which: the distinction between *thinking with sources
+in view* and *concluding from them* is real, and the label should be able to
+carry it.
+
+**What this does NOT answer.** R-32's substance stands: 0 of 28 advances were
+claimable, and mislabelling grounded work does not make it a position the world
+could settle. The next place to look is the deliberation prompt's own framing of
+what an advance is — line 119, *"Establishing that something is NOT the case,
+that two things differ in kind…"* — which invites exactly the distinction-drawing
+the claim door correctly declines.
+
