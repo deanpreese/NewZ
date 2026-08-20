@@ -276,6 +276,8 @@ def test_an_accepted_advance_reaches_the_claim_door(tmp_path):
   interest at least 10% below the exchange's published figure.</statement>
   <settles_when>The COT release is published and the two figures compared.</settles_when>
   <resolver>CFTC Commitments of Traders weekly report</resolver>
+  <could_be_wrong>The COT figure comes in at or above the exchange's own,
+  showing the netting gap is not there.</could_be_wrong>
   <due>{due}</due>
 </claim>""")])
 
