@@ -766,7 +766,7 @@ score**.
 *Hooks:* §10 — a score standing in for the read is the failure this project has
 named from the beginning, and a page is exactly where one would appear.
 
-**E3.7 — the derivation layer**
+**E3.7 — the derivation layer** *(built 2026-08-20)*
 *Delivers:* the metrics composed from what exists — volume against development
 (episodes per item added or revised), restatement rate, consequence rate
 (advances accepted against claims resolved), autonomy against world-grounded

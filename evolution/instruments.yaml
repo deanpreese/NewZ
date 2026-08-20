@@ -183,8 +183,15 @@ metrics:
     baselined: true
     serves: [evidence:S1-E, tn10:volume]
     emitted_by: tools/claims.py
-    grade: mechanical
-    reason: a count of concern_advances rows in a window.
+    grade: model-graded
+    reason: >
+      a count of concern_advances rows — and a row exists because judge_advance
+      accepted it. Graded `mechanical` when E2.5 wrote the registry, on the
+      reasoning that counting rows is mechanical; corrected 2026-08-20 while
+      E3.7 composed it, because `concerns_closed` was graded model-graded for
+      exactly the same shape (a count of rows a model's judgment created) and
+      one of the two was wrong. Counting is mechanical; what is being counted
+      is a judgment.
 
   claims_opened:
     definition_version: 1
@@ -447,6 +454,75 @@ metrics:
     grade: mechanical
     unreadable_when: the call log is gitignored and does not travel with a clone (INV-044).
     reason: deliberation tokens over all tokens in the window, tagged at the call site.
+
+  # ── the derivation layer (E3.7) ───────────────────────────────────────
+  # Four of TRUE_NORTH §10's six checkable items, as ratios of what the store
+  # already holds. A derived metric takes the WEAKEST grade among its inputs:
+  # a mechanical numerator over a model-graded denominator is model-graded, and
+  # cannot carry a decision neither input could.
+
+  episodes_recorded:
+    definition_version: 1
+    baselined: true
+    serves: [tn10:volume]
+    emitted_by: newz/evidence/derived.py
+    grade: mechanical
+    reason: a count of episodes rows in the window; nothing judges what becomes one.
+
+  volume_against_development:
+    definition_version: 1
+    baselined: true
+    derived_from: [episodes_recorded, perspective_novelty]
+    serves: [tn10:volume]
+    emitted_by: newz/evidence/derived.py
+    grade: mixed
+    reason: >
+      episodes recorded per Perspective item added or revised. §10's "activity,
+      memory growth, or output volume" — a rising number is the being doing
+      more and holding no more for it. Mixed because the denominator's
+      added/revised labels are the model's, applied at consolidation.
+
+  restatement_rate:
+    definition_version: 1
+    baselined: true
+    derived_from: [perspective_novelty]
+    serves: [tn10:consistency]
+    emitted_by: newz/evidence/derived.py
+    grade: mixed
+    reason: >
+      1 − novelty: the share of what is held that is being restated. §10's
+      "personality consistency without development", and mixed for the same
+      reason novelty is.
+
+  consequence_rate:
+    definition_version: 1
+    baselined: true
+    derived_from: [advances_offered, claims_opened]
+    serves: [tn10:novelty-without-consequence, evidence:S1-E]
+    emitted_by: newz/evidence/derived.py
+    grade: model-graded
+    reason: >
+      claims settled per advance accepted. §10's "novelty without relevance or
+      consequence" — advances accumulating while nothing is ever settled is
+      that item, and today it is exactly zero, which is S1-E stated as a ratio.
+      Model-graded because the denominator counts what judge_advance accepted.
+
+  autonomy_against_world_grounding:
+    definition_version: 1
+    baselined: true
+    derived_from: [advances_offered, self_grounding_share]
+    serves: [tn10:autonomy-without-perspective]
+    emitted_by: newz/evidence/derived.py
+    grade: model-graded
+    reason: >
+      unprompted acts per unit of world-grounded position. §10's "autonomy
+      without perspective or purpose". The denominator is the WORLD share
+      rather than a count of positions, because a being can hold a great many
+      positions and still be talking to itself. Model-graded by inheritance:
+      the numerator counts advances, and an advance row exists because
+      judge_advance accepted it — the judgment sits in an input rather than in
+      the composition, which is exactly why a derivation takes the weakest
+      grade among its parts.
 
 # ── purposes: what a measurement is FOR (P4 E2.6, Rule 2) ───────────────
 #

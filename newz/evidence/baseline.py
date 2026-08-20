@@ -189,6 +189,7 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
     """Take one reading of every baselined metric. The series' only writer."""
     from newz.evidence.consequence import read as read_consequence
     from newz.evidence.definitions import sync
+    from newz.evidence.derived import all_derived
     from newz.evidence.mechanical import all_values
 
     now = now or time.time()
@@ -206,6 +207,12 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
     # E2.9's mechanical set, in the same pass and the same window.
     for name, v in all_values(conn, repo_root, now=now, hours=window_hours).items():
         values[name] = (v.value, v.unreadable)
+    # E3.7's derivations, in the same pass and the same window as their inputs.
+    for name, v in all_derived(conn, repo_root, now=now, hours=window_hours).items():
+        values[name] = (v.value, v.unreadable)
+    values["episodes_recorded"] = (
+        float(conn.execute("SELECT COUNT(*) FROM episodes WHERE ts >= ?",
+                           (now - window_hours * 3600.0,)).fetchone()[0]), None)
     missing = set(baselined_metrics()) - set(values)
     if missing:
         raise KeyError(

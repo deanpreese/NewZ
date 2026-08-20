@@ -234,7 +234,7 @@ epics:
   E3.7:
     title: 'the derivation layer'
     phase: 3
-    status: open
+    status: built
     depends_on: [E1.6, E2.9]
     done_when: mechanical
 
