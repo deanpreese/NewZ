@@ -200,7 +200,7 @@ epics:
   E3.3:
     title: 'disclosure by construction'
     phase: 3
-    status: open
+    status: built
     depends_on: [E3.2]
     done_when: mechanical
 

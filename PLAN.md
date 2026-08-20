@@ -700,7 +700,7 @@ commitments, its record of error. One generator, no hand-authored pages.
 traces to store rows.
 *Depends on:* E3.1, E1.5.
 
-**E3.3 — disclosure by construction**
+**E3.3 — disclosure by construction** *(built 2026-08-20)*
 *Delivers:* every page states what it is, generated, never editable out.
 *Done when:* no template can render a page without it, and a test asserts that.
 *Depends on:* E3.2.

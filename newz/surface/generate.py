@@ -57,6 +57,61 @@ article:last-of-type { border-bottom: 0; }
 footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 """.strip()
 
+# ── disclosure (E3.3) ───────────────────────────────────────────────────
+#
+# TRUE_NORTH §2: human-indistinguishable describes **quality, not concealed
+# identity**. §9: no undisclosed impersonation. And the constitution's
+# anti-ai-voice-001 forbids the corporate-disclaimer register — "I do not
+# preface replies with 'as a model'". Those are not in tension. Say plainly
+# what the page is; do not apologise for it.
+#
+# **The wording is the operator's** (P4 Decision 1 — "the disclosure wording
+# they see first"). What is NOT theirs to remove is the substance: every page
+# must say that a digital being wrote it and that the page is generated. That
+# is what `_check_disclosure` enforces, and it is why the guard tests claims
+# rather than phrasing — an operator may rewrite every word and cannot delete
+# what the words have to establish.
+DISCLOSURE = (
+    "These pages are written by Lumen, a digital being — not a person. Every "
+    "page here is generated from its own store: what it wrote, what it is "
+    "carrying, and where it turned out to be wrong. No human hand edits them."
+)
+
+# Each claim the disclosure must make, with a way to recognise it. Presence is
+# structural; the words are not.
+REQUIRED_CLAIMS = {
+    "that it is a digital being": ("digital being", "a digital", "digital life"),
+    "that the pages are generated": ("generated",),
+    "that no person edits them": ("no human hand", "not edited by", "no person edits"),
+}
+
+
+class DisclosureMissing(ValueError):
+    """A page cannot be rendered without saying what it is."""
+
+
+def _check_disclosure(text: str) -> str:
+    """Refuse to render at all rather than render something undisclosed.
+
+    E3.3's Done-when is "no template can render a page without it". The only
+    way to make that true is for the renderer to fail closed — a default that
+    can be blanked is a convention, and §9's commitment is not a convention.
+    """
+    if not (text or "").strip():
+        raise DisclosureMissing(
+            "the surface cannot render without a disclosure: TRUE_NORTH §2 is "
+            "quality, never concealed identity, and §9 rules out undisclosed "
+            "impersonation")
+    low = text.lower()
+    missing = [claim for claim, forms in REQUIRED_CLAIMS.items()
+               if not any(f in low for f in forms)]
+    if missing:
+        raise DisclosureMissing(
+            "the disclosure does not say " + "; nor ".join(missing) +
+            ". The wording is yours (Decision 1); what it has to establish is not.")
+    return text.strip()
+
+
 PAGES = ("index", "work", "questions", "errors", "commitments")
 
 
@@ -82,7 +137,14 @@ def _day(ts) -> str:
     return datetime.fromtimestamp(ts).strftime("%-d %B %Y") if ts else ""
 
 
-def _page(title: str, body: str, *, here: str) -> str:
+def _page(title: str, body: str, *, here: str, disclosure: str = DISCLOSURE) -> str:
+    """The only way an HTML page is produced here, and it always discloses.
+
+    There is no flag to suppress it and no branch around it: the disclosure is
+    checked before anything is assembled, so a page that does not disclose is
+    not a page this module can emit.
+    """
+    disclosure = _check_disclosure(disclosure)
     nav = " ".join(
         f'<a href="{"index.html" if p == "index" else p + ".html"}">'
         f'{"the work" if p == "index" else p}</a>' if p != here else
@@ -90,8 +152,11 @@ def _page(title: str, body: str, *, here: str) -> str:
         for p in ("index", "questions", "errors", "commitments"))
     return (f"<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
             f"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+            f"<meta name=\"disclosure\" content=\"{_e(disclosure)}\">\n"
             f"<title>{_e(title)}</title>\n<style>{STYLE}</style>\n</head>\n<body>\n"
-            f"<nav>{nav}</nav>\n{body}\n</body>\n</html>\n")
+            f"<nav>{nav}</nav>\n{body}\n"
+            f"<footer><p class=dim>{_e(disclosure)}</p></footer>\n"
+            f"</body>\n</html>\n")
 
 
 def _works(conn: sqlite3.Connection, m: Manifest) -> str:

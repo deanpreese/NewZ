@@ -163,3 +163,79 @@ def test_the_error_record_shows_what_being_wrong_cost(store, tmp_path):
     assert "The March release prints below 40." in text
     assert "0.80" in text and "0.30" in text and "released" in text
     assert manifest["pages"]["errors"]["claim_costs"] == [1]
+
+
+# ── disclosure by construction (E3.3) ───────────────────────────────────
+
+def test_no_template_can_render_a_page_without_disclosure(store, tmp_path):
+    """E3.3's Done-when, in its strongest form. Behavior: `_page` is the only
+    way this module produces HTML, and it checks the disclosure before it
+    assembles anything — so a page that does not disclose is not a page the
+    generator can emit.
+
+    A default that can be blanked is a convention. §9's commitment to no
+    undisclosed impersonation is not a convention."""
+    from newz.surface.generate import DisclosureMissing, _page
+
+    with pytest.raises(DisclosureMissing, match="cannot render"):
+        _page("t", "<p>body</p>", here="index", disclosure="")
+    with pytest.raises(DisclosureMissing, match="cannot render"):
+        _page("t", "<p>body</p>", here="index", disclosure="   \n ")
+
+
+def test_every_generated_page_discloses_twice(store, tmp_path):
+    """Behavior: in the head, where a machine reads it, and in the body, where
+    a person does. A page disclosing only in metadata discloses to crawlers."""
+    out, _ = _generate(store, tmp_path)
+
+    for page in out.glob("*.html"):
+        text = page.read_text()
+        assert '<meta name="disclosure"' in text, page.name
+        assert "<footer>" in text and "digital being" in text, page.name
+
+
+def test_the_wording_is_the_operators_and_the_substance_is_not():
+    """P4 Decision 1 owns "the disclosure wording they see first". What it does
+    not own is what the words must establish — that a digital being wrote the
+    page, that the page is generated, and that no person edits it.
+
+    So the guard tests claims rather than phrasing: an operator may rewrite
+    every word and cannot delete what the words have to say."""
+    from newz.surface.generate import DisclosureMissing, _page
+
+    reworded = ("Lumen wrote this. It is a digital being rather than a person, "
+                "these pages are generated from its own record, and no human "
+                "hand edits them.")
+    assert _page("t", "<p>b</p>", here="index", disclosure=reworded)
+
+    for gutted in ("Written by Lumen.",
+                   "Lumen is a digital being.",
+                   "Generated from a store. No human hand edits them."):
+        with pytest.raises(DisclosureMissing, match="does not say"):
+            _page("t", "<p>b</p>", here="index", disclosure=gutted)
+
+
+def test_the_disclosure_is_not_a_corporate_disclaimer():
+    """The constitution's anti-ai-voice-001: "I do not sound like an AI in the
+    corporate-disclaimer sense. I do not apologize for being what I am."
+
+    TRUE_NORTH §2 requires disclosure and the constitution forbids the
+    disclaimer register. They are compatible — say plainly what the page is,
+    without apology — and this holds the line between them."""
+    from newz.surface.generate import DISCLOSURE
+
+    low = DISCLOSURE.lower()
+    for disclaimer in ("as an ai", "as a model", "i cannot", "i'm sorry",
+                       "please note", "disclaimer", "large language model"):
+        assert disclaimer not in low, disclaimer
+    assert "digital being" in low
+
+
+def test_disclosure_survives_regeneration_byte_for_byte(store, tmp_path):
+    """Behavior: the disclosure is part of what E3.5 will compare, so it cannot
+    drift between runs any more than the rest of the page can."""
+    a, b = tmp_path / "a", tmp_path / "b"
+    generate(store, a, now=1.0)
+    generate(store, b, now=2.0)
+
+    assert (a / "index.html").read_bytes() == (b / "index.html").read_bytes()
