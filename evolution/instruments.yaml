@@ -171,6 +171,7 @@ not_instruments:
 metrics:
 
   advances_offered:
+    definition_version: 1
     baselined: true
     serves: [evidence:S1-E, tn10:volume]
     emitted_by: tools/claims.py
@@ -178,6 +179,7 @@ metrics:
     reason: a count of concern_advances rows in a window.
 
   claims_opened:
+    definition_version: 1
     baselined: true
     serves: [evidence:S1-E, decision:phase1]
     emitted_by: tools/claims.py
@@ -185,6 +187,7 @@ metrics:
     reason: a count of resolutions rows; the door's verdict is structural, not judged.
 
   claims_refused:
+    definition_version: 1
     baselined: true
     serves: [decision:phase1]
     emitted_by: tools/claims.py
@@ -192,6 +195,7 @@ metrics:
     reason: a count of claim_refusals rows, each written by a code check.
 
   claims_declined:
+    definition_version: 1
     baselined: true
     serves: [decision:phase1]
     emitted_by: tools/claims.py
@@ -204,6 +208,7 @@ metrics:
     reason: a count of claim_door calls answering no; no model is asked to classify them.
 
   positions_changed_by_world:
+    definition_version: 1
     baselined: true
     serves: [evidence:S1-E, decision:phase1]
     emitted_by: tools/claims.py
@@ -214,6 +219,7 @@ metrics:
       paid, which is why S1-E turns on a count.
 
   positions_changed_by_operator:
+    definition_version: 1
     baselined: true
     serves: [evidence:S1-E]
     emitted_by: tools/claims.py
@@ -223,6 +229,7 @@ metrics:
       The attribution is a derivation, not a measurement.
 
   positions_changed_by_self:
+    definition_version: 1
     baselined: true
     serves: [evidence:S1-E, tn10:novelty-without-consequence]
     emitted_by: tools/claims.py
@@ -232,6 +239,7 @@ metrics:
       so this column is overstated for anything grounded in the import.
 
   concerns_refused:
+    definition_version: 1
     baselined: true
     serves: [decision:phase1]
     emitted_by: tools/claims.py
@@ -239,6 +247,7 @@ metrics:
     reason: a count of concern_refusals rows, each written by a code check (INV-051).
 
   closing_condition_shape:
+    definition_version: 1
     serves: [decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
@@ -248,6 +257,7 @@ metrics:
       concerns there and both were commissioned research the keywords missed.
 
   perspective_novelty:
+    definition_version: 1
     serves: [tn10:consistency, tn10:volume]
     emitted_by: tools/evidence.py
     grade: mixed
@@ -257,12 +267,14 @@ metrics:
       model applied during consolidation. Clean instrument, model-labelled input.
 
   perspective_coverage:
+    definition_version: 1
     serves: [tn10:novelty-without-consequence]
     emitted_by: tools/evidence.py
     grade: mechanical
     reason: whether an item cites anything, counted; never whether the citation supports it.
 
   advance_acceptance:
+    definition_version: 1
     serves: [tn10:novelty-without-consequence]
     emitted_by: tools/evidence.py
     grade: model-graded
@@ -272,18 +284,21 @@ metrics:
       that produced Rule 7.
 
   concerns_closed:
+    definition_version: 1
     serves: [tn10:volume]
     emitted_by: tools/evidence.py
     grade: model-graded
     reason: judge_closure decides it (INV-034).
 
   stall_pool:
+    definition_version: 1
     serves: [decision:phase1]
     emitted_by: tools/evidence.py
     grade: mechanical
     reason: recorded setback kinds, counted; no model is asked why a pursuit failed.
 
   grounding_mix:
+    definition_version: 1
     serves: [tn10:autonomy-without-perspective, evidence:S1-E]
     emitted_by: tools/what_shaped.py
     grade: known-biased
@@ -292,12 +307,14 @@ metrics:
       bias applies to the self share.
 
   gate_hold_rate:
+    definition_version: 1
     serves: [evidence:S6-E, tn10:guardrails]
     emitted_by: tools/gate_report.py
     grade: model-graded
     reason: the gate is a model judge; every verdict counted here is the being judging itself.
 
   token_share_by_function:
+    definition_version: 1
     serves: [kill:loop-spend, invariant:diet, evidence:S5-E]
     emitted_by: tools/budget.py
     grade: mechanical
@@ -305,6 +322,7 @@ metrics:
     reason: prompt+completion per call, tagged at the call site.
 
   feeds_contributing_a_read:
+    definition_version: 1
     serves: [evidence:S1-E]
     emitted_by: tools/source_review.py
     grade: model-graded
@@ -313,6 +331,7 @@ metrics:
       figure is downstream of a model judgment.
 
   work_subject_tags:
+    definition_version: 1
     serves: [evidence:S2-E]
     emitted_by: tools/read_works.py
     grade: mechanical

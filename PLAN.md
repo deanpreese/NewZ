@@ -615,7 +615,7 @@ window reports as such rather than as a number.
 by hand, once, inside an argument. Nothing can steer on a figure that lives in a
 document.
 
-**E2.8 — metric revision without silent breakage**
+**E2.8 — metric revision without silent breakage** *(built 2026-08-20)*
 *Delivers:* every metric carries a `definition_version`; changing a definition
 **resets its baseline and records the reset with its reason**, and the prior
 series is retained and marked as the older definition's.

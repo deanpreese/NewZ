@@ -86,12 +86,21 @@ class Reading:
 
 def _baseline(conn: sqlite3.Connection, metric: str, *, window_hours: float,
               now: float) -> tuple[float | None, float | None]:
-    """The last measured reading from before this window opened."""
+    """The last measured reading from before this window opened, **computed the
+    same way**.
+
+    Scoped to the current definition (E2.8). Comparing a figure to one computed
+    differently is not a delta, it is two numbers subtracted — and "novelty"
+    already named two quantities in this codebase once.
+    """
+    from newz.evidence.definitions import version_of
+
     try:
         row = conn.execute(
             "SELECT ts, value FROM metric_readings WHERE metric=? AND status=?"
-            " AND ts <= ? ORDER BY ts DESC LIMIT 1",
-            (metric, OK, now - window_hours * 3600.0)).fetchone()
+            " AND definition_version=? AND ts <= ? ORDER BY ts DESC LIMIT 1",
+            (metric, OK, version_of(metric),
+             now - window_hours * 3600.0)).fetchone()
     except sqlite3.OperationalError:
         # A store that has not taken 0034 yet has no series. No baseline is
         # the honest answer, and it is not an error — the first reading of
@@ -140,10 +149,13 @@ def take(conn: sqlite3.Connection, metric: str, value: float | None, *,
     """
     r = peek(conn, metric, value, window_hours=window_hours,
              covers_from=covers_from, unreadable=unreadable, now=now)
+    from newz.evidence.definitions import version_of
+
     conn.execute(
         "INSERT INTO metric_readings (ts, metric, status, value, window_hours,"
-        " note) VALUES (?,?,?,?,?,?)",
-        (now or time.time(), metric, r.status, r.value, window_hours, r.note))
+        " note, definition_version) VALUES (?,?,?,?,?,?,?)",
+        (now or time.time(), metric, r.status, r.value, window_hours, r.note,
+         version_of(metric)))
     conn.commit()
     return r
 
@@ -177,6 +189,8 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
     """Take one reading of every baselined metric. The series' only writer."""
     from newz.evidence.consequence import read as read_consequence
 
+    from newz.evidence.definitions import sync
+
     now = now or time.time()
     c = read_consequence(conn, repo_root, now=now, hours=window_hours)
     values: dict[str, tuple] = {
@@ -194,6 +208,13 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
         raise KeyError(
             f"registry marks {sorted(missing)} baselined and record_all does not "
             "produce them — a metric that carries a baseline must have a writer")
+
+    # Definitions are reconciled before anything is written, so a reading is
+    # never filed under a version the store has not acknowledged (E2.8).
+    for metric in values:
+        if sync(conn, metric, now=now):
+            logger.info("metric %s: definition changed; the series starts again", metric)
+
     return [take(conn, name, v, window_hours=window_hours, unreadable=why, now=now)
             for name, (v, why) in values.items()]
 
