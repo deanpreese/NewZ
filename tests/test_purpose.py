@@ -61,17 +61,19 @@ def test_a_purpose_with_no_metric_is_reported_and_not_an_error():
     assert "tn10:scores" in gaps
 
 
-def test_the_kill_condition_that_matters_most_has_no_metric_yet():
-    """P4 Phase 8 says nights-slept is the kill condition that matters most —
-    "development is measured in nights, not commits, and a loop that costs sleep
-    is subtracting". It has nothing measuring it.
+def test_the_kill_condition_that_matters_most_now_has_one():
+    """P4 Phase 8 calls nights-slept the kill condition that matters most —
+    "development is measured in nights, not commits, and a loop that costs
+    sleep is subtracting".
 
-    Pinned deliberately: when E2.9 registers the nights-slept metric this test
-    fails, and whoever is here reads the sentence above and knows why it mattered.
-    """
-    assert "kill:nights-slept" in set(unserved()), (
-        "nights-slept now has a metric — good. Move this assertion to check the "
-        "metric serves it, and delete this test's reason for existing.")
+    From 2026-08-20 this test asserted the gap, so that closing it would fail
+    here and whoever was standing there would read why it mattered. E2.9 closed
+    it the same day. The assertion is inverted rather than deleted, because the
+    sentence above is the reason the metric exists."""
+    served = set(served_by("kill:nights-slept"))
+
+    assert "nights_slept" in served
+    assert "kill:nights-slept" not in set(unserved())
 
 
 def test_every_metric_is_both_graded_and_purposed():

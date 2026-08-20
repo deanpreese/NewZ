@@ -188,8 +188,8 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
                now: float | None = None) -> list[Reading]:
     """Take one reading of every baselined metric. The series' only writer."""
     from newz.evidence.consequence import read as read_consequence
-
     from newz.evidence.definitions import sync
+    from newz.evidence.mechanical import all_values
 
     now = now or time.time()
     c = read_consequence(conn, repo_root, now=now, hours=window_hours)
@@ -203,6 +203,9 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
         "positions_changed_by_self": (c.positions.by_self, None),
         "concerns_refused": (c.opener.refused, None),
     }
+    # E2.9's mechanical set, in the same pass and the same window.
+    for name, v in all_values(conn, repo_root, now=now, hours=window_hours).items():
+        values[name] = (v.value, v.unreadable)
     missing = set(baselined_metrics()) - set(values)
     if missing:
         raise KeyError(

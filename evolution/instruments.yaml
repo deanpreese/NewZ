@@ -323,12 +323,17 @@ metrics:
 
   feeds_contributing_a_read:
     definition_version: 1
+    baselined: true
     serves: [evidence:S1-E]
     emitted_by: tools/source_review.py
     grade: model-graded
     reason: >
       the counting is mechanical and triage decides what is read at all, so the
-      figure is downstream of a model judgment.
+      figure is downstream of a model judgment. P4's E2.9 lists this among the
+      metrics "all graded mechanical"; the 2026-08-19 audit found otherwise and
+      the measured grade stands. It informs and it may not carry a decision
+      alone (Rule 4) — recorded here rather than reconciled away, because the
+      plan's assumption and the audit's finding are both part of the record.
 
   work_subject_tags:
     definition_version: 1
@@ -338,6 +343,89 @@ metrics:
     reason: >
       inverse document frequency over the works corpus. No vocabulary is
       authored and no model is asked what a piece is about (INV-056).
+
+  # ── the mechanical set (E2.9) — what the loop may steer by ────────────
+  # Every one is a count or a ratio of counts over rows the being wrote as it
+  # lived. No model judgment sits anywhere between the world and the number,
+  # which is the whole qualification for carrying a decision (Rule 4).
+
+  nights_slept:
+    definition_version: 1
+    baselined: true
+    serves: [kill:nights-slept, evidence:S8-E, tn10:volume]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mechanical
+    reason: >
+      Perspective versions written in the window. P4 Phase 8 calls this the kill
+      condition that matters most — development is measured in nights, not
+      commits, and a loop that costs sleep is subtracting.
+
+  hours_since_last_sleep:
+    definition_version: 1
+    baselined: true
+    serves: [kill:nights-slept]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mechanical
+    reason: elapsed time since the last consolidation; rises when sleep stops happening.
+
+  pieces_written:
+    definition_version: 1
+    baselined: true
+    serves: [evidence:S2-E, decision:phase2, tn10:volume]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mechanical
+    reason: a count of works rows in the window.
+
+  works_revised:
+    definition_version: 1
+    baselined: true
+    serves: [evidence:S2-E, decision:phase2]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mechanical
+    reason: >
+      a count of work_revisions rows of kind 'revised'. P4 Phase 2's decision
+      rule turns on this against pieces_written: produces on rhythm but never
+      revises means the re-read is decorative.
+
+  works_retracted:
+    definition_version: 1
+    baselined: true
+    serves: [evidence:S2-E, decision:phase2]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mechanical
+    reason: a count of work_revisions rows of kind 'retracted'; a retraction is an outcome (INV-054).
+
+  source_gaps_open:
+    definition_version: 1
+    baselined: true
+    serves: [evidence:S1-E]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mechanical
+    reason: >
+      questions no readable source answered, counted. §Going public's own
+      trip-wire for the room no longer being enough.
+
+  single_source_positions:
+    definition_version: 1
+    baselined: true
+    serves: [tn10:autonomy-without-perspective, evidence:S1-E]
+    emitted_by: newz/evidence/mechanical.py
+    grade: known-biased
+    reason: >
+      the share of held positions where one provenance supplies more than half
+      the evidence — INV-033's flag, counted per position. Mechanical, and
+      R-15 applies: imported v1 episodes are uniformly provenance='self', so
+      positions grounded in the import are flagged for a reason that is partly
+      an artefact of the import.
+
+  deliberation_token_share:
+    definition_version: 1
+    baselined: true
+    serves: [evidence:S5-E, invariant:diet, kill:loop-spend]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mechanical
+    unreadable_when: the call log is gitignored and does not travel with a clone (INV-044).
+    reason: deliberation tokens over all tokens in the window, tagged at the call site.
 
 # ── purposes: what a measurement is FOR (P4 E2.6, Rule 2) ───────────────
 #

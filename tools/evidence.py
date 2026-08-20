@@ -6,6 +6,7 @@
     python tools/evidence.py 2e        # pursuit (Phase 2)
     python tools/evidence.py 2e --stalls   # every stall, with its cause
     python tools/evidence.py purposes      # what each metric is for, and the gaps
+    python tools/evidence.py s2e           # Phase 2's read, off the instruments
 
 Read-only, and no model is consulted. P2 Rule 0: every number here carries
 its method, including the ones that cannot be produced.
@@ -46,6 +47,41 @@ def head(title: str) -> None:
 
 def when(ts: float) -> str:
     return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
+
+
+def report_s2e(conn, repo_root) -> None:
+    """S2-E, read off the mechanical set rather than assembled by hand (E2.9).
+
+    P4 asks for pieces per week, revisions and retractions with their causes,
+    and — the clause that decides the phase — **at least one revision caused by
+    something other than the operator saying so.** That last one stays the
+    operator's read; what is mechanical is everything it rests on.
+    """
+    import time as _t
+
+    from newz.evidence.baseline import peek
+    from newz.evidence.mechanical import all_values, revision_causes
+
+    hours = 168.0
+    now = _t.time()
+    head(f"Evidence S2-E — the work, on a rhythm (last {hours/24:.0f} days)")
+    vals = all_values(conn, repo_root, now=now, hours=hours)
+    for name in ("pieces_written", "works_revised", "works_retracted"):
+        v = vals[name]
+        print(peek(conn, name, v.value, window_hours=hours,
+                   unreadable=v.unreadable, covers_from=v.covers_from).render())
+
+    causes = revision_causes(conn, since=now - hours * 3600.0)
+    print(f"\n  revisions and retractions, with the reason given at the time:")
+    if not causes:
+        print("    none in this window")
+    for kind, reason in causes:
+        print(f"    [{kind}] {reason[:88]}")
+
+    print("\n  the clause this phase turns on — at least one revision caused by")
+    print("  something other than the operator saying so — is the operator's")
+    print("  read. What is above it is mechanical; the judgment is not, and P4")
+    print("  Rule 6 keeps it that way.")
 
 
 def report_purposes() -> None:
@@ -233,7 +269,7 @@ def report_2e(conn, repo_root: Path, *, show_stalls: bool = False) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("which", nargs="?", default="all",
-                    choices=["1e", "2e", "purposes", "all"])
+                    choices=["1e", "2e", "s2e", "purposes", "all"])
     ap.add_argument("--stalls", action="store_true",
                     help="list every stalled concern with its cause")
     args = ap.parse_args()
@@ -241,6 +277,10 @@ def main() -> int:
     cfg = load()
     conn = open_db(cfg.main_db_path, read_only=True)
     try:
+        if args.which == "s2e":
+            report_s2e(conn, cfg.repo_root)
+            print()
+            return 0
         if args.which == "purposes":
             report_purposes()
             print()

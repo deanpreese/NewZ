@@ -626,7 +626,7 @@ definition change is visible in the record. Both tested.
 the Perspective development share and `novelty_against_history`'s cosine — with
 nothing in the system objecting.
 
-**E2.9 — the mechanical set**
+**E2.9 — the mechanical set** *(built 2026-08-20)*
 *Delivers:* the metrics the loop may later steer by, all graded mechanical:
 nights slept and the interval between them; the grounding mix with INV-033's
 single-source flag; feeds contributing a read and `source_gaps`; the compute
