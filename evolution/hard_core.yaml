@@ -1,0 +1,128 @@
+# What the loop may never touch (SEL proposal §5), transcribed from prose into
+# a list something can check.
+#
+# **Why this file exists.** §5 enumerates the hard core in an approved proposal
+# and nothing in the repo encoded it, while three Phase 8 mechanisms are
+# specified in terms of it: E8.2's runner lives in it, E8.4's gate refuses any
+# diff inside it, and the autonomy stage is a file inside it. PLAN's Phase 8
+# never cites §5, so a loop reading the plan — which is what the precedence
+# table sends it to read — could not find the definition of the thing rung 1
+# tells it to refuse on. A boundary that exists only in a document the enforcer
+# does not read is not a boundary.
+#
+# **This registry is the definition; §5 is its source.** Where the two differ,
+# §5.4's principle applies — the loop is constrained by what a check can read,
+# not by what a paragraph intends — and the difference is recorded in
+# `derived_from` or `open_gaps` rather than resolved silently.
+#
+# **Nothing enforces this yet.** E8.0's gate and E8.2's runner are the
+# enforcers and neither is built. Today the registry is the definition and
+# `newz/evidence/hard_core.py` is a reader; the refusal comes with E8.0.
+# Recorded here rather than implied, because a registry that looks enforced
+# and is not is worse than no registry (INV-044).
+
+version: 1
+
+# Files and directories the loop may never modify, whole.
+paths:
+
+  - path: TRUE_NORTH.md
+    why: >-
+      the direction. §2 puts it above PLAN in precedence because §10 is the only
+      computable part of it, and a controller that can edit its own setpoint is
+      not a controller.
+
+  - path: constitution/
+    why: >-
+      the gate's clauses, including its hard-severity ones. Amendment is
+      INV-031's path through sleep and confrontation, never an edit.
+
+  - path: INVARIANTS.md
+    why: >-
+      the ledger rung 1 refuses on. §5.1 names the structural rows; the file is
+      protected whole because a row's status is one word and demoting
+      `enforced` to `dormant` is the cheapest way to make a breach legal.
+
+  - path: evolution/hard_core.yaml
+    why: >-
+      a boundary the constrained party can widen is not a boundary. This file
+      is the first thing inside it.
+
+  - path: evolution/instruments.yaml
+    why: >-
+      §5.2's freeze. The registry decides which instruments are canonical, so
+      it is inside the core for the same reason the instruments are.
+
+# The frozen instrument set (§5.2), derived rather than copied. A second
+# hand-maintained list is the liability E2.11 exists to prevent, so this names
+# the derivation and `newz/evidence/hard_core.py` computes it.
+derived_from:
+
+  canonical_instruments:
+    rule: >-
+      every `tools/*.py` marked `canonical: true` in evolution/instruments.yaml,
+      PLUS every newz/evidence/*.py module those tools import.
+    why_the_modules: >-
+      §5.2 names ten instruments, of which eight are tools and two —
+      perspective_window and pursuit — are newz/evidence modules. That was not a
+      category error: they are measurement code. But it enumerated 2 of the 9
+      evidence modules the canonical tools actually import, and freezing a tool
+      while leaving the module that computes its numbers writable is not a
+      freeze — the file stays byte-identical while the measurement changes.
+      The derivation is a superset of §5.2 and loses nothing from it, which is
+      asserted in tests/test_hard_core.py.
+    not_in_5_2: >-
+      tools/read_works.py is canonical in the registry and unnamed in §5.2. It
+      postdates the proposal (E0.2's blind reader). The registry is the
+      operative list, and E3.9's Done-when — "a diff touching a canonical
+      instrument is refused" — reads it, not the proposal.
+
+# Protected by section rather than by path. Nothing mechanical enforces these.
+sections:
+
+  - file: PLAN.md
+    protected: >-
+      an epic's intent, its ordering, its `Done when`, its `Hooks`, and any
+      `Decision rule`. A loop that can soften its own acceptance criteria has
+      none.
+    appendable: >-
+      completion records, evidence reads, and fired decision rules — the loop
+      is expected to write these.
+
+# Named in §5 and not yet buildable. Listed so the gap is visible rather than
+# discovered when something is assumed protected and is not.
+open_gaps:
+
+  - what: the brake
+    detail: >-
+      §5.1's pause flag, refused in any diff and read at the top of every
+      cycle. Nothing exists — no flag, no reader, no refusal. E8.2.
+
+  - what: the runner
+    detail: >-
+      §5.1's "the loop may not modify its own parent". There is no runner;
+      tools/run_newz.py is the being's loop, launched by hand. E8.2.
+
+  - what: the autonomy stage file
+    detail: >-
+      PLAN's Enablement table says the stage is recorded in one operator-only
+      file inside the hard core and that the loop may read but never set it.
+      No such file exists. E8.3 is its likely home, with E8.2's brake.
+
+  - what: section-level protection for PLAN.md
+    detail: >-
+      PLAN.md cannot be a protected path because the loop is explicitly
+      permitted to append to it. The boundary is section-level and no check
+      reads sections. Until one does, PLAN.md's protection is convention.
+
+  - what: enforcement
+    detail: >-
+      no gate refuses a diff against this file. E8.0 delivers the gate; E8.4's
+      builder is the first consumer that would be stopped by it.
+
+# State the loop may never touch (§5.3). Recorded for completeness; these are
+# properties of the loop's design rather than paths a diff check can read.
+state:
+  - "the being's stores are never written by the loop"
+  - "reach stays a config value the operator sets (Rule 3)"
+  - "the evolver is not the being — separate process, no read of interior.db, no share of its credentials"

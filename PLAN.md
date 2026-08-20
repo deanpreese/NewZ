@@ -1029,6 +1029,42 @@ Rungs 5a and 5b never build. TRUE_NORTH sits above this plan because §10 is the
 only part of it that is computable — the rest is a direction, and a direction
 makes a circuit breaker, not a controller.
 
+**The hard core is §5 of the proposal, and it is now enumerated** *(built
+2026-08-20)*. Rung 1 refuses on "INVARIANTS and the hard core", and until today
+this phase never said where the hard core was written down: it was prose in
+`proposals/2026-08-19-the-self-evolving-loop.md` §5, which this plan did not
+cite, so a loop sent here by its own precedence table could not find the
+boundary it is required to refuse on. It is now
+**`evolution/hard_core.yaml`**, read by `newz/evidence/hard_core.py`
+(INV-064) — the direction, the constitution, the ledger, both registries, and
+the frozen instrument set.
+
+**The frozen set is derived, not copied.** §5.2 named ten instruments by hand.
+Eight are tools; two — `perspective_window` and `pursuit` — are
+`newz/evidence` modules, which was not a category error but was an incomplete
+one: the canonical tools import **nine** such modules, and freezing
+`tools/evidence.py` while `newz/evidence/pursuit.py` stays writable freezes a
+filename and not a measurement. The registry therefore computes the set as
+every canonical tool plus the evidence modules those tools import, and a test
+asserts the result is a superset of §5.2 rather than trusting that it is.
+`tools/read_works.py` is canonical in the registry and absent from §5.2 because
+it postdates the proposal; **the registry is the operative list**, which is what
+E3.9's `Done when` reads.
+
+**Nothing enforces it yet, and the registry says so.** E8.0 delivers the gate
+that refuses a diff; E8.4's builder is the first thing it would stop. The
+registry's `open_gaps` records that, along with the brake, the runner, the
+autonomy stage file and the fact that PLAN.md is protected by *section* and no
+check reads sections — tied to E8.0's status in the plan rather than to a
+comment, because a boundary that looks enforced and is not is worse than none
+(INV-044).
+
+**What this settles for E8.2.** Its `Depends on:` reads *nothing*, and that was
+false while its runner was specified to live in a core that did not exist — the
+queue offered E8.2 as buildable and the loop would have had to invent the
+boundary meant to constrain it. The dependency is discharged rather than
+declared: the core exists, so the line is now true as written.
+
 ---
 
 **E8.0 — the gate made runnable and trustworthy**

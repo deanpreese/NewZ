@@ -8,7 +8,7 @@ Two failures this catches, both of which were live in the tree on 2026-08-19:
     reports a number that looks fine.
 
   - a tool that exists and is in no row of the registry. The registry is what
-    the loop steers by (E8.3's map, E8.9's freeze); a tool outside it is a
+    the loop steers by (E2.6's map, E3.9's freeze); a tool outside it is a
     measurement nobody classified, which is the state the whole tree was in
     before this epic.
 """
@@ -64,7 +64,7 @@ def test_every_tool_is_classified_exactly_once():
 
 
 def test_every_instrument_row_carries_the_fields_it_is_for():
-    """Consumer: the SEL's state read (E8.13) and E8.3's map. Behavior: an
+    """Consumer: the SEL's state read (E8.3) and E2.6's map. Behavior: an
     instrument cannot enter the registry without saying what it measures, what
     it reads, its denominator, and whether a model touched its chain."""
     for row in _registry()["instruments"]:
@@ -78,7 +78,7 @@ def test_every_instrument_row_carries_the_fields_it_is_for():
 
 
 def test_the_registry_names_only_read_only_tools_as_instruments():
-    """Consumer: E8.9's freeze. Behavior: a tool that writes to the store can
+    """Consumer: E3.9's freeze. Behavior: a tool that writes to the store can
     never be frozen as an instrument, because it is not one."""
     writes = ("INSERT ", "UPDATE ", "DELETE ", ".commit()")
     for row in _registry()["instruments"]:

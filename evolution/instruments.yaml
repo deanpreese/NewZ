@@ -12,14 +12,14 @@
 # distinction is recorded rather than assumed: a judge that is the being's own
 # model produces operation, never evidence.
 #
-# `canonical: true` marks the frozen set (E8.9) — changing one is an operator
+# `canonical: true` marks the frozen set (E3.9) — changing one is an operator
 # act, because the loop steers by these while changing the being that produces
 # them.
 #
 # Writers: hand-maintained, and tests/test_instruments_registry.py fails the
 # build when a tool is added without a row.
 # Readers: tests/test_instruments_registry.py today; the SEL's state read
-# (E8.13) and the metric-to-purpose map (E8.3) next.
+# (E8.3) and the metric-to-purpose map (E2.6) next.
 
 version: 1
 
