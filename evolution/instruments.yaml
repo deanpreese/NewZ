@@ -151,3 +151,144 @@ not_instruments:
   one_time:          # migrations and operations, not part of any cycle
     - tools/backup.py
     - tools/corpus_hygiene.py
+
+# ── metrics, and the grade each one carries (P4 E2.5, Rule 7) ───────────
+#
+# Rule 7: every measurement carries its grade. An instrument is not one grade —
+# `evidence.py` emits a mechanical coverage figure and a mixed novelty figure
+# in the same report — so the grade belongs to the METRIC, not to the tool.
+#
+#   mechanical    no model judgment anywhere between the world and the number.
+#   model-graded  a model decided something the number counts. Useful, readable,
+#                 and it may never carry a decision on its own (Rule 4).
+#   mixed         the read consults no model and its INPUT was model-labelled.
+#   known-biased  mechanical, with a named systematic distortion.
+#
+# An ungraded metric cannot be cited: newz/evidence/grades.py raises rather
+# than printing a number with no provenance, which is how Rule 7 stops being a
+# convention and starts being a mechanism.
+
+metrics:
+
+  advances_offered:
+    emitted_by: tools/claims.py
+    grade: mechanical
+    reason: a count of concern_advances rows in a window.
+
+  claims_opened:
+    emitted_by: tools/claims.py
+    grade: mechanical
+    reason: a count of resolutions rows; the door's verdict is structural, not judged.
+
+  claims_refused:
+    emitted_by: tools/claims.py
+    grade: mechanical
+    reason: a count of claim_refusals rows, each written by a code check.
+
+  claims_declined:
+    emitted_by: tools/claims.py
+    grade: mechanical
+    unreadable_when: >
+      the tagged call log is absent. INV-046 keeps declines out of the store by
+      design, so without it "the being commits to nothing" and "the door was
+      never called" are the same reading — the metric reports UNREADABLE rather
+      than zero.
+    reason: a count of claim_door calls answering no; no model is asked to classify them.
+
+  positions_changed_by_world:
+    emitted_by: tools/claims.py
+    grade: mechanical
+    reason: >
+      claim_costs rows. INV-048 writes them by TRACING a claim's provenance to
+      the episodes and the Perspective items citing them — no model chooses who
+      paid, which is why S1-E turns on a count.
+
+  positions_changed_by_operator:
+    emitted_by: tools/claims.py
+    grade: mixed
+    reason: >
+      a revised item attributed by the dominant provenance of its evidence.
+      The attribution is a derivation, not a measurement.
+
+  positions_changed_by_self:
+    emitted_by: tools/claims.py
+    grade: known-biased
+    reason: >
+      as above, and R-15: imported v1 episodes are uniformly provenance='self',
+      so this column is overstated for anything grounded in the import.
+
+  concerns_refused:
+    emitted_by: tools/claims.py
+    grade: mechanical
+    reason: a count of concern_refusals rows, each written by a code check (INV-051).
+
+  closing_condition_shape:
+    emitted_by: tools/claims.py
+    grade: mechanical
+    reason: >
+      a regex over the opening clause of each closing condition. `reachable` is
+      a queue to read rather than a count to trust — the first run put two
+      concerns there and both were commissioned research the keywords missed.
+
+  perspective_novelty:
+    emitted_by: tools/evidence.py
+    grade: mixed
+    reason: >
+      the read consults no model (INV-023 — diffs are computed by comparing item
+      sets, never narrated). Its inputs, added/revised/carried, are labels the
+      model applied during consolidation. Clean instrument, model-labelled input.
+
+  perspective_coverage:
+    emitted_by: tools/evidence.py
+    grade: mechanical
+    reason: whether an item cites anything, counted; never whether the citation supports it.
+
+  advance_acceptance:
+    emitted_by: tools/evidence.py
+    grade: model-graded
+    reason: >
+      judge_advance decides every numerator and denominator. Rule 4 names this
+      judge, and P3 nonetheless cited the figure as evidence — the inconsistency
+      that produced Rule 7.
+
+  concerns_closed:
+    emitted_by: tools/evidence.py
+    grade: model-graded
+    reason: judge_closure decides it (INV-034).
+
+  stall_pool:
+    emitted_by: tools/evidence.py
+    grade: mechanical
+    reason: recorded setback kinds, counted; no model is asked why a pursuit failed.
+
+  grounding_mix:
+    emitted_by: tools/what_shaped.py
+    grade: known-biased
+    reason: >
+      provenance assigned at write time and counted at read, and R-15's import
+      bias applies to the self share.
+
+  gate_hold_rate:
+    emitted_by: tools/gate_report.py
+    grade: model-graded
+    reason: the gate is a model judge; every verdict counted here is the being judging itself.
+
+  token_share_by_function:
+    emitted_by: tools/budget.py
+    grade: mechanical
+    unreadable_when: the call log is gitignored and does not travel with a clone (INV-044).
+    reason: prompt+completion per call, tagged at the call site.
+
+  feeds_contributing_a_read:
+    emitted_by: tools/source_review.py
+    grade: model-graded
+    reason: >
+      the counting is mechanical and triage decides what is read at all, so the
+      figure is downstream of a model judgment.
+
+  work_subject_tags:
+    emitted_by: tools/read_works.py
+    grade: mechanical
+    reason: >
+      inverse document frequency over the works corpus. No vocabulary is
+      authored and no model is asked what a piece is about (INV-056).

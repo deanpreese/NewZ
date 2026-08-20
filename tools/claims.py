@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from newz.config import load
 from newz.evidence.consequence import read as read_consequence
+from newz.evidence.grades import tag
 from newz.evidence.pursuit import closing_shapes
 from newz.resolutions.store import claims_by_status, contradicted_claims, due_claims
 from newz.store.db import open_db
@@ -112,10 +113,11 @@ def _s1e(conn, repo_root) -> int:
     print(f"\nS1-E — did the world contradict it?   (window: last {hours/24:.0f} days)")
     print("─" * W)
     print("  method: direct reads off the resolutions tables and perspective_items.")
-    print("  No model is consulted. Grades are P4 Rule 7's.\n")
+    print("  Grades come from evolution/instruments.yaml, not from this file:")
+    print("  a metric nobody graded cannot be printed here at all (Rule 7).\n")
 
     d = r.door
-    print("  the door                                                    [mechanical]")
+    print(f"  the door{' ' * 52}{tag('claims_opened')}")
     print(f"    advances offered to it       {d.advances:>6}")
     print(f"    claims opened                {d.opened:>6}"
           + (f"   ({d.per_advance:.0%} of advances)" if d.per_advance is not None else ""))
@@ -123,13 +125,14 @@ def _s1e(conn, repo_root) -> int:
     for reason, n in sorted(d.refusal_reasons.items(), key=lambda kv: -kv[1]):
         print(f"        {reason:<44} {n:>3}")
     if d.declined is None:
-        print(f"    declined                     UNREADABLE")
+        print(f"    declined                     UNREADABLE   {tag('claims_declined')}")
         print(f"        {d.unreadable}")
     else:
-        print(f"    declined                     {d.declined:>6}   [from the call log]")
+        print(f"    declined                     {d.declined:>6}   "
+          f"{tag('claims_declined', note='from the call log')}")
 
     s = r.resolution
-    print("\n  resolution                                                  [mechanical]")
+    print(f"\n  resolution{' ' * 50}{tag('claims_opened')}")
     print(f"    open, past due               {s.due:>6}")
     print(f"    settled in window            {s.settled:>6}"
           + (f"   median {s.median_latency_days:.0f}d to settle" if s.median_latency_days else ""))
@@ -138,19 +141,23 @@ def _s1e(conn, repo_root) -> int:
 
     p_ = r.positions
     print("\n  positions changed")
-    print(f"    by the WORLD                 {p_.by_world:>6}   [mechanical — traced, INV-048]")
-    print(f"    by the operator              {p_.by_operator:>6}   [mixed — dominant provenance]")
-    print(f"    by the being itself          {p_.by_self:>6}   [mixed — dominant provenance, and R-15]")
+    print(f"    by the WORLD                 {p_.by_world:>6}   "
+          f"{tag('positions_changed_by_world', note='traced, INV-048')}")
+    print(f"    by the operator              {p_.by_operator:>6}   "
+          f"{tag('positions_changed_by_operator', note='dominant provenance')}")
+    print(f"    by the being itself          {p_.by_self:>6}   "
+          f"{tag('positions_changed_by_self', note='dominant provenance, and R-15')}")
     print(f"    unattributed                 {p_.unattributed:>6}")
 
     o = r.opener
-    print("\n  the concern door                                            [mechanical]")
+    print(f"\n  the concern door{' ' * 44}{tag('concerns_refused')}")
     print(f"    concerns refused             {o.refused:>6}   (a terminus nothing could reach)")
     for reason, n in sorted(o.reasons.items(), key=lambda kv: -kv[1]):
         print(f"        {reason:<44} {n:>3}")
 
     shapes = closing_shapes(conn)
-    print("\n  why, upstream: can any concern be closed at all?             [mechanical]")
+    print(f"\n  why, upstream: can any concern be closed at all?{' ' * 13}"
+          f"{tag('closing_condition_shape')}")
     print(f"    terminus the being decides   {shapes.self_terminus:>6}   'I can cite…' — self-graded (R-33)")
     print(f"    terminus nobody will reach   {shapes.commissioned:>6}   'a study correlating…' (R-33)")
     print(f"    names something that exists  {shapes.reachable:>6}")

@@ -583,7 +583,7 @@ Four of these read Phase 2's own output; three are the general layer everything
 later depends on. All are Class A — the test suite is their sensor — so none
 competes with E2.1–E2.4 for the being's evidence windows.
 
-**E2.5 — every metric carries its grade**
+**E2.5 — every metric carries its grade** *(built 2026-08-20)*
 *Delivers:* each metric in `evolution/instruments.yaml` graded **mechanical /
 model-graded / mixed / known-biased**, with the reason and the place the judgment
 sits.
