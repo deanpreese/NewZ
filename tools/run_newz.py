@@ -92,6 +92,7 @@ def main() -> int:
     from newz.world.substrate import SubstrateScheduler
     from newz.ambient.noticing import SurfaceScheduler
     from newz.works.rhythm import WritingScheduler
+    from newz.works.reread import RereadScheduler
 
     backups = BackupScheduler(cfg.main_db_path, cfg.interior_db_path, cfg.backups_dir)
     sleeper = SleepScheduler(cfg.main_db_path, client, cfg.operator_id or "operator",
@@ -121,6 +122,10 @@ def main() -> int:
     # cadence the way it sleeps on cadence, and stands off sleep's window for
     # the same reason deliberation does (R-20).
     writing = WritingScheduler(cfg.main_db_path, client)
+    # E2.2: and it reads its own past work back, on its own cadence. Under one
+    # operator this is the cheapest genuine outcome it did not grade at the
+    # time — meeting what it wrote as something someone else wrote.
+    reread = RereadScheduler(cfg.main_db_path, client)
 
     logging.info(
         "ambient loop up: constitution v%d (%d clauses), perspective present, "
@@ -137,7 +142,8 @@ def main() -> int:
                       asyncio.create_task(thinker.run()),
                       asyncio.create_task(substrate.run()),
                       asyncio.create_task(surface.run()),
-                      asyncio.create_task(writing.run())]
+                      asyncio.create_task(writing.run()),
+                      asyncio.create_task(reread.run())]
         try:
             await loop.run()
         finally:

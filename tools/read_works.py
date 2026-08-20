@@ -47,12 +47,40 @@ def _render(row, *, blind: bool = False, label: str | None = None) -> str:
     return "\n".join(out)
 
 
+def _history(conn) -> int:
+    """What each piece used to say, and why it changed (E2.2's reader half).
+
+    A retraction is an outcome and not a deletion, so this is where being wrong
+    about one's own work stays visible after the piece itself has moved on.
+    """
+    rows = list(conn.execute(
+        "SELECT r.*, w.title AS now_title, w.status FROM work_revisions r"
+        " JOIN works w ON w.id = r.work_id ORDER BY r.ts"))
+    if not rows:
+        print("no piece has been revised or retracted yet.")
+        return 0
+    print(f"{len(rows)} revision(s)\n")
+    for r in rows:
+        when = datetime.fromtimestamp(r["ts"]).strftime("%Y-%m-%d")
+        print("─" * 72)
+        print(f"[{when}] work {r['work_id']} {r['kind'].upper()} "
+              f"(now: {r['status']})")
+        print(f"  reason: {r['reason']}")
+        print(f"  it used to be titled: {r['prior_title']}")
+        print("  it used to say:")
+        print("\n".join("    " + l for l in textwrap.wrap(r["prior_body"], 66)[:6]))
+    print("─" * 72)
+    return 0
+
+
 def main() -> int:
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     blind = "--blind" in sys.argv
     cfg = load()
     conn = open_db(cfg.main_db_path, read_only=True)
 
+    if "--history" in sys.argv:
+        return _history(conn)
     rows = list(conn.execute("SELECT * FROM works ORDER BY ts"))
     if not rows:
         print("no pieces yet — python tools/write_piece.py")

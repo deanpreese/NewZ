@@ -552,7 +552,7 @@ products.
 *Depends on:* E0.3 (the verdict), E0.1.
 *Hooks:* R-25, Rule 5.
 
-**E2.2 — re-reading, revision and retraction**
+**E2.2 — re-reading, revision and retraction** *(built 2026-08-20)*
 *Delivers:* on a cadence the being reads its own past work and may revise or
 retract it. Revision history is kept; a retraction is a first-class outcome, not
 a deletion.
