@@ -1,6 +1,7 @@
 """Crash evidence — a failure must say why (RISKS R-21).
 
-Extracted from tools/run_ambient.py, which learned this on 2026-08-11: the
+Extracted from tools/run_newz.py (then run_ambient.py), which learned this
+on 2026-08-11: the
 ambient loop stopped between two health checks and the only evidence was a
 gap in the backup cadence, leaving the cause to be inferred.
 

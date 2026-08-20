@@ -140,7 +140,7 @@ not_instruments:
     - tools/perspective_hygiene.py
 
   runners:           # operate the being
-    - tools/run_ambient.py
+    - tools/run_newz.py
     - tools/run_deliberation.py
     - tools/run_first_sleep.py
     - tools/run_import.py
