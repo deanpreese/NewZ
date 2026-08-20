@@ -15,6 +15,7 @@ itself — and this is where that becomes countable rather than asserted.
 from __future__ import annotations
 
 import sys
+import time
 import textwrap
 from datetime import datetime
 from pathlib import Path
@@ -22,6 +23,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from newz.config import load
+from newz.evidence.consequence import read as read_consequence
+from newz.evidence.pursuit import closing_shapes
 from newz.resolutions.store import claims_by_status, contradicted_claims, due_claims
 from newz.store.db import open_db
 
@@ -101,8 +104,65 @@ def _refusals(conn) -> int:
     return 0
 
 
+def _s1e(conn, repo_root) -> int:
+    """The S1-E read (P4 E1.6). Every figure carries its grade (Rule 7)."""
+    hours = 168.0
+    r = read_consequence(conn, repo_root, now=time.time(), hours=hours)
+    W = 70
+    print(f"\nS1-E — did the world contradict it?   (window: last {hours/24:.0f} days)")
+    print("─" * W)
+    print("  method: direct reads off the resolutions tables and perspective_items.")
+    print("  No model is consulted. Grades are P4 Rule 7's.\n")
+
+    d = r.door
+    print("  the door                                                    [mechanical]")
+    print(f"    advances offered to it       {d.advances:>6}")
+    print(f"    claims opened                {d.opened:>6}"
+          + (f"   ({d.per_advance:.0%} of advances)" if d.per_advance is not None else ""))
+    print(f"    refused at the door          {d.refused:>6}")
+    for reason, n in sorted(d.refusal_reasons.items(), key=lambda kv: -kv[1]):
+        print(f"        {reason:<44} {n:>3}")
+    if d.declined is None:
+        print(f"    declined                     UNREADABLE")
+        print(f"        {d.unreadable}")
+    else:
+        print(f"    declined                     {d.declined:>6}   [from the call log]")
+
+    s = r.resolution
+    print("\n  resolution                                                  [mechanical]")
+    print(f"    open, past due               {s.due:>6}")
+    print(f"    settled in window            {s.settled:>6}"
+          + (f"   median {s.median_latency_days:.0f}d to settle" if s.median_latency_days else ""))
+    print(f"    still open                   {s.unsettled:>6}")
+    print(f"    upheld / contradicted        {s.upheld:>6} / {s.contradicted}")
+
+    p_ = r.positions
+    print("\n  positions changed")
+    print(f"    by the WORLD                 {p_.by_world:>6}   [mechanical — traced, INV-048]")
+    print(f"    by the operator              {p_.by_operator:>6}   [mixed — dominant provenance]")
+    print(f"    by the being itself          {p_.by_self:>6}   [mixed — dominant provenance, and R-15]")
+    print(f"    unattributed                 {p_.unattributed:>6}")
+
+    shapes = closing_shapes(conn)
+    print("\n  why, upstream: can any concern be closed at all?             [mechanical]")
+    print(f"    terminus the being decides   {shapes.self_terminus:>6}   'I can cite…' — self-graded (R-33)")
+    print(f"    terminus nobody will reach   {shapes.commissioned:>6}   'a study correlating…' (R-33)")
+    print(f"    names something that exists  {shapes.reachable:>6}")
+    print(f"    no closing condition         {shapes.missing:>6}")
+    print(f"    → {shapes.unreachable} of {shapes.total} concerns have a terminus nothing can reach")
+
+    print("\n" + "─" * W)
+    print(f"  S1-E: {'MET' if r.met else 'NOT MET'} — "
+          + ("a position changed because the world contradicted it"
+             if r.met else "no position has been changed by the world"))
+    return 0
+
+
 def main() -> int:
-    conn = open_db(load().main_db_path)
+    cfg = load()
+    conn = open_db(cfg.main_db_path)
+    if "--read" in sys.argv:
+        return _s1e(conn, cfg.repo_root)
     if "--refused" in sys.argv:
         return _refusals(conn)
     if "--wrong" in sys.argv:

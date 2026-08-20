@@ -474,7 +474,7 @@ claim, its resolver and its cost, and nothing prunes it.
 *Depends on:* E1.4.
 *Hooks:* INV-044's honesty, applied to the being's own record.
 
-**E1.6 — the reader S1-E does not have**
+**E1.6 — the reader S1-E does not have** *(built 2026-08-19)*
 *Delivers:* `tools/claims.py` promoted from a reader to an instrument — claims
 made and resolved as rates over a window, resolution latency, refusals with their
 reasons, and **the count of positions changed by a resolution**, separated from
