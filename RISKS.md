@@ -1323,3 +1323,60 @@ advances from unreachable concerns, so it tested nothing about this. That is one
 deliberation against case B's concern, and it is the only thing between here and
 knowing whether Phase 1's chain closes.
 
+### R-32 CONFIRMED INDEPENDENT of R-33, 2026-08-19 — and the red team that rejected the fix was wrong
+
+**The last link, tested end to end** on a throwaway copy: a concern with a
+**reachable** terminus, seeded from the probe's own output, deliberated with
+research on, and the claim door watched.
+
+```
+concern 124   closes when: the publication of the official agency's final
+              fire-acreage figure and the platform's subsequent resolution
+research      read Prediction market in full — 7 chunks, 30 claims
+advance       ACCEPTED, novelty 1.00
+summary       "I distinguished between the ontological fact of the acreage
+               and the epistemic resolution of the bet..."
+closure       correctly kept open — the publication has not occurred
+claim door    0 opened, 0 refused
+```
+
+**Same shape.** *"I distinguished…"*, on a concern whose terminus is a
+publication event with a date attached. Repairing the concern changed nothing
+about what the advance looks like.
+
+**So the two faults are independent, and R-33 was necessary but not
+sufficient.** E1.7 gives the being a question the world can close; deliberation
+still answers it with a distinction, and the door still correctly declines.
+
+**The red team of 2026-08-19 rejected the fix for this, and it was wrong.** It
+rejected widening the advance definition on the grounds that *"on a concern
+whose terminus is an uncommissioned study there is no world-facing advance to
+make"* — so the fix was aimed a layer too low. That reasoning was sound and its
+premise is now falsified: **there is a reachable terminus here, and the advance
+is still a distinction.** The evidence that would have settled it did not exist
+at the time, and now does. The advance definition is back on the table as the
+live fix, and it is the last unexplained link in Phase 1's chain.
+
+**Also visible in the same run, both already recorded and both confirmed live.**
+The advance was labelled *"reasoning without sources, labelled"* immediately
+after reading a document that yielded 30 claims — R-32's first half, in a single
+deliberation. And the closure judge held the concern open **because its closing
+condition had not occurred yet**, which is E1.7 doing exactly what it was built
+for: a terminus that can be waited on rather than one nothing will ever satisfy.
+
+---
+
+## R-34 — A research deliberation with no call log crashes instead of reporting the budget unreadable. Low, and trivially fixed.
+
+Found 2026-08-19 while testing R-32's last link. `Deliberator(..., research=True)`
+defaults `log_path=None`; `research()` passes it to `budget_permits_ingest`,
+which reaches `Path(None)` and raises `TypeError`. The deliberation dies before
+it begins.
+
+This is INV-044's rule broken in the other direction: a measurement whose input
+is missing should report itself unmeasured, and this neither reports nor
+measures — it throws. The production runner passes a real path, so the live
+being never hits it; anything else constructing a Deliberator does. Guard
+`log_path is None` and return the unreadable verdict the invariant already
+specifies.
+
