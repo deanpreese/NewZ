@@ -261,6 +261,55 @@ def _questions(conn: sqlite3.Connection, m: Manifest) -> str:
             out.append(f"<p>{_e(r['why_open'])}</p>")
         out.append(f"<p class=dim>settles when: {_e(r['closing_condition'])}</p>")
         out.append("</article>")
+
+    out.append(_gaps(conn, m))
+    return "\n".join(out)
+
+
+# What it asked and could not answer. The question comes first and the count
+# second, deliberately (W12a, RT1): a question that has failed nine times is
+# either a source problem or a question no source can answer, and the second
+# is what R-33 found about closing conditions. Reading the count first invites
+# adding sources; reading the question first does not.
+CAUSES = {
+    "no_source": "no source answered",
+    "all_already_read": "everything its sources return, already read",
+    "floor": "nothing scored above the relevance floor",
+    "triage": "sources answered and it judged none worth reading",
+    "capped": "held back from over-represented outlets — a deferral, not an absence",
+    "extraction": "read, and nothing usable came out",
+}
+
+
+def _gaps(conn: sqlite3.Connection, m: Manifest) -> str:
+    try:
+        rows = list(conn.execute(
+            "SELECT query, cause, COUNT(*) n, MAX(ts) last, MAX(best_score) best,"
+            "       SUM(candidates) cands, MIN(id) id"
+            " FROM source_gaps GROUP BY query, cause"
+            " ORDER BY n DESC, last DESC LIMIT 20"))
+    except sqlite3.OperationalError:
+        return ""
+    if not rows:
+        return ""
+    m.record("questions", "source_gaps", [r["id"] for r in rows])
+    out = ["<h1>What it asked and could not answer</h1>",
+           "<p class=dim>Each question with the reason it went unanswered and "
+           "how often. A question that keeps failing is either a gap in what it "
+           "can reach or a question nothing could settle — and those are fixed "
+           "in different places.</p>"]
+    for r in rows:
+        out.append("<article>")
+        out.append(f"<h2>{_e(r['query'])}</h2>")
+        why = CAUSES.get(r["cause"], "recorded before the cause was")
+        times = "once" if r["n"] == 1 else f"{r['n']} times"
+        line = f"{why} · {times}"
+        if r["best"] is not None:
+            line += f" · best relevance {r['best']:.2f}"
+        if r["cands"]:
+            line += f" · {r['cands']} candidate(s) seen"
+        out.append(f"<p class=dim>{_e(line)}</p>")
+        out.append("</article>")
     return "\n".join(out)
 
 

@@ -467,3 +467,56 @@ def test_a_page_removed_from_the_store_does_not_survive_a_regeneration(tmp_path)
     publish(db, out, now=1_787_000_000.0)
 
     assert not (out / "leftover.html").exists()
+
+
+def test_the_questions_page_carries_what_it_could_not_answer(tmp_path):
+    """W12a's consumer. Behavior: 32 gaps existed and nothing read them but a
+    counter — a signal the being generates at its own rate, about the world,
+    with no reader at the other end. The question comes before the count
+    (RT1): reading the count first invites adding sources, and the repeat
+    failures may be questions no source can settle."""
+    from newz.store.db import open_db
+    from newz.store.migrations import apply_pending
+    from newz.surface.generate import generate
+
+    db = tmp_path / "s.db"
+    conn = open_db(db)
+    apply_pending(conn, MAIN_SQL)
+    for i in range(3):
+        conn.execute(
+            "INSERT INTO source_gaps (ts, concern_id, query, gap, cause,"
+            " candidates, rejected_floor, best_score) VALUES (?,?,?,?,?,?,?,?)",
+            (1_787_000_000.0 + i, None, "Does open interest indicate distress?",
+             "nothing was relevant enough to read", "floor", 6, 6, 0.31))
+    conn.commit()
+    out = tmp_path / "published"
+    generate(conn, out, now=1_787_000_000.0)
+    page = (out / "questions.html").read_text()
+    conn.close()
+
+    assert "Does open interest indicate distress?" in page
+    assert "3 times" in page
+    assert "nothing scored above the relevance floor" in page
+    assert "best relevance 0.31" in page
+
+
+def test_a_gap_recorded_before_the_cause_existed_is_not_a_category(tmp_path):
+    """Behavior: NULL means 'written before this was recorded', never a fifth
+    cause — the page says so rather than counting it as one."""
+    from newz.store.db import open_db
+    from newz.store.migrations import apply_pending
+    from newz.surface.generate import generate
+
+    db = tmp_path / "s.db"
+    conn = open_db(db)
+    apply_pending(conn, MAIN_SQL)
+    conn.execute("INSERT INTO source_gaps (ts, concern_id, query, gap)"
+                 " VALUES (?,?,?,?)", (1_787_000_000.0, None, "an old question",
+                                       "sources answered but nothing was relevant"))
+    conn.commit()
+    out = tmp_path / "published"
+    generate(conn, out, now=1_787_000_000.0)
+    page = (out / "questions.html").read_text()
+    conn.close()
+
+    assert "recorded before the cause was" in page

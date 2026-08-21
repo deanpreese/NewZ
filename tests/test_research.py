@@ -565,3 +565,62 @@ def test_full_text_reading_still_obeys_the_budget_gate(tmp_path):
                    adapters=[StubAdapter([RESULT])], form_queries=False,
                    fetcher=page)
     assert out.paused and page.calls == []
+
+
+# ── the gap record says which filter rejected (P4 W12a) ─────────────────
+
+def test_a_gap_names_the_stage_that_rejected(store):
+    """W12a. Behavior: 'nothing was relevant enough to read' is three different
+    failures — a floor that cut everything, a triage call that refused
+    everything, and a share cap that deferred everything — fixed in three
+    different places. The record collapsed all three into one sentence."""
+    from newz.world.research import ResearchOutcome, record_gap
+
+    o = ResearchOutcome(query="q", results=[object(), object(), object()])
+    o.rejected_floor, o.best_score, o.cause = 3, 0.31, "floor"
+    record_gap(store, concern_id=None, query="q", gap="nothing relevant", outcome=o)
+
+    r = store.execute("SELECT * FROM source_gaps").fetchone()
+    assert r["cause"] == "floor"
+    assert r["candidates"] == 3 and r["rejected_floor"] == 3
+    assert r["best_score"] == 0.31, "how far under 0.35 is the whole diagnosis"
+
+
+def test_a_gap_with_nothing_to_report_still_records_the_failure(store):
+    """Behavior: NULL means 'not recorded', never 'none' — a caller with
+    nothing to say must not be able to write a fifth category by omission."""
+    from newz.world.research import record_gap
+
+    record_gap(store, concern_id=None, query="q", gap="no source answered")
+
+    r = store.execute("SELECT * FROM source_gaps").fetchone()
+    assert r["cause"] is None and r["candidates"] is None
+
+
+def test_the_two_stages_are_counted_separately():
+    """Behavior: the floor is a threshold and triage is a judgment. Reporting
+    them as one number cannot tell 'the material was bad' from 'the model
+    refused it'."""
+    from newz.world.research import ResearchOutcome, _relevant
+
+    class Embedder:
+        def embed(self, texts):
+            # query, then three sources: two near it, one far
+            return [[1.0, 0.0], [1.0, 0.0], [0.9, 0.1], [0.0, 1.0]]
+
+    class Triage:
+        def complete(self, *a, **kw):
+            class R:
+                model, truncated = "fake", False
+                text = '<triage><keep n="1"/></triage>'
+            return R
+
+    results = [_result("a"), _result("b"), _result("c")]
+    out = ResearchOutcome(query="q", results=results)
+
+    kept = _relevant("q", results, Embedder(), Triage(), out=out)
+
+    assert len(kept) == 1
+    assert out.rejected_floor == 1, "the far source is cut by the floor"
+    assert out.rejected_triage == 1, "one of the two survivors is refused by triage"
+    assert out.best_score == 1.0

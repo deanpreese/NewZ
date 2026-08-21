@@ -63,6 +63,14 @@ class ResearchOutcome:
     already_read: int = 0           # found again, and read before (R1)
     full_text_reads: int = 0        # documents read past the abstract (S2 §9.1)
     hostile_documents: int = 0      # quarantined whole, any chunk manipulative
+    # W12a — which filter rejected, and how much. The pass held these and threw
+    # them away, so a gap could say "nothing was relevant enough to read"
+    # without saying whether the floor cut everything at 0.34 or a model read
+    # six summaries and refused all six. Different failures, one record.
+    rejected_floor: int = 0         # cut by the 0.35 embedding floor
+    rejected_triage: int = 0        # refused by the triage call
+    best_score: float | None = None  # highest relevance seen; None if unscored
+    cause: str | None = None        # the enumerated form of `gap`
 
     @property
     def found_anything(self) -> bool:
@@ -277,10 +285,11 @@ def research(
             f"I have already read everything my sources return for this: {query}"
             if out.already_read
             else f"no source answered: {query}")
+        out.cause = "all_already_read" if out.already_read else "no_source"
         logger.info("research: %s", out.gap)
         return out
 
-    relevant = _relevant(query, out.results, embedder, client)
+    relevant = _relevant(query, out.results, embedder, client, out=out)
 
     # Share caps (S2 §13): an over-represented outlet is deprioritised, not
     # banned — a hard ban would let the cap silence the only source that can
@@ -391,6 +400,19 @@ def research(
         out.gap = (f"sources answered but nothing usable was extracted: {query}"
                    if relevant else
                    f"sources answered but nothing was relevant enough to read: {query}")
+        # The cause is the sentence made checkable (W12a). "Nothing was
+        # relevant enough" is three different failures — a floor that cut
+        # everything, a triage call that refused everything, and a share cap
+        # that deferred everything — and they are fixed in three different
+        # places. Mechanical: which stage rejected, and how many.
+        if relevant:
+            out.cause = "extraction"
+        elif out.capped and not (out.rejected_floor or out.rejected_triage):
+            out.cause = "capped"
+        elif out.rejected_triage:
+            out.cause = "triage"
+        else:
+            out.cause = "floor"
         # The gap record is what source_review reads to decide which sources
         # to ADD (S2 §9.1), so it must not report a refusal as an absence.
         # Until 2026-08-15 a fully-capped cycle wrote "nothing was relevant
@@ -434,7 +456,8 @@ Output ONLY:
 
 
 def _relevant(query: str, results: list[SearchResult], embedder,
-              client: LLMClient | None = None) -> list[SearchResult]:
+              client: LLMClient | None = None,
+              out: "ResearchOutcome | None" = None) -> list[SearchResult]:
     """Keep only what bears on the question (S2 §9.1 adaptive depth).
 
     Two stages, because measurement showed one is not enough. The embedding
@@ -447,6 +470,12 @@ def _relevant(query: str, results: list[SearchResult], embedder,
     Without either instrument this is a no-op rather than a guess: reading
     too much is a budget problem, but inventing a relevance score would make
     it a memory problem.
+
+    `out`, when given, receives the split: how many the floor cut, how many
+    triage refused, and the best score seen. The two stages fail for different
+    reasons and are fixed in different places, and until W12a the caller could
+    not tell them apart (R-37's shape — a record that reads like a finding and
+    carries less than it claims).
     """
     if not results:
         return results
@@ -460,6 +489,9 @@ def _relevant(query: str, results: list[SearchResult], embedder,
             scored = [(cosine(vectors[0], v), r) for v, r in zip(vectors[1:], results)]
             candidates = [r for s, r in sorted(scored, key=lambda sr: -sr[0])
                           if s >= RELEVANCE_FLOOR]
+            if out is not None:
+                out.rejected_floor = len(results) - len(candidates)
+                out.best_score = round(max(s for s, _ in scored), 4) if scored else None
             for s, r in scored:
                 logger.debug("relevance %.2f  %s", s, r.title[:60])
         except Exception:  # noqa: BLE001
@@ -467,6 +499,7 @@ def _relevant(query: str, results: list[SearchResult], embedder,
 
     if client is None or not candidates:
         return candidates
+    before_triage = len(candidates)
 
     listing = "\n".join(
         f'<source n="{i + 1}">{r.title}\n{r.summary[:400]}</source>'
@@ -490,13 +523,39 @@ def _relevant(query: str, results: list[SearchResult], embedder,
         if 0 <= idx < len(candidates):
             keep.append(candidates[idx])
     logger.info("triage kept %d of %d source(s)", len(keep), len(candidates))
+    if out is not None:
+        out.rejected_triage = before_triage - len(keep)
     return keep
 
 
-def record_gap(conn, *, concern_id: int | None, query: str, gap: str) -> None:
+def record_gap(conn, *, concern_id: int | None, query: str, gap: str,
+               outcome: "ResearchOutcome | None" = None) -> None:
     """The source-gap record (S2 §9.1): the being's failed questions are what
-    name the sources worth adding, and the ones worth removing."""
+    name the sources worth adding, and the ones worth removing.
+
+    **With the cause, since W12a.** The sentence alone could not say which of
+    two filters had rejected, out of how many candidates, or how far under the
+    floor the best of them scored — so a reader could see that a question
+    failed and never why. On 2026-08-21 the first 32 rows said "nothing was
+    relevant enough to read" 28 times and named no adapter as exhausted even
+    once: the being was not short of sources, and the count was the only thing
+    anything read.
+
+    `outcome` is optional so a caller with nothing to report still records the
+    failure. Its absence writes NULLs, which mean "not recorded" and never
+    "none" — the readers say so rather than counting them as a category.
+    """
+    o = outcome
     conn.execute(
-        "INSERT INTO source_gaps (ts, concern_id, query, gap) VALUES (?,?,?,?)",
-        (time.time(), concern_id, query, gap))
+        "INSERT INTO source_gaps (ts, concern_id, query, gap, cause, candidates,"
+        " rejected_floor, rejected_triage, capped, already_read, best_score)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        (time.time(), concern_id, query, gap,
+         o.cause if o else None,
+         len(o.results) if o else None,
+         o.rejected_floor if o else None,
+         o.rejected_triage if o else None,
+         o.capped if o else None,
+         o.already_read if o else None,
+         o.best_score if o else None))
     conn.commit()

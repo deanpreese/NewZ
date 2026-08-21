@@ -60,14 +60,15 @@ def _verdict(settled="yes", outcome="contradicted", quote=QUOTE,
 @pytest.fixture
 def world(monkeypatch):
     """Patch the world in one place; each test says what came back."""
-    box = {"outcome": _found(QUOTE), "gaps": []}
+    box = {"outcome": _found(QUOTE), "gaps": [], "gap_causes": []}
 
     def fake_research(client, query, **kw):
         box["query"] = query
         return box["outcome"]
 
-    def fake_gap(conn, *, concern_id, query, gap):
+    def fake_gap(conn, *, concern_id, query, gap, outcome=None):
         box["gaps"].append(gap)
+        box["gap_causes"].append(outcome.cause if outcome else None)
 
     monkeypatch.setattr("newz.world.research.research", fake_research)
     monkeypatch.setattr("newz.world.research.record_gap", fake_gap)

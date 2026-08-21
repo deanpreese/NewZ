@@ -548,7 +548,8 @@ class Deliberator:
                 if outcome.gap:
                     gap = outcome.gap
                     record_gap(conn, concern_id=choice.concern.id,
-                               query=outcome.query, gap=outcome.gap)
+                               query=outcome.query, gap=outcome.gap,
+                               outcome=outcome)
                 if outcome.claims:
                     findings = "\n".join(f"- ({c:.1f}) {t}" for t, c in outcome.claims)
                     # NOT added to research_block since 2026-08-15. These same

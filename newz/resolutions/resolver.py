@@ -177,7 +177,8 @@ def resolve_claim(conn: sqlite3.Connection, client: LLMClient, claim: Claim, *,
         # what source_gaps is for, and it is how §9.1 learns which sources to
         # add — a resolver nobody can reach is a curation problem.
         record_gap(conn, concern_id=None, query=query,
-                   gap=f"claim {claim.id}: {found.gap or 'no usable material'}")
+                   gap=f"claim {claim.id}: {found.gap or 'no usable material'}",
+                   outcome=found)
         return out
 
     body = (f"<claim>{claim.claim}</claim>\n"
