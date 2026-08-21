@@ -439,6 +439,25 @@ Two things were found in the building that the proposal did not know:
   on the strength of the wrong declaration: `consequence_rate` needed
   `advances_offered`, which was already recorded.
 
+**T2 delivered 2026-08-20**, and one item was reversed the same day:
+
+| Item | Commit | Note |
+|---|---|---|
+| W5 | `b97f0cd` | `environment.yml`, `tools/gate.py --soak N`, CI. Four tests were reading the wall clock — the wake window was silently gating the test run, so the suite was green in the afternoon and red at 2 a.m. Fixed and checked at 00h, 01h, 09h, 12h, 17h local |
+| W6 | `b97f0cd`, reversed in `fc26aca` | **The operator removed the git hooks.** A check on every commit was not wanted. INV-082 is `dormant`: the trailers are right and unenforced, and nothing was moved into CI to replace the hook — that would move the friction rather than remove it |
+| W7 | `096bfd6` | the surface regenerates every six hours; `verify()` asserts rather than counts |
+
+**T3 delivered 2026-08-20**, less W11:
+
+| Item | Commit | What it found |
+|---|---|---|
+| W8 | `4310570` | the closure is 27 modules, 15 frozen, 12 classified. First catch: `cleanroom.py`, which W7 had pulled into the closure hours earlier. `contains()` was eating the leading dot of any dotfile — `.gitignore` read as `gitignore` and matched nothing |
+| W9 | `68bf9f1` | 48 of 53 epics pin their `Done when`; the five that do not are Phase 7, dormant by decision |
+| W10 | `218265d` | the baseline **cannot be taken yet** — one reading exists and a baseline needs seven, so the earliest is ~2026-08-27, the same date the deltas arrive. W8 caught this commit: `from newz.evidence import X` evaded the freeze that `from newz.evidence.X import y` did not |
+
+**W11 is not built.** It waits on decision 4 — `epics.yaml` frozen except
+`status`, or frozen whole.
+
 ---
 
 ## 6. Order, and the dated gate
