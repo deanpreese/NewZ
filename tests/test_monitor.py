@@ -122,10 +122,11 @@ def test_the_read_page_says_the_database_is_missing_rather_than_that_there_are_n
 
 # ── E3A.2: the readings, hourly, from outside ───────────────────────────
 
-def test_a_reading_is_taken_for_a_being_that_is_not_running(being, tmp_path):
-    """The whole reason the monitor moved out of `run_newz.py`. Behavior: the
-    being's process is not involved — nothing here starts it, and the turn
-    still records a full reading."""
+def test_a_turn_needs_nothing_of_the_being_but_its_store(being, tmp_path):
+    """The monitor runs inside the being's process *(operator, 2026-08-21)*, so
+    a dead being sends no report — silence is the alarm, and that is accepted.
+    What a turn must NOT depend on is any of the being's live machinery:
+    behavior — no scheduler, no client, no model, just the store on disk."""
     cfg = _cfg(tmp_path)
     being.close()
 
@@ -318,3 +319,49 @@ def test_no_model_is_called_anywhere_in_a_turn(being, tmp_path, monkeypatch):
 
     monkeypatch.setattr(client.LLMClient, "complete", refuse, raising=False)
     turn(_cfg(tmp_path), now=time.time(), transport=lambda m: None)
+
+
+# ── the rhythm belongs to the being ─────────────────────────────────────
+
+def test_the_monitor_is_a_scheduler_in_the_beings_process():
+    """*(operator, 2026-08-21)* — one process to start. Behavior: the being
+    launches the monitor among its background tasks, and `tools/monitor.py` is
+    a one-shot for a reading between hours rather than a second rhythm."""
+    from newz.monitor.run import MonitorScheduler
+
+    runner = (REPO / "tools" / "run_newz.py").read_text()
+    assert "MonitorScheduler(cfg)" in runner
+    assert "monitor.run()" in runner
+
+    tool = (REPO / "tools" / "monitor.py").read_text()
+    assert "loop(" not in tool, "the tool must not start a second rhythm"
+
+
+def test_the_scheduler_never_raises_into_the_ambient_loop(tmp_path, monkeypatch):
+    """A reading that cannot be taken is a hole in the series; a monitor that
+    raises into the being's task group is an outage. Behavior: the turn's
+    failure is logged and the scheduler keeps its rhythm."""
+    import asyncio
+
+    from newz.monitor.run import MonitorScheduler
+
+    calls: list[int] = []
+
+    def explode(cfg, **kw):
+        calls.append(1)
+        raise RuntimeError("the store is gone")
+
+    monkeypatch.setattr("newz.monitor.run.turn", explode)
+    sched = MonitorScheduler(_cfg(tmp_path), check_interval_s=0.01)
+
+    async def drive():
+        task = asyncio.create_task(sched.run())
+        await asyncio.sleep(0.05)
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+    asyncio.run(drive())
+    assert len(calls) > 1, "the scheduler stopped at the first failure"

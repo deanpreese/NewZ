@@ -320,15 +320,20 @@ epics:
       when what is missing is the monitor database
 
   E3A.2:
-    title: 'the monitor, hourly, outside the being'
+    title: 'the monitor, hourly'
     phase: 3A
     status: built
     depends_on: [E3A.1]
     done_when: mechanical
-    done_when_sha: 6d44b3231ef31573
+    done_when_sha: 743bf23ebca9fcef
     falsifier: >-
-      a reading that keeps arriving for a being that has stopped, reported as
-      though the being were alive
+      a liveness figure derived from the readings rather than from rows the
+      being writes — it would keep looking healthy through a stalled scheduler
+    note: >-
+      The criterion changed 2026-08-21 (hash 6d44b31 -> 743bf23) when the
+      operator moved the monitor from a second process into the being's own.
+      One process to start; the cost is that a dead being sends no report at
+      all. W9's pin caught the change, which is what it is for.
 
   E3A.3:
     title: 'the daily state email'

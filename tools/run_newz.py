@@ -106,6 +106,7 @@ def main() -> int:
     from newz.works.rhythm import WritingScheduler
     from newz.works.reread import RereadScheduler
     from newz.evidence.agreement import AgreementScheduler
+    from newz.monitor.run import MonitorScheduler
     from newz.surface.rhythm import PublishScheduler
     from newz.memory.index import EmbeddingScheduler
 
@@ -141,10 +142,6 @@ def main() -> int:
     # operator this is the cheapest genuine outcome it did not grade at the
     # time — meeting what it wrote as something someone else wrote.
     reread = RereadScheduler(cfg.main_db_path, client)
-    # E2.7's readings are NOT taken here any more. Phase 3A moved them to
-    # tools/monitor.py, which runs beside this process: an instrument written
-    # by the thing it measures stops being written at the moment it would have
-    # something to say. The being writes its life; the monitor reads it.
     # E3.8: the agreement classifier needs a writer and had none — the
     # agreement classifier ran only in tests, so `operator_agreement` held
     # nothing and §10's one un-instrumented item stayed un-instrumented in
@@ -157,6 +154,12 @@ def main() -> int:
     # vector, so retrieval — which conversation already queries — could not
     # see anything the being had read.
     indexer = EmbeddingScheduler(cfg.main_db_path, cfg)
+    # Phase 3A: an hourly reading of every instrument into data/monitor.db, and
+    # the day's state to GMAIL_TO once. It writes the monitor's database and
+    # never the being's, so this process still has one writer of newz.db.
+    # The being carries its own monitor *(operator, 2026-08-21)*: one process to
+    # start, at the cost that a dead being sends no report at all.
+    monitor = MonitorScheduler(cfg)
 
     logging.info(
         "ambient loop up: constitution v%d (%d clauses), perspective present, "
@@ -177,7 +180,8 @@ def main() -> int:
                       asyncio.create_task(reread.run()),
                       asyncio.create_task(agreement.run()),
                       asyncio.create_task(publishing.run()),
-                      asyncio.create_task(indexer.run())]
+                      asyncio.create_task(indexer.run()),
+                      asyncio.create_task(monitor.run())]
         try:
             await loop.run()
         finally:

@@ -836,11 +836,13 @@ every id. The design is
 2026-08-21; the measurement that produced it is
 `proposals/2026-08-21-the-loop-arrives-to-an-empty-queue.md`.
 
-**Two properties carry the whole design.** It runs **outside the being's
-process**, because a monitor inside the thing it monitors reports nothing at the
-moment that matters. And it writes **its own database**, because an observation
-*about* the being is not part of the being's record, and `newz.db` keeps exactly
-one writer.
+**One property carries the whole design.** It writes **its own database**,
+because an observation *about* the being is not part of the being's record, and
+`newz.db` keeps exactly one writer. The rhythm itself runs **inside the being's
+process** *(operator, 2026-08-21)* — one process to start, at the stated cost
+that a dead being sends no report at all. Every partial failure still arrives,
+because the send is on the clock and liveness reads rows the being writes rather
+than the readings themselves.
 
 **Rule 4 is untouched** — nothing here judges, and no model is called anywhere in
 the phase. **Rule 6 is untouched** — the page carries numbers and the operator
@@ -883,22 +885,33 @@ baseline was computed from, which INV-087 calls what separates it from an
 invented denominator. It is untaken today, so the move is free; after it is taken
 the same move is a `Semantics:` change with a snapshot behind it.
 
-**E3A.2 — the monitor, hourly, outside the being** *(built 2026-08-21)*
-*Delivers:* `tools/monitor.py` — one command, started the way the being is,
-sleeping to the next hour boundary, `--once` for a single turn. Per run it takes
-a reading of every registered metric through E2.7's layer and E2.8's definition
-guard. `MetricScheduler` is removed from `run_newz.py`. Liveness is read only
-from rows the being itself writes. The pre-loop baseline takes the last reading
-of each day.
-*Done when:* a reading exists for every elapsed hour whether or not the being was
-up; the liveness figures derive only from being-written rows; and the baseline
-reads one reading per day, refuses below seven days, and records ~28 ids rather
-than ~672.
+**E3A.2 — the monitor, hourly** *(built 2026-08-21)*
+*Delivers:* `MonitorScheduler`, a background task in `run_newz.py`, taking a
+reading of every registered metric at the top of every hour through E2.7's layer
+and E2.8's definition guard. `MetricScheduler` is replaced by it.
+`tools/monitor.py` runs one turn on demand — a reading between hours, a send
+after a failed one — and starts no second rhythm. Liveness is read only from
+rows the being itself writes. The pre-loop baseline takes the last reading of
+each day.
+*Done when:* a turn depends on nothing of the being but its store, and takes a
+reading once per clock hour; the liveness figures derive only from being-written
+rows; a failed turn is logged and never raises into the ambient loop; and the
+baseline reads one reading per day, refuses below seven days, and records ~28
+ids rather than ~672.
 *Depends on:* E3A.1.
 *Hooks:* **the instrument that reports the being is not sleeping was written by
-the being.** Move the writer out and the readings arrive forever, including for a
-being that stopped a week ago — the same defect in a new place, and why liveness
-comes from `perspective`, `episodes` and the verified backup instead.
+the being**, and still is. `MetricScheduler` wrote the series from inside the
+process it measured, so the series stopped at the moment it would have had
+something to say. The hourly cadence does not fix that on its own — what fixes
+the ordinary case is that liveness reads `perspective`, `episodes` and the
+verified backup rather than the readings, so a skipped night, a stalled
+scheduler or a backup that no longer restores all still arrive in the morning.
+*Why it is inside the being and not beside it* **(operator, 2026-08-21)**. An
+earlier design ran it as a second command, so that a dead being still produced a
+report saying so. One process to start was preferred, and **the cost is stated
+rather than buried: if the being's process dies there is no email at all, and
+silence is the alarm.** Every partial failure is still reported; only total
+death is silent.
 
 **E3A.3 — the daily state email** *(built 2026-08-21)*
 *Delivers:* the same command, at or after `NEWZ_MONITOR_SEND_HOUR`, sends one

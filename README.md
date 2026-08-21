@@ -35,17 +35,20 @@ Inference is local by design — no hosted model anywhere in the cognition path.
 
 ## Watching it
 
-The monitor runs beside the being, not inside it — a monitor that lives in the
-thing it monitors reports nothing at the moment that matters. It takes a reading
-of every instrument at the top of every hour and mails the day's state once,
-to `GMAIL_TO`. It writes `data/monitor.db` and never the being's store.
+The being carries its own monitor: an hourly reading of every instrument into
+`data/monitor.db` — never the being's store — and the day's state mailed once to
+`GMAIL_TO`. It runs as a background task of `tools/run_newz.py`, so there is one
+process to start. The cost, stated rather than buried: **if the being's process
+dies there is no email at all.** Every partial failure still arrives, because the
+send is on the clock and liveness reads rows the being writes rather than the
+readings themselves.
 
 ```sh
-python tools/monitor.py                 # hourly, until stopped
-python tools/monitor.py --once          # one turn, then exit
+python tools/monitor.py                 # one turn now: read, and send if due
 ```
 
-Started by hand, like the being. Nothing here judges and no model is called.
+A turn is idempotent — once per clock hour, once per day — so running it by hand
+while the being is up costs nothing. Nothing here judges and no model is called.
 
 ## Reading it
 

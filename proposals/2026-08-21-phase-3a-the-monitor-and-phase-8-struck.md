@@ -1,6 +1,15 @@
 # Phase 3A — the monitor, and Phase 8 struck
 
-*2026-08-21. The operator's design: **at the top of every hour the
+*2026-08-21. **Amended after approval, 2026-08-21: the monitor runs as a
+background task of the being's process, not as a second command beside it**
+(operator). One process to start; the cost is that a dead being sends no report
+at all, which was F12 below and is now the accepted position rather than a
+mitigated one. Every partial failure still arrives — the send is on the clock,
+and liveness reads rows the being writes rather than the readings themselves.
+`data/monitor.db` is unchanged: the database separation was never the same
+question as the process separation.*
+
+*The operator's design: **at the top of every hour the
 instrumentation is read and saved; every day an email goes to the address in
 `.env` with the current state; that eliminates the remainder of Phase 8.***
 
@@ -329,12 +338,16 @@ database: the monitor never opens `newz.db` for writing.
 
 ### Standing risks, accepted
 
-**F12 — a process nobody started sends nothing.** The monitor is started by hand,
-exactly as the being is, so its failure mode is the being's own: if it is not
-running there is no email, and the email's absence is the only signal. **This is
-the residual risk of the design and it is made small rather than removed.** With
-the monitor outside the being, every partial failure now produces an email that
-says what failed; only both processes being down produces silence.
+**F12 — a process nobody started sends nothing. RESOLVED BY DECISION, and the
+residual grew.** The proposal made the monitor a second command so that a dead
+being still produced a report saying so. The operator chose one process
+(2026-08-21), so **total death of the being is now silent** rather than
+reported. Accepted with the trade named: one thing to start, and silence as the
+alarm for the one failure that produces it. Every partial failure — a skipped
+night, a stalled scheduler, a backup that no longer restores — still arrives in
+the morning, because the send is on the clock and liveness reads rows the being
+writes rather than the readings themselves. The scheduler also never raises into
+the ambient loop: a hole in the series is not worth an outage.
 
 **F13 — this is the fourth reader built for instruments nothing reads.** E8.1
 gave the tools a registry, W7 gave the surface a rhythm, W3 gave the agreement

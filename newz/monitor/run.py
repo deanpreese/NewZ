@@ -106,25 +106,46 @@ def turn(cfg, *, now: float | None = None, transport=None) -> Turn:
     return t
 
 
-def _seconds_to_next_hour(now: float) -> float:
-    return 3600.0 - (now % 3600.0)
+class MonitorScheduler:
+    """Hourly, inside the being's process *(operator, 2026-08-21)*.
 
+    An earlier design ran this as a second command beside the being, so that a
+    dead being still produced a report saying so. The operator's decision is one
+    process, and it carries a cost worth stating rather than burying: **if the
+    being's process dies there is no email at all**, and silence is the alarm.
+    Every partial failure is still reported — a skipped night, a stalled
+    scheduler, a backup that no longer restores — because the send is on the
+    clock and the liveness lines read rows the being writes rather than the
+    readings themselves.
 
-def loop(cfg, *, sleep_fn=time.sleep, now_fn=time.time, stop_after: int = 0) -> int:
-    """Take a turn at the top of every hour. Started by hand, like the being.
-
-    No service manager: the repo's idiom is a command the operator starts, and
-    an OS scheduler would supervise the monitor more closely than the being it
-    watches — which is the wrong asymmetry to introduce.
+    `turn` is idempotent per clock hour and per day, so the check interval only
+    has to be finer than an hour; it is not the cadence.
     """
-    turns = 0
-    while True:
-        t = turn(cfg, now=now_fn())
-        turns += 1
-        logger.info("monitor: %d reading(s), %d unmeasured%s%s",
-                    t.readings, t.unmeasured,
-                    ", sent" if t.sent else "",
-                    f", skipped ({t.skipped})" if t.skipped else "")
-        if stop_after and turns >= stop_after:
-            return turns
-        sleep_fn(_seconds_to_next_hour(now_fn()))
+
+    def __init__(self, cfg, *, check_interval_s: float = 900.0):
+        self._cfg = cfg
+        self._interval = check_interval_s
+
+    async def run(self) -> None:
+        import asyncio
+
+        from newz.crash import log_crash
+
+        logger.info("monitor: hourly, sending at or after %02d:00",
+                    self._cfg.monitor_send_hour)
+        while True:
+            try:
+                t = await asyncio.to_thread(turn, self._cfg)
+                if t.readings:
+                    logger.info("monitor: %d reading(s), %d unmeasured%s",
+                                t.readings, t.unmeasured,
+                                ", sent" if t.sent else "")
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                # The monitor must never take the being down with it. A reading
+                # that cannot be taken is a hole in the series; a monitor that
+                # raises into the ambient loop is an outage.
+                log_crash(self._cfg.repo_root, "monitor")
+                logger.exception("monitor: turn failed — retrying next check")
+            await asyncio.sleep(self._interval)
