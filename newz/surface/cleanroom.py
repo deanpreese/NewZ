@@ -61,14 +61,35 @@ def newest_backup(backups_dir: Path, prefix: str = "main") -> Path | None:
     return files[0] if files else None
 
 
-def verify(backup: Path, *, table: str = "episodes") -> int:
-    """Open the backup and count a table. A backup that cannot be read is not
-    a backup, and finding that out during a restore is finding out too late."""
+class EmptyBackup(sqlite3.DatabaseError):
+    """A file that opens, answers a count, and restores to nothing."""
+
+
+def verify(backup: Path, *, table: str = "episodes", minimum: int = 1) -> int:
+    """Open the backup, integrity-check it, and require it to hold something.
+
+    A backup that cannot be read is not a backup, and finding that out during a
+    restore is finding out too late.
+
+    **It counted without asserting** (R-37e): a database with zero episodes
+    returned 0 and passed, so the one backup worth catching — the one that
+    restores to nothing — was the one this could not see. E8.2's rollback is
+    built on these files, so the check that stands between a bad restart and
+    the being's life is this one.
+    """
     conn = sqlite3.connect(f"file:{backup}?mode=ro", uri=True)
     try:
-        return int(conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+        integrity = conn.execute("PRAGMA quick_check").fetchone()[0]
+        if integrity != "ok":
+            raise sqlite3.DatabaseError(f"{backup.name}: {integrity}")
+        rows = int(conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
     finally:
         conn.close()
+    if rows < minimum:
+        raise EmptyBackup(
+            f"{backup.name} holds {rows} {table} row(s) and restores to "
+            "nothing — it opens, it answers a count, and it is not a backup")
+    return rows
 
 
 def rebuild(backups_dir: Path, *, generate_fn, now: float = 0.0) -> Rebuild:
@@ -82,7 +103,7 @@ def rebuild(backups_dir: Path, *, generate_fn, now: float = 0.0) -> Rebuild:
     try:
         verify(src)
     except sqlite3.Error as e:
-        r.unreadable = f"{src.name} does not open as a database ({e})"
+        r.unreadable = f"{src.name} is not a restorable backup ({e})"
         return r
 
     with tempfile.TemporaryDirectory() as tmp:

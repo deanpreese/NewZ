@@ -400,3 +400,70 @@ def test_the_read_is_taken_from_recorded_readings_and_not_recomputed(store, tmp_
     assert "metric_readings" in read_fn
     for computed in ("all_values", "read_consequence", "record_all"):
         assert computed not in read_fn, f"the read recomputes via {computed}"
+
+
+# ── the surface has a rhythm (P4 W7, R-37e) ─────────────────────────────
+
+def test_the_surface_regenerates_without_being_asked(tmp_path):
+    """R-37e. Behavior: E3.2 built a generator and no rhythm, so the published
+    surface was stale from the moment the being wrote anything — and E8.3's
+    daily read is specified against it. A loop reading a page nothing refreshes
+    reads yesterday and reports it as today."""
+    from newz.store.db import open_db
+    from newz.store.migrations import apply_pending
+    from newz.surface.rhythm import PublishScheduler, publish
+
+    db = tmp_path / "live.db"
+    conn = open_db(db)
+    apply_pending(conn, MAIN_SQL)
+    conn.commit()
+    conn.close()
+    out = tmp_path / "published"
+
+    pages = publish(db, out, now=1_787_000_000.0)
+
+    assert pages >= 5 and (out / "read.html").exists()
+    assert PublishScheduler(db, out)._interval == 6 * 3600.0
+
+
+def test_regenerating_an_unchanged_store_rewrites_the_same_bytes(tmp_path):
+    """Behavior: what makes a short interval reasonable. INV-067 keeps every
+    timestamp out of the output, so a pass over an unchanged store is twelve
+    identical files rather than churn."""
+    from newz.store.db import open_db
+    from newz.store.migrations import apply_pending
+    from newz.surface.rhythm import publish
+
+    db = tmp_path / "live.db"
+    conn = open_db(db)
+    apply_pending(conn, MAIN_SQL)
+    conn.commit()
+    conn.close()
+    out = tmp_path / "published"
+
+    publish(db, out, now=1_787_000_000.0)
+    before = {p.name: p.read_bytes() for p in out.glob("*.html")}
+    publish(db, out, now=1_787_999_999.0)
+
+    assert {p.name: p.read_bytes() for p in out.glob("*.html")} == before
+
+
+def test_a_page_removed_from_the_store_does_not_survive_a_regeneration(tmp_path):
+    """Behavior: the surface is written whole, never incrementally — a stale
+    file left behind is a page tracing to rows that are gone (INV-067)."""
+    from newz.store.db import open_db
+    from newz.store.migrations import apply_pending
+    from newz.surface.rhythm import publish
+
+    db = tmp_path / "live.db"
+    conn = open_db(db)
+    apply_pending(conn, MAIN_SQL)
+    conn.commit()
+    conn.close()
+    out = tmp_path / "published"
+    out.mkdir()
+    (out / "leftover.html").write_text("a page from an older generation")
+
+    publish(db, out, now=1_787_000_000.0)
+
+    assert not (out / "leftover.html").exists()

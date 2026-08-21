@@ -106,6 +106,7 @@ def main() -> int:
     from newz.works.rhythm import WritingScheduler
     from newz.works.reread import RereadScheduler
     from newz.evidence.agreement import AgreementScheduler
+    from newz.surface.rhythm import PublishScheduler
     from newz.evidence.baseline import MetricScheduler
     from newz.memory.index import EmbeddingScheduler
 
@@ -150,6 +151,10 @@ def main() -> int:
     # nothing and §10's one un-instrumented item stayed un-instrumented in
     # life. It runs before the reading so the night's rate sees the day.
     agreement = AgreementScheduler(cfg.main_db_path, client)
+    # E3.2 built a generator and no rhythm, so the published surface was stale
+    # from the moment the being wrote anything — and E8.3's daily read is
+    # specified against it (R-37e).
+    publishing = PublishScheduler(cfg.main_db_path, cfg.repo_root / "published")
     # The index was never maintained: 0 of 653 reading episodes carried a
     # vector, so retrieval — which conversation already queries — could not
     # see anything the being had read.
@@ -173,6 +178,7 @@ def main() -> int:
                       asyncio.create_task(writing.run()),
                       asyncio.create_task(reread.run()),
                       asyncio.create_task(agreement.run()),
+                      asyncio.create_task(publishing.run()),
                       asyncio.create_task(metrics.run()),
                       asyncio.create_task(indexer.run())]
         try:

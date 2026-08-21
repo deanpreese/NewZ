@@ -227,11 +227,12 @@ def main() -> int:
              f"{len(list(cfg.backups_dir.glob('interior-*.db')))} interior")
         # A backup is only a backup if it reads back.
         try:
-            c = sqlite3.connect(f"file:{newest}?mode=ro", uri=True)
-            ok = c.execute("PRAGMA quick_check").fetchone()[0]
-            n = c.execute("SELECT COUNT(*) FROM episodes").fetchone()[0]
-            c.close()
-            line(OK if ok == "ok" else FAIL, "newest restorable", f"{ok}, {n} episodes")
+            # verify() asserts rather than counts (R-37e): a file that opens,
+            # answers a count and restores to nothing was passing this line.
+            from newz.surface.cleanroom import verify
+
+            n = verify(newest)
+            line(OK, "newest restorable", f"ok, {n} episodes")
         except Exception as e:
             line(FAIL, "newest restorable", str(e))
 

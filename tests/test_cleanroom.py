@@ -38,6 +38,13 @@ def backups(tmp_path):
         " VALUES (?,?,?,?,?,?,?,?,?,?)",
         (time.time(), "concern", 1, "Does the index roll over?", "because",
          "On rolling over", "It is rolling over.", 4, "qwen", 100))
+    # A backup holds a life, not just a table: `verify` requires an episode
+    # because a store with none restores to nothing (R-37e), and a fixture
+    # without one is not the thing being backed up.
+    conn.execute(
+        "INSERT INTO episodes (ts, kind, provenance, summary, digest_eligible)"
+        " VALUES (?,?,?,?,1)",
+        (time.time(), "reading", "world:arxiv", "something it read"))
     conn.commit()
     conn.close()
 
@@ -77,7 +84,7 @@ def test_a_backup_that_does_not_open_is_reported_not_ignored(tmp_path):
 
     r = C.rebuild(out, generate_fn=generate)
 
-    assert not r.ok and "does not open as a database" in r.unreadable
+    assert not r.ok and "not a restorable backup" in r.unreadable
 
 
 def test_no_backup_at_all_is_reported_not_passed(tmp_path):
@@ -138,3 +145,47 @@ def test_what_it_does_not_prove_is_written_down(backups):
     assert "does NOT prove" in doc
     assert "filesystem, architecture or locale" in doc
     assert "R-11" in doc
+
+
+# ── a backup that restores to nothing (R-37e) ───────────────────────────
+
+def test_a_backup_that_restores_to_nothing_is_refused(tmp_path):
+    """R-37e. Behavior: `verify` counted a table without asserting anything, so
+    a database with zero episodes returned 0 and passed — the one backup worth
+    catching was the one it could not see. E8.2's rollback is built on these
+    files."""
+    out = tmp_path / "backups"
+    out.mkdir()
+    empty = out / "main-20260820-120000.db"
+    conn = open_db(empty)
+    apply_pending(conn, MAIN_SQL)
+    conn.close()
+
+    with pytest.raises(C.EmptyBackup, match="restores to nothing"):
+        C.verify(empty)
+
+    r = C.rebuild(out, generate_fn=generate)
+    assert not r.ok and "not a restorable backup" in r.unreadable
+
+
+def test_a_backup_that_holds_something_still_verifies(backups):
+    """The other direction, because a check that refuses everything is not a
+    check."""
+    assert C.verify(C.newest_backup(backups)) >= 1
+
+
+def test_a_corrupt_backup_is_caught_before_it_is_counted(tmp_path):
+    """Behavior: quick_check runs first — a file can hold rows and still be
+    unrestorable, and counting them would report health it does not have."""
+    out = tmp_path / "backups"
+    out.mkdir()
+    db = out / "main-20260820-120000.db"
+    conn = open_db(db)
+    apply_pending(conn, MAIN_SQL)
+    conn.close()
+    with open(db, "r+b") as f:          # scribble on the page after the header
+        f.seek(4096)
+        f.write(b"\xde\xad\xbe\xef" * 64)
+
+    with pytest.raises(sqlite3.DatabaseError):
+        C.verify(db)
