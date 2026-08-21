@@ -33,6 +33,20 @@ Inference is local by design — no hosted model anywhere in the cognition path.
 `.env` holds the endpoint, the operator id and `SURFACE_REACH`, which stays
 `local` until the operator decides otherwise (INV-076 attests it at boot).
 
+## Watching it
+
+The monitor runs beside the being, not inside it — a monitor that lives in the
+thing it monitors reports nothing at the moment that matters. It takes a reading
+of every instrument at the top of every hour and mails the day's state once,
+to `GMAIL_TO`. It writes `data/monitor.db` and never the being's store.
+
+```sh
+python tools/monitor.py                 # hourly, until stopped
+python tools/monitor.py --once          # one turn, then exit
+```
+
+Started by hand, like the being. Nothing here judges and no model is called.
+
 ## Reading it
 
 ```sh

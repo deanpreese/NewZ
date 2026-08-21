@@ -26,6 +26,12 @@ W = 168.0
 
 @pytest.fixture
 def store(tmp_path):
+    # E3A.1: the metric series lives in the monitor's own database,
+    # attached as `mon`. It is created before the connection is opened,
+    # because `open_db` attaches it only if the file is already there.
+    from newz.monitor.db import open_monitor
+
+    open_monitor(tmp_path / "b.db").close()
     conn = open_db(tmp_path / "b.db")
     apply_pending(conn, MAIN_SQL)
     yield conn
@@ -112,7 +118,7 @@ def test_the_reader_does_not_write_the_series(store):
     they looked, and its deltas measure attention rather than change."""
     peek(store, "claims_opened", 4.0, window_hours=W)
 
-    assert store.execute("SELECT COUNT(*) FROM metric_readings").fetchone()[0] == 0
+    assert store.execute("SELECT COUNT(*) FROM mon.metric_readings").fetchone()[0] == 0
 
 
 def test_every_baselined_metric_has_a_writer(store, tmp_path):
@@ -122,7 +128,7 @@ def test_every_baselined_metric_has_a_writer(store, tmp_path):
 
     assert {r.metric for r in readings} == set(B.baselined_metrics())
     assert store.execute(
-        "SELECT COUNT(*) FROM metric_readings").fetchone()[0] == len(readings)
+        "SELECT COUNT(*) FROM mon.metric_readings").fetchone()[0] == len(readings)
 
 
 def test_a_baselined_metric_with_no_writer_is_refused(store, tmp_path, monkeypatch):

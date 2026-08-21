@@ -89,18 +89,28 @@ def test_the_queue_is_the_epics_whose_dependencies_are_built():
                    for d in E.epics()[eid]["depends_on"])
 
 
-def test_an_epic_a_test_cannot_close_is_not_offered_to_a_builder():
-    """Rule 6's distinction, made machine-readable. Behavior: an in-life or
-    operator-judgment epic can be BUILT autonomously and cannot be CLOSED that
-    way, so the builder's queue is narrower than the ready queue."""
-    assert set(E.closable_by_test()) <= set(E.ready())
-    for eid in E.closable_by_test():
-        assert E.epics()[eid]["done_when"] == "mechanical"
+def test_the_builders_queue_went_with_the_builder():
+    """P4 E3A.4. `closable_by_test` existed to tell an autonomous builder which
+    ready epics a test could close. Phase 8 is struck, there is no builder, and
+    a reader with nothing reading it is the Rule 2 defect the ledger has caught
+    in tables for months. Behavior: it is gone, and Rule 6's distinction lives
+    where it always did — in `done_when`, which `ready()` reports and a person
+    reads."""
+    assert not hasattr(E, "closable_by_test")
 
     judged = [e for e, r in E.epics().items()
               if r["done_when"] in ("in-life", "operator-judgment")]
     assert judged, "no epic needs judgment, which cannot be true of this plan"
-    assert not (set(judged) & set(E.closable_by_test()))
+
+
+def test_an_epic_id_may_carry_a_letter():
+    """P4 Phase 3A. Behavior: `E3A.1` parses out of PLAN and sorts between
+    `E3.9` and `E4.1`. The regex read `E\\d+\\.\\d+` and the sort key read
+    `int(e.split(".")[0][1:])`, so the first lettered phase was invisible to
+    the drift check and raised ValueError in the queue — a plan the drift check
+    cannot see is the failure this file exists to prevent."""
+    assert "E3A.1" in E.from_plan()
+    assert E._order("E3.9") < E._order("E3A.1") < E._order("E4.1")
 
 
 # ── the acceptance criterion is pinned (P4 W9) ──────────────────────────

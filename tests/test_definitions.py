@@ -29,6 +29,12 @@ M = "claims_opened"
 
 @pytest.fixture
 def store(tmp_path):
+    # E3A.1: the metric series lives in the monitor's own database,
+    # attached as `mon`. It is created before the connection is opened,
+    # because `open_db` attaches it only if the file is already there.
+    from newz.monitor.db import open_monitor
+
+    open_monitor(tmp_path / "d.db").close()
     conn = open_db(tmp_path / "d.db")
     apply_pending(conn, MAIN_SQL)
     yield conn
@@ -78,7 +84,7 @@ def test_the_prior_series_is_retained_and_stays_labelled(store, monkeypatch):
     take(store, M, 4.0, window_hours=W, now=now)
 
     rows = store.execute(
-        "SELECT value, definition_version FROM metric_readings WHERE metric=?"
+        "SELECT value, definition_version FROM mon.metric_readings WHERE metric=?"
         " ORDER BY ts", (M,)).fetchall()
 
     assert [(r["value"], r["definition_version"]) for r in rows] == [(10.0, 1), (4.0, 2)]
@@ -137,4 +143,4 @@ def test_a_definition_change_cannot_be_deleted(store, monkeypatch):
     D.sync(store, M)
 
     with pytest.raises(sqlite3.IntegrityError, match="why the series has a seam"):
-        store.execute("DELETE FROM metric_definition_changes")
+        store.execute("DELETE FROM mon.metric_definition_changes")

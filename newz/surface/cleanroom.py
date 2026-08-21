@@ -43,6 +43,7 @@ ABSOLUTE_PATH = re.compile(r"(?:^|[\s\"'(=])(/(?:Users|home|var|tmp|opt|private)
 @dataclass
 class Rebuild:
     source: Path | None = None
+    monitor: str = ""
     pages: int = 0
     identical: list[str] = field(default_factory=list)
     differing: list[str] = field(default_factory=list)
@@ -111,8 +112,21 @@ def rebuild(backups_dir: Path, *, generate_fn, now: float = 0.0) -> Rebuild:
         restored = room / "restored.db"
         shutil.copy(src, restored)
 
+        # P4 E3A.1. The read page traces to `metric_readings` row ids, and
+        # those rows live in the monitor's database now. Restore it beside the
+        # store under the name `attach_monitor` looks for, or the rebuild
+        # renders a page that looks correct and says nothing — which is worse
+        # than one that says what is missing (INV-044).
+        from newz.store.db import MONITOR_NAME, attach_monitor
+
+        mon_src = newest_backup(backups_dir, prefix="monitor")
+        if mon_src is not None:
+            shutil.copy(mon_src, room / MONITOR_NAME)
+            r.monitor = mon_src.name
+
         conn = sqlite3.connect(f"file:{restored}?mode=ro", uri=True)
         conn.row_factory = sqlite3.Row
+        attach_monitor(conn, restored, read_only=True)
         try:
             a, b = room / "a", room / "b"
             generate_fn(conn, a, now=now)

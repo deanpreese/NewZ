@@ -110,10 +110,25 @@ instruments:
     canonical: true
     note: "explicitly NOT an evidence instrument (P2 Rule 3) — it reports liveness, never development"
 
+  - tool: tools/monitor.py
+    reads: [main store, data/monitor.db, backups, evolution/premises.yaml, evolution/epics.yaml]
+    measures: "nothing of its own — it takes a reading of every registered metric each hour and mails the day's state once"
+    denominator: null
+    model_in_chain: false
+    method: "record_all through E2.7's layer, hourly; report composed from the series, the premises and the plan; no model call"
+    canonical: false
+    note: >-
+      NOT canonical and deliberately so (P4 E3A.2). It is a rhythm over the
+      instruments, not an instrument: it measures nothing itself, and freezing
+      it would freeze a scheduler while every number it reports stays writable.
+      What it reads is frozen; what it does is run on the hour. It runs OUTSIDE
+      the being's process, which is the whole design — a monitor inside the
+      thing it monitors reports nothing at the moment that matters.
+
   - tool: tools/pre_loop_baseline.py
     reads: [metric_readings, evolution/pre_loop_baseline.yaml]
-    measures: "where the being stands against what it was before the loop — the threshold three Phase 8 reads compare against"
-    denominator: "nightly readings in the 28 days before the baseline was taken"
+    measures: "where the being stands against what it was before anything started changing it deliberately — the daily email's comparison line"
+    denominator: "one reading per day in the 28 days before the baseline was taken"
     model_in_chain: true
     model_where: "inherited from whichever metric is compared: nights_slept is mechanical, advances_offered is not. The comparison adds no judgment and launders none"
     method: "median of the OK readings in the window, with the reading ids that produced it; the current value is the newest OK reading"

@@ -23,6 +23,13 @@ clauses:
 
 @pytest.fixture
 def store(tmp_path):
+    # P4 E3A.1: the metric series lives in the monitor's own database, beside
+    # the being's, attached as `mon`. Creating it here is what makes the
+    # fixture the shape a real store has — and `open_db` attaches it only if it
+    # already exists, so it is built before the connection is opened.
+    from newz.monitor.db import open_monitor
+
+    open_monitor(tmp_path / "newz.db").close()
     conn = open_db(tmp_path / "newz.db")
     apply_pending(conn, MAIN_SQL)
     conn.execute(

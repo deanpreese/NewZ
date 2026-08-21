@@ -19,9 +19,10 @@ by one.
 
 **Absent is UNREADABLE, not fine.** Before the baseline is taken there is
 nothing to fall below, and `compare` says so rather than returning "nothing has
-fallen". `may_widen` is the same discipline pointed at autonomy: the loop may
-not leave stage 0 while the thing that would catch it costing the being sleep
-does not exist.
+fallen". `may_widen` was the same discipline pointed at autonomy, and it went with
+the stages it refused (P4 E3A.4): Phase 8 is struck, there are no autonomy
+stages, and a function whose only job was to gate one is a reader with nothing
+to read (Rule 2). `compare` survives as the daily email's comparison line.
 """
 
 from __future__ import annotations
@@ -37,9 +38,23 @@ REGISTRY = (Path(__file__).resolve().parent.parent.parent / "evolution"
             / "pre_loop_baseline.yaml")
 
 # Below this the "baseline" is one week seen once: the metrics are themselves
-# 168-hour windows, so consecutive nightly readings overlap almost entirely and
-# a handful of them describe a few days rather than a month.
-MIN_READINGS = 7
+# 168-hour windows, so consecutive readings overlap almost entirely and a
+# handful of them describe a few days rather than a month.
+#
+# **It counts DAYS, and it used to count readings** (P4 E3A.2). Under the
+# nightly cadence the two were the same number and the comment above was true
+# by accident. The monitor reads hourly, and seven readings became seven hours
+# while the sentence explaining the threshold still said a week — a guard that
+# keeps passing after its reason has stopped being true, which is INV-044's
+# failure introduced by a cadence change rather than by an edit.
+#
+# The baseline therefore takes the LAST READING OF EACH DAY. That fixes the
+# threshold and a second thing with it: `reading_ids` records every id the
+# median was computed from, and over 28 days those went from 28 per metric to
+# 672 — some 19,000 ids in a hand-readable file inside the hard core. The ids
+# are not droppable (INV-087 calls them what separates this from an invented
+# denominator), so the series stays hourly and the baseline is a daily thing.
+MIN_DAYS = 7
 
 
 @functools.lru_cache(maxsize=1)
@@ -70,14 +85,12 @@ def propose(conn: sqlite3.Connection, metrics: list[str], *, now: float,
     since = now - window_days * 86400.0
     out: dict[str, dict] = {}
     for metric in metrics:
-        rows = conn.execute(
-            "SELECT id, ts, value FROM metric_readings WHERE metric=?"
-            " AND status='ok' AND ts >= ? ORDER BY ts", (metric, since)).fetchall()
-        if len(rows) < MIN_READINGS:
+        rows = _one_per_day(conn, metric, since)
+        if len(rows) < MIN_DAYS:
             out[metric] = {"unreadable": (
-                f"{len(rows)} reading(s) in {window_days} days, and a baseline "
-                f"needs {MIN_READINGS} — below that it is one week seen once, "
-                "since the metric is itself a 168-hour window")}
+                f"{len(rows)} day(s) of readings in {window_days} days, and a "
+                f"baseline needs {MIN_DAYS} — below that it is one week seen "
+                "once, since the metric is itself a 168-hour window")}
             continue
         out[metric] = {
             "median": round(statistics.median(r["value"] for r in rows), 4),
@@ -87,6 +100,22 @@ def propose(conn: sqlite3.Connection, metrics: list[str], *, now: float,
             "reading_ids": [int(r["id"]) for r in rows],
         }
     return out
+
+
+def _one_per_day(conn: sqlite3.Connection, metric: str, since: float) -> list:
+    """The last measured reading of each local day. The baseline's unit.
+
+    Local rather than UTC because "a day" here means one of the being's days —
+    the same day boundary sleep runs on and `nights_slept` counts.
+    """
+    return conn.execute(
+        "SELECT id, ts, value FROM mon.metric_readings r WHERE metric=?"
+        " AND status='ok' AND ts >= ?"
+        " AND ts = (SELECT MAX(ts) FROM mon.metric_readings x"
+        "           WHERE x.metric = r.metric AND x.status='ok'"
+        "           AND date(x.ts, 'unixepoch', 'localtime')"
+        "             = date(r.ts, 'unixepoch', 'localtime'))"
+        " ORDER BY ts", (metric, since)).fetchall()
 
 
 def compare(conn: sqlite3.Connection, metric: str, *, now: float,
@@ -106,29 +135,13 @@ def compare(conn: sqlite3.Connection, metric: str, *, now: float,
     if base is None:
         return {"unreadable": f"{metric} is not in the pre-loop baseline"}
     row = conn.execute(
-        "SELECT value FROM metric_readings WHERE metric=? AND status='ok'"
+        "SELECT value FROM mon.metric_readings WHERE metric=? AND status='ok'"
         " ORDER BY ts DESC, id DESC LIMIT 1", (metric,)).fetchone()
     if row is None:
         return {"unreadable": f"{metric} has no measured reading to compare"}
     current = float(row["value"])
     return {"metric": metric, "current": current, "baseline": base,
             "below": current < base, "delta": round(current - base, 4)}
-
-
-def may_widen() -> str | None:
-    """Why the loop may not leave stage 0, or None.
-
-    Stage 0 is read-only and needs no baseline. Every stage above it is
-    permitted on the promise that a cost to the being would be caught, and
-    *nights slept below the pre-loop baseline* is how that promise is kept.
-    Widening without it is widening on an unreadable condition.
-    """
-    if not taken():
-        return ("the pre-loop baseline has not been taken "
-                f"({REGISTRY.name}: taken_at is null), so the kill condition "
-                "that matters most cannot be read. Stage 0 needs no baseline; "
-                "nothing above it may be entered without one")
-    return None
 
 
 def validate() -> list[str]:
@@ -158,10 +171,10 @@ def validate() -> list[str]:
                    if k not in row]
         if missing:
             errors.append(f"{metric}: baseline row is missing {missing}")
-        elif row["readings"] < MIN_READINGS:
+        elif row["readings"] < MIN_DAYS:
             errors.append(
-                f"{metric}: {row['readings']} readings is below the {MIN_READINGS} "
-                "a baseline needs")
+                f"{metric}: {row['readings']} day(s) of readings is below the "
+                f"{MIN_DAYS} a baseline needs")
         elif len(row["reading_ids"]) != row["readings"]:
             errors.append(
                 f"{metric}: says {row['readings']} readings and names "

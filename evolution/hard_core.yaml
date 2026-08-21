@@ -3,7 +3,7 @@
 #
 # **Why this file exists.** §5 enumerates the hard core in an approved proposal
 # and nothing in the repo encoded it, while three Phase 8 mechanisms are
-# specified in terms of it: E8.2's runner lives in it, E8.4's gate refuses any
+# specified in terms of it: the struck loop's runner lives in it, the struck loop's gate refuses any
 # diff inside it, and the autonomy stage is a file inside it. PLAN's Phase 8
 # never cites §5, so a loop reading the plan — which is what the precedence
 # table sends it to read — could not find the definition of the thing rung 1
@@ -15,11 +15,20 @@
 # not by what a paragraph intends — and the difference is recorded in
 # `derived_from` or `open_gaps` rather than resolved silently.
 #
-# **Nothing enforces this yet.** E8.0's gate and E8.2's runner are the
-# enforcers and neither is built. Today the registry is the definition and
-# `newz/evidence/hard_core.py` is a reader; the refusal comes with E8.0.
-# Recorded here rather than implied, because a registry that looks enforced
-# and is not is worse than no registry (INV-044).
+# **Nothing refuses a diff against this, and nothing is coming that will.**
+# Phase 8 was struck on 2026-08-21, so the gate and the runner that were named
+# as the enforcers will not be built — and the refusal never had a caller in
+# any case: `tools/gate.py` runs `freeze_check --operator`, the mode that lists
+# and does not refuse. The registry is the definition and
+# `newz/evidence/hard_core.py` is a reader. Recorded as a standing fact rather
+# than as a pending epic, because a registry that looks enforced and is not is
+# worse than no registry (INV-044).
+#
+# **The constrained party is the operator's agents.** §5.2 was written about a
+# self-evolving loop, and the argument survives the strike unchanged: at n=1
+# with no held-out baseline, whatever edits this repo cannot tell improving the
+# being from improving the instrument's view of the being, and has a gradient
+# toward the second because that is cheaper and always works.
 
 version: 1
 
@@ -207,7 +216,7 @@ mechanisms:
 
   - path: newz/store/migrations.py
     why: >-
-      applies pending migrations. E8.2's expand-contract rule and E8.4's
+      applies pending migrations. the struck loop's expand-contract rule and the struck loop's
       forward-only gate constrain what a migration may DO; the applier is
       infrastructure, and a loop that cannot ship a migration cannot ship a
       Class A change.
@@ -258,36 +267,45 @@ open_gaps:
 
   - what: the brake
     detail: >-
-      §5.1's pause flag, refused in any diff and read at the top of every
-      cycle. Nothing exists — no flag, no reader, no refusal. E8.2.
+      WITHDRAWN 2026-08-21. §5.1's pause flag existed to stop a loop between
+      cycles. Phase 8 is struck; there is no cycle to pause and nothing to
+      brake. Not a gap — a requirement that went with its requirer.
 
   - what: the runner
     detail: >-
-      §5.1's "the loop may not modify its own parent". There is no runner;
-      tools/run_newz.py is the being's loop, launched by hand. E8.2.
+      WITHDRAWN 2026-08-21. §5.1's "the loop may not modify its own parent"
+      described a supervisor that would restart the being. Phase 8 is struck;
+      nothing restarts the being but a person, so there is no parent to
+      protect. tools/run_newz.py is launched by hand and stays that way.
 
   - what: the autonomy stage file
     detail: >-
-      PLAN's Enablement table says the stage is recorded in one operator-only
-      file inside the hard core and that the loop may read but never set it.
-      No such file exists. E8.3 is its likely home, with E8.2's brake.
+      WITHDRAWN 2026-08-21. PLAN's Enablement table recorded the loop's
+      autonomy as a stage in an operator-only file. The table is deleted with
+      Phase 8 — there is no autonomy to widen, so there is no stage to record
+      and no file that must be unwritable by anything.
 
   - what: section-level protection for PLAN.md
     detail: >-
-      PLAN.md cannot be a protected path because the loop is explicitly
-      permitted to append to it. **The `Done when` clause of every epic is now
-      pinned by hash** in evolution/epics.yaml and checked by
-      newz/evidence/epics.py::drift (P4 W9), so the acceptance criteria — the
-      sentences a builder would reach for — can no longer move quietly. The
-      rest of the section boundary is still convention: an epic's intent, its
-      ordering, its Hooks and the phase Decision rules are unpinned, on purpose,
-      because this plan is edited constantly and a check that fires on every
-      ordinary edit teaches its own bypass (RT7).
+      PLAN.md cannot be a protected path: it is edited constantly, and a check
+      that fires on every ordinary edit teaches its own bypass. **The `Done
+      when` clause of every epic is pinned by hash** in evolution/epics.yaml
+      and checked by newz/evidence/epics.py::drift, so softening an acceptance
+      criterion is an act somebody took rather than a sentence nobody was
+      watching. The intent, the hooks and the decision rules are not pinned,
+      and that is the residual gap — it was a gap against a loop and it is a
+      gap against an agent in a session, which is the party that edits this
+      file now.
 
   - what: enforcement
     detail: >-
-      no gate refuses a diff against this file. E8.0 delivers the gate; E8.4's
-      builder is the first consumer that would be stopped by it.
+      **Nothing refuses a diff against this file, and nothing is coming that
+      will.** The gate and the builder named here were struck with Phase 8 on
+      2026-08-21 — and the refusal had no caller before that either, since
+      tools/gate.py runs freeze_check with --operator, the mode that lists and
+      does not refuse. Removing the loop revealed this rather than causing it.
+      A standing fact, recorded as one: whether the refusing mode ever gets a
+      caller is an open question in PLAN's Decisions, not a pending epic.
 
   - what: gitignored files
     detail: >-

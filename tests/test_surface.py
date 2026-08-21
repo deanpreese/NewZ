@@ -30,6 +30,12 @@ DAY = 86400.0
 
 @pytest.fixture
 def store(tmp_path):
+    # E3A.1: the metric series lives in the monitor's own database,
+    # attached as `mon`. It is created before the connection is opened,
+    # because `open_db` attaches it only if the file is already there.
+    from newz.monitor.db import open_monitor
+
+    open_monitor(tmp_path / "s.db").close()
     conn = open_db(tmp_path / "s.db")
     apply_pending(conn, MAIN_SQL)
     now = time.time()
@@ -306,7 +312,7 @@ def _body(page: Path) -> str:
 
 def _reading(conn, metric, value, *, ts, status="ok", note="", window=168.0, dv=1):
     conn.execute(
-        "INSERT INTO metric_readings (ts, metric, status, value, window_hours,"
+        "INSERT INTO mon.metric_readings (ts, metric, status, value, window_hours,"
         " note, definition_version) VALUES (?,?,?,?,?,?,?)",
         (ts, metric, status, value, window, note, dv))
     conn.commit()

@@ -10,6 +10,7 @@ def _config(tmp_path):
         data_dir=tmp_path,
         main_db_path=tmp_path / "newz.db",
         interior_db_path=tmp_path / "interior.db",
+        monitor_db_path=tmp_path / "monitor.db",
         backups_dir=tmp_path / "backups",
         roles={
             "DEEP": LLMRole("DEEP", "http://localhost:9", "m"),

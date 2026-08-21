@@ -27,19 +27,30 @@ DAY = 86400.0
 
 @pytest.fixture
 def store(tmp_path):
+    # E3A.1: the series lives in the monitor's database, attached as `mon`.
+    from newz.monitor.db import open_monitor
+
+    open_monitor(tmp_path / "p.db").close()
     conn = open_db(tmp_path / "p.db")
     apply_pending(conn, MAIN_SQL)
     yield conn
     conn.close()
 
 
-def _readings(conn, metric: str, values, *, now: float, back: int = 0):
-    """Nightly readings, oldest first, ending `back` days before `now`."""
+def _readings(conn, metric: str, values, *, now: float, back: int = 0,
+              per_day: int = 1):
+    """Readings, oldest first, ending `back` days before `now`.
+
+    `per_day` writes several within one day, which is what the hourly cadence
+    does — the baseline must still count the day once (E3A.2).
+    """
     for i, v in enumerate(values):
-        conn.execute(
-            "INSERT INTO metric_readings (ts, metric, status, value,"
-            " window_hours, note, definition_version) VALUES (?,?,?,?,?,?,?)",
-            (now - (back + len(values) - i) * DAY, metric, "ok", v, 168.0, "", 1))
+        day = now - (back + len(values) - i) * DAY
+        for k in range(per_day):
+            conn.execute(
+                "INSERT INTO mon.metric_readings (ts, metric, status, value,"
+                " window_hours, note, definition_version) VALUES (?,?,?,?,?,?,?)",
+                (day + k * 3600.0, metric, "ok", v, 168.0, "", 1))
     conn.commit()
 
 
@@ -50,15 +61,13 @@ def test_it_is_not_taken_and_says_so(tmp_path, monkeypatch):
     assert P.validate() == []
 
 
-def test_the_loop_may_not_widen_without_one():
-    """Behavior: stage 0 is read-only and needs no baseline. Every stage above
-    it is permitted on the promise that a cost to the being would be caught,
-    and this is how that promise is kept — widening without it is widening on a
-    condition nobody can read."""
-    why = P.may_widen()
-
-    assert why and "has not been taken" in why
-    assert "Stage 0 needs no baseline" in why
+def test_an_untaken_baseline_is_readable_as_untaken():
+    """P4 E3A.4 replaced `may_widen` — Phase 8 is struck, there are no autonomy
+    stages, and a function whose only job was to gate one had no reader left
+    (Rule 2). Behavior: `taken()` is what the daily email and the tool ask, and
+    an untaken baseline answers plainly rather than by absence."""
+    assert P.taken() is False
+    assert not hasattr(P, "may_widen")
 
 
 def test_nothing_to_fall_below_is_unreadable_not_a_pass(store):
@@ -110,7 +119,6 @@ def test_a_taken_baseline_reads_below_and_above(store, monkeypatch):
 
     _readings(store, "nights_slept", [9], now=now)
     assert P.compare(store, "nights_slept", now=now)["below"] is False
-    assert P.may_widen() is None
 
 
 def test_a_baseline_that_names_no_reading_ids_is_refused(monkeypatch):

@@ -107,7 +107,6 @@ def main() -> int:
     from newz.works.reread import RereadScheduler
     from newz.evidence.agreement import AgreementScheduler
     from newz.surface.rhythm import PublishScheduler
-    from newz.evidence.baseline import MetricScheduler
     from newz.memory.index import EmbeddingScheduler
 
     backups = BackupScheduler(cfg.main_db_path, cfg.interior_db_path, cfg.backups_dir)
@@ -142,18 +141,17 @@ def main() -> int:
     # operator this is the cheapest genuine outcome it did not grade at the
     # time — meeting what it wrote as something someone else wrote.
     reread = RereadScheduler(cfg.main_db_path, client)
-    # E2.7: one reading of every baselined metric a night. The series is
-    # written on a cadence and never on read, because a series written when
-    # someone happens to look is a record of when they looked.
-    metrics = MetricScheduler(cfg.main_db_path, cfg.repo_root)
-    # E3.8: and one of those readings needs a writer that had none — the
+    # E2.7's readings are NOT taken here any more. Phase 3A moved them to
+    # tools/monitor.py, which runs beside this process: an instrument written
+    # by the thing it measures stops being written at the moment it would have
+    # something to say. The being writes its life; the monitor reads it.
+    # E3.8: the agreement classifier needs a writer and had none — the
     # agreement classifier ran only in tests, so `operator_agreement` held
     # nothing and §10's one un-instrumented item stayed un-instrumented in
     # life. It runs before the reading so the night's rate sees the day.
     agreement = AgreementScheduler(cfg.main_db_path, client)
     # E3.2 built a generator and no rhythm, so the published surface was stale
-    # from the moment the being wrote anything — and E8.3's daily read is
-    # specified against it (R-37e).
+    # from the moment the being wrote anything (R-37e).
     publishing = PublishScheduler(cfg.main_db_path, cfg.repo_root / "published")
     # The index was never maintained: 0 of 653 reading episodes carried a
     # vector, so retrieval — which conversation already queries — could not
@@ -179,7 +177,6 @@ def main() -> int:
                       asyncio.create_task(reread.run()),
                       asyncio.create_task(agreement.run()),
                       asyncio.create_task(publishing.run()),
-                      asyncio.create_task(metrics.run()),
                       asyncio.create_task(indexer.run())]
         try:
             await loop.run()

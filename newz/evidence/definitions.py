@@ -55,12 +55,12 @@ def reason_for(metric: str, version: int) -> str:
 
 def recorded_version(conn: sqlite3.Connection, metric: str) -> int | None:
     row = conn.execute(
-        "SELECT to_version FROM metric_definition_changes WHERE metric=?"
+        "SELECT to_version FROM mon.metric_definition_changes WHERE metric=?"
         " ORDER BY ts DESC LIMIT 1", (metric,)).fetchone()
     if row:
         return int(row[0])
     row = conn.execute(
-        "SELECT definition_version FROM metric_readings WHERE metric=?"
+        "SELECT definition_version FROM mon.metric_readings WHERE metric=?"
         " ORDER BY ts DESC LIMIT 1", (metric,)).fetchone()
     return int(row[0]) if row else None
 
@@ -87,7 +87,7 @@ def sync(conn: sqlite3.Connection, metric: str, *, now: float | None = None) -> 
             "gives no reason. Add a definition_history entry saying what "
             "changed and why the old series stopped meaning anything.")
     conn.execute(
-        "INSERT INTO metric_definition_changes (ts, metric, from_version,"
+        "INSERT INTO mon.metric_definition_changes (ts, metric, from_version,"
         " to_version, reason) VALUES (?,?,?,?,?)",
         (now or time.time(), metric, seen, current, why))
     conn.commit()
@@ -98,7 +98,7 @@ def changes(conn: sqlite3.Connection, metric: str | None = None) -> list[sqlite3
     """Every seam in every series — why a delta stops at a particular date."""
     if metric:
         return conn.execute(
-            "SELECT * FROM metric_definition_changes WHERE metric=? ORDER BY ts",
+            "SELECT * FROM mon.metric_definition_changes WHERE metric=? ORDER BY ts",
             (metric,)).fetchall()
     return conn.execute(
-        "SELECT * FROM metric_definition_changes ORDER BY ts").fetchall()
+        "SELECT * FROM mon.metric_definition_changes ORDER BY ts").fetchall()

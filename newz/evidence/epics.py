@@ -55,7 +55,8 @@ def from_plan(text: str | None = None) -> dict:
     t = text if text is not None else PLAN.read_text()
     out: dict[str, dict] = {}
     for eid, title, body in re.findall(
-            r'^\*\*(E\d+\.\d+) — (.*?)\*\*(.*?)(?=^\*\*E\d+\.\d+ —|\Z)', t, re.M | re.S):
+            r'^\*\*(E\d+[A-Z]?\.\d+) — (.*?)\*\*(.*?)(?=^\*\*E\d+[A-Z]?\.\d+ —|\Z)',
+            t, re.M | re.S):
         # `built`/`closed` anywhere in the epic's own parenthetical, not only
         # immediately after the paren: E3.5 is marked
         # "(amended 2026-08-19; built 2026-08-20)" and an epic carrying two
@@ -65,7 +66,7 @@ def from_plan(text: str | None = None) -> dict:
         m = re.search(r'^\*Depends on:\*(.*?)$', body, re.M)
         raw = m.group(1) if m else ""
         deps = ([] if raw.strip().lower().startswith("nothing")
-                else sorted(set(re.findall(r'E\d+\.\d+', raw))))
+                else sorted(set(re.findall(r'E\d+[A-Z]?\.\d+', raw))))
         done_when = re.search(
             r'^\*Done when:\*(.*?)(?=^\*[A-Z]|\Z)', body, re.M | re.S)
         clause = re.sub(r"\s+", " ", done_when.group(1)).strip() if done_when else ""
@@ -138,6 +139,19 @@ def drift(text: str | None = None) -> list[str]:
     return errors
 
 
+def _order(eid: str) -> tuple[int, str, float]:
+    """Sort key for an epic id. `E3A.2` sorts after `E3.9` and before `E4.1`.
+
+    A phase can carry a letter (P4 Phase 3A), so the number and the letter are
+    separate components — `int(e.split(".")[0][1:])` raised ValueError on the
+    first such id, which is the sort key equivalent of the regex above.
+    """
+    phase, _, num = eid[1:].partition(".")
+    digits = "".join(c for c in phase if c.isdigit())
+    letter = "".join(c for c in phase if c.isalpha())
+    return (int(digits), letter, float(num))
+
+
 def ready() -> list[str]:
     """Epics whose dependencies are all built — the queue, in plan order."""
     reg = epics()
@@ -145,13 +159,4 @@ def ready() -> list[str]:
     out = [e for e, row in reg.items()
            if row.get("status") == "open"
            and set(row.get("depends_on") or []) <= built]
-    return sorted(out, key=lambda e: (int(e.split(".")[0][1:]), float(e.split(".")[1])))
-
-
-def closable_by_test() -> list[str]:
-    """Ready epics a test can close — what an autonomous builder may attempt.
-
-    An in-life or operator-judgment epic can be BUILT autonomously and cannot be
-    CLOSED that way, which is the distinction P4 Rule 6 turns on.
-    """
-    return [e for e in ready() if epics()[e].get("done_when") == "mechanical"]
+    return sorted(out, key=_order)

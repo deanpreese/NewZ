@@ -28,6 +28,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+from newz.store.db import MONITOR_NAME
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_INTERVAL_S = 6 * 3600
@@ -134,6 +136,7 @@ def run_backup(
     interior_db: Path,
     dest_dir: Path,
     *,
+    monitor_db: Path | None = None,
     keep: int = DEFAULT_KEEP,
 ) -> BackupReport:
     started = time.monotonic()
@@ -151,7 +154,20 @@ def run_backup(
         report.made.append(path)
         report.counts["interior"] = (s, c)
 
-    for prefix in ("main", "interior"):
+    # P4 E3A.1. The monitor's database holds the metric series, and
+    # `evolution/pre_loop_baseline.yaml` pins the row ids a baseline was
+    # computed from — ids INV-087 calls what separates a measured baseline from
+    # an invented denominator. An unbacked series is a baseline that cannot be
+    # audited after a restore, so it is copied and verified like the others
+    # rather than left to be discovered missing.
+    monitor_db = monitor_db or (main_db.parent / MONITOR_NAME)
+    if monitor_db.exists():
+        path, s, c = backup_db(
+            monitor_db, dest_dir, "monitor", verify_table="metric_readings")
+        report.made.append(path)
+        report.counts["monitor"] = (s, c)
+
+    for prefix in ("main", "interior", "monitor"):
         report.pruned.extend(prune(dest_dir, prefix, keep))
 
     report.duration_s = time.monotonic() - started

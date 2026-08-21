@@ -29,6 +29,12 @@ DAY = 86400.0
 
 @pytest.fixture
 def store(tmp_path):
+    # E3A.1: the metric series lives in the monitor's own database,
+    # attached as `mon`. It is created before the connection is opened,
+    # because `open_db` attaches it only if the file is already there.
+    from newz.monitor.db import open_monitor
+
+    open_monitor(tmp_path / "m.db").close()
     conn = open_db(tmp_path / "m.db")
     apply_pending(conn, MAIN_SQL)
     yield conn

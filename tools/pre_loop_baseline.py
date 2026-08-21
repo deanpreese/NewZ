@@ -53,9 +53,11 @@ def main() -> int:
                 print(f"    reading_ids: {row['reading_ids']}")
             return 0
 
-        why = pre_loop.may_widen()
-        if why:
-            print(f"NOT TAKEN\n\n  {why}\n")
+        if not pre_loop.taken():
+            print("NOT TAKEN\n\n  There is nothing to compare against. The "
+                  "baseline is what the being was like\n  before anything "
+                  "started changing it deliberately, and the daily email\n  "
+                  "reads it as its comparison line.\n")
             print("  python tools/pre_loop_baseline.py --propose")
             return 0
 

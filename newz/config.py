@@ -39,6 +39,7 @@ class Config:
     data_dir: Path
     main_db_path: Path
     interior_db_path: Path
+    monitor_db_path: Path
     backups_dir: Path
     roles: dict[str, LLMRole] = field(default_factory=dict)
     telegram_bot_token: str | None = None
@@ -47,6 +48,14 @@ class Config:
     quiet_hours_start: str | None = None
     quiet_hours_end: str | None = None
     sleep_hour: int = 3          # nightly consolidation at or after this hour
+    # ── the monitor (P4 Phase 3A) ──────────────────────────────────────
+    # It runs beside the being, not inside it, and sends the day's state once.
+    # The send hour is deliberately AFTER sleep and never triggered BY it: a
+    # report gated on the thing it reports is silent on the day that matters.
+    monitor_send_hour: int = 5
+    gmail_user: str | None = None
+    gmail_password: str | None = None
+    gmail_to: str | None = None
     # Sovereign adapter identity. Wikipedia requires a reachable contact and
     # returns 403 without one (verified 2026-08-12).
     user_agent: str = ""
@@ -104,6 +113,7 @@ def load(repo_root: Path | None = None, env_file: str | os.PathLike | None = Non
         data_dir=data_dir,
         main_db_path=data_dir / "newz.db",
         interior_db_path=data_dir / "interior.db",
+        monitor_db_path=data_dir / "monitor.db",
         backups_dir=root / "backups",
         roles=roles,
         telegram_bot_token=env.get("TELEGRAM_BOT_TOKEN"),
@@ -112,6 +122,11 @@ def load(repo_root: Path | None = None, env_file: str | os.PathLike | None = Non
         quiet_hours_start=env.get("QUIET_HOURS_START"),
         quiet_hours_end=env.get("QUIET_HOURS_END"),
         sleep_hour=int(env.get("NEWZ_SLEEP_HOUR") or 3),
+        monitor_send_hour=int(env.get("NEWZ_MONITOR_SEND_HOUR")
+                              or (int(env.get("NEWZ_SLEEP_HOUR") or 3) + 2)),
+        gmail_user=env.get("GMAIL_USER"),
+        gmail_password=env.get("GMAIL_PASS"),
+        gmail_to=env.get("GMAIL_TO"),
         user_agent=env.get("NEWZ_USER_AGENT") or DEFAULT_USER_AGENT,
         # Anything other than the literal "open" is local. A typo must fail
         # closed: the failure mode of this setting is not a broken page, it is

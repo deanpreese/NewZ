@@ -99,12 +99,18 @@ def test_the_freeze_covers_every_module_that_emits_a_registered_metric():
     assert emitters <= canonical, f"emits a metric and is not frozen: {sorted(emitters - canonical)}"
 
 
-def test_nothing_enforces_this_automatically_yet_and_that_is_stated():
-    """INV-044's discipline applied to a guard. A guard that looks enforced and
-    is not is worse than no guard, so the module says which it is: E8.0's gate
-    and E8.4's builder are the consumers, and neither exists."""
+def test_nothing_enforces_this_automatically_and_that_is_stated():
+    """INV-044's discipline applied to a guard, after Phase 8 was struck.
+
+    A guard that looks enforced and is not is worse than no guard, so the
+    module says which it is — and what it says changed on 2026-08-21. It used
+    to name E8.0's gate and E8.4's builder as consumers that did not exist yet;
+    they will not exist at all, and `tools/gate.py` runs `freeze_check
+    --operator`, which lists and does not refuse. Behavior: the module states
+    the standing fact and names the party it constrains."""
     from newz.evidence import freeze
 
     doc = freeze.__doc__ or ""
-    assert "Nothing calls this yet" in doc
-    assert "E8.0" in doc and "E8.4" in doc
+    assert "Nothing calls this automatically" in doc
+    assert "operator's agents" in doc
+    assert "E8." not in doc

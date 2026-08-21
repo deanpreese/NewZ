@@ -15,15 +15,25 @@ it is the act the freeze exists to *require*, and E3.9's own words are
 **So the operator path is recorded rather than blocked**, and it carries an
 obligation. Changing a canonical instrument is precisely when a metric's meaning
 moves, which is E2.8's definition boundary: the series must end and the reason
-must be written down. A freeze that only said "no" to the loop would leave the
+must be written down. A freeze that only said "no" to an agent would leave the
 operator free to change a measurement while its series quietly continued across
 the change — the exact silent breakage E2.8 exists to prevent, arriving through
 the one door the freeze leaves open.
 
-**Nothing calls this yet, and that is stated rather than implied** (INV-044's
-discipline applied to a guard). E8.0's gate and E8.4's builder are its
-consumers; until they exist this is a check with a CLI and no automatic caller.
-A guard that looks enforced and is not is worse than no guard.
+**The constrained party is the operator's agents** (P4 E3A.4). This was written
+against a self-evolving loop and Phase 8 is struck; the sentence that justified
+it survives the strike unchanged, because it was never really about a loop — at
+n=1 with no held-out baseline, whatever is editing this repo cannot tell
+*improving the being* from *improving the instrument's view of the being*, and
+has a gradient toward the second because that is cheaper and always works. That
+is a true sentence about an agent in a session.
+
+**Nothing calls this automatically, and that is stated rather than implied**
+(INV-044's discipline applied to a guard). `tools/gate.py` runs `freeze_check
+--operator`, which lists and does not refuse, so the refusing mode has had no
+caller from the start — the strike revealed that rather than causing it. This is
+a check with a CLI, and a guard that looks enforced and is not is worse than no
+guard.
 """
 
 from __future__ import annotations
@@ -51,7 +61,17 @@ class Refusal:
 
 
 def refusals(paths) -> list[Refusal]:
-    """Which of these paths the loop may not touch, and why."""
+    """Which of these paths an agent may not touch, and why.
+
+    **The constrained party is not the loop and never really was** (P4 E3A.4).
+    §5.2's argument was written about a self-evolving loop: at n=1 with no
+    held-out baseline it cannot tell *improving the being* from *improving the
+    instrument's view of the being*, and it has a gradient toward the second
+    because that is cheaper and always works. Phase 8 is struck and that
+    sentence is still true — of an agent editing this repo in a session, at
+    speed, which is who actually edits it. The freeze keeps its job and gets an
+    honest actor.
+    """
     canonical = set(hard_core.canonical_paths())
     out: list[Refusal] = []
     for p in sorted({str(x).lstrip("./") for x in paths}):
@@ -59,8 +79,8 @@ def refusals(paths) -> list[Refusal]:
             continue
         if p in canonical:
             out.append(Refusal(p, (
-                "a canonical instrument. The loop steers by what this measures "
-                "and cannot tell improving the being from improving its own view "
+                "a canonical instrument. Whoever steers by what this measures "
+                "cannot tell improving the being from improving its own view "
                 "of the being — changing it is an operator act (E3.9)")))
         else:
             out.append(Refusal(p, (
@@ -69,8 +89,8 @@ def refusals(paths) -> list[Refusal]:
     return out
 
 
-def enforce(paths, *, actor: str = "loop") -> list[Refusal]:
-    """Refuse for the loop; record for the operator.
+def enforce(paths, *, actor: str = "agent") -> list[Refusal]:
+    """Refuse for an agent; record for the operator.
 
     The operator's path returns the same list rather than raising, because the
     obligation it carries is E2.8's: a changed instrument is a changed
@@ -79,9 +99,9 @@ def enforce(paths, *, actor: str = "loop") -> list[Refusal]:
     applies to.
     """
     found = refusals(paths)
-    if found and actor == "loop":
+    if found and actor != "operator":
         raise FrozenTouched(
-            "the loop may not change these:\n  "
+            "an agent may not change these:\n  "
             + "\n  ".join(str(f) for f in found)
             + "\n\nAn instrument changes when the operator changes it, and when "
               "they do, every metric it emits has a new definition (E2.8): bump "

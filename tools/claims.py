@@ -109,7 +109,7 @@ def _refusals(conn) -> int:
 
 def _s1e(conn, repo_root) -> int:
     try:
-        conn.execute("SELECT 1 FROM metric_readings LIMIT 1")
+        conn.execute("SELECT 1 FROM mon.metric_readings LIMIT 1")
     except sqlite3.OperationalError:
         print("\nmetric_readings does not exist in this store yet — it arrives"
               " with migration 0034, applied when the being next starts."

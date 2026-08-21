@@ -97,7 +97,7 @@ def _baseline(conn: sqlite3.Connection, metric: str, *, window_hours: float,
 
     try:
         row = conn.execute(
-            "SELECT ts, value FROM metric_readings WHERE metric=? AND status=?"
+            "SELECT ts, value FROM mon.metric_readings WHERE metric=? AND status=?"
             " AND definition_version=? AND ts <= ? ORDER BY ts DESC LIMIT 1",
             (metric, OK, version_of(metric),
              now - window_hours * 3600.0)).fetchone()
@@ -152,7 +152,7 @@ def take(conn: sqlite3.Connection, metric: str, value: float | None, *,
     from newz.evidence.definitions import version_of
 
     conn.execute(
-        "INSERT INTO metric_readings (ts, metric, status, value, window_hours,"
+        "INSERT INTO mon.metric_readings (ts, metric, status, value, window_hours,"
         " note, definition_version) VALUES (?,?,?,?,?,?,?)",
         (now or time.time(), metric, r.status, r.value, window_hours, r.note,
          version_of(metric)))
@@ -163,7 +163,7 @@ def take(conn: sqlite3.Connection, metric: str, value: float | None, *,
 def series(conn: sqlite3.Connection, metric: str, *, limit: int = 20) -> list[sqlite3.Row]:
     """Every reading, holes included — the point of keeping them."""
     return conn.execute(
-        "SELECT ts, status, value, window_hours, note FROM metric_readings"
+        "SELECT ts, status, value, window_hours, note FROM mon.metric_readings"
         " WHERE metric=? ORDER BY ts DESC LIMIT ?", (metric, limit)).fetchall()
 
 
@@ -250,7 +250,7 @@ class MetricScheduler:
         if _dt.datetime.fromtimestamp(now).hour < self._hour:
             return False
         row = conn.execute(
-            "SELECT MAX(ts) FROM metric_readings").fetchone()[0]
+            "SELECT MAX(ts) FROM mon.metric_readings").fetchone()[0]
         if row is None:
             return True
         return (_dt.datetime.fromtimestamp(row).date()

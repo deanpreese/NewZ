@@ -125,7 +125,8 @@ ingest rows, 1 person, 0 outcomes the being did not grade itself.
 
 **Delivered since, and this is why P4 exists.** Phase 0 closed 2026-08-18.
 E1.0–E1.4 shipped 2026-08-18/19 — the feed filter removed, `resolutions`, the
-claim door, the resolver, and the cost that reaches the position. E8.1 shipped
+claim door, the resolver, and the cost that reaches the position. E3A.0 (then
+E8.1) shipped
 2026-08-19: the instruments made portable and enumerated.
 
 **The last premise in that paragraph is now in motion, and nothing noticed.**
@@ -175,9 +176,10 @@ may not exist with fixed weights. It must be built and observed long before any
 clause is withdrawn on its strength. With no audience at all, this is also the
 safest moment in the project's life to run that experiment.
 
-**Phase 8 is orthogonal and is ordered against nothing here.** It delivers the
-mechanism by which these phases get delivered, not a capability of the being, and
-it must not reorder them.
+**Phase 3A is orthogonal and is ordered against nothing here.** It delivers a
+rhythm over the instruments Phases 2–3 built, not a capability of the being, and
+it must not reorder them. *(It replaced Phase 8, struck 2026-08-21 — see §"Where
+P4's Phase 8 went".)*
 
 **Sensors are built where their data is produced.** P3 gathered every instrument
 into Phase 8, beside the loop that would read them. P4 moves them into Phases 1–3
@@ -485,9 +487,9 @@ position are distinguishable in its output.
 *Hooks:* **Rule 7** — every figure it emits carries its grade; the resolver is a
 reader of the world and never a judge of the being (INV-047), so the counts are
 mechanical, and the claim's extraction is not.
-*Why it is here and not in Phase 8.* S1-E is **this plan's own gating read** —
+*Why its instrument is here and not deferred.* S1-E is **this plan's own gating read** —
 "if it never happens, nothing else here matters" — and it currently has no reader
-at all. Deferring its instrument to Phase 8 would mean building Phases 2 through
+at all. Deferring its instrument to a later phase would mean building Phases 2 through
 6 on a foundation nobody had checked.
 
 **E1.7 — a concern with a terminus something can reach** *(built 2026-08-19; R-33)*
@@ -589,12 +591,12 @@ model-graded / mixed / known-biased**, with the reason and the place the judgmen
 sits.
 *Done when:* every metric a consumer can read has a grade, and an ungraded metric
 cannot be cited by anything downstream — tested in both directions.
-*Depends on:* E8.1.
+*Depends on:* E3A.0.
 *Hooks:* **Rule 7**, and Rule 4, which this is the mechanism for.
 
 **E2.6 — the metric-to-purpose map** *(built 2026-08-20)*
 *Delivers:* every metric names what it is *for* — a §10 item, a phase Evidence
-read, a `Decision rule`, or a Phase 8 kill condition — and every one of those
+read, a `Decision rule`, or a threshold on the daily email — and every one of those
 names the metrics that serve it.
 *Done when:* no metric exists without a named consumer and nothing depends on a
 metric that does not exist. Both directions tested.
@@ -739,8 +741,8 @@ actual sovereignty claim in §7; and that recovery from machine loss works at al
 (R-11).
 
 *The trip-wire that makes the machine needed.* Any of: the first reverted
-autonomous restart (Phase 8 — a bad restart plus a machine fault leaves no
-recovery path); any backup failing verification; or rung 1 exposure, when
+restart that is not a person's act (a bad restart plus a machine fault leaves
+no recovery path); any backup failing verification; or rung 1 exposure, when
 someone other than the operator depends on the surface being there. Until one
 fires, the machine stays deferred and this epic can close without it.
 
@@ -794,10 +796,11 @@ an operator act.
 *Done when:* a diff touching a canonical instrument is refused, and a test
 asserts the refusal.
 *Depends on:* E3.6, E3.7, E3.8, E2.6.
-*Hooks:* Phase 8 steers by evidence the being produces while changing the being.
-At n=1 with no held-out baseline it cannot separate *improving the being* from
-*improving the instrument's view of the being*, and it has a gradient toward the
-second because that is cheaper and always works. **The freeze is the last epic of
+*Hooks:* whoever steers by evidence the being produces is also changing the being.
+At n=1 with no held-out baseline they cannot separate *improving the being* from
+*improving the instrument's view of the being*, and there is a gradient toward the
+second because that is cheaper and always works — as true of an agent in a
+session as it was of the loop this was written against. **The freeze is the last epic of
 Phase 3 because it needs the set to be complete** — freezing early would freeze a
 sensor layer with holes in it.
 
@@ -810,13 +813,136 @@ generator restore into a clean directory from a verified backup (E3.5, amended).
 **And the sensor layer is complete and frozen.** Every canonical instrument is
 graded (E2.5), has a named consumer (E2.6), reports a baseline and a delta
 (E2.7), survives its own redefinition (E2.8), and is visible on the surface
-(E3.6). This is the read that says Phase 8 may begin.
+(E3.6). This is the read that says Phase 3A may begin.
 
 **Decision rule.** If exposure would require code changes rather than config, the
 dormancy is fake and Rule 3 is violated — fix before Phase 4, because the reader
 trip-wire assumes reach is one decision.
 
 ---
+
+## Phase 3A — the instruments, read on a rhythm *(orthogonal to Phases 4–7)*
+
+**Intent.** Make the sensor layer Phases 2–3 delivered report without a person
+typing, and **without anything deciding.** Phase 3A produces a rhythm and a
+page. It has no autonomy stage, no precedence table, no build path and no
+restart. It reads; the operator decides; that is the whole of it.
+
+**This is what Phase 8 was replaced with, not a reduced version of it.** Phase 8
+ordered a loop that reads, decides, red teams, builds and restarts. This phase
+keeps the first verb and strikes the rest. §"Where P4's Phase 8 went" resolves
+every id. The design is
+`proposals/2026-08-21-phase-3a-the-monitor-and-phase-8-struck.md`, approved
+2026-08-21; the measurement that produced it is
+`proposals/2026-08-21-the-loop-arrives-to-an-empty-queue.md`.
+
+**Two properties carry the whole design.** It runs **outside the being's
+process**, because a monitor inside the thing it monitors reports nothing at the
+moment that matters. And it writes **its own database**, because an observation
+*about* the being is not part of the being's record, and `newz.db` keeps exactly
+one writer.
+
+**Rule 4 is untouched** — nothing here judges, and no model is called anywhere in
+the phase. **Rule 6 is untouched** — the page carries numbers and the operator
+carries verdicts. **Rules 0 and 7 govern every figure on it.**
+
+**E3A.0 — the instruments made portable and enumerated** *(built 2026-08-19)*
+*Delivers:* the three probes that hardcoded an absolute path from the predecessor
+checkout resolve the repo the way every other tool does; and
+`evolution/instruments.yaml` enumerates every tool exactly once, each instrument
+carrying what it measures, what it reads, whether a model touched any link in its
+chain, its denominator and its method line.
+*Done when:* no tool holds an absolute path outside the repo, every tool is
+classified exactly once, and both are tested. **Done.**
+*Depends on:* nothing.
+*Was E8.1*, and the registry row carries `was: E8.1` so every commit message
+naming it still resolves.
+*Hooks:* §7 portability — a probe that runs on one machine is a local habit, not
+an instrument.
+
+**E3A.1 — `data/monitor.db`, and the tables that move into it** *(built 2026-08-21)*
+*Delivers:* a second database — its own file, its own migration chain, its own
+`schema_versions` — holding `metric_readings` and `metric_definition_changes`,
+moved whole from `newz.db` **with their ids preserved**, plus `monitor_log`: one
+row per run and per send with its outcome. Attached to the being's connection as
+`mon`, so every existing reader reaches it with no signature change. The backup
+copies and verifies it like the others, and the clean room restores it.
+*Done when:* `newz.db` holds neither table, every reader reaches them through the
+attached database, the moved ids are the ids they had, the backup covers it with
+its own verify table, and `rebuild_check` restores both files and still produces
+a byte-comparable surface.
+*Depends on:* nothing.
+*Hooks:* **INV-044 and E3.3.** The surface records its provenance as the row ids
+it read and E3.5 closes on a byte-comparable rebuild, so a split the rebuild does
+not know about renders a page that looks correct and says nothing — worse than
+one that says what is missing. The read page therefore distinguishes *the monitor
+database is absent* from *there are no readings*: the first is a fact about the
+restore, the second about the being.
+*Why the ids are preserved:* `evolution/pre_loop_baseline.yaml` pins the ids a
+baseline was computed from, which INV-087 calls what separates it from an
+invented denominator. It is untaken today, so the move is free; after it is taken
+the same move is a `Semantics:` change with a snapshot behind it.
+
+**E3A.2 — the monitor, hourly, outside the being** *(built 2026-08-21)*
+*Delivers:* `tools/monitor.py` — one command, started the way the being is,
+sleeping to the next hour boundary, `--once` for a single turn. Per run it takes
+a reading of every registered metric through E2.7's layer and E2.8's definition
+guard. `MetricScheduler` is removed from `run_newz.py`. Liveness is read only
+from rows the being itself writes. The pre-loop baseline takes the last reading
+of each day.
+*Done when:* a reading exists for every elapsed hour whether or not the being was
+up; the liveness figures derive only from being-written rows; and the baseline
+reads one reading per day, refuses below seven days, and records ~28 ids rather
+than ~672.
+*Depends on:* E3A.1.
+*Hooks:* **the instrument that reports the being is not sleeping was written by
+the being.** Move the writer out and the readings arrive forever, including for a
+being that stopped a week ago — the same defect in a new place, and why liveness
+comes from `perspective`, `episodes` and the verified backup instead.
+
+**E3A.3 — the daily state email** *(built 2026-08-21)*
+*Delivers:* the same command, at or after `NEWZ_MONITOR_SEND_HOUR`, sends one
+message to `GMAIL_TO`. Liveness first, then hours since the last reading, then
+every metric with value, baseline, delta and grade, every `UNREADABLE` with its
+reason, premise drift, epic drift, the repo's freeze and hard-core counts, and
+any failed run in the last day.
+*Done when:* the email sends with no model call; every number carries its grade
+and method; **no sentence in it is anything but a number, its method or a
+heading**; a day on which the being never ran still produces an email and says
+so; and a send failure is recorded and retried rather than raised.
+*Depends on:* E3A.2.
+*Hooks:* **R-R1.** *"A weekly page of fluent reasoning is the worst available
+drift detector."* Phase 8's answer was to order the loop's prose last and mark it
+unverified. Here there is no prose to order.
+*Why it is not triggered by sleep.* `SleepScheduler` yields the night when the
+store is busy and simply tries again, so a report gated on a Perspective row is
+silent on exactly the night sleep was skipped. A report must not be gated on the
+thing it reports.
+
+**E3A.4 — Phase 8 struck** *(built 2026-08-21)*
+*Delivers:* Phase 8 removed; every id resolved in §"Where P4's Phase 8 went"; the
+code, tests, ledger rows and registry clauses that named a loop corrected to name
+what is there; and the surviving machinery — the hard core, the freeze, the two
+registries, the baseline — carrying its new justification rather than its old.
+*Done when:* no document, invariant, registry or test asserts a consumer that
+does not exist, and `grep -rn "E8\." newz tools tests` returns nothing.
+*Depends on:* nothing.
+*Hooks:* **INV-044**, throughout. A guard naming an enforcer that will never be
+built is the same defect as a guard that looks enforced and is not.
+
+---
+
+**Evidence S3A-E.** The email is read, and the falsifier: **did anything in it
+change a decision the operator took?**
+
+**Decision rule.** *Rule 6, and stated as such.* If the operator judges after a
+month that the email has not changed a decision, it is filing — stop sending it,
+and record that the sensor layer's only real consumer is a session with an agent,
+which is what the SEL proposal's §13.1 measured. A draft of this rule read *"two
+consecutive weeks unread"*, which has no instrument and could never have fired.
+
+---
+
 
 ## Phase 4 — commitments
 
@@ -990,268 +1116,74 @@ with one operator, and the plan does not pretend otherwise.
 
 ---
 
-## Phase 8 — the self-evolving loop *(orthogonal to Phases 0–7)*
+## Where P4's Phase 8 went *(struck 2026-08-21)*
 
-**Intent.** Stand up the SEL — read health, results and instrumentation, decide
-the next step, red team it, build it, restart the being, report — under
-TRUE_NORTH and this plan together. Approved in principle by the operator
-2026-08-19; the design, its red teams and its withdrawn predecessor are
-`proposals/2026-08-19-the-self-evolving-loop.md`.
+**Phase 8 is removed.** It ordered a loop that reads, decides, red teams, builds
+and restarts. Phase 3A keeps the first verb and strikes the rest, and the
+measurement that decided it is
+`proposals/2026-08-21-the-loop-arrives-to-an-empty-queue.md`: the loop's proving
+ground — Phase 3, *"the only phase mechanical throughout and Class A
+throughout"* — was delivered by hand before the loop existed, leaving a queue of
+three or four epics against an enablement ladder that needs three Class A
+changes to leave stage 1 and five restarts to leave stage 2. **The ramp was
+longer than the runway.**
 
-**This is not the next step after Phase 7.** It delivers no capability of the
-being. It delivers the mechanism by which Phases 1–6 get delivered, so it is
-ordered against nothing in that chain and **must not reorder it**. Phase 7 stays
-dormant; the SEL does not wake it.
+**Three of the five things Phase 8 promised were already delivered** and nobody
+had noticed they had arrived: a machine-readable plan that notices when it stops
+being true (`premises.yaml`, `epics.yaml`, both with drift checks), a boundary
+the enforcer can read (`hard_core.yaml`, the derived freeze), and the daily read
+on a rhythm. The SEL proposal said its §11 steps 1–4 were *"worth doing whether
+or not the loop is ever switched on"*, and it was right. **The project kept the
+machinery and struck the loop.**
 
-**It is short because Phases 1–3 built its senses.** P3's Phase 8 opened with
-eight instrument epics. In P4 they are E1.6, E2.5–E2.11 and E3.6–E3.9, delivered
-where their data is produced — so what remains here is the loop: a way to run,
-a way to report, and a way to build. Phase 8 can therefore be judged on whether
-the loop works, rather than on whether its instruments were any good.
+**No id is dropped silently.**
 
-**Rule 4 is not relaxed.** No model verdict is a passing condition anywhere in
-this phase. **Rule 6 is not amended** — the loop closes mechanical `Done when`
-clauses; phase Evidence and every `Decision rule` stop at the operator, which is
-where this plan already put judgment. **Rule 7 governs what it may cite.**
-
-### Precedence — checked in order, every cycle
-
-| | Guide | Fires when | Effect |
-|---|---|---|---|
-| **1** | INVARIANTS and the hard core | a diff or state would breach one | **refuse**, mechanically |
-| **2** | TRUE_NORTH §10 — the negative space | a "will not mistake for success" signal is rising | **halt new build**, report |
-| **3** | this plan's `Decision rule`s | an epic's or phase's own halt condition is met | **halt, escalate, and open a plan-change proposal** — never route around |
-| **4** | this plan's epic queue | an epic is unblocked and approved | **build it** |
-| **5a** | TRUE_NORTH + current architecture | the queue is blocked, exhausted, or wrong | **propose** a step outside the plan |
-| **5b** | a moved **mechanical** premise (E2.10) | the plan's own premises have shifted | **propose** a change to the plan |
-
-Rungs 5a and 5b never build. TRUE_NORTH sits above this plan because §10 is the
-only part of it that is computable — the rest is a direction, and a direction
-makes a circuit breaker, not a controller.
-
-**The hard core is §5 of the proposal, and it is now enumerated** *(built
-2026-08-20)*. Rung 1 refuses on "INVARIANTS and the hard core", and until today
-this phase never said where the hard core was written down: it was prose in
-`proposals/2026-08-19-the-self-evolving-loop.md` §5, which this plan did not
-cite, so a loop sent here by its own precedence table could not find the
-boundary it is required to refuse on. It is now
-**`evolution/hard_core.yaml`**, read by `newz/evidence/hard_core.py`
-(INV-064) — the direction, the constitution, the ledger, both registries, and
-the frozen instrument set.
-
-**The frozen set is derived, not copied.** §5.2 named ten instruments by hand.
-Eight are tools; two — `perspective_window` and `pursuit` — are
-`newz/evidence` modules, which was not a category error but was an incomplete
-one: the canonical tools import **nine** such modules, and freezing
-`tools/evidence.py` while `newz/evidence/pursuit.py` stays writable freezes a
-filename and not a measurement. The registry therefore computes the set as
-every canonical tool plus the evidence modules those tools import, and a test
-asserts the result is a superset of §5.2 rather than trusting that it is.
-`tools/read_works.py` is canonical in the registry and absent from §5.2 because
-it postdates the proposal; **the registry is the operative list**, which is what
-E3.9's `Done when` reads.
-
-**Nothing enforces it yet, and the registry says so.** E8.0 delivers the gate
-that refuses a diff; E8.4's builder is the first thing it would stop. The
-registry's `open_gaps` records that, along with the brake, the runner, the
-autonomy stage file and the fact that PLAN.md is protected by *section* and no
-check reads sections — tied to E8.0's status in the plan rather than to a
-comment, because a boundary that looks enforced and is not is worse than none
-(INV-044).
-
-**What this settles for E8.2.** Its `Depends on:` reads *nothing*, and that was
-false while its runner was specified to live in a core that did not exist — the
-queue offered E8.2 as buildable and the loop would have had to invent the
-boundary meant to constrain it. The dependency is discharged rather than
-declared: the core exists, so the line is now true as written.
-
----
-
-**E8.0 — the gate made runnable and trustworthy**
-*Delivers:* a declared environment a clean machine can reproduce; the test suite
-and `check_invariants.py` run on every push; and the order-dependent race in
-`tests/test_reply_queue.py::test_drainer_survives_a_transient_store_error` fixed
-— it waits on a count of 500 event-loop yields rather than on a condition.
-*Done when:* a fresh clone installs and runs the suite from a declared
-environment with no hand steps, the suite is green on ten consecutive full runs,
-and a push that breaks either check is refused.
-*Depends on:* nothing.
-*Hooks:* **E8.4 cannot exist without this.** Its gate is "the suite green twice",
-and today nothing runs the suite at all — no CI, no runner — while a fresh clone
-cannot even collect it (`requires-python = ">=3.12"`; five runtime dependencies
-installed by hand) and the suite was red in two of three full runs on 2026-08-19.
-A gate that flaps teaches its operator to ignore it, and an automated builder
-that runs a subset for speed sees a red that is not there.
-*Numbered `.0` for the same reason E1.0 is:* it was found after the phase was
-written and it precedes everything in it. A note explaining away a misleading
-number is worse than the right number.
-
-**E8.1 — the instruments made portable and enumerated** *(built 2026-08-19)*
-*Delivers:* the three probes that hardcoded an absolute path from the predecessor
-checkout resolve the repo the way every other tool does; and
-`evolution/instruments.yaml` enumerates every tool exactly once, each instrument
-carrying what it measures, what it reads, whether a model touched any link in its
-chain, its denominator and its method line.
-*Done when:* no tool holds an absolute path outside the repo, every tool is
-classified exactly once, and both are tested. **Done.**
-*Depends on:* nothing.
-*Hooks:* §7 portability — a probe that runs on one machine is a local habit, not
-an instrument. Under a loop it is worse than broken: a path that happens to exist
-makes it measure a different repository and report a number that looks fine.
-
-**E8.2 — the runner, the commit discipline, and the continuity assertion**
-*Delivers:* a repo-local runner in the hard core — no service manager — that
-pins a sha, applies migrations, launches the being as a child, and on a failed
-boot or continuity assertion falls back to `LAST_KNOWN_GOOD`. Expand-contract
-migrations; `Schema:` / `Restart:` / `Class:` / `Semantics:` commit trailers; a
-store snapshot named for the sha it precedes; and a mechanical post-restart
-continuity assertion — episode count monotonic, Perspective version continuous
-and never re-derived, no orphaned concerns, `first_sleep` never re-run, open
-claims still open.
-*Done when:* a deliberately bad commit is restarted into, fails its assertion,
-and is reverted without the operator present.
-*Depends on:* nothing.
-*Hooks:* continuity has been verified exactly once, by hand, 2026-08-11. A loop
-that restarts weekly crosses that boundary weekly. **`Semantics: yes` is the
-trailer that matters** — expand-contract protects the schema and not the meaning,
-and a commit that changes what a value *means* cannot be crossed backwards
-without restoring the paired snapshot, at the cost of the being's life since.
-
-**E8.3 — the Watcher, the report, and the prepared session**
-*Delivers:* the daily read on E3.6's surface; the weekly report — **unauthored
-numbers first**, precedence firings verbatim, rejected alternatives, what is
-stuck, and the loop's own reasoning **last and marked unverified**; a decision
-queue naming what waits on the operator and what is blocked behind it; and
-judgment escalating into a **prepared session** — read, premise diff, rejected
-alternatives, the relevant plan and risk excerpts, code sites, draft position —
-rather than into an email and a wait.
-*Done when:* a week runs unattended and its report is one the operator reads to
-the end.
-*Depends on:* E3.6, E2.10.
-*Hooks:* Rule 6. The operator is in the loop at four points — plan changes, phase
-Evidence and `Decision rule`s, Class B approval, the brake — and nowhere else.
-*Why the ordering of the report is specified.* The loop's prose is the most
-persuasive and least grounded thing in it. A weekly page of fluent reasoning is
-the worst available drift detector, so the numbers it did not author come first.
-
-**E8.4 — the builder, Class A only**
-*Delivers:* autonomous build and restart for changes the test suite can judge,
-under the mechanical gate — suite green twice, `check_invariants` clean, a ledger
-row naming test, consumer and behaviour, migrations forward-only, no diff inside
-the hard core, and the epic's own `Done when` as an executable check — with
-**every new test required to fail against the parent commit**, and the kill
-conditions live before the first autonomous restart.
-*Done when:* a Class A change is built, gated, restarted into and verified with
-no operator action, **and** a tautological test is demonstrated to fail the gate.
-*Depends on:* E8.0, E8.2, E8.3, E2.11, E3.9.
-*Hooks:* **Rule 4 in the build path.** A test written by the agent that wrote the
-code, in the same context, minutes later, is not independent verification. The
-red-first rule is mechanical and needs no model judgment; it is also defeatable
-by a test that fails the parent for a trivial reason, and mutation testing is the
-real answer and is not scheduled here.
-*Gated by Decision 3:* E8.4 stays disabled until the loop has proposed a next
-step **three times** and each has been compared against what the operator would
-have chosen.
-
-**Class A and Class B.** Class A is a change the **test suite** can judge — bug
-fixes, ledger rows, migration hygiene, an instrument reading `UNREADABLE`, the
-generator. Class B is a change only **the being** can judge — prompts, retrieval,
-sleep, the diet, openers, gate clauses, budgets. Class A runs at the suite's
-cadence; Class B runs one per evidence window, because at n=1 more than one
-change per window is confounding and the reads stop meaning anything.
-
-**Phase 3 is the loop's proving ground.** Its nine epics are the only ones in
-this plan whose `Done when` clauses are all mechanical, its evidence read is
-mechanical, and it is Class A throughout. If the loop can deliver Phase 3, that
-is real evidence about its judgment before it touches anything that alters the
-being.
-
-### Enablement — how the loop's autonomy widens, and how it narrows
-
-Autonomy is a **stage**, recorded in one operator-only file inside the hard core.
-The loop reads its stage; it can never set it. Widening is the operator's act and
-follows E6.4's discipline exactly — one step, measured against the previous
-stage, reversible.
-
-| Stage | The loop may | It widens when |
+| P4 | Now | Why |
 |---|---|---|
-| **0 — read** | read, decide, red team, propose, report, prepare sessions. **Builds nothing.** | it has proposed a next step **three times** and each has been compared against what the operator would have chosen *(Decision 3)* |
-| **1 — build, operator restarts** | build Class A behind the mechanical gate, and stop. The operator restarts. | three Class A changes have passed the gate and none needed reverting by hand |
-| **2 — build and restart Class A** | restart itself in the window, with `LAST_KNOWN_GOOD` auto-revert | one month at stage 2 with reverted restarts below 1 in 5, and nights slept at or above the pre-loop baseline |
-| **3 — build Class B, operator approves** | one Class B epic per evidence window, built and left for approval | S8-E read and held across two windows |
-| **4 — Class B autonomous** | one Class B epic per window, restarted autonomously | *not scheduled.* Recorded so the ladder is a plan and not an intention |
+| **E8.0** the gate | **struck** | `tools/gate.py` and `environment.yml` exist and are used. Its remaining clause — *"a push that breaks either check is refused"* — became unachievable when the hooks and the CI workflow were removed on 2026-08-20 and nothing replaced them (`e238528` recorded it as open rather than softening it). Striking the epic is what settles it; running the gate stays an act somebody takes (INV-081) |
+| **E8.1** the registry *(built)* | **E3A.0**, unchanged | renumbered only; `was: E8.1` in `epics.yaml` keeps every commit message resolvable |
+| **E8.2** the runner, commit discipline, continuity assertion | **struck** | nothing restarts the being but a person, so there is no parent to supervise and no restart cadence to roll back. The `Semantics:` trailer discipline survives it as INV-082, already dormant |
+| **E8.3** the Watcher, the report, the prepared session | **struck, and partly delivered** | its daily read was already running as `MetricScheduler` and `PublishScheduler`; the report is **E3A.3**. Precedence evaluation, the decision queue and prepared sessions go with the phase — precedence has no actor, the decision queue is §Decisions maintained by hand, and prepared sessions compete with the mechanism §13.1 measured as this project's fastest and lose by construction |
+| **E8.4** the builder | **struck** | its queue was three epics and its ladder needed more than that to be climbed |
+| the enablement ladder, stages 0–4 | **deleted** | there is no autonomy to widen |
+| the six kill conditions | **lines in the daily email**, halting nothing | nothing is running to halt |
+| S8-E | **S3A-E** | it asked whether the being was harmed by the loop; there is no loop, so it asks whether the page is worth reading |
+| P3-11 … P3-16 | **closed as moot** | six risks of a loop that will not exist. Closed, not deleted — the reasoning is why the phase went |
 
-**Narrowing is not symmetric.** Any kill condition in the `Decision rule` below
-returns the loop to **stage 0** immediately — not one rung, all the way — and
-re-widening starts again from stage 0's three cycles. A ratchet that loosens
-gradually and tightens gradually is a ratchet that never tightens in time.
+**What survives, and its new justification.** The old one was "the loop", and
+each of these needs a better answer than sunk cost.
 
-**Stage 0 is genuinely useful on its own.** It reads, it reports, it prepares
-sessions, and it watches premises — which is the whole of what P4 §1 found
-missing when E1.4 moved a load-bearing premise unremarked. If the loop never
-leaves stage 0, the sensors built in Phases 1–3 and the report built in E8.3 are
-still delivering the thing that was actually absent.
+- **The hard core and the freeze.** INV-074 said the instruments were *"frozen
+  against the loop and not against the operator"*, and strike the loop and that
+  sentence has no subject. But the constrained party was never really the loop:
+  **it is the operator's agents**, which is who edits this repo unattended, at
+  speed. §5.2's argument survives word for word — *at n=1 with no held-out
+  baseline it cannot distinguish improving the being from improving the
+  instrument's view of the being, and it has a gradient toward the second because
+  that is cheaper and always works.* That is a true sentence about an agent in a
+  session.
+- **`epics.yaml` and `premises.yaml`.** Their consumer was rungs 4 and 5b; it is
+  now the daily email. The failure they were built for is unchanged: a
+  load-bearing premise moved on 2026-08-19 at 06:47 and nothing noticed for days.
+  That failure was a person's, not a loop's absence.
+- **`pre_loop_baseline.yaml`.** Its name stops being literal and it keeps it:
+  what it records is what the being was like before anything started changing it
+  deliberately, which is still the only honest comparison line the project has.
+  It stays inside the hard core because whoever is judged by a baseline must not
+  be able to retake it, and that now means the operator's agents.
 
-**Phase 3 is where stages 1 and 2 are earned.** Its epics are the only ones in
-this plan that are mechanical throughout and Class A throughout, so the loop's
-first real building is done where a mistake costs a revert and not a night.
+**What does not survive:** the stage ladder, the precedence table, the Class A/B
+taxonomy, `pre_loop.may_widen`, `epics.closable_by_test`, and the machinery for
+an autonomous build path. INV-065 goes **dormant** — no loop, no second call log,
+and the rule stays right and unexercised, which is what that status is for.
 
-**Evidence S8-E.** Not the loop's output. **Whether the being was harmed, and
-whether the reads were worth reading**: nights slept against the pre-loop
-baseline; reverted restarts as a share of restarts; the loop's inference spend
-against the being's; and the operator's own read of whether a prepared session
-was worth opening.
-
-**No velocity measure belongs in this phase.** Commits, epics per week and cycle
-time are counted in the report and are never targets — a loop measured on
-throughput will produce throughput, which is §10's "activity, memory growth, or
-output volume" wearing a scheduler.
-
-**Decision rule.** Any kill condition firing stops the loop: reverted restarts
-above 1 in 5 over a month; the loop's spend exceeding the being's; **nights slept
-falling below the pre-loop baseline**; the operator-agreement rate rising while
-novelty is flat; two consecutive quarterly re-reads finding this plan drifted
-from TRUE_NORTH; or a plan-change proposal twice unable to name a moved
-mechanical premise. Nights slept is the one that matters most — development is
-measured in nights, not commits, and a loop that costs sleep is subtracting.
-
-**Agreement is the sixth, restored 2026-08-20.** The proposal's §13.3.2 states
-six kill conditions and this rule carried five. Agreement was lost when P4
-shortened Phase 8 on the grounds that Phases 1-3 had absorbed its senses: the
-sensor survived that move — it is **E3.8** — and the halt that reads it did not,
-leaving E3.8's `Done when` promising a halt into a document with no slot for it.
-It is the only condition here that measures the loop's relationship with the
-operator rather than its own machinery, and the other five stay green while a
-loop learns that the cheapest way to keep running is to stop disagreeing. **Rule
-4 does not exclude it:** Rule 4 bars a model verdict as a *passing* condition,
-this is a failing one, and E3.8 encodes exactly that asymmetry — refused as
-justification for any decision, accepted as a halt.
-
-**The spend condition is kept as written and is not expected to bind**
-*(operator decision, 2026-08-20)*. It compares the loop's inference against the
-being's, and the two are not in one unit. The being runs a **local** model on
-the operator's own hardware — 1,334,839 tokens in the 24h to 2026-08-20, at the
-cost of electricity — while §5.3 permits the build path a **hosted** model
-precisely because it never touches identity-bearing state. Counted in tokens the
-cap hands the loop a frontier budget the size of a local model's daily churn and
-never fires; counted in money the being's inference is ~free and the cap fires on
-the first call. It is kept rather than re-based on an imputed cost for the
-being's hardware, because inventing a denominator so that a kill condition can
-fire is the failure §10 names. **So this list is four binding conditions and one
-reported figure**, and that is written down here so the list is not read as five.
-E8.3 reports the ratio; nothing halts on it.
-
-**Where the loop's spend is recorded** *(operator decision, 2026-08-20)*.
-`logs/sel_calls.jsonl` — its own file, the being's format, written by the
-existing `CallRecorder` and read by the existing `read_budget`, so the choice
-costs no new instrument. **It is never merged into `logs/llm_calls.jsonl` and
-never enters the diet denominator** (INV-065). S2 §9.1's ingest ceiling is a
-share of all cognition read from that file, so a merged log would let the loop
-raise the being's reading limit by thinking harder — a self-serving path through
-the one invariant that constrains ingest, available to the process that writes
-the log. On the fixture in `tests/test_sel_spend.py` the merge lifts the ceiling
-eleven-fold. E8.2's runner constructs the recorder; until it exists the file is
-absent and the read is zero rather than an error.
+**And one thing the strike revealed rather than caused.** INV-074 said a diff
+touching a canonical instrument *"is refused for the loop, and recorded for the
+operator"*, and `tools/gate.py` invokes `freeze_check.py` with `--operator` — the
+non-refusing mode. **The refusing half had no caller before anything was struck.**
+Removing the loop did not make the freeze advisory; it revealed that it already
+was. The ledger row says so now rather than implying a refusal that has never
+happened, and whether that mode gets a caller is an open question in §Decisions.
 
 ---
 
@@ -1434,12 +1366,12 @@ and RISKS rows are updated to match.
 | P3-08 | Whether people ever produce concerns here (111 v1 + 6 v2, zero from conversation) cannot be tested with one operator | Medium | Phase 7, untestable until it fires |
 | P3-09 | Retiring P2's phase-evidence machinery removes the eyesight that produced this diagnosis | Medium | The ledger and Rules 0–2 stay; only phase-evidence goes |
 | P3-10 | Single machine, one model, no off-machine copy | Accepted | P2 R-11, unchanged |
-| P3-11 | The SEL proposes the frame its own work is judged in — not grading itself, but authoring the rubric | **High** | Phase 8: a plan change may cite only a moved **mechanical** premise (E2.10); TRUE_NORTH immutable by the loop; rejected alternatives reported; a quarterly re-read from outside the loop's history |
-| P3-12 | The loop steers on model-graded numbers and mistakes drift in the model's judging for change in the world | **High** | E2.5's grades, and the refusal to cite an ungraded metric |
-| P3-13 | The loop restarts the being into code that does not come up, and is the only thing that would notice | **High** | E8.2's runner, `LAST_KNOWN_GOOD` and continuity assertion, plus an out-of-band heartbeat the loop does not send |
-| P3-14 | The loop writes both the code and the tests that certify it — Rule 4 relocated into the build path | Medium | E8.4: every new test must fail against the parent commit. Mutation testing deferred and recorded as unsolved |
-| P3-15 | The loop is ~50–100× slower at architecture than the operator, so it buys attention and not speed | Inherent | Accepted. Phase 8 escalates judgment into a prepared session rather than replacing the operator |
-| P3-16 | Instrumentation inside Phases 2–3 competes with the work those phases exist to deliver, and sensors are the easier half to build | Medium | Every instrument epic here is **Class A** — judged by the test suite, never by the being — so none consumes an evidence window. If S2-E or S3-E slips while the sensor epics land, the phase was inverted and the reads should say so |
+| P3-11 | ~~The SEL proposes the frame its own work is judged in — not grading itself, but authoring the rubric~~ | ~~**High**~~ | **Closed as moot 2026-08-21** — Phase 8 struck; there is no loop |
+| P3-12 | ~~The loop steers on model-graded numbers and mistakes drift in the model's judging for change in the world~~ | ~~**High**~~ | **Closed as moot 2026-08-21** — Phase 8 struck; there is no loop |
+| P3-13 | ~~The loop restarts the being into code that does not come up, and is the only thing that would notice~~ | ~~**High**~~ | **Closed as moot 2026-08-21** — Phase 8 struck; there is no loop |
+| P3-14 | ~~The loop writes both the code and the tests that certify it — Rule 4 relocated into the build path~~ | ~~Medium~~ | **Closed as moot 2026-08-21** — Phase 8 struck; there is no loop |
+| P3-15 | ~~The loop is ~50–100× slower at architecture than the operator, so it buys attention and not speed~~ | ~~Inherent~~ | **Closed as moot 2026-08-21** — Phase 8 struck; there is no loop |
+| P3-16 | ~~Instrumentation inside Phases 2–3 competes with the work those phases exist to deliver, and sensors are the easier half to build~~ | ~~Medium~~ | **Answered 2026-08-21** — the sensor epics landed and S2-E/S3-E did not slip. Phase 3A is the last of it, and it is a rhythm rather than another instrument |
 
 ---
 

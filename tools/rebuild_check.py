@@ -30,6 +30,7 @@ def main() -> int:
         return 2
 
     print(f"restored   {r.source.name}")
+    print(f"monitor    {r.monitor or 'NONE — the read page will say so'}")
     print(f"rebuilt    {r.pages} file(s), from a different working directory")
     print(f"identical  {len(r.identical)} of {r.pages}")
     for name in r.differing:

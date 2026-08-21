@@ -94,13 +94,22 @@ def test_plan_is_section_protected_and_says_nothing_checks_it():
                for g in hard_core.open_gaps())
 
 
-def test_the_registry_admits_it_is_unenforced_while_e8_0_is_open():
-    """The honesty clause, tied to the plan rather than to a comment: while the
-    gate is unbuilt, the registry must still say nothing enforces it."""
-    if epics.epics()["E8.0"]["status"] != "built":
-        assert any("enforc" in g["what"] or "enforc" in g["detail"]
-                   for g in hard_core.open_gaps()), \
-            "E8.0 is not built and the registry no longer records that nothing enforces it"
+def test_the_registry_says_plainly_that_nothing_refuses_a_diff():
+    """The honesty clause, after Phase 8 was struck (P4 E3A.4).
+
+    It used to be tied to E8.0's status — *unenforced until the gate is built*.
+    There is no gate coming: `tools/gate.py` runs `freeze_check --operator`,
+    the non-refusing mode, so the refusing half has had no caller from the
+    start. Behavior: the registry records that as a standing fact rather than
+    as a pending epic, because a boundary that looks enforced and is not is
+    worse than none (INV-044)."""
+    assert "E8.0" not in epics.epics()
+    gaps = hard_core.open_gaps()
+    enforcement = [g for g in gaps
+                   if "enforc" in g["what"] or "enforc" in g["detail"]]
+    assert enforcement, "the registry no longer records that nothing refuses a diff"
+    assert not any("E8." in g["detail"] for g in gaps), \
+        "a gap still waits on an epic that was struck"
 
 
 def test_the_registry_is_valid_yaml_with_reasons_on_every_path():

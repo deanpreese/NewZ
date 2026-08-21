@@ -370,17 +370,28 @@ def _read(conn: sqlite3.Connection, m: Manifest) -> str:
 
     try:
         latest = list(conn.execute(
-            "SELECT r.* FROM metric_readings r JOIN (SELECT metric, MAX(ts) t"
-            " FROM metric_readings GROUP BY metric) x"
+            "SELECT r.* FROM mon.metric_readings r JOIN (SELECT metric, MAX(ts) t"
+            " FROM mon.metric_readings GROUP BY metric) x"
             " ON x.metric = r.metric AND x.t = r.ts ORDER BY r.metric"))
     except sqlite3.OperationalError:
-        return ("<h1>The read</h1>\n<p class=dim>No readings yet — the nightly "
-                "cadence records them, and this store has not taken the "
+        # F4: a page that looks correct and is wrong is worse than a page that
+        # says what is missing. *The monitor database is not here* is a fact
+        # about the restore; *there are no readings* is a fact about the being,
+        # and rendering the first as the second is how E3.5's rebuild would
+        # have silently produced an empty read (INV-044).
+        from newz.store.db import MONITOR_NAME, monitor_attached
+        if not monitor_attached(conn):
+            return ("<h1>The read</h1>\n<p class=dim>UNREADABLE — the monitor "
+                    f"database is not attached to this connection. {MONITOR_NAME} "
+                    "holds the readings and sits beside the store; this is a "
+                    "fact about the restore, not about the being.</p>")
+        return ("<h1>The read</h1>\n<p class=dim>No readings yet — the hourly "
+                "cadence records them, and this database has not taken the "
                 "migration that holds them.</p>")
     m.record("read", "metric_readings", [r["id"] for r in latest])
     if not latest:
         return ("<h1>The read</h1>\n<p class=dim>No readings recorded yet. "
-                "The cadence writes one of each a night.</p>")
+                "The cadence writes one of each an hour.</p>")
 
     out = ["<h1>The read</h1>",
            "<p class=dim>What the instruments say, as of the last nightly "
@@ -401,7 +412,7 @@ def _read(conn: sqlite3.Connection, m: Manifest) -> str:
                        f"<span class=dim>{_e(r['note'])}</span></p>")
             continue
         base = conn.execute(
-            "SELECT value FROM metric_readings WHERE metric=? AND status='ok'"
+            "SELECT value FROM mon.metric_readings WHERE metric=? AND status='ok'"
             " AND definition_version=? AND ts <= ? ORDER BY ts DESC LIMIT 1",
             (r["metric"], r["definition_version"],
              r["ts"] - r["window_hours"] * 3600.0)).fetchone()
