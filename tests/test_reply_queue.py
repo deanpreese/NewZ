@@ -82,6 +82,25 @@ def test_burst_coalesces_into_one_reply(store):
     assert statuses == ["replied"] * 3
 
 
+def test_the_batch_a_reply_answered_is_recorded(store):
+    """R-37d's writer. Behavior: the drainer knows which messages one reply
+    answered, and it is the only place that knows — an instrument
+    reconstructing it from timestamps counts one reply as three exchanges."""
+    for i, text in enumerate(["first thought", "wait, also this", "and one more"]):
+        record_message(store, channel="telegram", direction="in", person_id="dean",
+                       content=text, update_id=20 + i, reply_status="pending",
+                       tg_message_id=200 + i)
+    llm = FakeLLM([("VOICE", "One answer to all three."), ("AMBIENT", CLEAN)])
+    loop = _loop(store, llm, FakeChannel())
+    asyncio.run(loop._work_batch(_pending_rows(store)))
+
+    out_id = store.execute(
+        "SELECT id FROM messages WHERE direction='out'").fetchone()[0]
+    answered = [r[0] for r in store.execute(
+        "SELECT answered_by FROM messages WHERE direction='in' ORDER BY id")]
+    assert answered == [out_id] * 3, "every message in the batch names its reply"
+
+
 def test_late_reply_anchors_when_thread_moved_on(store):
     record_message(store, channel="telegram", direction="in", person_id="dean",
                    content="slow question", update_id=20, reply_status="pending",

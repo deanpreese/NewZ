@@ -64,19 +64,40 @@ Reply with XML only:
 
 
 def _pairs(conn: sqlite3.Connection, limit: int) -> list[tuple[int, str, str]]:
-    """Operator messages with the being's next reply, not yet judged."""
-    rows = conn.execute(
-        "SELECT m.id, m.ts, m.content FROM messages m"
-        " WHERE m.direction='in'"
-        "   AND NOT EXISTS (SELECT 1 FROM operator_agreement a WHERE a.message_id = m.id)"
-        " ORDER BY m.ts DESC LIMIT ?", (limit,)).fetchall()
+    """Exchanges not yet judged: one reply, and everything it answered.
+
+    **An exchange is a reply, not a message** (R-37d). The drainer coalesces
+    every pending message into one reply, so pairing each inbound message with
+    the next outbound one turned three messages into three exchanges judged
+    against identical text — the denominator inflated by the being's own
+    batching. The batch is recorded at reply time now (migration 0039) and this
+    reads it.
+
+    The judged row is the **oldest** message in the batch, which is the one
+    `record_exchange_episode` already anchors the episode to. Messages written
+    before 0039 carry `answered_by IS NULL` and are never judged: backfilling
+    them under the old pairing would fill the first window with the figure this
+    exists to remove.
+    """
+    batches = conn.execute(
+        "SELECT reply_id, anchor_id FROM ("
+        "  SELECT answered_by AS reply_id, MIN(id) AS anchor_id FROM messages"
+        "   WHERE direction='in' AND answered_by IS NOT NULL"
+        "   GROUP BY answered_by)"
+        " WHERE anchor_id NOT IN (SELECT message_id FROM operator_agreement)"
+        " ORDER BY reply_id DESC LIMIT ?", (limit,)).fetchall()
     out = []
-    for r in rows:
-        reply = conn.execute(
-            "SELECT content FROM messages WHERE direction='out' AND ts > ?"
-            " ORDER BY ts LIMIT 1", (r["ts"],)).fetchone()
-        if reply and (r["content"] or "").strip() and (reply["content"] or "").strip():
-            out.append((r["id"], r["content"], reply["content"]))
+    for b in batches:
+        said = "\n".join(
+            r["content"] for r in conn.execute(
+                "SELECT content FROM messages WHERE answered_by=?"
+                " AND direction='in' ORDER BY ts, id", (b["reply_id"],))
+            if (r["content"] or "").strip())
+        reply = conn.execute("SELECT content FROM messages WHERE id=?",
+                             (b["reply_id"],)).fetchone()
+        replied = (reply["content"] or "").strip() if reply else ""
+        if said.strip() and replied:
+            out.append((b["anchor_id"], said, replied))
     return out
 
 

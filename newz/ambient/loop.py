@@ -181,9 +181,14 @@ class AmbientLoop:
             msg_ids[0], out_msg_id,
         )
         await self._maybe_open_concern(texts, reply.text, msg_ids[0])
+        # Which reply answered which messages — recorded, not left to be
+        # inferred later. The batch is known here and nowhere else, and an
+        # instrument that reconstructs it from timestamps counts one reply as
+        # many exchanges (R-37d).
         self._conn.executemany(
-            "UPDATE messages SET reply_status='replied', reply_attempts=? WHERE id=?",
-            [(attempts, mid) for mid in msg_ids],
+            "UPDATE messages SET reply_status='replied', reply_attempts=?,"
+            " answered_by=? WHERE id=?",
+            [(attempts, out_msg_id, mid) for mid in msg_ids],
         )
         self._conn.commit()
         logger.info(

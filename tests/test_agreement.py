@@ -56,16 +56,24 @@ class FakeLLM:
         return R
 
 
-def _exchange(conn, said: str, replied: str, *, ts: float) -> int:
-    cur = conn.execute(
+def _exchange(conn, said, replied: str, *, ts: float, answered: bool = True) -> int:
+    """One reply and the message or messages it answered, as the drainer writes
+    them: the inbound rows carry `answered_by` (migration 0039), because the
+    batch is known there and nowhere else."""
+    said = [said] if isinstance(said, str) else list(said)
+    ids = [int(conn.execute(
         "INSERT INTO messages (ts, channel, direction, person_id, content,"
-        " reply_status) VALUES (?,?,'in','dean',?,'done')", (ts, "telegram", said))
-    conn.execute(
+        " reply_status) VALUES (?,?,'in','dean',?,'done')",
+        (ts + i * 0.1, "telegram", s)).lastrowid) for i, s in enumerate(said)]
+    out_id = int(conn.execute(
         "INSERT INTO messages (ts, channel, direction, person_id, content,"
         " reply_status) VALUES (?,?,'out','dean',?,'done')",
-        (ts + 1, "telegram", replied))
+        (ts + 1, "telegram", replied)).lastrowid)
+    if answered:
+        conn.executemany("UPDATE messages SET answered_by=? WHERE id=?",
+                         [(out_id, i) for i in ids])
     conn.commit()
-    return int(cur.lastrowid)
+    return ids[0]
 
 
 # ── the authority half, which is what the epic turns on ─────────────────
@@ -180,3 +188,63 @@ def test_the_verdict_keeps_the_models_own_reason(store):
 
     row = store.execute("SELECT reason, model FROM operator_agreement").fetchone()
     assert "without a reason" in row["reason"] and row["model"]
+
+
+# ── an exchange is a reply, not a message (R-37d) ───────────────────────
+
+def test_one_reply_to_three_messages_is_one_exchange(store):
+    """R-37d. Behavior: the drainer coalesces pending messages into a single
+    reply, so pairing each inbound message with the next outbound one judged
+    the same reply three times and inflated the denominator by the being's own
+    batching. One reply is one exchange."""
+    now = time.time()
+    _exchange(store, ["first thought", "second thought", "and another"],
+              "one reply to all three", ts=now)
+    llm = FakeLLM("disagreed")
+
+    assert A.classify(store, llm) == 1
+    assert llm.calls == 1
+    assert store.execute(
+        "SELECT COUNT(*) FROM operator_agreement").fetchone()[0] == 1
+
+
+def test_the_person_half_is_every_message_the_reply_answered(store):
+    """Behavior: the judge sees what the being saw — the whole batch, in the
+    order it arrived, not the last message of it."""
+    seen = {}
+
+    class Capturing(FakeLLM):
+        def complete(self, role, system, user, **kw):
+            seen["user"] = user
+            return super().complete(role, system, user, **kw)
+
+    now = time.time()
+    _exchange(store, ["the base effect explains it", "or does it"],
+              "it does not", ts=now)
+    A.classify(store, Capturing())
+
+    person = seen["user"].split("<person>")[1].split("</person>")[0]
+    assert person == "the base effect explains it\nor does it"
+
+
+def test_messages_from_before_the_batch_was_recorded_are_never_judged(store):
+    """W2 is forward-only. Behavior: rows written before migration 0039 carry
+    no batch, and judging them under the old pairing would fill the first
+    window with exactly the figure this fix exists to remove."""
+    now = time.time()
+    _exchange(store, "an old message", "an old reply", ts=now, answered=False)
+
+    assert A.classify(store, FakeLLM()) == 0
+    assert store.execute(
+        "SELECT COUNT(*) FROM operator_agreement").fetchone()[0] == 0
+
+
+def test_the_judged_row_is_the_oldest_message_in_the_batch(store):
+    """Behavior: the anchor is the same message record_exchange_episode anchors
+    the episode to, so the verdict and the episode point at one row."""
+    now = time.time()
+    first = _exchange(store, ["one", "two"], "a reply", ts=now)
+    A.classify(store, FakeLLM())
+
+    assert store.execute(
+        "SELECT message_id FROM operator_agreement").fetchone()[0] == first
