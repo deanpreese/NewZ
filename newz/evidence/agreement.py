@@ -135,6 +135,32 @@ def classify(conn: sqlite3.Connection, client, *, limit: int = MAX_PER_RUN) -> i
     return recorded
 
 
+def _verdict_counts(conn: sqlite3.Connection, since: float) -> dict[str, int] | str:
+    try:
+        rows = conn.execute(
+            "SELECT verdict, COUNT(*) n FROM operator_agreement"
+            " WHERE ts >= ? GROUP BY verdict", (since,)).fetchall()
+    except sqlite3.OperationalError as e:
+        return f"{e} — the store has not taken this migration yet"
+    return {r["verdict"]: r["n"] for r in rows}
+
+
+def exchanges_at_stake(conn: sqlite3.Connection, *, since: float) -> Value:
+    """The rate's denominator, carried as a metric of its own.
+
+    **Because a wired-and-empty kill condition reads like a working one.** The
+    rate is UNREADABLE whenever no exchange in the window put a position at
+    stake, and that can stay true for weeks without anything being broken — the
+    operator simply never said something contestable. A halt that can never
+    fire and a halt that never needed to look identical on a page, so the count
+    is on the page too, with its own series (P4 W3, RT1).
+    """
+    counts = _verdict_counts(conn, since)
+    if isinstance(counts, str):
+        return Value(unreadable=counts)
+    return Value(float(counts.get("disagreed", 0) + counts.get("deferred", 0)))
+
+
 def disagreement_rate(conn: sqlite3.Connection, *, since: float) -> Value:
     """Disagreements over exchanges where a position was at stake.
 
@@ -142,17 +168,66 @@ def disagreement_rate(conn: sqlite3.Connection, *, since: float) -> Value:
     rate a measure of how often the operator says something contestable rather
     than of what the being does when they do.
     """
-    try:
-        rows = conn.execute(
-            "SELECT verdict, COUNT(*) n FROM operator_agreement"
-            " WHERE ts >= ? GROUP BY verdict", (since,)).fetchall()
-    except sqlite3.OperationalError as e:
-        return Value(unreadable=f"{e} — the store has not taken this migration yet")
-    counts = {r["verdict"]: r["n"] for r in rows}
+    counts = _verdict_counts(conn, since)
+    if isinstance(counts, str):
+        return Value(unreadable=counts)
     at_stake = counts.get("disagreed", 0) + counts.get("deferred", 0)
     if not at_stake:
         return Value(unreadable=(
             "no exchange in the window put a position at stake — the rate has "
             "no denominator, and a rate of 0 would read as 'never disagrees' "
-            "when it means 'was never asked to'"))
+            f"when it means 'was never asked to'. {counts.get('neither', 0)} "
+            "exchange(s) in the window had nothing at stake"))
     return Value(round(counts.get("disagreed", 0) / at_stake, 4))
+
+
+class AgreementScheduler:
+    """Nightly, before the reading, so the night's rate sees the day's exchanges.
+
+    **Judged after the day, not during it.** An exchange still in progress is
+    not an exchange, and a verdict on half of one is a verdict on nothing.
+
+    The due-check is a date held in memory rather than a row: `classify` judges
+    only unjudged batches, so a restart costs at most one extra pass over
+    whatever is already judged — which makes no model calls at all.
+    """
+
+    def __init__(self, db_path, client, *, hour: int = 3,
+                 check_interval_s: float = 900.0):
+        self._db_path = db_path
+        self._client = client
+        self._hour = hour
+        self._interval = check_interval_s
+        self._last: object = None
+
+    def _turn(self) -> None:
+        import datetime as _dt
+
+        from newz.store.db import open_db
+
+        today = _dt.datetime.fromtimestamp(time.time())
+        if today.hour < self._hour or self._last == today.date():
+            return
+        conn = open_db(self._db_path)
+        try:
+            n = classify(conn, self._client)
+            self._last = today.date()
+            logger.info("agreement: %d exchange(s) judged", n)
+        finally:
+            conn.close()
+
+    async def run(self) -> None:
+        import asyncio
+
+        from newz.crash import log_crash
+
+        logger.info("agreement: nightly at or after %02d:00", self._hour)
+        while True:
+            try:
+                await asyncio.to_thread(self._turn)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log_crash(self._db_path.parent.parent, "agreement")
+                logger.exception("agreement pass failed — retrying next check")
+            await asyncio.sleep(self._interval)

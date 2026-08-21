@@ -248,3 +248,75 @@ def test_the_judged_row_is_the_oldest_message_in_the_batch(store):
 
     assert store.execute(
         "SELECT message_id FROM operator_agreement").fetchone()[0] == first
+
+
+# ── the rhythm, and the denominator kept visible ────────────────────────
+
+def test_the_classifier_has_a_rhythm(store, tmp_path, monkeypatch):
+    """W3. Behavior: E3.8 shipped a writer nothing called — `classify` ran only
+    in tests, so `operator_agreement` held nothing in life and §10's one
+    un-instrumented item stayed un-instrumented. The scheduler is the caller."""
+    import datetime as _dt
+
+    now = time.time()
+    _exchange(store, "the base effect explains it", "I don't think it does", ts=now)
+    db = tmp_path / "a.db"
+    sched = A.AgreementScheduler(db, FakeLLM("disagreed"), hour=0)
+    monkeypatch.setattr(A, "classify", lambda conn, client, **kw: 1)
+    monkeypatch.setattr("newz.store.db.open_db", lambda *a, **kw: store)
+
+    sched._turn()
+    first = sched._last
+
+    assert first == _dt.datetime.fromtimestamp(time.time()).date()
+    sched._turn()
+    assert sched._last == first, "a second pass the same day does nothing"
+
+
+def test_the_rhythm_holds_until_its_hour(store, tmp_path):
+    """Behavior: exchanges are judged after the day, not during it — a verdict
+    on an exchange still in progress is a verdict on nothing."""
+    sched = A.AgreementScheduler(tmp_path / "a.db", FakeLLM(), hour=25)
+
+    sched._turn()
+
+    assert sched._last is None
+
+
+def test_the_denominator_is_a_metric_of_its_own(store):
+    """RT1. Behavior: a wired-and-empty kill condition reads like a working
+    one. The rate is UNREADABLE whenever nothing was at stake — which can be
+    true for weeks with nothing broken — so the count is carried beside it."""
+    now = time.time()
+    for i, verdict in enumerate(("neither", "neither", "disagreed")):
+        _exchange(store, f"m{i}", f"r{i}", ts=now + i * 10)
+        A.classify(store, FakeLLM(verdict), limit=1)
+
+    assert A.exchanges_at_stake(store, since=now - DAY).value == 1.0
+
+
+def test_an_empty_denominator_says_how_empty(store):
+    """Behavior: 'no exchange put a position at stake' and 'there were no
+    exchanges' are different findings, and the read must not conflate them."""
+    now = time.time()
+    _exchange(store, "morning", "morning", ts=now)
+    A.classify(store, FakeLLM("neither"))
+
+    v = A.disagreement_rate(store, since=now - DAY)
+
+    assert "1 exchange(s) in the window had nothing at stake" in v.unreadable
+    assert A.exchanges_at_stake(store, since=now - DAY).value == 0.0
+
+
+def test_the_kill_condition_it_was_restored_for_now_reads_something():
+    """PLAN restored agreement as the sixth kill condition on 2026-08-20 and
+    the registry had no metric behind it. Behavior: the halt reads a rate, its
+    denominator, and the novelty it is judged against — 'rising while novelty
+    is flat' is two metrics, not one."""
+    from newz.evidence.purpose import served_by
+
+    served = served_by("kill:operator-agreement")
+
+    assert "operator_disagreement_rate" in served
+    assert "exchanges_at_stake" in served
+    assert "perspective_novelty" in served

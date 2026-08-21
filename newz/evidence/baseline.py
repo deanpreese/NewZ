@@ -192,7 +192,7 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
     from newz.evidence.derived import all_derived
     from newz.evidence.mechanical import all_values
 
-    from newz.evidence.agreement import disagreement_rate
+    from newz.evidence.agreement import disagreement_rate, exchanges_at_stake
     from newz.evidence.mechanical import Value
 
     now = now or time.time()
@@ -210,6 +210,8 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
     # E2.9's mechanical set, in the same pass and the same window.
     values.update(all_values(conn, repo_root, now=now, hours=window_hours))
     values["operator_disagreement_rate"] = disagreement_rate(
+        conn, since=now - window_hours * 3600.0)
+    values["exchanges_at_stake"] = exchanges_at_stake(
         conn, since=now - window_hours * 3600.0)
     # E3.7's derivations, over the values above rather than over the store —
     # so a declared input is the only input a derivation can have (R-37c).

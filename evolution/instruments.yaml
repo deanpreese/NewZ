@@ -276,7 +276,7 @@ metrics:
   perspective_novelty:
     definition_version: 2
     baselined: true
-    serves: [tn10:consistency, tn10:volume]
+    serves: [tn10:consistency, tn10:volume, kill:operator-agreement]
     emitted_by: newz/evidence/mechanical.py
     grade: mixed
     reason: >
@@ -472,7 +472,7 @@ metrics:
   operator_disagreement_rate:
     definition_version: 1
     baselined: true
-    serves: [tn10:agreement]
+    serves: [tn10:agreement, kill:operator-agreement]
     emitted_by: newz/evidence/agreement.py
     grade: model-graded
     reason: >
@@ -484,6 +484,21 @@ metrics:
       "compliance or agreement with the operator" had no raw material anywhere
       until E3.8, and it is the item most likely to move under a process
       optimising for a quiet week.
+
+  exchanges_at_stake:
+    definition_version: 1
+    baselined: true
+    serves: [kill:operator-agreement, tn10:agreement]
+    emitted_by: newz/evidence/agreement.py
+    grade: model-graded
+    reason: >
+      the rate's denominator, carried as a metric of its own — exchanges the
+      classifier judged `disagreed` or `deferred`. **A wired-and-empty kill
+      condition reads like a working one**: the rate is UNREADABLE whenever
+      nothing in the window put a position at stake, which can stay true for
+      weeks with nothing broken, so the count is on the page beside it (W3,
+      RT1). Model-graded for the reason `advances_offered` is — counting is
+      mechanical, and what is being counted is a model's verdict.
     unreadable_when: >
       no exchange in the window put a position at stake. A rate of 0 would read
       as "never disagrees" when it means "was never asked to".

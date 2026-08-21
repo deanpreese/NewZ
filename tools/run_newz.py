@@ -105,6 +105,7 @@ def main() -> int:
     from newz.ambient.noticing import SurfaceScheduler
     from newz.works.rhythm import WritingScheduler
     from newz.works.reread import RereadScheduler
+    from newz.evidence.agreement import AgreementScheduler
     from newz.evidence.baseline import MetricScheduler
     from newz.memory.index import EmbeddingScheduler
 
@@ -144,6 +145,11 @@ def main() -> int:
     # written on a cadence and never on read, because a series written when
     # someone happens to look is a record of when they looked.
     metrics = MetricScheduler(cfg.main_db_path, cfg.repo_root)
+    # E3.8: and one of those readings needs a writer that had none — the
+    # agreement classifier ran only in tests, so `operator_agreement` held
+    # nothing and §10's one un-instrumented item stayed un-instrumented in
+    # life. It runs before the reading so the night's rate sees the day.
+    agreement = AgreementScheduler(cfg.main_db_path, client)
     # The index was never maintained: 0 of 653 reading episodes carried a
     # vector, so retrieval — which conversation already queries — could not
     # see anything the being had read.
@@ -166,6 +172,7 @@ def main() -> int:
                       asyncio.create_task(surface.run()),
                       asyncio.create_task(writing.run()),
                       asyncio.create_task(reread.run()),
+                      asyncio.create_task(agreement.run()),
                       asyncio.create_task(metrics.run()),
                       asyncio.create_task(indexer.run())]
         try:
