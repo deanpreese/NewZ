@@ -21,7 +21,9 @@ from newz.config import load
 from newz.llm.client import LLMClient
 from newz.llm.recorder import CallRecorder
 from newz.store.db import open_db
-from newz.works.compose import candidate_subjects, choose_subject, compose_piece, write_work
+from newz.works.compose import (candidate_subjects, choose_subject,
+                                compose_piece, write_work)
+from newz.works.rhythm import close_subject
 
 
 def log(msg: str) -> None:
@@ -61,7 +63,10 @@ def main() -> int:
         log("--dry-run: nothing stored")
         return 0
     work_id = write_work(conn, piece)
+    status = close_subject(conn, piece, work_id)
     log(f"stored as work {work_id} — read it back with: python tools/read_works.py {work_id}")
+    if status == "closed":
+        log(f"concern {piece.subject.ref} closed — the being has said its piece")
     return 0
 
 

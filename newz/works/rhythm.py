@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from newz.works.compose import (
+    Piece,
     candidate_subjects,
     choose_subject,
     compose_piece,
@@ -83,6 +84,66 @@ def _record(conn: sqlite3.Connection, outcome: str, *, subject=None,
     return int(cur.lastrowid)
 
 
+def close_subject(conn: sqlite3.Connection, piece: Piece, work_id: int) -> str:
+    """Writing about a concern ends it *(operator, 2026-08-21)*.
+
+    **The loop this breaks.** `score_concern` keys staleness on
+    `last_advanced_at` and takes drag only from stalls and blocks, so an
+    accepted advance resets the clock and costs nothing — a concern that keeps
+    advancing is never dragged and stays at the top of the queue. Concern 112
+    reached 44 advances with a stall count of 1 and never closed. And the only
+    closure path that does not need an advance, `sweep.eligible`, selects
+    `status='stalled'`, so it is structurally blind to exactly the concerns
+    that circle. Nothing had ever judged one: `last_judged_at` was NULL on all
+    125 rows.
+
+    So this is a third exit, and the only one that asks no model anything:
+    **the being has said its piece.** An essay is a more considered engagement
+    with a question than any number of advances, and when it exists the concern
+    is finished whether or not a judge would agree.
+
+    **It carries no position, deliberately.** `judge_closure`'s closure writes a
+    first-person sentence that sleep may admit into the Perspective. Taking one
+    from the essay would make a work evidence for a position, which is exactly
+    the self-echo trap E2.3 and R-24 exist to prevent. The position on this
+    question *is* the piece — signed, stamped with the constitution and
+    Perspective version that wrote it. The resolution names it and stops there.
+
+    Returns the status afterwards. **The piece is never lost to this**: a
+    failure here is logged and the work stands, because the work is the
+    artifact and the closure is a consequence of it.
+    """
+    if piece.subject.kind != "concern":
+        return ""
+    from newz.concerns.store import close_concern
+
+    # `close_concern` is an UPDATE with no rowcount check, so a subject that is
+    # gone or already closed would report success and write a `concern_closed`
+    # episode about it — a record that says something happened to a concern
+    # that was not there. Read the status first and act only on a live one.
+    row = conn.execute(
+        "SELECT status FROM concerns WHERE id=?", (piece.subject.ref,)).fetchone()
+    if row is None:
+        logger.warning("work %d names concern %s, which does not exist",
+                       work_id, piece.subject.ref)
+        return "open"
+    if row["status"] != "open":
+        logger.info("concern %s was already %s when work %d landed",
+                    piece.subject.ref, row["status"], work_id)
+        return str(row["status"])
+
+    try:
+        close_concern(
+            conn, int(piece.subject.ref), position="",
+            resolution=f"said its piece — work {work_id}: {piece.title}")
+    except Exception:  # noqa: BLE001
+        logger.exception("concern %s stayed open; work %d stands",
+                         piece.subject.ref, work_id)
+        return "open"
+    logger.info("concern %s closed by work %d", piece.subject.ref, work_id)
+    return "closed"
+
+
 def write_once(conn: sqlite3.Connection, client, *,
                max_starts: int = MAX_STARTS_PER_DAY,
                now: float | None = None) -> RhythmResult:
@@ -106,6 +167,11 @@ def write_once(conn: sqlite3.Connection, client, *,
         subject, because = choose_subject(client, conn, subjects)
         piece = compose_piece(client, conn, subject, because)
         work_id = write_work(conn, piece)
+        # The being has said its piece, so the question is finished — the third
+        # exit, and the only one that asks no model anything. Inside the try
+        # because a piece whose subject is gone is a broken record; the function
+        # itself never raises, so a closure failure leaves the work standing.
+        close_subject(conn, piece, work_id)
     except Exception as e:  # noqa: BLE001
         conn.execute("UPDATE work_attempts SET outcome='failed', note=?"
                      " WHERE id=?", (f"{type(e).__name__}: {e}"[:400], attempt))

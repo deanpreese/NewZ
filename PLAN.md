@@ -554,6 +554,35 @@ products.
 *Depends on:* E0.3 (the verdict), E0.1.
 *Hooks:* R-25, Rule 5.
 
+**E2.1 amendment — writing ends the concern** *(operator, 2026-08-21)*
+*Delivers:* a piece about a concern closes it, with `resolution` naming the work
+and **no position**. A third exit beside `_maybe_close` and the sweep, and the
+only one that asks no model anything.
+*Done when:* a written concern leaves the active pool, the closure carries no
+position, and a subject that is gone or already closed is not reported as
+closed. Tested.
+*Why it was needed.* `score_concern` keys staleness on `last_advanced_at` and
+takes drag only from `stall_count` and `blocked_count`, so **an accepted advance
+resets the clock and costs nothing**: a concern that keeps advancing is never
+dragged and stays at the head of the queue. Concern 112 reached **44 advances
+with a stall count of 1** and never closed. Meanwhile the only closure path that
+does not need an advance — `sweep.eligible` — selects `status='stalled'`, so it
+is structurally blind to exactly the concerns that circle, and nothing had ever
+judged one: `last_judged_at` was NULL on all 125 rows. The judge that decides an
+advance is the being's own model, which Rule 4 says produces operation and never
+evidence, so the loop was self-graded as well as self-sustaining.
+*Why it carries no position.* `close_concern` puts the position on an episode
+sleep may admit into the Perspective. Taking one from the essay would make a
+work evidence for a position — E2.3 and R-24's self-echo trap in a new medium.
+The position on that question *is* the piece, signed and stamped with the
+identity that wrote it.
+*What it costs, recorded.* Judged closures hand sleep a candidate observation;
+written ones donate nothing to the Perspective, where novelty is 6.4%. An
+artifact is traded for an input, deliberately. And `concerns_closed` is no
+longer a count of judged closures — its definition_version is 2 and its grade is
+now **mixed**, because a series that mixed the two without saying so would read
+a change of mechanism as a change in the being.
+
 **E2.2 — re-reading, revision and retraction** *(built 2026-08-20)*
 *Delivers:* on a cadence the being reads its own past work and may revise or
 retract it. Revision history is kept; a retraction is a first-class outcome, not

@@ -9,6 +9,8 @@ and a written subject must not be offered twice.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from newz.works.compose import (
@@ -162,3 +164,119 @@ def test_the_piece_is_written_with_perspective_and_constitution_in_context(store
     assert "I am Lumen" in system                    # the Perspective
     assert "honesty-001" in system or "false" in system  # the constitution prefix
     assert "Plain, curious, honest." in system       # the character core
+
+
+# ── writing ends the concern (operator, 2026-08-21) ─────────────────────
+
+def _composed(kind, ref):
+    """A Piece as `compose_piece` returns it, ready for `write_work`."""
+    from newz.works.compose import Piece, Subject
+
+    return Piece(subject=Subject(kind, ref, "the subject", "why"),
+                 chosen_because="because", title="A title",
+                 body="Some prose that stands on its own.", model="m",
+                 completion_tokens=10)
+
+
+def test_writing_about_a_concern_closes_it(store):
+    """*(operator, 2026-08-21)* — the loop this breaks: `score_concern` keys
+    staleness on `last_advanced_at` and takes drag only from stalls, so a
+    concern that keeps advancing resets its own clock and is never dragged.
+    Concern 112 reached 44 advances, stall_count 1, and never closed. Behavior:
+    an essay is a terminus that asks no model anything."""
+    from newz.works.compose import write_work
+    from newz.works.rhythm import close_subject
+
+    _open_concern(store, cid=1)
+    piece = _composed("concern", 1)
+    work_id = write_work(store, piece)
+
+    assert close_subject(store, piece, work_id) == "closed"
+    row = store.execute(
+        "SELECT status, resolution FROM concerns WHERE id=?", (1,)).fetchone()
+    assert row["status"] == "closed"
+    assert f"work {work_id}" in row["resolution"]
+
+
+def test_the_closure_carries_no_position(store):
+    """E2.3 and R-24: a work may never be evidence for a position. `close_concern`
+    puts the position on an episode that sleep may admit into the Perspective,
+    so taking one from the essay would be the self-echo trap in a new medium.
+    Behavior: the position is empty — the piece IS the position, and it stays
+    outside the Perspective."""
+    from newz.works.compose import write_work
+    from newz.works.rhythm import close_subject
+
+    _open_concern(store, cid=1)
+    piece = _composed("concern", 1)
+    close_subject(store, piece, write_work(store, piece))
+
+    ep = store.execute(
+        "SELECT content_json FROM episodes WHERE kind='concern_closed'"
+        " AND source_ref=?", ("concern:1",)).fetchone()
+    assert ep is not None, "closing must still record the episode"
+    assert json.loads(ep["content_json"])["position"] == ""
+
+
+def test_writing_about_a_position_closes_nothing(store):
+    """Works are written about held positions too, and a position is not a
+    concern. Behavior: the closure applies to concerns alone."""
+    from newz.works.compose import write_work
+    from newz.works.rhythm import close_subject
+
+    piece = _composed("position", 1)
+    assert close_subject(store, piece, write_work(store, piece)) == ""
+
+
+def test_a_subject_that_is_gone_is_not_reported_as_closed(store):
+    """`close_concern` is an UPDATE with no rowcount check, so a missing concern
+    would report success AND write a `concern_closed` episode about a row that
+    does not exist — a record saying something happened to nothing. Behavior:
+    the status is read first, the work stands, and no episode is written."""
+    from newz.works.compose import write_work
+    from newz.works.rhythm import close_subject
+
+    piece = _composed("concern", 9999)            # no such concern
+    work_id = write_work(store, piece)
+
+    assert close_subject(store, piece, work_id) == "open"
+    assert store.execute(
+        "SELECT COUNT(*) FROM works WHERE id=?", (work_id,)).fetchone()[0] == 1
+    assert store.execute(
+        "SELECT COUNT(*) FROM episodes WHERE kind='concern_closed'"
+    ).fetchone()[0] == 0
+
+
+def test_a_concern_already_closed_is_not_closed_twice(store):
+    """The judge may close a concern between the subject being chosen and the
+    piece landing. Behavior: the second closure is a no-op, so there is one
+    `concern_closed` episode and not two."""
+    from newz.works.compose import write_work
+    from newz.works.rhythm import close_subject
+
+    _open_concern(store, cid=1)
+    piece = _composed("concern", 1)
+    work_id = write_work(store, piece)      # UNIQUE(subject_kind, subject_ref)
+
+    assert close_subject(store, piece, work_id) == "closed"
+    assert close_subject(store, piece, work_id) == "closed"
+    assert store.execute(
+        "SELECT COUNT(*) FROM episodes WHERE kind='concern_closed'"
+    ).fetchone()[0] == 1
+
+
+def test_a_written_concern_leaves_the_deliberation_pool(store):
+    """The desired outcome, stated as the being's own scorer sees it.
+    `ACTIVE_STATUSES` is ("open",), so a closed concern is not chosen, not
+    scored and not advanced again. Behavior: the loop cannot resume."""
+    from newz.concerns.store import load_active
+    from newz.works.compose import write_work
+    from newz.works.rhythm import close_subject
+
+    _open_concern(store, cid=1)
+    assert 1 in [c.id for c in load_active(store)]
+
+    piece = _composed("concern", 1)
+    close_subject(store, piece, write_work(store, piece))
+
+    assert 1 not in [c.id for c in load_active(store)]

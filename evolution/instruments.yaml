@@ -352,11 +352,25 @@ metrics:
       that produced Rule 7.
 
   concerns_closed:
-    definition_version: 1
+    definition_version: 2
     serves: [tn10:volume]
     emitted_by: tools/evidence.py
-    grade: model-graded
-    reason: judge_closure decides it (INV-034).
+    grade: mixed
+    reason: >-
+      two mechanisms close a concern and only one of them asks a model.
+      judge_closure decides the judged ones (INV-034); writing about a concern
+      closes it outright, and that is mechanical — a piece exists or it does
+      not.
+    definition_history:
+      - version: 2
+        why: >
+          writing about a concern now closes it (2026-08-21), so the count is
+          no longer a count of judged closures. Every closure before this date
+          was a verdict from judge_closure; every one after may be either, and
+          a series that mixes them without saying so would read a change of
+          mechanism as a change in the being. The quantity is unchanged and
+          what produces it is not, which is exactly the seam E2.8 exists to
+          record. The grade moves model-graded -> mixed for the same reason.
 
   stall_pool:
     definition_version: 1
