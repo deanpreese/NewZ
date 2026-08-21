@@ -1,48 +1,88 @@
 # The bench that writes back
 
 *2026-08-21. A proposal for using `tools/bench_model.py` to understand and tune
-the prompts the repo actually sends, in response to the operator's instruction
-to reverse `452666a`'s standalone position. Figures measured from this clone at
-`d13ec55` and from the live store this session; where a claim has no instrument,
-it says so (Rule 0).*
+the prompts the repo actually sends, against the inputs it has actually sent
+them. Figures measured from this clone at `65be881`, from `logs/llm_calls.jsonl`
+and from the live store this session; where a claim has no instrument, it says
+so (Rule 0).*
 
-**Supersedes this document's first two drafts.** The first was prose. The second
-specified an artifact, a patch file, a journal and a scratch worktree, which is
-a release pipeline and not a diagnostic *(operator, 2026-08-21: "this is too
-complicated … this is a diagnostic tool to help understand and tune existing
-prompts")*. §2 is what remains after that correction, and §3 is what it removed.
+**Supersedes this document's first three drafts.** The first was prose. The
+second specified an artifact, a patch, a journal and a scratch worktree — a
+release pipeline, not a diagnostic. The third dropped those but still invented
+its own corpus. This one does not *(operator, 2026-08-21: "does this leverage
+current prompts and LLM input and output from the repo")*.
 
 ---
 
 ## 0. The finding, in one line
 
-**The tool writes nothing, so the only question is whether its numbers mean
-anything** — and against 54 cases, 4 of them on `deep`, most of them do not
-without the two guards in §2.3.
+**The corpus already exists and the bench was not using it** — 2,559 recorded
+calls carrying full prompt and full response, against 54 cases written by hand,
+two of which measure widths the system has never produced.
 
 ---
 
 ## 1. What was counted
 
-**The tunable surface.** 10 prompt bodies, 20,120 characters:
+### 1.1 The recorded calls — 2,559, with everything needed to replay them
+
+`logs/llm_calls.jsonl`, 18MB, one JSON line per call since day one: `role`,
+`function`, `model`, `system`, `user`, `response`, tokens, duration, error.
+3 errored.
+
+Every call site builds its prompt as `template + payload` with a known join, so
+the payload separates mechanically. Verified this session:
+
+| shape | recorded | split | payload chars: min / median / max |
+|---|---:|---|---|
+| extract | 1,187 | 1187/1187 | 587 / 2,021 / 6,544 |
+| opener.reading | 272 | — | — |
+| delib | 170 | 170/170 | 8,551 / 13,735 / 19,869 |
+| triage | 157 | 157/157 | 637 / 6,776 / 11,900 |
+| gate | 47 | 47/47 | 12 / 331 / 926 |
+| digest | 17 | payload **is** the user turn | — |
+| confront | 5 | payload **is** the user turn | — |
+| **replayable** | **1,855** | | |
+
+The remaining 704 are call sites the bench does not cover (`question`,
+`research`, `claim_door`, `conversation`, `works`, `closure`).
+
+### 1.2 The hand-built corpus measures two widths that do not occur
+
+| | hand-built | recorded |
+|---|---:|---:|
+| deliberation dossier | 2,258 chars | median **13,735**, max 19,869 |
+| gate emission | max 128 chars | median 331, max 926 |
+| gate context sweep | 2k / 8k / 16k | **nothing above 926** |
+| triage listing | 7,158 | median 6,776 ✓ |
+
+Deliberation is benched at **16% of production width**, on the boundary where
+holding a schema at width is the entire question. The context sweep tests three
+widths the gate has never been given.
+
+### 1.3 The tunable surface — 10 bodies, 20,120 characters
+
 `outbound._judge_prompt` 5,018 · `lite._TASK` 4,855 · `opener._READING_TASK`
 3,423 · `nightly._CONFRONT_SYSTEM` 3,043 · `feeds._TRIAGE_TASK` 1,520 ·
 `extract._TASK` 795 · `extract._DIRECTED` 605 · `nightly._DIGEST_SYSTEM` 482 ·
 `extract._SYSTEM` 197 · `feeds._TRIAGE_SYSTEM` 182.
 
-**The corpus.** 54 cases — gate 23, extract 13, conformance 5, triage 5 (60 item
-decisions), voice 4, **deep 4**. One gate case is 4.3 points of balanced
-accuracy. One deep case is 25.
+### 1.4 Labels, where judgment rather than structure is being scored
 
-**No baseline exists.** *(Rule 0.)* No full run has been recorded for any
-candidate. Six spot cases ran green against `qwen/qwen3.6-35b-a3b` this session;
-that is not a baseline.
+`gate_log`: 216 rows, **40 operator-classified** — 28 `gate_misfire`, 12
+`gate_correct`, **17 carrying `emission_full`**. Of the 28 misfires, **22 are on
+`don't-pretend-to-feel-001`, which the active constitution (v6) does not
+contain**; they describe a retired rule and are excluded.
 
-**The prompts carry 77 lines the corpus cannot see** — dated provenance markers
-across the six modules (`lite.py` 22, `opener.py` 19, `nightly.py` 13,
-`feeds.py` 8, `extract.py` 8, `outbound.py` 7). Each names a failure a line
-prevents. No case exercises any of them, so deleting one is free by the bench's
-reckoning and costly in fact.
+`concern_refusals`: 5. `ingest_log`: 1,160, **unlabelled** — "kept" is not
+"should have been kept".
+
+### 1.5 The prompts carry 77 lines no case exercises
+
+Dated provenance markers across the six modules (`lite.py` 22, `opener.py` 19,
+`nightly.py` 13, `feeds.py` 8, `extract.py` 8, `outbound.py` 7). Each names a
+failure a line prevents. Replay does not fix this: the failures happened before
+the lines existed, so they are not in the log either.
 
 ---
 
@@ -50,58 +90,77 @@ reckoning and costly in fact.
 
 ### 2.1 The bench reads the repo's prompts
 
-Delete the 16 hand copies. `build_cases(prompts)` takes a `PromptSet` — a dict
-from prompt id to string, defaulted by reading `newz.*`.
+Delete the 16 hand copies. `build_cases(prompts)` takes a `PromptSet` — prompt
+id to string, defaulted by reading `newz.*`. Modules are read, never patched.
 
 This **deletes** machinery: the copies, and the drift they caused twice.
 
-Modules are read, never patched.
+*Done when:* no prompt literal in `bench_model.py` also exists in `newz/`.
 
-*Done when:* no prompt literal in `bench_model.py` also exists in `newz/`, and a
-`--repeats 3` run is recorded as the first baseline.
+### 2.2 The cases come from the recorded calls
 
-### 2.2 Score a variant against what the repo has
+A reader over `logs/llm_calls.jsonl` that, per line: identifies the shape from
+the join marker, splits the payload off the old template, and re-renders it
+against whichever `PromptSet` is being scored. `--since`, `--function` and
+`--sample N` bound a run.
+
+**This deletes the hand-built fixtures** — `_DOSSIER`, `_DOSSIER_DRY`,
+`_EPISODE_ROWS`, `_HELD`, `_CANDIDATES`, `_NOISE`, `_SUMMARIES`, the three
+`_KEEP_*` items, `_CLEAN_MATERIAL`, `_CHUNK` — and the context sweep, whose
+widths §1.2 shows do not occur. Real width is whatever the log holds.
+
+What survives as hand-written: `GATE_FIRE` / `GATE_PASS` as a seed beside the
+classified holds, and the nine injection payloads, because an attack that has
+not happened is not in the log and is the one thing worth inventing.
+
+**Three things make this work without gold answers:**
+
+1. **Most checks are structural** — schema held, refs real, no truncation,
+   verbatim grounding, the fence respected, confidences in range. Those need a
+   real input, not a right answer, and they are what `delib_check`,
+   `digest_check`, `confront_check`, `extract_check` and `ground_check` already
+   do.
+2. **Labels are used where judgment is scored** — §1.4's classified holds for
+   the gate, expired-clause rows excluded and counted.
+3. **The baseline is free.** The recorded `response` is already there, so
+   scoring the current prompts across all 1,855 inputs costs **zero LLM calls**.
+   *Caveat:* a recorded response reflects the prompt live at the time, so
+   pre-E1.0 triage rows carry the retired prompt. Rows are dated; a run reports
+   how many predate the current prompt.
+
+*Done when:* a run prints its corpus composition — replayed per shape, excluded
+as expired, predating the current prompt — and the deliberation denominator is
+the log's, not four.
+
+### 2.3 Score a variant, or loop it
 
 ```
-bench_model.py --prompt triage.task --variant my_edit.txt
+bench_model.py --prompt triage.task --variant my_edit.txt      # one comparison
+bench_model.py --tune triage --rounds 6                        # propose + score
 ```
 
-Runs both, prints both, side by side, with intervals and the per-case failures
-for each. This is the whole diagnostic: you edit a prompt in a scratch file, you
-find out whether it is better, and you decide.
+`--variant` re-renders every replayed payload of that shape against the edited
+prompt and prints both scores side by side, with intervals and the per-case
+failures. `--tune` does that repeatedly, asking a model for one rewrite per
+round from the failures it sees, and prints a diff of the best against the
+repo's current at the end.
 
-*Done when:* a variant that fixes one triage case shows as +1 case with its
-interval, and the unchanged boundaries show as unchanged.
+**Two guards:**
 
-### 2.3 A loop that proposes variants and prints the winner
-
-```
-bench_model.py --tune triage --rounds 6
-```
-
-Each round: show a model the current prompt and the cases that failed, ask for
-one rewrite, score it, keep it if it is better. At the end, print a diff of the
-best prompt found against the repo's current one, and the scores either side.
-
-**Two guards, because §1's numbers are small:**
-
-1. **Half the cases are held back.** The proposer sees failures from the tuning
-   half; the score that decides is from the other half. Both are printed every
-   round. If the tuning half improves and the held-back half does not, the
-   output says so and the diff is not worth applying.
+1. **Half the replayed payloads are held back.** The proposer sees failures from
+   one half; the deciding score is the other. Both print every round.
 2. **A change must beat the incumbent's upper interval**, not its point score.
-   At 4.3 points a gate case and 25 a deep one, a point-score comparison would
-   accept noise every round.
 
 Output goes to stdout, verbose, per round:
 
 ```
-── round 3 · triage · incumbent tune 0.61 [0.48-0.73] · held-back 0.58 ────────
-   failing: triage_summaries, triage_unfamiliar
+── round 3 · triage · 157 replayed (78 tune / 79 held) ────────────────────────
+   incumbent  tune 0.61 [0.52-0.69]  held 0.58
+   failing (tune): 31 — 22 kept an item the being later never cited
    variant: +6 lines, "name the shape of a keep, not just examples"
-     tune 0.71  held-back 0.69 [0.55-0.80]  vs upper 0.71 ····· below, discard
+     tune 0.71  held 0.69 [0.58-0.78]  vs upper 0.69 ······· below, discard
    variant: -1 +2 lines, "the ordinary answer is nothing" moved up
-     tune 0.66  held-back 0.74 [0.61-0.84]  vs upper 0.71 ····· keep
+     tune 0.66  held 0.74 [0.63-0.82]  vs upper 0.69 ······· keep
      gate 0.87→0.87  extract 0.79→0.78  deep 0.75→0.75
 ```
 
@@ -114,48 +173,51 @@ Redirect it if you want to keep it. The tool does not.
 ## 3. What it does not do
 
 **It writes nothing.** Not `newz/`, not the store, not git, not a file of its
-own. The last draft specified an artifact, a patch, a journal and a scratch
-worktree for a `pytest` run; all four are gone. The diff goes to the terminal
-and you apply it by hand or you do not.
+own. **The tool has no code path that writes to `newz/`** — a stronger guarantee
+than a flag defaulting to off, because it cannot be edited away without being
+visible. The diff goes to the terminal; you apply it by hand or you do not.
 
-That removes the reason for everything else that was in the last draft. There is
-no lock list, because nothing is applied. There is no protected-line mechanism,
-because you read the diff. There is no approval gate, because there is nothing
-to approve against — **the tool has no code path that writes to `newz/`**, which
-is a stronger guarantee than a flag that defaults to off.
+It **reads** two things it did not before: `logs/llm_calls.jsonl`, and
+`data/newz.db` read-only for §1.4's holds. Both are the operator's own record.
+Neither is ever copied into the repo, a commit, or the tool's output — runs
+report counts and row ids, never emission or payload text.
 
-Two consequences worth stating rather than discovering:
+Because nothing is applied, there is no lock list and no protected-line
+mechanism. Two consequences worth stating rather than discovering:
 
 - **The gate is tunable like anything else**, because a gate diff is a diff you
-  read. Note when reading one that gate score is balanced accuracy and a prompt
-  can raise it by firing *less* — the run prints catch and false-fire
-  separately for exactly this.
-- **Constitution clause text is not in scope** and is not offered as a prompt
-  id. It lives in the store under a governance flow; it is not a prompt.
+  read. Its score is balanced accuracy and a prompt can raise it by firing
+  *less*, so catch and false-fire print separately.
+- **Constitution clause text is not a prompt** and is not offered as a prompt
+  id. It lives in the store under a governance flow.
 
 ---
 
 ## 4. Red team
 
-**The corpus is too small and the loop cannot tell.** At 4 deep cases, most gain
-after two or three rounds is noise. §2.3's two guards are necessary and not
-sufficient. The honest mitigation is that you read the diff and the held-back
-number, both of which are printed.
+**Replay does not make the corpus representative, only real.** 1,855 calls are
+what this being did, on the feeds it reads, in the months it has run. A prompt
+tuned on them is tuned to that distribution — which is the right one for this
+being and the wrong one for judging a model in general.
 
-**A tuned prompt is fitted to one model.** Every gain is fitted to whatever was
-under test, and the repo swaps candidates. Tune at model-adoption time, not
-continuously.
+**The log is a survivor.** It records calls that were made. It cannot contain
+the read that was never triaged or the question that was never opened, so
+false-negative failure modes stay invisible. §1.5's 77 lines are the same
+problem in another form.
 
-**The loop will propose deleting §1's 77 lines**, because they are long and
-score nothing. Nothing in the tool stops it; the diff is printed and you are the
-one who knows what those lines cost to learn. This is the single strongest
-argument for the tool never applying anything.
+**Recorded responses are a baseline, not ground truth.** They came from prompts
+live at the time, and from whichever model was serving. §2.2 dates and counts
+them; it does not make them true.
+
+**A tuned prompt is fitted to one model.** Tune at model-adoption time, not
+continuously, and print which model did which.
+
+**The loop will propose deleting §1.5's lines**, because they are long and score
+nothing. Nothing in the tool stops it. This is the single strongest argument for
+the tool never applying anything.
 
 **It optimises a proxy.** Nothing here shows a better bench score is a
 better-behaved being. §5's last item is the only thing that would.
-
-**Circularity.** If the proposer and the model under test are the same, it is a
-model writing its own exam. Print which model did which.
 
 ---
 
@@ -164,29 +226,34 @@ model writing its own exam. Print which model did which.
 Reviewed after the first `--tune` run:
 
 - **Held-back score against tuning score.** If the first rose and the second did
-  not, the run fitted the cases it was shown. Primary reading.
-- **Keep rate.** If most variants are kept, the interval guard is too loose and
-  the corpus is too small — stop and grow it.
+  not, the run fitted the payloads it was shown. Primary reading.
+- **Keep rate.** If most variants are kept, the interval guard is too loose.
 - **Proposed deletions of provenance-marked lines.** If they recur, the corpus
-  is the problem and no amount of tuning fixes it.
+  is the problem and tuning does not fix it.
+- **Deliberation at real width.** §1.2 predicts the current prompt scores worse
+  on 13,735-character dossiers than on the 2,258-character fixture. If it does
+  not, the width concern was wrong and the fixture was adequate.
 - **The being, on a tuned prompt, for a week.** Gate misfire rate, feed
   coverage, advance kinds. The only test that settles the proxy question.
 
 **Reversion.** The prompts are in git and the tool changed none of them.
-Reverting an applied diff is `git revert`. There is no state to unwind.
+Reverting an applied diff is `git revert`. No state to unwind.
 
-**Decision rule.** Build §2.1 and §2.2 first and use them by hand for a week. If
-hand-written variants do not produce a single improvement that survives the
-held-back half, **do not build §2.3** — the corpus, not the prompts, is what
-needs work, and a loop would only generate that same non-result faster.
+**Decision rule.** Build §2.1 and §2.2, then run the free baseline — scoring the
+1,855 recorded responses costs nothing. **If the current prompts already score
+near the ceiling of what the checks can detect, do not build §2.3**; there is
+nothing for it to find, and the honest next step is better checks, not better
+prompts.
 
 ---
 
 ## 6. What this does not claim
 
 - It does not claim tuned prompts produce a better-behaved being. §4.
-- It does not claim the corpus is adequate. §1 says it is 4 cases on `deep`, and
-  §5's decision rule exists because of it.
-- It offers no baseline. §2.1 produces the first one.
+- It does not claim the replayed distribution is the right one to tune against.
+  §4's first two points.
+- It offers no baseline yet. §2.2 produces the first one, for free.
 - It has no instrument for a rewrite that keeps a provenance-marked line's shape
   and drops its force. A human reading the diff is the only defence.
+- The 704 unreplayed calls are counted, not covered. Adding a shape is a join
+  marker and a check apiece.
