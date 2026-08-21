@@ -1,0 +1,51 @@
+# What the being was like before the loop (P4 W10).
+#
+# **The phrase had no definition anywhere.** PLAN names "the pre-loop baseline"
+# three times — the Enablement table's condition for holding stage 2, S8-E's
+# read, and the kill condition Phase 8 calls the one that matters most,
+# *nights slept falling below the pre-loop baseline* — and `instruments.yaml`
+# repeats it once. Nothing said what it was, over what window, or who took it.
+# A halt whose threshold is a phrase is a halt that fires when somebody decides
+# it should.
+#
+# **It is measured, not imputed.** The values come from `metric_readings` —
+# the being's own nightly series — over a stated window, with the reading ids
+# that produced them. Nothing here is estimated, and nothing is a target: this
+# is a record of what was true before anything started changing the being.
+#
+# **The operator writes it, and only once.** `tools/pre_loop_baseline.py`
+# computes what the file should say and prints it; putting it here is a
+# deliberate act, and this file is inside the hard core, so the loop can read it
+# and can never take, retake or adjust its own baseline. A loop that computes
+# the figure it is judged against is not being judged.
+#
+# **When:** at the moment stage 0 starts — before the loop reads, decides,
+# proposes or reports anything. Not later, and not "when it becomes
+# interesting": a baseline taken after the loop has been running measures the
+# loop as much as the being.
+#
+# **Retaking it.** There is one legitimate reason — E2.8 reset the metric's
+# definition, so the old series and the new one are not comparable. Then the
+# retake records `supersedes` and the reason, and the old block stays. Any
+# other retake is the ratchet loosening, and the whole point of `narrowing is
+# not symmetric` is that it must not.
+
+version: 1
+
+# null until the operator takes it. Absent values are UNREADABLE, never zero,
+# and `newz/evidence/pre_loop.py` refuses to compare against nothing rather
+# than reporting that nothing has fallen below nothing (INV-044).
+taken_at: null
+taken_by: null
+
+# The window the values were computed over, in days. 28 is the intent: long
+# enough that one bad week does not set the bar, short enough to describe the
+# being as it is rather than as it was.
+window_days: 28
+
+# metric -> {median, readings, from, to, reading_ids}
+metrics: {}
+
+# Why this file exists before it holds anything: the shape of the record is
+# fixed while nothing is at stake, which is the only time it is cheap. The same
+# order as INV-065's — the rule is written before there is code to break it.

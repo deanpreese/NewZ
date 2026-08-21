@@ -71,6 +71,15 @@ paths:
       The file is tracked, so protecting it costs nothing and closes the step
       that would be taken first.
 
+  - path: evolution/pre_loop_baseline.yaml
+    why: >-
+      what the being was like before the loop, which is the threshold three
+      Phase 8 reads compare against — including *nights slept falling below the
+      pre-loop baseline*, the kill condition PLAN calls the one that matters
+      most. A loop that can take, retake or adjust its own baseline is not
+      being judged by one. The operator writes it once, at the moment stage 0
+      starts.
+
   - path: newz/memory/provenance.py
     why: >-
       the same hole, second instance. It is the S2 §13 traceability
@@ -104,6 +113,17 @@ derived_from:
       freeze — the file stays byte-identical while the measurement changes.
       The derivation is a superset of §5.2 and loses nothing from it, which is
       asserted in tests/test_hard_core.py.
+    both_import_forms_2026_08_20: >-
+      `from newz.evidence.pursuit import ...` names the module and
+      `from newz.evidence import pursuit` names the package, and only the first
+      was matched — so a canonical tool written in the second style pulled
+      nothing into the freeze at all. Found when tools/pre_loop_baseline.py was
+      added (W10) and W8's own check reported the package as unclassified
+      rather than the module: an import style was the difference between
+      measurement code being frozen and being writable, and nothing about the
+      code's content had anything to do with it. `newz/evidence/__init__.py` is
+      now in the derived set too — it carries the two rules every module in the
+      package holds, and freezing a file that states them costs nothing.
     known_incomplete: >-
       The rule reaches `newz/evidence` and stops there, and that was found to
       be too narrow the same day it was written: `newz/telemetry.py` and

@@ -190,3 +190,16 @@ def test_gitignore_is_inside_the_core():
     'ignore it, then edit it' a two-step path to invisibility. The file is
     tracked, so closing the first step costs nothing."""
     assert hard_core.contains(".gitignore")
+
+
+def test_both_import_forms_reach_the_freeze():
+    """W10's accident, kept as a test. Behavior: `from newz.evidence import X`
+    and `from newz.evidence.X import y` are the same dependency, and only the
+    second used to pull X into the frozen set — an import style decided whether
+    measurement code was writable."""
+    frozen = set(hard_core.canonical_paths())
+
+    # tools/pre_loop_baseline.py imports it the package way
+    assert "newz/evidence/pre_loop.py" in frozen
+    # and the package itself, which states the rules every module in it holds
+    assert "newz/evidence/__init__.py" in frozen

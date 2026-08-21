@@ -110,6 +110,20 @@ instruments:
     canonical: true
     note: "explicitly NOT an evidence instrument (P2 Rule 3) — it reports liveness, never development"
 
+  - tool: tools/pre_loop_baseline.py
+    reads: [metric_readings, evolution/pre_loop_baseline.yaml]
+    measures: "where the being stands against what it was before the loop — the threshold three Phase 8 reads compare against"
+    denominator: "nightly readings in the 28 days before the baseline was taken"
+    model_in_chain: true
+    model_where: "inherited from whichever metric is compared: nights_slept is mechanical, advances_offered is not. The comparison adds no judgment and launders none"
+    method: "median of the OK readings in the window, with the reading ids that produced it; the current value is the newest OK reading"
+    unreadable_when: "the baseline has not been taken — there is nothing to fall below, and reporting that nothing has fallen would be a pass the measurement never made"
+    canonical: true
+    note: >-
+      Reports; never writes. Taking the baseline is the operator's act and the
+      file is inside the hard core, so a tool that wrote it would make the
+      record of that decision a side effect of running a command.
+
   - tool: tools/check_invariants.py
     reads: [INVARIANTS.md, the tree]
     measures: "ledger well-formedness — ids unique, statuses valid, tests and consumers resolvable"

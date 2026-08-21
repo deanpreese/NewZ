@@ -51,7 +51,16 @@ def canonical_tools() -> list[str]:
 
 def _evidence_imports(tool: str) -> set[str]:
     """`newz/evidence/*.py` modules a tool imports. A frozen tool whose
-    measurement code is writable is not frozen."""
+    measurement code is writable is not frozen.
+
+    **Both import forms.** `from newz.evidence.pursuit import ...` names the
+    module and `from newz.evidence import pursuit` names the package, and only
+    the first was matched — so a canonical tool written the second way pulled
+    nothing into the freeze. Found 2026-08-20 when `tools/pre_loop_baseline.py`
+    imported `pre_loop` that way and W8's check noticed the package rather than
+    the module: an import style was the difference between measurement code
+    being frozen and being writable.
+    """
     out: set[str] = set()
     try:
         tree = ast.parse((REPO / tool).read_text())
@@ -61,11 +70,18 @@ def _evidence_imports(tool: str) -> set[str]:
         mods: list[str] = []
         if isinstance(node, ast.ImportFrom) and node.module:
             mods = [node.module]
+            if node.module == "newz.evidence":
+                # the package itself, plus every module named off it
+                mods += [f"newz.evidence.{a.name}" for a in node.names]
         elif isinstance(node, ast.Import):
             mods = [a.name for a in node.names]
         for m in mods:
-            if m.startswith("newz.evidence."):
-                out.add("newz/" + m.split("newz.", 1)[1].replace(".", "/") + ".py")
+            if m == "newz.evidence":
+                out.add("newz/evidence/__init__.py")
+            elif m.startswith("newz.evidence."):
+                rel = "newz/" + m.split("newz.", 1)[1].replace(".", "/") + ".py"
+                if (REPO / rel).exists():
+                    out.add(rel)
     return out
 
 
