@@ -410,6 +410,37 @@ and was not used.
 
 ---
 
+## 5a. Delivery record
+
+*Appended as the work lands. Approved by the operator 2026-08-20 (decisions 1
+and 2); decision 3 stands at its default — the RT2 threshold stays withdrawn —
+and decision 4 is still open, which W11 needs.*
+
+**T1 delivered 2026-08-20**, four commits, gate green before each:
+
+| Item | Commit | What the live store said |
+|---|---|---|
+| W1 | `ab680bb` | the volume ratio was understated 40% — 948 episodes over 11 nights of development (94.8) where the window says 6 (158.0) |
+| W2 | `221c07d` | migration 0039; 148 historical inbound messages stay unjudged by design |
+| W3 | `54aea74` | `kill:operator-agreement` reads three metrics where it read none |
+| W4 | `4012fcb` | `authority.py` has a production caller for the first time |
+
+Suite 743, ledger 80 clean. Three of the four carry `Restart: required` — the
+being is running the code from before them until the operator restarts it, and
+migration 0039 applies at boot.
+
+Two things were found in the building that the proposal did not know:
+
+- **`read_window` took a `since` and dropped it** (W1). Both Perspective-derived
+  metrics were all-time figures filed nightly under a 168-hour label. That is
+  R-37c's second half, and it produced a wrong number rather than a wrong
+  declaration.
+- **`advance_acceptance` did not need registering.** The proposal said it did,
+  on the strength of the wrong declaration: `consequence_rate` needed
+  `advances_offered`, which was already recorded.
+
+---
+
 ## 6. Order, and the dated gate
 
 | When | What | Gate |
