@@ -162,6 +162,14 @@ not_instruments:
     - tools/backup.py
     - tools/corpus_hygiene.py
 
+  gates:             # run the checks and report a verdict about the REPO, never
+                     # about the being. Not instruments: nothing they emit is a
+                     # measurement of development, and nothing downstream may
+                     # cite them as evidence (Rule 3, and P2's line about
+                     # health.py). They exist so that "the suite is green" is a
+                     # fact about a command rather than about someone's memory.
+    - tools/gate.py
+
 # ── metrics, and the grade each one carries (P4 E2.5, Rule 7) ───────────
 #
 # Rule 7: every measurement carries its grade. An instrument is not one grade —

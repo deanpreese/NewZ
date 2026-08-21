@@ -1,0 +1,40 @@
+# The environment this repo runs in, declared (P4 E8.0 / W5).
+#
+# Until this file existed, "conda agent13" was a fact about one machine: the
+# interpreter was 3.13 while pyproject asked only for >=3.12, and five runtime
+# dependencies were installed by hand. A fresh clone could not collect the
+# suite, which makes every claim about the suite a claim about one laptop.
+#
+#     conda env create -f environment.yml
+#     conda activate newz
+#     pip install -e '.[dev]'          # the one hand step, and it is declared
+#     python tools/gate.py
+#
+# The existing `agent13` environment is not touched — this creates `newz`
+# beside it. Both work; the point of the file is that a machine without either
+# can get there.
+#
+# **Versions are pinned to what is known to pass**, captured 2026-08-20 from
+# the environment the suite has been green in. A range would declare an
+# environment nobody has run.
+
+name: newz
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.13
+  - pip
+  - pip:
+      # runtime — pyproject is the source of truth for what is needed; this
+      # pins the versions that are known to work together
+      - python-dotenv==1.2.1
+      - PyYAML==6.0.3
+      - httpx==0.28.1
+      - trafilatura==2.0.0
+      - beautifulsoup4==4.14.3
+      # dev — the gate needs these and nothing else
+      - pytest==9.1.1
+      - pytest-asyncio==1.3.0
+      - pytest-timeout==2.4.0

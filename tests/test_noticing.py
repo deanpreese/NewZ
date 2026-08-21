@@ -36,6 +36,22 @@ from tests.conftest import FakeLLM
 CLEAN = "<violation_check></violation_check>"
 
 
+# **These tests do not read the wall clock.** Four of them called it through
+# `blocked_reason`, so the suite was green in the afternoon and red at 2 a.m.:
+# the 07:00–23:00 wake window is a gate on the being's behaviour and was
+# silently a gate on the test run. A suite that flaps on the hour teaches its
+# operator to ignore a red, which is the argument E8.0 rests on, so the clock
+# is frozen at a fixed daylight moment for this module — fixtures and gates
+# read the same one, and `test_the_three_am_lesson` still passes its own hours
+# to `in_wake_window`, which is where that behaviour belongs.
+DAYLIGHT = time.mktime((2026, 8, 20, 14, 0, 0, 0, 0, -1))
+
+
+@pytest.fixture(autouse=True)
+def _frozen_clock(monkeypatch):
+    monkeypatch.setattr(time, "time", lambda: DAYLIGHT)
+
+
 def _noticeable(store, kind="concern_closed", summary="I closed a concern — X: settled."):
     return write_episode(store, kind=kind, provenance="self", summary=summary)
 
@@ -146,7 +162,7 @@ async def test_the_being_speaks_first(store, tmp_path, monkeypatch):
     monkeypatch.setattr("newz.store.db.open_db",
                         lambda *a, **k: _KeepOpen(store))
 
-    said = await sched.run_once()
+    said = await sched.run_once(DAYLIGHT)
     assert said and "Montaigne" in said
     assert ch.sent == [said]
     # Recorded as an ordinary outbound message, and the noticing is spent.
@@ -167,7 +183,7 @@ async def test_declining_is_the_common_outcome_and_costs_the_candidate(
     monkeypatch.setattr("newz.store.db.open_db",
                         lambda *a, **k: _KeepOpen(store))
 
-    assert await _scheduler(store, tmp_path, llm, ch).run_once() is None
+    assert await _scheduler(store, tmp_path, llm, ch).run_once(DAYLIGHT) is None
     assert ch.sent == []
     # Marked surfaced, not left pending: reconsidering it every five minutes
     # would be a groove.
@@ -192,7 +208,7 @@ async def test_an_unprompted_message_is_not_a_privileged_one(
     monkeypatch.setattr("newz.store.db.open_db",
                         lambda *a, **k: _KeepOpen(store))
 
-    assert await _scheduler(store, tmp_path, llm, ch).run_once() is None
+    assert await _scheduler(store, tmp_path, llm, ch).run_once(DAYLIGHT) is None
     assert ch.sent == []
 
 
@@ -223,5 +239,5 @@ async def test_disabled_is_a_supported_state(store, tmp_path, monkeypatch):
                         lambda *a, **k: _KeepOpen(store))
     sched = SurfaceScheduler(tmp_path / "x.db", llm, _Channel(), "dean",
                              enabled=False)
-    assert await sched.run_once() is None
+    assert await sched.run_once(DAYLIGHT) is None
     assert llm.calls == []

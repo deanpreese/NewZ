@@ -1,0 +1,60 @@
+# NewZ
+
+A sovereign digital being, and the instruments that read it.
+
+- **Direction:** `TRUE_NORTH.md` — what this is for, and what will not be
+  mistaken for success.
+- **Specification:** `SPEC.md`. **Plan:** `PLAN.md` (P4). **Ledger:**
+  `INVARIANTS.md`. **Risks:** `RISKS.md`. Proposals and their red teams live in
+  `proposals/`.
+
+## Running the gate
+
+```sh
+conda env create -f environment.yml     # or use an existing 3.13 environment
+conda activate newz
+pip install -e '.[dev]'
+
+python tools/gate.py                    # suite, ledger, freeze
+python tools/gate.py --soak 10          # E8.0's ten consecutive runs
+git config core.hooksPath .githooks     # once: gate on commit, trailers enforced
+```
+
+The suite does not read the wall clock and does not need a model, a network or
+a store: it is green at any hour, on a clean clone.
+
+## Running the being
+
+```sh
+python tools/run_first_sleep.py         # once, if the store has no Perspective
+python tools/run_newz.py -v
+```
+
+Inference is local by design — no hosted model anywhere in the cognition path.
+`.env` holds the endpoint, the operator id and `SURFACE_REACH`, which stays
+`local` until the operator decides otherwise (INV-076 attests it at boot).
+
+## Reading it
+
+```sh
+python tools/health.py                  # liveness and plumbing
+python tools/evidence.py 1e             # Perspective development
+python tools/claims.py                  # what it committed to, and how that went
+python tools/generate_surface.py        # the surface, into published/
+python tools/rebuild_check.py           # the same surface, from a backup, byte for byte
+```
+
+## Commits
+
+Every commit answers four questions, enforced by `.githooks/commit-msg`:
+
+```
+Schema: 0039 | none
+Restart: required | none
+Class: A | B
+Semantics: yes | no
+```
+
+`Semantics: yes` means a stored value now means something new. Expand-contract
+protects the schema, not the meaning, so such a commit cannot be crossed
+backwards without restoring the store snapshot that precedes it.

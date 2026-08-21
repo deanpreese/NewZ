@@ -211,8 +211,16 @@ class SurfaceScheduler:
             function="conversation")
         return result.text.strip()
 
-    async def run_once(self) -> str | None:
-        """Returns what was said, or None. Never raises past the caller."""
+    async def run_once(self, now: float | None = None) -> str | None:
+        """Returns what was said, or None. Never raises past the caller.
+
+        `now` is the clock the gates are read against. It defaults to the real
+        one — nothing in the being passes it — and exists because a test that
+        reads the wall clock is a test that passes in the afternoon and fails
+        at 2 a.m.: four of these failed outside the 07:00–23:00 wake window,
+        so the suite was only green in daylight and a nightly gate would have
+        taught its operator to ignore a red (E8.0).
+        """
         import asyncio
 
         from newz.conversation.composer import record_message
@@ -221,15 +229,16 @@ class SurfaceScheduler:
         if not self._enabled:
             return None
 
+        now = now or time.time()
         conn = open_db(self._db_path, busy_timeout_ms=30_000)
         try:
             decay_stale(conn)
             notice(conn)
-            blocked = blocked_reason(conn, self._person)
+            blocked = blocked_reason(conn, self._person, now)
             if blocked:
                 logger.debug("surface: holding — %s", blocked)
                 return None
-            cand = next_candidate(conn)
+            cand = next_candidate(conn, now)
             if cand is None:
                 return None
 
