@@ -13,14 +13,32 @@ Two modes, and the first one is free:
         prompt that is live now, how many responses survive the checks the
         consuming code applies, and what the failures actually are.
 
-    python tools/replay_prompts.py --live --model M [--sample 40]
-        Re-runs the payloads through the current prompts against an endpoint,
-        so the same numbers can be had for a model that has never run here.
+    python tools/replay_prompts.py --live [--sample 40]
+        Re-runs the payloads through the current prompts. Each shape goes to
+        the model its ROLE is configured with in the being's own .env — DEEP
+        for deliberation and sleep, AMBIENT for triage, extraction, the opener
+        and the gate — so a replay follows the being's configuration rather
+        than a constant in a bench file. `--model` / `--endpoint` override.
 
-    python tools/replay_prompts.py --variant opener.reading=new.txt --live --model M
+    python tools/replay_prompts.py --variant opener.reading=new.txt --live
         Re-renders every payload of that shape against an edited prompt and
-        prints both scores side by side. This is the tuning primitive: edit a
+        prints both scores side by side, with the interval rule deciding
+        whether the difference is real. This is the tuning primitive: edit a
         prompt in a scratch file, find out whether it is better.
+
+WHAT IT SCORES
+--------------
+Not "did the XML parse" — the prompts clear that bar at 97% and it says
+nothing. Where this system decides quality IN CODE, downstream of the call,
+that code is the scorer:
+
+    delib   advance.judge_advance   — accepted, or a restatement discarded
+    opener  opener.py's door guards — unreachable terminus, reused example,
+                                      placeholders, verbatim grounding
+    gate    gate_log.classification — the operator's own verdict on the stop
+
+Everything else falls back to the schema check, and the report says which is
+which. `--structure-only` forces the old behaviour.
 
 WHAT IT CANNOT DO
 -----------------
@@ -167,6 +185,33 @@ def _gate_parts(user: str) -> dict:
 # bench's own defaults would truncate confront (2,500) and over-budget triage
 # (600), and truncation is a failure at three of these boundaries — so the
 # numbers have to be production's or the failures are the tool's.
+# Which ROLE each shape is called under, from the call sites. A replay that
+# uses one model for everything is not this system: the roles are configured
+# separately in .env and may point at different models on different boxes, and
+# a tool that ignores that reports numbers for a being nobody is running.
+ROLES = {
+    "triage":   "AMBIENT",        # newz/world/feeds.py:399
+    "extract":  "AMBIENT",        # newz/world/extract.py:131
+    "opener":   "AMBIENT",        # newz/concerns/opener.py:567
+    "gate":     "AMBIENT",        # newz/gate/outbound.py:245
+    "delib":    "DEEP",           # newz/deliberation/lite.py:591
+    "digest":   "DEEP",           # newz/sleep/nightly.py:286
+    "confront": "DEEP",           # newz/sleep/nightly.py:422
+}
+
+
+def configured_roles() -> dict[str, tuple[str, str]]:
+    """(model, endpoint) per role, from the being's own .env — not from a
+    constant in a bench file. If DEEP moves to another box, a replay follows
+    it."""
+    from newz.config import load
+
+    try:
+        return {r: (v.model, v.endpoint) for r, v in load(repo_root=_ROOT).roles.items()}
+    except Exception:                                          # noqa: BLE001
+        return {}
+
+
 PARAMS = {
     "triage":   (600,  0.2),      # newz/world/feeds.py:399
     "extract":  (900,  0.1),      # newz/world/extract.py:131
@@ -519,6 +564,7 @@ def load_rows(prompts: dict, path: Path = LOG) -> list[Row]:
             current = "largest source of wrong holds" in u
         else:
             current = spec["head"](u) == prompts[spec["tmpl"]]
+        extra["model"] = d.get("model") or "?"
         rows.append(Row(shape=name, payload=payload, extra=extra,
                         response=d.get("response") or "", current=current,
                         ts=d.get("ts") or 0.0))
@@ -586,9 +632,10 @@ def sample_failures(results: dict, shape: str, limit: int = 3) -> None:
 # ─── live ──────────────────────────────────────────────────────────────────
 
 
-def run_live(rows: list[Row], prompts: dict, model: str, endpoint: str,
-             timeout: float, quality: bool = True) -> list[tuple[Row, Verdict]]:
-    bench_model.ENDPOINT = endpoint
+def run_live(rows: list[Row], prompts: dict, resolve, timeout: float,
+             quality: bool = True) -> list[tuple[Row, Verdict]]:
+    """`resolve(shape) -> (model, endpoint)`, so each shape goes to the model
+    its ROLE is configured with rather than to one global default."""
     out: list[tuple[Row, Verdict]] = []
     with httpx.Client() as client:
         for i, row in enumerate(rows, start=1):
@@ -596,6 +643,8 @@ def run_live(rows: list[Row], prompts: dict, model: str, endpoint: str,
             system = prompts[spec["system"]]
             user = spec["render"](prompts, row)
             max_tokens, temperature = PARAMS[row.shape]
+            model, endpoint = resolve(row.shape)
+            bench_model.ENDPOINT = endpoint
             reply = call(client, model, system, user, max_tokens=max_tokens,
                          temperature=temperature, timeout=timeout)
             if reply.error:
@@ -624,8 +673,12 @@ def main(argv: list[str] | None = None) -> int:
                     help="only rows produced by the prompt that is live now")
     ap.add_argument("--sample", type=int, default=0, help="cap rows per shape")
     ap.add_argument("--live", action="store_true", help="re-run against an endpoint")
-    ap.add_argument("--model", default=bench_model.MODEL)
-    ap.add_argument("--endpoint", default=bench_model.ENDPOINT)
+    ap.add_argument("--model", default="",
+                    help="override the model for every shape (default: each "
+                         "shape's ROLE, from the being's own .env)")
+    ap.add_argument("--endpoint", default="",
+                    help="override the endpoint for every shape (default: the "
+                         "role's configured endpoint)")
     ap.add_argument("--timeout", type=float, default=300.0)
     ap.add_argument("--variant", action="append", default=[],
                     metavar="ID=FILE", help="replace one prompt with a file's "
@@ -638,6 +691,14 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     prompts = live_prompts()
+
+    roles = configured_roles()
+
+    def resolve(shape: str) -> tuple[str, str]:
+        model, endpoint = roles.get(ROLES[shape], ("", ""))
+        return (args.model or model or bench_model.MODEL,
+                args.endpoint or endpoint or bench_model.ENDPOINT)
+
     try:
         clauses, version = active_clauses()
         prompts["_clauses"] = clauses
@@ -671,6 +732,15 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  {store_note}")
     print(f"  {sum(1 for r in rows if r.current):,} were produced by the prompt "
           f"that is live now")
+    seen = collections.Counter(r.extra.get("model", "?") for r in rows)
+    print("  recorded responses came from: "
+          + ", ".join(f"{m} ({n:,})" for m, n in seen.most_common()))
+    if roles:
+        want = {m for m, _ in roles.values()}
+        stale = {m for m in seen if m not in want and m != "?"}
+        if stale:
+            print(f"  NOTE: {', '.join(sorted(stale))} no longer serves any role — "
+                  f"those rows are a baseline for a model you have moved off")
 
     variants = {}
     for v in args.variant:
@@ -694,10 +764,11 @@ def main(argv: list[str] | None = None) -> int:
 
     live = varlive = None
     if args.live or variants:
-        print(f"\n  re-running {len(rows):,} calls against {args.model} "
-              f"at {args.endpoint}")
-        live = run_live(rows, prompts, args.model, args.endpoint, args.timeout,
-                        quality)
+        print(f"\n  re-running {len(rows):,} calls, each under its own role:")
+        used = sorted({f"{ROLES[k]} {resolve(k)[0]} @ {resolve(k)[1]}" for k in by})
+        for u in used:
+            print(f"    {u}")
+        live = run_live(rows, prompts, resolve, args.timeout, quality)
         report({k: [(r, v) for r, v in live if r.shape == k] for k in by},
                f"LIVE — current prompts on {args.model}")
 
@@ -708,8 +779,7 @@ def main(argv: list[str] | None = None) -> int:
                    if s.get("tmpl") in variants or s.get("system") in variants}
         vrows = [r for r in rows if r.shape in touched]
         print(f"\n  variant: {', '.join(variants)} — {len(vrows):,} affected calls")
-        varlive = run_live(vrows, vp, args.model, args.endpoint, args.timeout,
-                           quality)
+        varlive = run_live(vrows, vp, resolve, args.timeout, quality)
         report({k: [(r, v) for r, v in varlive if r.shape == k] for k in touched},
                f"VARIANT — {', '.join(variants)}")
         print("\n  SIDE BY SIDE")
