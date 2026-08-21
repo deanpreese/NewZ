@@ -257,12 +257,96 @@ Reviewed after the first `--tune` run:
 **Reversion.** The prompts are in git and the tool changed none of them.
 Reverting an applied diff is `git revert`. No state to unwind.
 
-**Decision rule, applied by the run rather than by the operator.** The free
-baseline is the first thing `--tune` computes. A boundary already at the ceiling
+**Decision rule, applied by the run rather than by the operator — and it has
+now fired; see §6.2.** The free baseline is the first thing `--tune` computes. A boundary already at the ceiling
 of what its checks can detect has nothing for the loop to find, and the run
 **skips it and says so** rather than spending a budget proving it. If every
 boundary is skipped, the run ends immediately with that finding, which is the
 useful answer: the next step is better checks, not better prompts.
+
+---
+
+## 6. Red team, run — and what it found
+
+§2.1 and §2.2 are built as `tools/replay_prompts.py`. Running them is the red
+team, and it went against the proposal.
+
+### 6.1 The mechanism holds
+
+Round trip — rebuild the original prompt from the current template plus the
+split payload, and compare byte for byte:
+
+| shape | rows | byte-identical | reading |
+|---|---:|---:|---|
+| extract | 1,191 | 100% | payload self-contained |
+| triage | 157 | 100% | " |
+| gate | 47 | 100% | " |
+| digest | 17 | 100% | " |
+| confront | 5 | 100% | " |
+| opener | 275 | 84% | the other 16% used an older template |
+| delib | 170 | 58% | the other 42% used an older template |
+
+The two below 100% are exactly the shapes whose prompts have changed, measured
+independently at the same 84% and 58%. The split is correct.
+
+### 6.2 There is almost nothing for a tuner to find
+
+The free baseline, 1,862 calls, 0 model calls:
+
+| shape | rows | pass | rate | payload p50 |
+|---|---:|---:|---:|---:|
+| triage | 157 | 157 | **100%** | 6,714 |
+| gate | 47 | 47 | **100%** | 331 |
+| delib | 170 | 168 | 99% | 13,721 |
+| extract | 1,191 | 1,184 | 99% | 2,017 |
+| digest | 17 | 16 | 94% | 28,263 |
+| confront | 5 | 4 | 80% | 12,852 |
+| opener | 275 | 233 | **85%** | 212 |
+| **all** | **1,862** | **1,809** | **97%** | |
+
+**The prompts already hold their schemas.** Five of seven shapes are at or above
+99%, and the two that are not are `confront` (n=5, no denominator) and the
+opener. §5's decision rule — *skip a boundary already at the ceiling of what its
+checks can detect* — fires on six of seven.
+
+### 6.3 The one real defect, and a prompt did not fix it
+
+The opener's 15% is one failure mode: **45 of 275 responses close the element as
+`</worth_pursuing>` or `</worth_pursving>`**, which makes the proposal
+unparseable and loses the question. Production absorbs it with a retry.
+
+Tested directly — a variant adding an explicit spelling instruction beside the
+schema:
+
+```
+current  32/40  80%  [0.65-0.90]
+variant  33/40  82%  [0.68-0.91]     no detectable difference (+1 case)
+```
+
+One case, intervals overlapping. **The prompt is not where that defect lives.**
+The likely fix is renaming the element to a word the model spells reliably —
+which is a code change as well as a prompt change, and therefore outside what
+this tool can test.
+
+### 6.4 The tool needed its own guard on its first use
+
+The side-by-side above first printed "better" for 32/40 against 33/40. That is
+precisely the noise a tuning loop accumulates and calls progress. The interval
+rule from §2.3 is now applied to the variant verdict itself — which is the
+proposal's own guard, shown to be necessary by one run.
+
+### 6.5 What this means for §2.3
+
+The loop was specified to tune against replayed payloads. Replay supplies real
+**inputs** and no **verdicts**, so the only thing scoreable is structure — and
+§6.2 shows structure is at ceiling. A loop built now would work six boundaries
+that have nothing to give and one whose defect is not in the prompt.
+
+**The recommendation is therefore to stop here.** What would change it is
+labels: `gate_log.classification` is the only labelled set the being has, and it
+is 40 rows with 22 on a retired clause. Judgment — did triage keep the right
+item, should the gate have fired — is where the headroom must be, and none of it
+is measurable yet.
 
 ---
 
