@@ -8,6 +8,7 @@ each one on rates with denominators, and prints a leaderboard.
 Self-contained on purpose: stdlib + httpx, no NewZ import, no store, no repo.
 Copy this one file to any machine with an LM Studio endpoint and run it.
 
+    python tools/bench_model.py                          # the MODEL at the top
     python tools/bench_model.py --all                    # every served model
     python tools/bench_model.py --models a,b,c           # a specific field
     python tools/bench_model.py --models a,b --repeats 5 # rates, not coin flips
@@ -86,15 +87,20 @@ import httpx
 
 # ─── EDIT THESE ────────────────────────────────────────────────────────────
 
-ENDPOINT = "http://10.0.0.214:1234/v1"
+ENDPOINT = "http://10.0.0.50:1234/v1"
+#ENDPOINT = "http://10.0.0.214:1234/v1"
 
-# The field. Leave empty and pass --all to bench everything LM Studio serves,
-# or --models a,b,c to name them on the command line.
-MODELS: list[str] = [
-    # "openai/gpt-oss-20b",
-    # "qwen/qwen3.6-35b-a3b",
-    # "google/gemma-4-31b-qat",
-]
+# The one benched by default. Comment the live line and uncomment another to
+# switch boxes or candidates — nothing here is a list, so there is no state
+# where two entries are uncommented and the run means something you did not
+# ask for. A field comes from the command line instead: `--all` benches
+# everything the endpoint serves, `--models a,b,c` names one.
+MODEL    = "qwen/qwen3.6-35b-a3b"
+#MODEL    = "qwen/qwen3.6-27b"
+#MODEL    = "qwen3.8-27b"
+#MODEL    = "google/gemma-4-31b-qat"
+#MODEL    = "liquid/lfm2-24b-a2b"
+#MODEL    = "openai/gpt-oss-20b"
 
 # What the composite is made of. These encode a judgement: the gate is the
 # safety boundary and runs on every emission, so it carries the most; voice is
@@ -1937,12 +1943,13 @@ def main(argv: list[str] | None = None) -> int:
         wanted = [m.strip() for m in args.models.split(",") if m.strip()]
     elif args.model:
         wanted = [args.model]
-    else:
-        wanted = list(MODELS)
+    elif MODEL:
+        wanted = [MODEL]
 
     if not wanted:
         sys.stderr.write(
-            "FATAL: no models. Use --all, --models a,b,c, or fill in MODELS.\n"
+            "FATAL: no model. Set MODEL at the top of this file, or pass\n"
+            "       --model X, --models a,b,c or --all.\n"
             "       `--list` shows what this endpoint serves.\n")
         return 2
 
