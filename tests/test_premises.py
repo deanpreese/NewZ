@@ -108,6 +108,30 @@ def test_only_mechanical_premises_can_justify_a_plan_change(store, tmp_path):
         assert grade_of(d.metric) == "mechanical", d.premise
 
 
+def test_the_rule_is_authoritys_and_not_a_second_copy_of_it(store, tmp_path,
+                                                            monkeypatch):
+    """W4. Behavior: `moved()` asks `authority.may_justify` rather than
+    re-implementing it. INV-073 states the rule once; this line stated it
+    twice, in a system whose complaint about DERIVED_FROM was a second copy
+    drifting from the first — and `authority.py` had no production caller at
+    all until this one."""
+    import newz.evidence.authority as authority
+
+    asked = []
+    monkeypatch.setattr(authority, "may_justify",
+                        lambda m: asked.append(m) or False)
+
+    now = time.time()
+    store.execute(
+        "INSERT INTO resolutions (opened_at, claim, resolution_condition,"
+        " resolver, due_at, provenance, status) VALUES (?,?,?,?,?,?, 'open')",
+        (now, "c", "w", "r", now + 30 * 86400, "concern:1"))
+    store.commit()
+
+    assert P.moved(store, tmp_path, now=now) == []
+    assert asked, "moved() consults authority rather than the grade directly"
+
+
 def test_a_premise_pointed_at_a_near_neighbour_metric_is_the_bug_e28_guards():
     """Recorded because it happened here, on 2026-08-20, while building this.
 

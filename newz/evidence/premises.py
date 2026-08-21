@@ -117,11 +117,19 @@ def moved(conn: sqlite3.Connection, repo_root: Path, *, now: float,
 
     §12.6's rule reads this: a plan-change proposal must name a moved
     **mechanical** premise, and may not be justified by preference or elegance.
+
+    **The rule is `authority.may_justify`, not a copy of it** *(W4)*. This line
+    read `grade_of(d.metric) == "mechanical"` inline — the same rule INV-073
+    states, written twice, in a system whose whole complaint about
+    `DERIVED_FROM` was a second copy drifting from the first. `authority.py`
+    had no production caller at all until this call; it was a module the test
+    suite exercised and nothing used, which is the shape of defect W3 just
+    fixed one file over.
     """
-    from newz.evidence.grades import grade_of
+    from newz.evidence.authority import may_justify
 
     return [d for d in check(conn, repo_root, now=now, hours=hours)
-            if d.moved and grade_of(d.metric) == "mechanical"]
+            if d.moved and may_justify(d.metric)]
 
 
 def validate() -> list[str]:
