@@ -33,6 +33,19 @@ def main() -> int:
         print(f"REACH IS UNATTESTED\n\n{found}\n")
         return 2
 
+    # W8: a module a canonical tool reaches, classified as neither measurement
+    # nor mechanism, is a hole in the boundary this tool reports on. Checked
+    # before the diff, because a registry that cannot describe the tree cannot
+    # be used to judge a change to it.
+    from newz.evidence.hard_core import validate
+
+    problems = validate()
+    if problems:
+        print("THE HARD CORE DOES NOT DESCRIBE THE TREE\n")
+        for p in problems:
+            print(f"  {p}")
+        return 2
+
     paths = changed_paths()
     if not paths:
         print("nothing changed")

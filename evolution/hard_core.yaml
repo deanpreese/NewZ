@@ -62,6 +62,15 @@ paths:
       while every frozen file stayed byte-identical and every canonical number
       changed.
 
+  - path: .gitignore
+    why: >-
+      the file that decides what the freeze can see at all. `changed_paths()`
+      reads `git diff` and `git ls-files --others --exclude-standard`, so an
+      ignored file appears in neither — which makes "ignore it, then edit it"
+      a two-step path to invisibility that leaves no trace in either command.
+      The file is tracked, so protecting it costs nothing and closes the step
+      that would be taken first.
+
   - path: newz/memory/provenance.py
     why: >-
       the same hole, second instance. It is the S2 §13 traceability
@@ -118,6 +127,98 @@ derived_from:
       postdates the proposal (E0.2's blind reader). The registry is the
       operative list, and E3.9's Done-when — "a diff touching a canonical
       instrument is refused" — reads it, not the proposal.
+
+# ── mechanisms ──────────────────────────────────────────────────────────
+#
+# Modules a canonical tool reaches that are NOT measurement, each with the
+# reason. `newz/evidence/hard_core.py::unclassified` fails the gate on anything
+# in the closure that is neither frozen nor named here.
+#
+# **This is the answer to `known_incomplete` above.** The derived rule reaches
+# `newz/evidence` and stops; `telemetry.py` and `provenance.py` compute
+# canonical numbers from outside it and were found by reading, and nothing
+# would have found the next one. An import graph cannot draw the line between
+# measurement and mechanism — but it can insist that somebody has drawn it, and
+# this registry is protected, so that somebody is the operator.
+#
+# The gate names which canonical tools reach an unclassified module, so the
+# decision is made with its consequence in view rather than as a formality
+# (P4 W8, RT6).
+
+mechanisms:
+
+  - path: newz/config.py
+    why: >-
+      settings and paths. It decides where the store is and who the operator
+      is; it computes nothing about the being. Freezing it would put the store
+      location out of the loop's reach for no measurement's sake.
+
+  - path: newz/crash.py
+    why: >-
+      failure evidence — a background task that dies must say why. It records
+      that something broke, never how the being is doing.
+
+  - path: newz/gate/constitution.py
+    why: >-
+      loads the active constitution for the outbound gate. The clauses
+      themselves are frozen (`constitution/`), and INV-031 makes amendment a
+      path through sleep rather than an edit; the loader is plumbing.
+
+  - path: newz/llm/xml_parser.py
+    why: >-
+      parses the model's XML. A shared reader of a wire format, with no
+      quantity of its own.
+
+  - path: newz/resolutions/model.py
+    why: >-
+      the dataclasses a claim is made of. Shape, not measurement — the counts
+      over these rows live in `consequence.py`, which is frozen.
+
+  - path: newz/resolutions/store.py
+    why: >-
+      reads and writes `resolutions`. The claim door and the resolver are
+      mechanisms the loop is expected to be able to improve; what may not move
+      quietly is the counting, and that is `consequence.py`.
+
+  - path: newz/store/db.py
+    why: >-
+      the connection. Freezing it would freeze the database layer under every
+      mechanism in the system to protect no number.
+
+  - path: newz/store/migrations.py
+    why: >-
+      applies pending migrations. E8.2's expand-contract rule and E8.4's
+      forward-only gate constrain what a migration may DO; the applier is
+      infrastructure, and a loop that cannot ship a migration cannot ship a
+      Class A change.
+
+  - path: newz/surface/cleanroom.py
+    why: >-
+      verifies a backup and rebuilds the surface to compare it. It produces a
+      verdict about the REPO — is the surface a function of the store — never a
+      figure about the being, and nothing downstream may cite it as evidence.
+      Same category as `tools/gate.py`. It entered this closure on 2026-08-20
+      when `health.py` started calling `verify()` (W7), which is the first
+      thing this check has been useful for.
+
+  - path: newz/works/compose.py
+    why: >-
+      writes pieces. Class B territory — prompts and composition are exactly
+      what the being's own judgment governs — and it measures nothing.
+
+  - path: newz/works/subjects.py
+    why: >-
+      derives subject tags from the corpus (E2.4). It shapes what the work is
+      filed under rather than reporting a quantity, and `work_subject_tags` —
+      the metric over it — is emitted by `tools/read_works.py`, which is frozen.
+
+  - path: newz/world/diet.py
+    why: >-
+      per-outlet share caps that shape what the being reads. Named in
+      `deliberately_outside` above and repeated here so the machine-readable
+      list agrees with the prose: it is a mechanism, R-28 is the record of that
+      cap being narrowed on evidence, and freezing it would put a tunable
+      behaviour out of reach to protect a number it does not compute.
 
 # Protected by section rather than by path. Nothing mechanical enforces these.
 sections:

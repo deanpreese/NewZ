@@ -129,3 +129,64 @@ def test_mechanisms_stay_outside_the_core():
     assert not hard_core.contains("newz/world/diet.py")
     assert not hard_core.contains("newz/store/db.py")
     assert not hard_core.contains("newz/config.py")
+
+
+# ── nothing enters the closure unclassified (P4 W8) ─────────────────────
+
+def test_every_module_a_canonical_tool_reaches_is_classified():
+    """W8. Behavior: `known_incomplete` says measurement code outside
+    `newz/evidence` must be named by hand and **nothing detects a failure to do
+    so** — `telemetry.py` and `provenance.py` were found by reading, and the
+    next one would not have been. An import graph cannot draw the line between
+    measurement and mechanism, but it can insist somebody has drawn it."""
+    assert hard_core.unclassified() == []
+    assert set(hard_core.mechanisms()) < set(hard_core.reachable())
+
+
+def test_a_new_module_in_the_closure_fails_the_gate(tmp_path, monkeypatch):
+    """A check that cannot fail proves nothing. Behavior: a module a canonical
+    tool reaches, called neither measurement nor mechanism, is an error naming
+    the tools that reach it — so the classification is made with its
+    consequence in view rather than as a formality (RT6)."""
+    reachable = hard_core.reachable()
+    monkeypatch.setattr(hard_core, "reachable",
+                        lambda: [*reachable, "newz/world/feeds.py"])
+    monkeypatch.setattr(hard_core, "reached_by", lambda m: ["tools/evidence.py"])
+
+    errors = hard_core.validate()
+
+    assert any("newz/world/feeds.py" in e and "tools/evidence.py" in e
+               for e in errors), errors
+
+
+def test_a_mechanism_must_say_why_it_is_not_measurement():
+    """Behavior: the cheapest way past this gate is to write `mechanism` and
+    move on, so the row carries a reason and an empty one is an error."""
+    for path, why in hard_core.mechanisms().items():
+        assert why.strip(), f"{path} is called a mechanism and does not say why"
+
+
+def test_a_module_cannot_be_both_frozen_and_a_mechanism():
+    """Behavior: a contradiction here is a boundary nobody can read."""
+    for path in hard_core.mechanisms():
+        assert not hard_core.contains(path), path
+
+
+def test_the_closure_is_transitive_and_not_one_hop():
+    """Behavior: the fault the freeze already had once. A tool's measurement
+    code reached two hops out is as writable as one hop out, and the file stays
+    byte-identical while the number changes."""
+    reach = set(hard_core.reachable())
+
+    # health.py -> cleanroom.verify, which no canonical tool imported until W7
+    assert "newz/surface/cleanroom.py" in reach
+    # claims.py -> resolutions.store -> the model it reads
+    assert "newz/resolutions/model.py" in reach
+
+
+def test_gitignore_is_inside_the_core():
+    """Behavior: `changed_paths()` reads `git diff` and `git ls-files --others
+    --exclude-standard`, so an ignored file is in neither — which makes
+    'ignore it, then edit it' a two-step path to invisibility. The file is
+    tracked, so closing the first step costs nothing."""
+    assert hard_core.contains(".gitignore")

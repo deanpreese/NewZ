@@ -69,6 +69,76 @@ def _evidence_imports(tool: str) -> set[str]:
     return out
 
 
+def _newz_imports(path: str) -> set[str]:
+    """Every `newz.*` module a file imports — the whole package, not just
+    `newz/evidence`. What `_evidence_imports` is to the freeze, this is to the
+    question of what the freeze can even see."""
+    out: set[str] = set()
+    try:
+        tree = ast.parse((REPO / path).read_text())
+    except (OSError, SyntaxError):
+        return out
+    for node in ast.walk(tree):
+        mods: list[str] = []
+        if isinstance(node, ast.ImportFrom) and node.module:
+            mods = [node.module]
+        elif isinstance(node, ast.Import):
+            mods = [a.name for a in node.names]
+        for m in mods:
+            if m != "newz" and not m.startswith("newz."):
+                continue
+            rel = ("newz/__init__.py" if m == "newz" else
+                   "newz/" + m.split("newz.", 1)[1].replace(".", "/") + ".py")
+            if (REPO / rel).exists():
+                out.add(rel)
+            elif (REPO / rel[:-3]).is_dir():
+                out.add(rel[:-3] + "/__init__.py")
+    return out
+
+
+def _closure(seeds: list[str]) -> set[str]:
+    seen: set[str] = set()
+    frontier = {m for s in seeds for m in _newz_imports(s)}
+    while frontier:
+        seen |= frontier
+        frontier = {m for f in frontier for m in _newz_imports(f)} - seen
+    return seen
+
+
+def reachable() -> list[str]:
+    """Every `newz` module a canonical tool can reach, transitively."""
+    return sorted(_closure(canonical_tools()))
+
+
+def reached_by(module: str) -> list[str]:
+    """Which canonical tools reach this module. The consequence of a
+    classification, shown to whoever is making it."""
+    return sorted(t for t in canonical_tools() if module in _closure([t]))
+
+
+def mechanisms() -> dict[str, str]:
+    """Modules a canonical tool reaches that are **not** measurement, each with
+    the reason it is not.
+
+    **The line is that measurement code is frozen wherever it lives and
+    mechanisms are not**, and the registry says plainly that an import graph
+    cannot draw that line. So it is drawn by hand — and this is what makes the
+    hand-drawing checkable: a module in the closure is either inside the core or
+    named here, and a new one is neither until somebody decides which it is.
+    The registry is protected, so only the operator can add a row.
+    """
+    return {r["path"]: r.get("why", "") for r in registry().get("mechanisms", [])}
+
+
+def unclassified() -> list[str]:
+    """Modules a canonical tool reaches that nobody has called measurement or
+    mechanism. This is the gap `known_incomplete` describes: `telemetry.py` and
+    `provenance.py` were found by reading, and nothing would have found the
+    next one."""
+    named = mechanisms()
+    return [m for m in reachable() if not contains(m) and m not in named]
+
+
 def canonical_paths() -> list[str]:
     """The frozen instrument set: canonical tools plus the evidence modules
     that compute their numbers, **transitively**.
@@ -106,8 +176,16 @@ def protected_paths() -> list[str]:
 
 
 def contains(path: str | Path) -> bool:
-    """Is `path` inside the hard core? Directory entries match by prefix."""
-    rel = str(Path(path)).lstrip("./")
+    """Is `path` inside the hard core? Directory entries match by prefix.
+
+    `lstrip("./")` was doing the normalising here, and it takes a character
+    *set*: `.gitignore` came back as `gitignore` and matched nothing. Every
+    dotfile named in the core was silently outside it — found when `.gitignore`
+    was added (W8), which is the first dotfile the core has ever held.
+    """
+    rel = str(Path(path))
+    while rel.startswith("./"):
+        rel = rel[2:]
     for p in protected_paths():
         if p.endswith("/") and rel.startswith(p):
             return True
@@ -181,4 +259,28 @@ def validate() -> list[str]:
             errors.append(f"open_gaps row without a what and a detail: {row!r}")
     if not canonical_paths():
         errors.append("the derived canonical set is empty")
+
+    # W8: every module a canonical tool reaches is measurement or mechanism,
+    # and saying which is an act somebody takes rather than one nobody takes.
+    within = set(reachable())
+    for module in unclassified():
+        errors.append(
+            f"{module} is reached by {', '.join(reached_by(module))} and is "
+            "classified nowhere — add it to `mechanisms` in hard_core.yaml with "
+            "the reason it is not measurement, or name it in `paths` to freeze "
+            "it. Measurement code is frozen wherever it lives")
+    for path, why in mechanisms().items():
+        if not why.strip():
+            errors.append(f"{path} is called a mechanism and does not say why")
+        if not (REPO / path).exists():
+            errors.append(f"{path} is classified as a mechanism and does not exist")
+        elif contains(path):
+            errors.append(
+                f"{path} is both frozen and called a mechanism — one of the two "
+                "is wrong, and a contradiction here is a boundary nobody can read")
+        elif path not in within:
+            errors.append(
+                f"{path} is classified as a mechanism and no canonical tool "
+                "reaches it any more — a stale row makes the list read as a "
+                "survey when it is a decision about live code")
     return errors
