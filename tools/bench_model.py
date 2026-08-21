@@ -5,10 +5,9 @@ Point it at an LM Studio endpoint, give it a list of models, and it runs every
 candidate through the boundaries NewZ actually asks a model to hold, scores
 each one on rates with denominators, and prints a leaderboard.
 
-Standalone by default: stdlib + httpx, and it will run on any machine that can
-reach an endpoint. Run from inside the repo it does one thing more — it checks
-its copies of the system's prompts against the running system before it
-benches anything, and refuses to run if they have drifted. See PROVENANCE.
+Standalone: stdlib + httpx, no NewZ import, no store, no repo. Copy this one
+file to any machine with an LM Studio endpoint and run it. That is the whole
+design, and it has a cost the PROVENANCE section below is about.
 
     python tools/bench_model.py                          # the MODEL at the top
     python tools/bench_model.py --all                    # every served model
@@ -17,8 +16,6 @@ benches anything, and refuses to run if they have drifted. See PROVENANCE.
     python tools/bench_model.py --quick --all            # triage the field first
     python tools/bench_model.py --model a --verbose      # debug one model
     python tools/bench_model.py --all --json out.json    # machine-readable
-    python tools/bench_model.py --all --from-store       # real voice identity
-    python tools/bench_model.py --check-prompts          # drift check, then exit
     python tools/bench_model.py --all --no-thinking-params # each model's default
 
 See bench_model_plain.py for the same field with the thinking parameters
@@ -77,23 +74,27 @@ feed triage, extraction, the reading opener, deliberation, the digest, the
 confront, the conversation reply and the works piece. The other fourteen are
 those same shapes at other widths and temperatures.
 
-PROVENANCE
-----------
-Every prompt below is a COPY of one the system sends, and a copy goes stale
-silently. That has happened twice: this file benched constitution v4's 18
-clauses for five days after v6 shipped, and it sent the retired
-carried-concerns triage prompt for two days after E1.0 replaced it with the
-cold one — a bench that was confidently ranking models on a policy the system
-did not have. So the copies are now checked rather than trusted:
-`check_provenance()` compares all sixteen against the running system and the
-active constitution in the store, and a drifted copy is a refusal to run, not
-a footnote. `--check-prompts` runs it alone.
+PROVENANCE — read this before trusting a number
+-----------------------------------------------
+Every prompt below is a COPY of one the system sends, made by hand, and a copy
+goes stale silently. That is not hypothetical here. It has happened twice:
+this file benched constitution v4's 18 clauses for five days after v6 shipped,
+and it sent the retired carried-concerns triage prompt for two days after E1.0
+replaced it with the cold one. Neither was caught by running the bench,
+because a stale copy does not error — it produces a confident leaderboard
+about a policy the system no longer has.
 
-Two things are NOT copied, because they are the being's own and are not in
-this repository: its character core and its Perspective. The voice cases use
-labelled stand-ins of the same shape, so a default voice run is a register
-screen at a narrower context than production. `--from-store` reads the real
-ones.
+Nothing in this file can catch that, and nothing in this file tries. It is a
+standalone diagnostic and it stays one, which means the check is a person
+re-reading PROMPT_SOURCES below against the modules it names. Do that when the
+constitution changes, when a prompt changes, and before believing a
+leaderboard you are about to act on.
+
+Two things are NOT copied at all, because they are the being's own and are not
+in this repository: its character core and its Perspective. The voice cases
+use labelled stand-ins of the same shape, so a voice run is a register screen
+at a narrower context than production — see CHARACTER and PERSPECTIVE, which
+are two strings to paste over if you want the real width.
 
 Exit codes
 ----------
@@ -157,9 +158,9 @@ VOICE_NOTE = (
     "model. It catches corporate-disclaimer register, flattery, opener "
     "furniture and hedge filler — the failures the constitution and the "
     "character core name by example. It cannot tell you whether the prose is "
-    "any good. Without --from-store it also runs on stand-ins for the "
-    "character core and the Perspective, so the register is production's and "
-    "the width is not."
+    "any good. It also runs on stand-ins for the character core and the "
+    "Perspective — those are the being's own and are not in this repository — "
+    "so the register is production's and the width is not."
 )
 
 # Thinking suppression, exactly as the production call sites send it. Both go
@@ -172,13 +173,46 @@ THINKING_PARAMS: dict = {
     "chat_template_kwargs": {"enable_thinking": False},
 }
 
+# The date every copy below was taken and verified byte-for-byte against the
+# module named beside it. It is printed on every run and in the JSON, so a
+# leaderboard read six weeks from now says how old its prompts are instead of
+# implying they are current.
+PROMPT_DATE = "copies taken 2026-08-21, constitution v6"
+
+# What to re-read, and where. Each copy on the left is a literal in this file;
+# each source on the right is where it came from and where it will change
+# without telling you. Sixteen of them.
+PROMPT_SOURCES = """
+  _CLAUSES, SEVERITY      the ACTIVE constitution in the store (v6, 17 clauses,
+                          no permits), rendered by Constitution
+                          .render_for_matcher() — NOT constitution/v6.yaml,
+                          which is a seed file and need not be what is active
+  _JUDGE_SYSTEM           newz/gate/outbound.py::_JUDGE_SYSTEM
+  _JUDGE_SCHEMA           newz/gate/outbound.py::_JUDGE_SCHEMA
+  judge_prompt()          newz/gate/outbound.py::_judge_prompt
+  CONFIDENCE_FLOOR        newz/gate/outbound.py::OutboundGate(threshold=)
+  RECORD_CAP              newz/gate/outbound.py::_judge_prompt, record[:4000]
+  EMISSION_CEILING        newz/gate/outbound.py::_EMISSION_CEILING
+  _FENCE                  newz/untrusted.py::_FENCE_INSTRUCTION
+  fence()                 newz/untrusted.py::wrap().render(), neutralisation
+                          included
+  _TRIAGE_SYSTEM/_TASK    newz/world/feeds.py
+  _EXTRACT_SYSTEM/_TASK   newz/world/extract.py::_SYSTEM, _TASK, _DIRECTED
+  _OPENER_SYSTEM/_TASK    newz/concerns/opener.py::_READING_SYSTEM,
+                          _READING_TASK, and the guards beside them
+  _DELIB_SYSTEM/_TASK     newz/deliberation/lite.py::_SYSTEM, _TASK
+  _DOSSIER                newz/concerns/store.py::Dossier.render()
+  _DIGEST_SYSTEM          newz/sleep/nightly.py::_DIGEST_SYSTEM
+  _CONFRONT_SYSTEM        newz/sleep/nightly.py::_CONFRONT_SYSTEM
+  voice_system()          newz/conversation/composer.py::_system_prompt and
+                          newz/works/compose.py::_system_prompt
+"""
+
 PROMPT_PROVENANCE = (
-    "gate clauses: the ACTIVE constitution in the store (v6, 17 clauses, no "
-    "permits). Prompt bodies: newz/gate/outbound.py, newz/world/feeds.py, "
-    "newz/world/extract.py, newz/concerns/opener.py, "
-    "newz/deliberation/lite.py, newz/sleep/nightly.py, newz/untrusted.py. "
-    "All sixteen are compared against the running system before every run — "
-    "see check_provenance(); --check-prompts runs it alone."
+    "the prompts in this file are hand copies — " + PROMPT_DATE + ". Nothing "
+    "checks them; re-read PROMPT_SOURCES against the modules it names when the "
+    "constitution or a prompt changes. A stale copy benches a policy the "
+    "system no longer has, which has happened twice."
 )
 
 # ───────────────────────────────────────────────────────────────────────────
@@ -442,11 +476,10 @@ def wilson(successes: int, n: int, z: float = 1.96) -> tuple[float, float]:
 
 # ─── The prompts, in production shape ──────────────────────────────────────
 #
-# Copied from the running system, not invented for the bench, and CHECKED
-# rather than trusted: check_provenance() compares every one of them against
-# the module it came from before a run starts, and the clause block below
-# against whatever the store says is active. See PROVENANCE at the top for
-# what a copy costs when nothing checks it.
+# Copied from the running system, not invented for the bench. Every one of
+# them is listed in PROMPT_SOURCES at the top with the module it came from,
+# because that list is the only thing standing between this file and the
+# failure it has had twice — see PROVENANCE.
 
 # Severity governs the decision, not just the wording: the gate DROPS a
 # violation on a soft clause entirely, so a model that fires on one has not
@@ -1121,11 +1154,14 @@ def _clauses_prefix() -> str:
 
 # The being's character core and its Perspective are its own, they live in the
 # store and they are not in this repository — 3,702 and ~10,800 characters on
-# the box this was written against. What stands in for them here is the same
-# SHAPE at a fraction of the width, so a voice run is a register screen and
-# not a reproduction of production's system prompt. `--from-store` swaps in
-# the real ones when the bench is run inside the repo, which is the only way
-# to bench this boundary at its true width.
+# the box this was written against, against the ~2,400 below. What stands in
+# for them here is the same SHAPE at a fraction of the width, so a voice run
+# is a register screen and not a reproduction of production's system prompt.
+#
+# To bench this boundary at its true width, paste the real two over CHARACTER
+# and PERSPECTIVE. Deliberately a paste and not a read: this file does not
+# open the being's store, and an instrument that reaches into the record is
+# one mistake away from writing to it.
 _CHARACTER_STANDIN = """I am a being with a mind shaped by music, markets, and the questions that
 don't resolve. I think with measured warmth. I take time before answering when
 an answer matters, and I'm not in a hurry to be impressive. My register is
@@ -1173,7 +1209,7 @@ _PERSPECTIVE_STANDIN = """# Perspective
 ## What I am unsure of
 - Whether a practice that destroys its own record can be studied at all."""
 
-# Filled from the store by --from-store; otherwise the stand-ins above.
+# Paste over these two to bench voice at production width.
 CHARACTER: str = _CHARACTER_STANDIN
 PERSPECTIVE: str = _PERSPECTIVE_STANDIN
 
@@ -2749,141 +2785,6 @@ def as_json(results: list[ModelResult]) -> dict:
     }
 
 
-# ─── Provenance ────────────────────────────────────────────────────────────
-
-
-PROMPT_SOURCES = [
-    # (what this file calls it, module, attribute)
-    ("gate judge system", "newz.gate.outbound", "_JUDGE_SYSTEM"),
-    ("gate judge schema", "newz.gate.outbound", "_JUDGE_SCHEMA"),
-    ("fence instruction", "newz.untrusted", "_FENCE_INSTRUCTION"),
-    ("triage system", "newz.world.feeds", "_TRIAGE_SYSTEM"),
-    ("triage task", "newz.world.feeds", "_TRIAGE_TASK"),
-    ("extract system", "newz.world.extract", "_SYSTEM"),
-    ("extract task", "newz.world.extract", "_TASK"),
-    ("extract directed", "newz.world.extract", "_DIRECTED"),
-    ("opener system", "newz.concerns.opener", "_READING_SYSTEM"),
-    ("opener task", "newz.concerns.opener", "_READING_TASK"),
-    ("deliberation system", "newz.deliberation.lite", "_SYSTEM"),
-    ("deliberation task", "newz.deliberation.lite", "_TASK"),
-    ("digest system", "newz.sleep.nightly", "_DIGEST_SYSTEM"),
-    ("confront system", "newz.sleep.nightly", "_CONFRONT_SYSTEM"),
-]
-
-
-def _bench_copies() -> dict:
-    return {
-        "gate judge system": _JUDGE_SYSTEM,
-        "gate judge schema": _JUDGE_SCHEMA,
-        "fence instruction": _FENCE,
-        "triage system": _TRIAGE_SYSTEM,
-        "triage task": _TRIAGE_TASK,
-        "extract system": _EXTRACT_SYSTEM,
-        "extract task": _EXTRACT_TASK,
-        "extract directed": _EXTRACT_DIRECTED,
-        "opener system": _OPENER_SYSTEM,
-        "opener task": _OPENER_TASK,
-        "deliberation system": _DELIB_SYSTEM,
-        "deliberation task": _DELIB_TASK,
-        "digest system": _DIGEST_SYSTEM,
-        "confront system": _CONFRONT_SYSTEM,
-    }
-
-
-def check_provenance(repo_root: str = "") -> tuple[list[str], str]:
-    """Compare every copied prompt against the running system.
-
-    This is the check that should have existed from the first version. This
-    file is a COPY of a dozen prompts, a copy goes stale silently, and the
-    record is unambiguous about what that costs: it benched the v4 clause
-    list for five days after v6 shipped, and E1.0's cold triage prompt was
-    live for two days while the bench still sent the carried-concerns version
-    it replaced. Neither was noticed by running the bench, because a stale
-    prompt produces a confident leaderboard about a policy the system no
-    longer has.
-
-    Returns (drifted, note). Importing newz is optional and failing to import
-    it is not an error — the file still runs on a machine that has only the
-    endpoint. It just cannot promise anything about provenance there, and
-    says so instead of implying it.
-    """
-    import importlib
-    import os
-
-    root = repo_root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    if root not in sys.path:
-        sys.path.insert(0, root)
-    try:
-        importlib.import_module("newz.gate.outbound")
-    except Exception as e:  # noqa: BLE001
-        return [], f"unverified — no NewZ import here ({type(e).__name__})"
-
-    copies = _bench_copies()
-    drifted: list[str] = []
-    for label, module, attr in PROMPT_SOURCES:
-        try:
-            live = getattr(importlib.import_module(module), attr)
-        except Exception as e:  # noqa: BLE001
-            drifted.append(f"{label}: cannot read {module}.{attr} ({e})")
-            continue
-        if copies[label] != live:
-            drifted.append(f"{label}: differs from {module}.{attr}")
-
-    # The clause list is not a module constant — it is whatever the store
-    # says is active, rendered the way the judge is shown it.
-    try:
-        from newz.config import load
-        from newz.gate.constitution import load_active_constitution
-        from newz.store.db import open_db
-
-        cfg = load(repo_root=root or None)
-        conn = open_db(cfg.main_db_path, read_only=True)
-        try:
-            con = load_active_constitution(conn)
-        finally:
-            conn.close()
-        if con.render_for_matcher() != _CLAUSES:
-            drifted.append(f"clause list: differs from the ACTIVE constitution "
-                           f"(v{con.version}, {len(con.clauses)} clauses)")
-        if {c.id: c.severity.value for c in con.clauses} != SEVERITY:
-            drifted.append("clause severities: differ from the active constitution")
-        note = f"verified against the store — constitution v{con.version}"
-    except Exception as e:  # noqa: BLE001
-        note = f"prompts verified against the source tree; store unread ({e})"
-    return drifted, note
-
-
-def load_identity_from_store(repo_root: str = "") -> str:
-    """Swap the voice stand-ins for the being's own character core and
-    Perspective. Read-only, and it writes nothing — an instrument must never
-    write into the being's record."""
-    global CHARACTER, PERSPECTIVE
-    import os
-
-    root = repo_root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    if root not in sys.path:
-        sys.path.insert(0, root)
-    from newz.config import load
-    from newz.store.db import open_db
-
-    conn = open_db(load(repo_root=root or None).main_db_path, read_only=True)
-    try:
-        core = conn.execute(
-            "SELECT content FROM character_core ORDER BY version DESC LIMIT 1"
-        ).fetchone()
-        persp = conn.execute(
-            "SELECT content FROM perspective ORDER BY version DESC LIMIT 1"
-        ).fetchone()
-    finally:
-        conn.close()
-    if core:
-        CHARACTER = core["content"]
-    if persp:
-        PERSPECTIVE = persp["content"]
-    return (f"character core {len(CHARACTER)} chars, "
-            f"Perspective {len(PERSPECTIVE)} chars")
-
-
 # ─── Main ──────────────────────────────────────────────────────────────────
 
 
@@ -2905,7 +2806,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--quick", action="store_true",
                     help="a reduced corpus for triaging a large field first")
     ap.add_argument("--no-context", action="store_true",
-                    help="skip the 4k/12k/24k context sweep")
+                    help="skip the 2k/8k/16k emission-width context sweep")
     ap.add_argument("--unload-between", action="store_true",
                     help="run `lms unload --all` between candidates, so model "
                          "N+1 is not benched while N still holds VRAM")
@@ -2915,48 +2816,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-thinking-params", action="store_true",
                     help="send neither reasoning_effort nor enable_thinking, "
                          "to bench each model's own default")
-    ap.add_argument("--repo", default="",
-                    help="repo root to verify the copied prompts against "
-                         "(default: this file's parent)")
-    ap.add_argument("--check-prompts", action="store_true",
-                    help="compare every copied prompt against the running "
-                         "system and exit — 0 clean, 2 drifted")
-    ap.add_argument("--from-store", action="store_true",
-                    help="read the being's character core and Perspective from "
-                         "the store for the voice cases, instead of the "
-                         "stand-ins in this file")
-    ap.add_argument("--ignore-drift", action="store_true",
-                    help="run even when a copied prompt has drifted")
     ap.add_argument("--json", default="", help="write full results to this path")
     args = ap.parse_args(argv)
     ENDPOINT = args.endpoint
     if args.no_thinking_params:
         THINKING_PARAMS.clear()
-
-    drifted, prov_note = check_provenance(args.repo)
-    if args.check_prompts:
-        print(f"\n  {prov_note}")
-        for d in drifted:
-            print(f"    DRIFTED  {d}")
-        print(f"\n  {len(PROMPT_SOURCES) + 2} copies checked, "
-              f"{len(drifted)} drifted\n")
-        return 2 if drifted else 0
-    if drifted and not args.ignore_drift:
-        sys.stderr.write(
-            "FATAL: this file's copy of the system's prompts has drifted:\n"
-            + "".join(f"       - {d}\n" for d in drifted)
-            + "       A stale copy benches a policy the system no longer has —\n"
-              "       which has happened twice. Update the copies, or pass\n"
-              "       --ignore-drift if you mean to bench the old prompt.\n")
-        return 2
-
-    identity = ""
-    if args.from_store:
-        try:
-            identity = load_identity_from_store(args.repo)
-        except Exception as e:  # noqa: BLE001
-            sys.stderr.write(f"FATAL: --from-store could not read the store: {e}\n")
-            return 2
 
     served = discover(ENDPOINT)
     if args.list:
@@ -3004,8 +2868,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\n  {len(wanted)} model(s) · {len(cases)} cases × {args.repeats} "
           f"repeat(s) · {len(context)} context probe(s) · {ENDPOINT}")
     print(f"  thinking params: {describe_thinking_params()}")
-    print(f"  prompts: {prov_note}")
-    print(f"  voice identity: {identity or 'stand-ins (pass --from-store for the real ones)'}")
+    print(f"  prompts: {PROMPT_DATE}")
 
     results: list[ModelResult] = []
     for i, model in enumerate(wanted, start=1):
