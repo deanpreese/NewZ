@@ -255,8 +255,14 @@ open_gaps:
   - what: section-level protection for PLAN.md
     detail: >-
       PLAN.md cannot be a protected path because the loop is explicitly
-      permitted to append to it. The boundary is section-level and no check
-      reads sections. Until one does, PLAN.md's protection is convention.
+      permitted to append to it. **The `Done when` clause of every epic is now
+      pinned by hash** in evolution/epics.yaml and checked by
+      newz/evidence/epics.py::drift (P4 W9), so the acceptance criteria — the
+      sentences a builder would reach for — can no longer move quietly. The
+      rest of the section boundary is still convention: an epic's intent, its
+      ordering, its Hooks and the phase Decision rules are unpinned, on purpose,
+      because this plan is edited constantly and a check that fires on every
+      ordinary edit teaches its own bypass (RT7).
 
   - what: enforcement
     detail: >-

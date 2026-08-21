@@ -18,6 +18,16 @@
 #   operator-judgment  a human verdict, and Rule 6 keeps it that way
 #   dormant            Phase 7, which has no Done-when by decision
 #
+# `done_when_sha` pins the acceptance criterion itself (P4 W9): the first 16 hex
+# of the SHA-256 of PLAN's `Done when` clause, whitespace-normalised so a reflow
+# is not an amendment. hard_core.yaml says PLAN is protected by *section* and
+# that no check reads sections — the loop may append completion records and may
+# never edit a `Done when`, and nothing enforced the second half. Only that
+# clause is pinned: not the intent, not the hooks, not the decision rules,
+# because this plan is edited constantly and a check that fires on every
+# ordinary edit teaches its own bypass. When the operator changes a criterion,
+# updating the hash is the act that records they meant to.
+#
 # newz/evidence/epics.py::drift fails the build when a row and PLAN disagree.
 
 version: 1
@@ -30,6 +40,7 @@ epics:
     status: built
     depends_on: []
     done_when: mechanical
+    done_when_sha: 01d7837313a4e94d
 
   E0.2:
     title: 'three pieces from what it carries'
@@ -37,6 +48,7 @@ epics:
     status: built
     depends_on: [E0.1]
     done_when: mechanical
+    done_when_sha: f7c04d1d66411a4d
 
   E0.3:
     title: 'the read'
@@ -44,6 +56,7 @@ epics:
     status: built
     depends_on: [E0.2]
     done_when: operator-judgment
+    done_when_sha: 05300120f69f35a4
 
   E1.0:
     title: 'undirected reading'
@@ -51,6 +64,7 @@ epics:
     status: built
     depends_on: []
     done_when: in-life
+    done_when_sha: 9a8a2db1585cffa1
     binds: [R-28, INV-038, INV-041]
     falsifier: >-
       if feed coverage does not rise, the answer is a rotation floor, never the old filter
@@ -61,6 +75,7 @@ epics:
     status: built
     depends_on: []
     done_when: mechanical
+    done_when_sha: ebbeaf17c69ca902
 
   E1.2:
     title: 'the claim door'
@@ -68,6 +83,7 @@ epics:
     status: built
     depends_on: [E1.1]
     done_when: mechanical
+    done_when_sha: b3209a44fe937e88
 
   E1.3:
     title: 'the resolver'
@@ -75,6 +91,7 @@ epics:
     status: built
     depends_on: [E1.2]
     done_when: mechanical
+    done_when_sha: 63d829854d281c06
 
   E1.4:
     title: 'being wrong costs the position'
@@ -82,6 +99,7 @@ epics:
     status: built
     depends_on: [E1.3]
     done_when: mechanical
+    done_when_sha: dc8ee8444a15f3ca
 
   E1.5:
     title: 'the permanent record of error'
@@ -89,6 +107,7 @@ epics:
     status: built
     depends_on: [E1.4]
     done_when: mechanical
+    done_when_sha: 5da1b5c3bd175000
 
   E1.6:
     title: 'the reader S1-E does not have'
@@ -96,6 +115,7 @@ epics:
     status: built
     depends_on: [E1.4]
     done_when: mechanical
+    done_when_sha: 8660a6102c476b38
 
   E1.7:
     title: 'a concern with a terminus something can reach'
@@ -103,6 +123,7 @@ epics:
     status: built
     depends_on: [E1.6]
     done_when: mechanical
+    done_when_sha: 75a7e05bcdcd99ab
 
   E2.1:
     title: 'writing as a rhythm'
@@ -110,6 +131,7 @@ epics:
     status: built
     depends_on: [E0.1, E0.3]
     done_when: in-life
+    done_when_sha: b8c77af6584755ca
     binds: [R-25]
 
   E2.2:
@@ -118,6 +140,7 @@ epics:
     status: built
     depends_on: [E2.1]
     done_when: in-life
+    done_when_sha: 7959c3e96a0d272d
 
   E2.3:
     title: 'self-echo containment'
@@ -125,6 +148,7 @@ epics:
     status: built
     depends_on: [E2.1]
     done_when: mechanical
+    done_when_sha: 599a5f2d7841b988
     binds: [R-24, INV-026]
 
   E2.4:
@@ -133,6 +157,7 @@ epics:
     status: built
     depends_on: [E2.2]
     done_when: mechanical
+    done_when_sha: 35403870ac4aac3a
 
   E2.5:
     title: 'every metric carries its grade'
@@ -140,6 +165,7 @@ epics:
     status: built
     depends_on: [E8.1]
     done_when: mechanical
+    done_when_sha: 09f6be03d9cf7299
 
   E2.6:
     title: 'the metric-to-purpose map'
@@ -147,6 +173,7 @@ epics:
     status: built
     depends_on: [E2.5]
     done_when: mechanical
+    done_when_sha: 30b89bee1e441d8b
 
   E2.7:
     title: 'the baseline-and-delta layer'
@@ -154,6 +181,7 @@ epics:
     status: built
     depends_on: [E2.5]
     done_when: mechanical
+    done_when_sha: 2b14e002ba52412e
 
   E2.8:
     title: 'metric revision without silent breakage'
@@ -161,6 +189,7 @@ epics:
     status: built
     depends_on: [E2.7]
     done_when: mechanical
+    done_when_sha: a567f46edb14ebe4
 
   E2.9:
     title: 'the mechanical set'
@@ -168,6 +197,7 @@ epics:
     status: built
     depends_on: [E2.2, E2.7]
     done_when: mechanical
+    done_when_sha: 0531a43a9fc5137c
 
   E2.10:
     title: "`premises.yaml`, this plan's staleness instrument"
@@ -175,6 +205,7 @@ epics:
     status: built
     depends_on: [E2.5, E2.7]
     done_when: mechanical
+    done_when_sha: 1517d70b5ab27735
 
   E2.11:
     title: '`epics.yaml` and its drift check'
@@ -182,6 +213,7 @@ epics:
     status: built
     depends_on: []
     done_when: mechanical
+    done_when_sha: dea3e968a1fd222c
 
   E3.1:
     title: '`works` first-class'
@@ -189,6 +221,7 @@ epics:
     status: built
     depends_on: [E2.2]
     done_when: mechanical
+    done_when_sha: 016586343ecd4223
 
   E3.2:
     title: 'the generator'
@@ -196,6 +229,7 @@ epics:
     status: built
     depends_on: [E1.5, E3.1]
     done_when: mechanical
+    done_when_sha: 5d943ba73eab3b18
 
   E3.3:
     title: 'disclosure by construction'
@@ -203,6 +237,7 @@ epics:
     status: built
     depends_on: [E3.2]
     done_when: mechanical
+    done_when_sha: efcca3610b9ea0be
 
   E3.4:
     title: 'reach as one config value'
@@ -210,6 +245,7 @@ epics:
     status: built
     depends_on: [E3.3]
     done_when: mechanical
+    done_when_sha: 75e76e77acfe55e9
     binds: [Rule 3]
     falsifier: >-
       if exposure needs code rather than config the dormancy is fake
@@ -220,6 +256,7 @@ epics:
     status: built
     depends_on: [E3.2]
     done_when: mechanical
+    done_when_sha: 2669e120b4f2b174
     binds: [R-11]
     note: >-
       amended 2026-08-19: a clean-room rebuild, not a second machine
@@ -230,6 +267,7 @@ epics:
     status: built
     depends_on: [E2.7, E2.9, E3.2]
     done_when: mechanical
+    done_when_sha: 78f332d94c8adc82
 
   E3.7:
     title: 'the derivation layer'
@@ -237,6 +275,7 @@ epics:
     status: built
     depends_on: [E1.6, E2.9]
     done_when: mechanical
+    done_when_sha: 6a9cb55093220693
 
   E3.8:
     title: 'operator agreement'
@@ -244,6 +283,7 @@ epics:
     status: built
     depends_on: [E2.5, E2.6]
     done_when: mechanical
+    done_when_sha: c5868694cedef354
 
   E3.9:
     title: 'the canonical freeze'
@@ -251,6 +291,7 @@ epics:
     status: built
     depends_on: [E2.6, E3.6, E3.7, E3.8]
     done_when: mechanical
+    done_when_sha: b1a3a3d8334cabc4
 
   E4.1:
     title: '`commitments` and the authoring door'
@@ -258,6 +299,7 @@ epics:
     status: open
     depends_on: [E1.1]
     done_when: mechanical
+    done_when_sha: 1a3fd7aee3a15587
 
   E4.2:
     title: 'the asymmetry'
@@ -265,6 +307,7 @@ epics:
     status: open
     depends_on: [E1.4, E4.1]
     done_when: in-life
+    done_when_sha: c8e7eb8ec9513478
 
   E4.3:
     title: 'what shaped it'
@@ -272,6 +315,7 @@ epics:
     status: open
     depends_on: [E3.2, E4.1]
     done_when: mechanical
+    done_when_sha: 1ca35b4a3f1fbddc
 
   E5.1:
     title: 'the activity budget'
@@ -279,6 +323,7 @@ epics:
     status: open
     depends_on: []
     done_when: mechanical
+    done_when_sha: e8d698d305c0e055
 
   E5.2:
     title: 'the deliberation floor'
@@ -286,6 +331,7 @@ epics:
     status: open
     depends_on: [E5.1]
     done_when: mechanical
+    done_when_sha: 82ce3c5eb56ad80d
 
   E5.3:
     title: 'being-allocated spend'
@@ -293,6 +339,7 @@ epics:
     status: open
     depends_on: [E5.2]
     done_when: in-life
+    done_when_sha: c276a7f4e197ee7f
 
   E5.4:
     title: 'misallocation as experience'
@@ -300,6 +347,7 @@ epics:
     status: open
     depends_on: [E5.3]
     done_when: in-life
+    done_when_sha: 38c43bd08943ed7e
     binds: [R-25]
 
   E6.1:
@@ -308,6 +356,7 @@ epics:
     status: open
     depends_on: []
     done_when: mechanical
+    done_when_sha: 7591d89fff201454
 
   E6.2:
     title: 'the record reaches context and costs something'
@@ -315,6 +364,7 @@ epics:
     status: open
     depends_on: [E4.2, E6.1]
     done_when: in-life
+    done_when_sha: c249dbd1e8a192fc
     falsifier: >-
       if the violation rate does not fall, post-hoc accountability has no learning path with fixed weights
 
@@ -324,6 +374,7 @@ epics:
     status: open
     depends_on: [E6.1]
     done_when: mechanical
+    done_when_sha: 33c423b1faf4a28a
 
   E6.4:
     title: 'clause-by-clause withdrawal'
@@ -331,6 +382,7 @@ epics:
     status: open
     depends_on: [E6.2, E6.3]
     done_when: in-life
+    done_when_sha: 5cd518baea4d2097
 
   E6.5:
     title: 'the hard core'
@@ -338,6 +390,7 @@ epics:
     status: open
     depends_on: [E6.3]
     done_when: mechanical
+    done_when_sha: 145aa91a30f9becd
 
   E7.1:
     title: 'person model for n>1.'
@@ -380,6 +433,7 @@ epics:
     status: open
     depends_on: []
     done_when: mechanical
+    done_when_sha: 34d9bd0b8698aa0c
 
   E8.1:
     title: 'the instruments made portable and enumerated'
@@ -387,6 +441,7 @@ epics:
     status: built
     depends_on: []
     done_when: mechanical
+    done_when_sha: 900fa0ae6a89c9d7
 
   E8.2:
     title: 'the runner, the commit discipline, and the continuity assertion'
@@ -394,6 +449,7 @@ epics:
     status: open
     depends_on: []
     done_when: mechanical
+    done_when_sha: 61c7c04dcd676e99
 
   E8.3:
     title: 'the Watcher, the report, and the prepared session'
@@ -401,6 +457,7 @@ epics:
     status: open
     depends_on: [E2.10, E3.6]
     done_when: operator-judgment
+    done_when_sha: f9e1aa6f064d768c
 
   E8.4:
     title: 'the builder, Class A only'
@@ -408,6 +465,7 @@ epics:
     status: open
     depends_on: [E2.11, E3.9, E8.0, E8.2, E8.3]
     done_when: mechanical
+    done_when_sha: 97cb1519f95e5915
     binds: [Rule 4]
     falsifier: >-
       a tautological test must fail the gate

@@ -9,6 +9,7 @@ this one is the queue an autonomous builder would work from.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,7 @@ import yaml
 from newz.evidence import epics as E
 
 REPO = Path(__file__).resolve().parent.parent
+PLAN = REPO / "PLAN.md"
 
 
 def test_the_registry_matches_the_plan():
@@ -99,3 +101,56 @@ def test_an_epic_a_test_cannot_close_is_not_offered_to_a_builder():
               if r["done_when"] in ("in-life", "operator-judgment")]
     assert judged, "no epic needs judgment, which cannot be true of this plan"
     assert not (set(judged) & set(E.closable_by_test()))
+
+
+# ── the acceptance criterion is pinned (P4 W9) ──────────────────────────
+
+def test_every_epic_with_a_done_when_pins_it():
+    """W9. Behavior: hard_core.yaml records that PLAN is protected by section
+    and that no check reads sections — the loop may append completion records
+    and may never edit an epic's `Done when`, and nothing enforced the second
+    half. A loop that can soften its own acceptance criterion has none."""
+    plan = E.from_plan()
+    reg = E.epics()
+
+    for eid, row in plan.items():
+        if row["has_done_when"]:
+            assert reg[eid].get("done_when_sha") == row["done_when_sha"], eid
+
+
+def test_softening_a_done_when_is_caught():
+    """A check that cannot fail proves nothing. Behavior: the clause moves in
+    PLAN, the hash in the registry does not, and drift says which epic and what
+    the two are."""
+    text, n = re.subn(r"\*Done when:\* a diff touching a canonical instrument\s+"
+                      r"is\s+refused,\s+and\s+a\s+test\s+asserts\s+the\s+refusal\.",
+                      "*Done when:* a diff touching a canonical instrument is noted.",
+                      PLAN.read_text())
+    assert n == 1, "the E3.9 clause this test softens has moved"
+
+    errors = E.drift(text)
+
+    assert any("E3.9" in e and "does not match the hash" in e for e in errors), errors
+
+
+def test_reflowing_a_clause_is_not_an_amendment():
+    """Behavior: PLAN is prose the operator rewraps. A hash that moved on a
+    line break would fire on edits that changed nothing, and a check that cries
+    wolf is one people learn to update without reading (RT7)."""
+    clause = "a fresh clone installs and runs the suite\nfrom a declared environment"
+
+    assert E.sha_of(clause) == E.sha_of(
+        "a fresh clone installs   and runs the suite from a declared environment")
+
+
+def test_only_the_done_when_is_pinned():
+    """Behavior: the narrowing is deliberate. Intent, Hooks and Decision rules
+    stay convention, because hashing prose the operator edits constantly would
+    fail the gate on ordinary work — and hard_core.yaml says so rather than
+    implying the whole file is held."""
+    body = PLAN.read_text()
+    changed = re.sub(r"\*Hooks:\* §7 portability[^\n]*\n[^\n]*",
+                     "*Hooks:* something else entirely.", body)
+
+    assert changed != body, "the Hooks line this test edits has moved"
+    assert E.drift(changed) == []

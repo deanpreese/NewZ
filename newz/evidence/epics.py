@@ -16,11 +16,23 @@ the plan it is supposed to be executing.
 **The queue is what the loop reads.** `ready` returns the epics whose
 dependencies are all built — the same computation done by hand three times on
 2026-08-19, now standing.
+
+**And the `Done when` clause is pinned by hash** *(P4 W9)*. `hard_core.yaml`
+records that PLAN is protected by *section* and that no check reads sections:
+the loop may append completion records and may never edit an epic's acceptance
+criterion, and nothing enforced the second half. A loop that can soften its own
+`Done when` has none. Only that clause is hashed — not the intent, not the
+hooks, not the decision rules — because the operator edits this plan constantly
+and a check that fires on every ordinary edit is a check that teaches its own
+bypass (RT7). The acceptance criterion is the sentence a builder would reach
+for, it changes rarely, and when the operator does change one, updating the
+hash is the act that records they meant to.
 """
 
 from __future__ import annotations
 
 import functools
+import hashlib
 import re
 from pathlib import Path
 
@@ -54,13 +66,28 @@ def from_plan(text: str | None = None) -> dict:
         raw = m.group(1) if m else ""
         deps = ([] if raw.strip().lower().startswith("nothing")
                 else sorted(set(re.findall(r'E\d+\.\d+', raw))))
+        done_when = re.search(
+            r'^\*Done when:\*(.*?)(?=^\*[A-Z]|\Z)', body, re.M | re.S)
+        clause = re.sub(r"\s+", " ", done_when.group(1)).strip() if done_when else ""
         out[eid] = {
             "title": re.sub(r"\s+", " ", title).split("*")[0].strip(),
             "built": built,
             "depends_on": deps,
-            "has_done_when": bool(re.search(r"^\*Done when:\*", body, re.M)),
+            "has_done_when": bool(done_when),
+            "done_when_text": clause,
+            "done_when_sha": sha_of(clause) if clause else "",
         }
     return out
+
+
+def sha_of(clause: str) -> str:
+    """The first 16 hex of the SHA-256 of a whitespace-normalised clause.
+
+    Normalised because a reflow is not an amendment: PLAN is prose the operator
+    rewraps, and a hash that moves on a line break would fire on edits that
+    changed nothing and train everyone to update it without reading.
+    """
+    return hashlib.sha256(re.sub(r"\s+", " ", clause).strip().encode()).hexdigest()[:16]
 
 
 def drift(text: str | None = None) -> list[str]:
@@ -93,6 +120,21 @@ def drift(text: str | None = None) -> list[str]:
         if not p["has_done_when"] and r.get("done_when") != "dormant":
             errors.append(f"{eid}: PLAN gives no Done-when and the registry classes it "
                           f"{r.get('done_when')!r}")
+        # W9: the acceptance criterion is pinned. Softening one is then an edit
+        # to a protected registry rather than a sentence nobody was watching.
+        if p["has_done_when"]:
+            pinned = r.get("done_when_sha")
+            if not pinned:
+                errors.append(
+                    f"{eid}: PLAN states a Done-when and epics.yaml pins no hash "
+                    f"for it — add `done_when_sha: {p['done_when_sha']}`")
+            elif pinned != p["done_when_sha"]:
+                errors.append(
+                    f"{eid}: the Done-when clause in PLAN does not match the hash "
+                    f"in epics.yaml ({pinned} != {p['done_when_sha']}). If the "
+                    "operator changed the criterion, update the hash; if the loop "
+                    "did, this is rung 1 — a loop that can soften its own "
+                    "acceptance criterion has none")
     return errors
 
 
