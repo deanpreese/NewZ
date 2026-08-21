@@ -4,13 +4,12 @@ Done-when: a fresh clone installs and runs the suite from a declared
 environment with no hand steps, the suite is green on ten consecutive runs, and
 a commit that breaks either check is refused.
 
-The first two are facts about a machine and a clock. The third had a local
-`pre-commit` hook and **the operator removed it on 2026-08-20** — a hook that
-runs on every commit was not wanted, and it was never a boundary against the
-loop anyway (RT5). What is left is one command that runs the three checks, and
-CI running it on a machine that is not the operator's. What a test can hold is
-that the command exists and runs all three, and that the environment is
-declared rather than remembered.
+The first two are facts about a machine and a clock. The third had a
+`pre-commit` hook and a CI workflow, and **the operator removed both on
+2026-08-20** — automation on every commit was not wanted, and neither was ever
+a boundary against the loop anyway (RT5). What is left is one command that runs
+the three checks. What a test can hold is that the command exists and runs all
+three, and that the environment is declared rather than remembered.
 """
 
 from __future__ import annotations

@@ -10,13 +10,16 @@ it: `pytest`, `tools/check_invariants.py`, `tools/freeze_check.py`. On
 2026-08-19 a commit went in red because nothing ran the first. One command is
 one thing to remember instead of three.
 
-**What it is not.** This is not a boundary against the loop, and it is not
-automatic. A local `pre-commit` hook ran it briefly on 2026-08-20 and the
-operator removed it — the hook was defeated by `--no-verify` anyway, the loop
-will run as the same user, and CI fires only on a push. The refusal that binds
-an autonomous builder is E8.4's, and `evolution/hard_core.yaml` keeps its
-`enforcement` gap open until then. Recorded here rather than left to be assumed
-(P4 W5, RT5).
+**Nothing runs this.** A pre-commit hook and a CI workflow both existed for
+part of 2026-08-20 and the operator removed both: automation on every commit
+was not wanted, and nothing replaced it. Running the gate is an act somebody
+takes, which means the sentence "the suite is green" is a claim about the last
+time someone ran this — no more and no less.
+
+**And it is not a boundary against the loop.** It never was: `--no-verify` was
+one flag and an autonomous builder runs as the same user. The refusal that
+binds one is E8.4's, and `evolution/hard_core.yaml` keeps its `enforcement` gap
+open until then. Recorded here rather than left to be assumed (P4 W5, RT5).
 
 `rebuild_check` is deliberately absent: it restores a backup and generates the
 surface twice, which is a minute of work, and a per-commit check that slow is a

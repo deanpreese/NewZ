@@ -455,6 +455,28 @@ Two things were found in the building that the proposal did not know:
 | W9 | `68bf9f1` | 48 of 53 epics pin their `Done when`; the five that do not are Phase 7, dormant by decision |
 | W10 | `218265d` | the baseline **cannot be taken yet** — one reading exists and a baseline needs seven, so the earliest is ~2026-08-27, the same date the deltas arrive. W8 caught this commit: `from newz.evidence import X` evaded the freeze that `from newz.evidence.X import y` did not |
 
+**The gate is unautomated, by decision** *(operator, 2026-08-20)*. The
+pre-commit hook went first and the CI workflow followed; nothing replaced
+either. `tools/gate.py`, `environment.yml` and the hour-independent suite stand.
+
+*What that does to E8.0, stated rather than absorbed.* Its `Done when` reads
+*"a fresh clone installs and runs the suite from a declared environment with no
+hand steps, the suite is green on ten consecutive full runs, and **a push that
+breaks either check is refused**"*. The third clause is now unachievable by
+decision rather than unbuilt — nothing watches a push. Two options, both the
+operator's:
+
+- **amend the clause** to what the decision leaves — a gate that runs in one
+  command and a suite that does not depend on the hour — which under W9 means
+  editing PLAN and updating `done_when_sha` for E8.0 in `epics.yaml`. That is
+  the path W9 built, and this is the first live use of it;
+- **leave it**, and E8.0 stays open with a criterion nothing can close, which
+  is the state E3.5 was in before its amendment — written unclosable against a
+  decision the plan itself had taken.
+
+Recorded here rather than resolved, because Rule 6 puts a `Done when` with the
+operator and W9 now makes moving one an act with a hash on it.
+
 **W11 is not built.** It waits on decision 4 — `epics.yaml` frozen except
 `status`, or frozen whole.
 
