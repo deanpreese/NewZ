@@ -9,8 +9,11 @@ so (Rule 0).*
 **Supersedes this document's first three drafts.** The first was prose. The
 second specified an artifact, a patch, a journal and a scratch worktree — a
 release pipeline, not a diagnostic. The third dropped those but still invented
-its own corpus. This one does not *(operator, 2026-08-21: "does this leverage
-current prompts and LLM input and output from the repo")*.
+its own corpus. The third also kept phases, hand-running and a
+per-boundary decision the operator was expected to make; those are gone too
+*(operator, 2026-08-21: "does this leverage current prompts and LLM input and
+output from the repo" … "all of this should happen without my intervention")*.
+**One command, unattended, one diff at the end.**
 
 ---
 
@@ -132,26 +135,40 @@ not happened is not in the log and is the one thing worth inventing.
 as expired, predating the current prompt — and the deliberation denominator is
 the log's, not four.
 
-### 2.3 Score a variant, or loop it
+### 2.3 One command, unattended
 
 ```
-bench_model.py --prompt triage.task --variant my_edit.txt      # one comparison
-bench_model.py --tune triage --rounds 6                        # propose + score
+bench_model.py --tune
 ```
 
-`--variant` re-renders every replayed payload of that shape against the edited
-prompt and prints both scores side by side, with intervals and the per-case
-failures. `--tune` does that repeatedly, asking a model for one rewrite per
-round from the failures it sees, and prints a diff of the best against the
-repo's current at the end.
+No arguments, no phases, no decision asked of the operator until it is done.
+The run:
 
-**Two guards:**
+1. reads the current prompts (§2.1);
+2. **establishes its own baseline for free** — scoring the 1,855 recorded
+   responses costs zero model calls (§2.2);
+3. **chooses its own order**, working boundaries worst-first by weighted deficit
+   against that baseline;
+4. per boundary, per round: shows a model the failing payloads, takes one
+   rewrite, scores it on held-back payloads, keeps it if it beats the
+   incumbent's upper interval;
+5. **drops a boundary by itself** when its held-back half is too thin to decide
+   anything, or when two rounds pass with nothing kept — and says which and why;
+6. **stops by itself** when no boundary is still improving, or the call budget
+   is spent;
+7. prints one diff of everything it kept, with before and after either side.
+
+`--prompt X --variant f.txt` remains for scoring one edit by hand, but nothing
+in the loop requires it.
+
+**Two guards, applied by the tool, not by the operator:**
 
 1. **Half the replayed payloads are held back.** The proposer sees failures from
    one half; the deciding score is the other. Both print every round.
 2. **A change must beat the incumbent's upper interval**, not its point score.
 
-Output goes to stdout, verbose, per round:
+Output goes to stdout, verbose, throughout — a long run is watchable and never
+silent:
 
 ```
 ── round 3 · triage · 157 replayed (78 tune / 79 held) ────────────────────────
@@ -166,7 +183,8 @@ Output goes to stdout, verbose, per round:
 
 Redirect it if you want to keep it. The tool does not.
 
-*Done when:* a run ends and prints a diff, having created no file.
+*Done when:* `--tune` with no arguments runs to its own stopping condition and
+prints a diff, having asked nothing and created no file.
 
 ---
 
@@ -239,11 +257,12 @@ Reviewed after the first `--tune` run:
 **Reversion.** The prompts are in git and the tool changed none of them.
 Reverting an applied diff is `git revert`. No state to unwind.
 
-**Decision rule.** Build §2.1 and §2.2, then run the free baseline — scoring the
-1,855 recorded responses costs nothing. **If the current prompts already score
-near the ceiling of what the checks can detect, do not build §2.3**; there is
-nothing for it to find, and the honest next step is better checks, not better
-prompts.
+**Decision rule, applied by the run rather than by the operator.** The free
+baseline is the first thing `--tune` computes. A boundary already at the ceiling
+of what its checks can detect has nothing for the loop to find, and the run
+**skips it and says so** rather than spending a budget proving it. If every
+boundary is skipped, the run ends immediately with that finding, which is the
+useful answer: the next step is better checks, not better prompts.
 
 ---
 
