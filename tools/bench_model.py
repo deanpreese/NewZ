@@ -16,6 +16,11 @@ Usage
     python tools/bench_model.py --case NAME     # debug a single case
     python tools/bench_model.py --verbose       # show full model outputs
     python tools/bench_model.py --repeats 3     # surface non-determinism
+    python tools/bench_model.py --no-thinking-params   # send neither switch
+
+See bench_model_plain.py for the same cases with the thinking parameters
+never sent — the question that flag asks, as a script you cannot forget to
+pass a flag to.
 
 The cases are v2's boundaries, not generic capability probes:
 
@@ -56,6 +61,15 @@ Every call carries v2's model-call discipline inline — `reasoning_effort:
 "none"` plus `enable_thinking: false` — because on qwen3.6 the soft switches
 are ignored and only the former works. A model that will not accept those
 parameters fails here the way it would in production.
+
+Those two live in THINKING_PARAMS, one place, and `--no-thinking-params`
+sends neither. That answers a different question: not "does this model obey
+the switches" but "what does it do when nobody tells it anything", which is
+what a stack that drops unknown fields — or a model with no such switch —
+actually gives you. `no_think_leak` carries that run: under the params it
+tests that the model honours them, without them it tests the model's own
+default. The table names which of the two it ran, so a saved run is not
+ambiguous later.
 
 Exit codes
 ----------
@@ -116,6 +130,16 @@ VOICE_MODEL      = ""
 
 # A second candidate, run after the first with its own table. Empty = one.
 COMPARE_MODEL    = ""
+
+# Thinking suppression, exactly as the production call sites send it (S2 §16,
+# INV-003). Both switches go out because on qwen3.6 `enable_thinking` is
+# ignored and only `reasoning_effort` bites, while other stacks are the other
+# way round. Set to {} — or pass --no-thinking-params — to send neither and
+# see what the model does unprompted.
+THINKING_PARAMS: dict = {
+    "reasoning_effort": "none",
+    "chat_template_kwargs": {"enable_thinking": False},
+}
 
 # ───────────────────────────────────────────────────────────────────────────
 
@@ -1065,7 +1089,7 @@ CASES: list[TestCase] = [
 async def run_one_call(
     client: httpx.AsyncClient, endpoint: str, model: str, prompt: str,
     max_tokens: int, timeout_seconds: float = 120.0, system: str = "",
-    temperature: float = 0.1,
+    temperature: float = 0.1, thinking_params: dict | None = None,
 ) -> tuple[str, int, bool]:
     """POST to chat/completions; return (content, latency_ms, truncated).
 
@@ -1074,21 +1098,25 @@ async def run_one_call(
     only `reasoning_effort` works; both are sent so the check is meaningful
     on other stacks too. A model that rejects these parameters fails here
     the way it would in production.
+
+    `thinking_params` defaults to THINKING_PARAMS; pass {} to send neither
+    switch, which asks what the model does when nothing suppresses it.
     """
     messages = [{"role": "user", "content": prompt}]
     if system:
         messages.insert(0, {"role": "system", "content": system})
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    payload.update(
+        THINKING_PARAMS if thinking_params is None else thinking_params)
     t0 = time.time()
     resp = await client.post(
         f"{endpoint.rstrip('/')}/chat/completions",
-        json={
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "reasoning_effort": "none",
-            "chat_template_kwargs": {"enable_thinking": False},
-        },
+        json=payload,
         timeout=timeout_seconds,
     )
     latency_ms = int((time.time() - t0) * 1000)
@@ -1120,7 +1148,8 @@ class CaseResult:
         return self.xml_ok and self.schema_ok
 
 
-async def run_case(case: TestCase, role_endpoint: RoleEndpoint) -> CaseResult:
+async def run_case(case: TestCase, role_endpoint: RoleEndpoint,
+                   thinking_params: dict | None = None) -> CaseResult:
     """Execute one case and validate. XML and SCHEMA fail separately."""
     base = dict(name=case.name, role=role_endpoint.role,
                 endpoint=role_endpoint.endpoint, model=role_endpoint.model,
@@ -1130,7 +1159,8 @@ async def run_case(case: TestCase, role_endpoint: RoleEndpoint) -> CaseResult:
             content, latency, truncated = await run_one_call(
                 client, role_endpoint.endpoint, role_endpoint.model,
                 case.prompt, case.max_tokens, system=case.system,
-                temperature=case.temperature)
+                temperature=case.temperature,
+                thinking_params=thinking_params)
         except Exception as e:  # noqa: BLE001
             return CaseResult(**base, latency_ms=0, xml_ok=False,
                               schema_ok=False, error=str(e)[:200])
@@ -1171,10 +1201,25 @@ def _format_endpoint(ep: str) -> str:
     return ep.replace("http://", "").replace("https://", "")[:26]
 
 
-def print_summary(results: list[CaseResult], verbose: bool = False) -> None:
+def describe_thinking_params(params: dict | None) -> str:
+    """One line naming what suppression the run sent, for the table header.
+
+    A table without this is ambiguous a week later: a clean `no_think_leak`
+    means the model obeyed the switches, or that it never thinks out loud
+    unprompted, and those are different findings about the model.
+    """
+    params = THINKING_PARAMS if params is None else params
+    if not params:
+        return "none sent — this is the model's own default"
+    return ", ".join(f"{k}={v!r}" for k, v in params.items())
+
+
+def print_summary(results: list[CaseResult], verbose: bool = False,
+                  thinking_params: dict | None = None) -> None:
     print()
     print("=" * 96)
     print(f"  LLM smoke test — {results[0].model if results else '?'}")
+    print(f"  thinking params: {describe_thinking_params(thinking_params)}")
     print("=" * 96)
     print()
     print(f"  {'CASE':<22}  {'ROLE':<8}  {'ENDPOINT':<26}  {'LAT(ms)':>7}  "
@@ -1228,7 +1273,8 @@ def _find_case(name: str) -> TestCase:
 
 
 async def bench(model_override: str, cases: list[TestCase],
-                repeats: int, verbose: bool) -> int:
+                repeats: int, verbose: bool,
+                thinking_params: dict | None = None) -> int:
     endpoints = _resolve_endpoints(model_override)
     ambient = endpoints["ambient"]
 
@@ -1243,18 +1289,20 @@ async def bench(model_override: str, cases: list[TestCase],
     results: list[CaseResult] = []
     for case in cases:
         for _ in range(repeats):
-            results.append(await run_case(case, endpoints[case.role]))
+            results.append(await run_case(case, endpoints[case.role],
+                                          thinking_params))
 
     if results and all(r.latency_ms == 0 and r.error for r in results):
         print(f"\n  every call failed: {results[0].error}")
         return 3
 
-    print_summary(results, verbose)
+    print_summary(results, verbose, thinking_params)
     print_aggregate_latency(results)
     return 0 if all(r.passed for r in results) else 1
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None,
+         thinking_params: dict | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="",
                     help="override the MODEL constants for every role")
@@ -1265,13 +1313,18 @@ def main(argv: list[str] | None = None) -> int:
                     help="runs per case; >1 surfaces non-determinism")
     ap.add_argument("--verbose", action="store_true",
                     help="show full model outputs")
+    ap.add_argument("--no-thinking-params", action="store_true",
+                    help="send neither reasoning_effort nor enable_thinking")
     args = ap.parse_args(argv)
+
+    if args.no_thinking_params:
+        thinking_params = {}
 
     cases = [_find_case(args.case)] if args.case else CASES
     worst = 0
     for model in [args.model] + ([args.compare_with] if args.compare_with else []):
         worst = max(worst, asyncio.run(
-            bench(model, cases, args.repeats, args.verbose)))
+            bench(model, cases, args.repeats, args.verbose, thinking_params)))
     return worst
 
 
