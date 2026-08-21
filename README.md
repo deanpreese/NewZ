@@ -17,7 +17,6 @@ pip install -e '.[dev]'
 
 python tools/gate.py                    # suite, ledger, freeze
 python tools/gate.py --soak 10          # E8.0's ten consecutive runs
-git config core.hooksPath .githooks     # once: gate on commit, trailers enforced
 ```
 
 The suite does not read the wall clock and does not need a model, a network or
@@ -46,7 +45,9 @@ python tools/rebuild_check.py           # the same surface, from a backup, byte 
 
 ## Commits
 
-Every commit answers four questions, enforced by `.githooks/commit-msg`:
+Every commit answers four questions. Nothing enforces this locally — there are
+no git hooks in this repo, by the operator's decision — so it is a discipline
+the person committing keeps:
 
 ```
 Schema: 0039 | none

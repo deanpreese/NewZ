@@ -7,15 +7,16 @@
 
 **Why one command.** Three checks existed and each ran only when a person typed
 it: `pytest`, `tools/check_invariants.py`, `tools/freeze_check.py`. On
-2026-08-19 a commit went in red because nothing ran the first. A gate the
-operator has to remember is a gate that reports the operator's memory.
+2026-08-19 a commit went in red because nothing ran the first. One command is
+one thing to remember instead of three.
 
-**What it is not.** This is not a boundary against the loop. The pre-commit
-hook that calls it is defeated by `--no-verify`, and the loop will run as the
-same user; CI only fires on a push, which is rare here. It buys hygiene for the
-operator and close to nothing against an autonomous builder — that refusal is
-E8.4's, and `evolution/hard_core.yaml` keeps its `enforcement` gap open until
-then. Recorded here rather than left to be assumed (P4 W5, RT5).
+**What it is not.** This is not a boundary against the loop, and it is not
+automatic. A local `pre-commit` hook ran it briefly on 2026-08-20 and the
+operator removed it — the hook was defeated by `--no-verify` anyway, the loop
+will run as the same user, and CI fires only on a push. The refusal that binds
+an autonomous builder is E8.4's, and `evolution/hard_core.yaml` keeps its
+`enforcement` gap open until then. Recorded here rather than left to be assumed
+(P4 W5, RT5).
 
 `rebuild_check` is deliberately absent: it restores a backup and generates the
 surface twice, which is a minute of work, and a per-commit check that slow is a
