@@ -335,18 +335,58 @@ precisely the noise a tuning loop accumulates and calls progress. The interval
 rule from §2.3 is now applied to the variant verdict itself — which is the
 proposal's own guard, shown to be necessary by one run.
 
-### 6.5 What this means for §2.3
+### 6.5 The first red team measured the wrong thing
 
-The loop was specified to tune against replayed payloads. Replay supplies real
-**inputs** and no **verdicts**, so the only thing scoreable is structure — and
-§6.2 shows structure is at ceiling. A loop built now would work six boundaries
-that have nothing to give and one whose defect is not in the prompt.
+§6.2 concluded there was nothing to tune. That conclusion was wrong, and the
+error was in what it scored: **whether the answer PARSED, not whether it was
+any good** *(operator, 2026-08-21: "this does not satisfy my goal of being able
+to tune and optimize the prompts")*. A prompt can hold its schema perfectly and
+still restate what the being already holds, keep the wrong items, and open
+questions that never move.
 
-**The recommendation is therefore to stop here.** What would change it is
-labels: `gate_log.classification` is the only labelled set the being has, and it
-is 40 rows with 22 on a retired clause. Judgment — did triage keep the right
-item, should the gate have fired — is where the headroom must be, and none of it
-is measurable yet.
+Quality does not need a new judge, because **this system already decides it in
+code, downstream of every call, and that code runs offline**:
+
+| shape | who decides quality | baseline | headroom |
+|---|---|---:|---|
+| delib | `advance.judge_advance` — the real acceptance judge | **78%** (132/170) | 27 restatements, 9 that do not move the concern |
+| opener | `opener.py`'s own door guards | **85%** (233/275) | 41 unparseable, 1 unreachable terminus |
+| gate | `gate_log.classification` — the operator's own verdict | 40 labelled rows | 22 on a clause v6 retired |
+
+And the store's outcome record says the same thing more bluntly:
+
+- **69 of 796 reads that kept claims were ever cited in an advance — 8.7%.**
+- **500 setbacks against 330 advances**: 232 `restated`, 182 `blocked`, 84 `drift`.
+- **24 of 123 concerns never produced a single advance**; 86 are stalled, 19 closed.
+- 152 of 330 advances were later superseded.
+
+So the headroom is large and it was invisible to a schema check.
+
+### 6.6 The comparison works end to end
+
+A variant of `delib.task` aimed at the restatement failure — an explicit
+pre-answer check against the dossier's own advance list — run against ten real
+dossiers at production width:
+
+```
+current  8/10  80%  [0.49-0.94]
+variant  9/10  90%  [0.60-0.98]   no detectable difference (+1 case, overlap)
+```
+
+The verdict is the point. The tool refuses to call a one-case swing an
+improvement, which is the guard from §2.3 governing its own output. A real
+verdict needs roughly 60 payloads a side; at ~15s per deliberation call that is
+about half an hour of the box, which is what one tuning round actually costs.
+
+### 6.7 What this means for §2.3
+
+**Build it.** §6.5 reverses the earlier recommendation: there is a measurable
+objective, it is the system's own, it runs offline, and the current prompts sit
+22 points below ceiling on deliberation and 15 on the opener.
+
+The loop's objective is the downstream judge, never the schema check. Schema
+scores stay reported, because a variant that improves acceptance while breaking
+parsing has not improved anything.
 
 ---
 

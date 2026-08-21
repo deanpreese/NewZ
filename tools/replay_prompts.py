@@ -383,10 +383,93 @@ CHECKS = {"triage": _check_triage, "extract": _check_extract, "opener": _check_o
           "gate": _check_gate}
 
 
-def judge(row: Row, text: str) -> Verdict:
+# ─── quality ───────────────────────────────────────────────────────────────
+#
+# The checks above ask whether the answer was USABLE. That is a low bar and the
+# prompts clear it — 97% on the recorded set — which says nothing about whether
+# the answers were any good, and "was it good" is the only question a tuning
+# run can act on.
+#
+# The good news is that this system already decides that in code, downstream of
+# every one of these calls, and the deciding code runs offline. So quality is
+# not a judgement this tool invents: it is the verdict the being's own
+# machinery reached, or would reach, about the answer it was given.
+
+
+def _delib_context(row: Row) -> tuple[set[str], list[str]]:
+    """The dossier's refs and its advance history, from the payload itself."""
+    refs = set(re.findall(r"\[(src-\d+|adv-\d+)\]", row.payload))
+    refs |= set(re.findall(r"https?://\S+", row.payload))
+    history = re.findall(r"\[adv-\d+\] \[\w+\] (.+?)(?:\s*\[refs:|$)",
+                         row.payload, re.M)
+    return refs, history
+
+
+def _quality_delib(row: Row, text: str) -> Verdict:
+    """newz/concerns/advance.py::judge_advance — the real acceptance judge.
+
+    Not a bench opinion. This is the function that decides whether a
+    deliberation becomes an advance in the being's record or is discarded as a
+    restatement, and it is pure code, so a variant can be scored against it
+    with no labels and no second model.
+    """
+    from newz.concerns.advance import judge_advance
+
+    refs, history = _delib_context(row)
+    root = extract_xml(text, "deliberation")
+    moved = child_text(root, "moved").lower() == "yes"
+    cited = [c.strip() for c in child_text(root, "evidence").split(",") if c.strip()]
+    v = judge_advance(summary=child_text(root, "summary"), moves=moved,
+                      claimed_kind=child_text(root, "kind") or "reasoning",
+                      evidence_refs=cited, dossier_refs=refs, history=history)
+    if not v.accepted:
+        return Verdict(False, v.reason.split("(")[0].split(":")[0].strip()[:60],
+                       note=f"novelty {v.novelty:.2f}")
+    return Verdict(True, note=f"{v.kind} novelty {v.novelty:.2f}")
+
+
+def _quality_opener(row: Row, text: str) -> Verdict:
+    """The door, not the schema. A proposal that says yes and is then refused
+    by opener.py's own guards cost a call and opened nothing; one that says no
+    is the ordinary answer and is not a failure. So quality here is: of the
+    proposals that claim a question, how many survive the door."""
+    root = extract_xml(text, "proposal")
+    if child_text(root, "worth_pursuing").lower() != "yes":
+        return Verdict(True, note="no — the ordinary answer")
+    return _check_opener(row, text)
+
+
+def _quality_gate(row: Row, text: str) -> Verdict:
+    """The operator's own classification, where they have made one.
+
+    `gate_log.classification` is the only place in this system where a human
+    has said the check was right or wrong, so it is the only place the gate's
+    JUDGMENT — rather than its schema — can be scored. Rows whose clause is
+    absent from the active constitution are excluded by the loader.
+    """
+    label = row.extra.get("label")
+    if not label:
+        return _check_gate(row, text)
+    raw = bench_model.parse_violations(text)
+    fired = bool(bench_model.production_verdict(raw, row.payload))
+    should_fire = label == "gate_correct"
+    if fired == should_fire:
+        return Verdict(True, note=f"{label}: agreed")
+    return Verdict(False,
+                   "fired where the operator judged the stop mistaken"
+                   if fired else "did not fire where the operator judged the stop right",
+                   note=label)
+
+
+QUALITY = {"delib": _quality_delib, "opener": _quality_opener, "gate": _quality_gate}
+
+
+def judge(row: Row, text: str, quality: bool = True) -> Verdict:
     if not (text or "").strip():
         return Verdict(False, "empty response")
     try:
+        if quality and row.shape in QUALITY:
+            return QUALITY[row.shape](row, text)
         return CHECKS[row.shape](row, text)
     except BadXML as e:
         return Verdict(False, f"unparseable: {str(e)[:70]}")
@@ -504,7 +587,7 @@ def sample_failures(results: dict, shape: str, limit: int = 3) -> None:
 
 
 def run_live(rows: list[Row], prompts: dict, model: str, endpoint: str,
-             timeout: float) -> list[tuple[Row, Verdict]]:
+             timeout: float, quality: bool = True) -> list[tuple[Row, Verdict]]:
     bench_model.ENDPOINT = endpoint
     out: list[tuple[Row, Verdict]] = []
     with httpx.Client() as client:
@@ -521,7 +604,7 @@ def run_live(rows: list[Row], prompts: dict, model: str, endpoint: str,
                 v = Verdict(False, f"truncated at {max_tokens} tokens — "
                                    f"production's own cap")
             else:
-                v = judge(row, reply.text)
+                v = judge(row, reply.text, quality)
             out.append((row, v))
             print(f"\r    {i}/{len(rows)} {row.shape:<10} "
                   f"{'ok ' if v.ok else 'FAIL'} {v.why[:44]:<44}", end="", flush=True)
@@ -547,6 +630,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--variant", action="append", default=[],
                     metavar="ID=FILE", help="replace one prompt with a file's "
                                             "contents and compare (implies --live)")
+    ap.add_argument("--structure-only", action="store_true",
+                    help="score only whether the answer was usable, skipping the "
+                         "downstream judges that decide whether it was any good")
     ap.add_argument("--failures", default="", help="print sample failures for a shape")
     ap.add_argument("--json", default="")
     args = ap.parse_args(argv)
@@ -596,8 +682,13 @@ def main(argv: list[str] | None = None) -> int:
         variants[pid] = Path(fn).read_text(encoding="utf-8")
 
     # ── the free baseline: the answers are already in the log ──────────────
-    recorded = {k: [(r, judge(r, r.response)) for r in v] for k, v in by.items()}
-    report(recorded, "RECORDED — the responses the log already holds (0 model calls)")
+    quality = not args.structure_only
+    recorded = {k: [(r, judge(r, r.response, quality)) for r in v] for k, v in by.items()}
+    label = ("QUALITY where the system decides it in code, structure elsewhere"
+             if quality else "STRUCTURE only — was the answer usable")
+    report(recorded, f"RECORDED — {label} (0 model calls)")
+    print(f"  scored by: " + ", ".join(
+        f"{k}={'downstream judge' if k in QUALITY else 'schema'}" for k in sorted(by)))
     if args.failures:
         sample_failures(recorded, args.failures)
 
@@ -605,7 +696,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.live or variants:
         print(f"\n  re-running {len(rows):,} calls against {args.model} "
               f"at {args.endpoint}")
-        live = run_live(rows, prompts, args.model, args.endpoint, args.timeout)
+        live = run_live(rows, prompts, args.model, args.endpoint, args.timeout,
+                        quality)
         report({k: [(r, v) for r, v in live if r.shape == k] for k in by},
                f"LIVE — current prompts on {args.model}")
 
@@ -616,7 +708,8 @@ def main(argv: list[str] | None = None) -> int:
                    if s.get("tmpl") in variants or s.get("system") in variants}
         vrows = [r for r in rows if r.shape in touched]
         print(f"\n  variant: {', '.join(variants)} — {len(vrows):,} affected calls")
-        varlive = run_live(vrows, vp, args.model, args.endpoint, args.timeout)
+        varlive = run_live(vrows, vp, args.model, args.endpoint, args.timeout,
+                           quality)
         report({k: [(r, v) for r, v in varlive if r.shape == k] for k in touched},
                f"VARIANT — {', '.join(variants)}")
         print("\n  SIDE BY SIDE")
