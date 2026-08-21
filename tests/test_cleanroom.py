@@ -152,7 +152,7 @@ def test_what_it_does_not_prove_is_written_down(backups):
 def test_a_backup_that_restores_to_nothing_is_refused(tmp_path):
     """R-37e. Behavior: `verify` counted a table without asserting anything, so
     a database with zero episodes returned 0 and passed — the one backup worth
-    catching was the one it could not see. E8.2's rollback is built on these
+    catching was the one it could not see. The clean-room rebuild is built on these
     files."""
     out = tmp_path / "backups"
     out.mkdir()

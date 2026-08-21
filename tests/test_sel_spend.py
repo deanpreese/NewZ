@@ -1,5 +1,5 @@
-"""The loop's spend is recorded in its own log and never enters the being's
-diet denominator (operator decision, 2026-08-20 — option 1b).
+"""A second inference log never enters the being's diet denominator (INV-065,
+**dormant since 2026-08-21**).
 
 **The hazard this exists for.** S2 §9.1's ingest ceiling is a share of ALL
 cognition, read from `logs/llm_calls.jsonl`. If the loop's calls were tagged
@@ -8,9 +8,13 @@ and the being's reading limit would rise with it — a self-serving path through
 the one invariant that constrains ingest, available to the process that writes
 the log. Two files, and the diet reads one of them.
 
-The loop does not exist yet (E8.2 builds the runner that would write the second
-file). These tests fix the rule before there is code to break it, which is the
-only order in which that is cheap.
+**The loop this was written for was struck with Phase 8**, so nothing writes a
+second log and the rule is unexercised. It is kept rather than deleted because
+it was right and it is cheap: the hazard belongs to *any* second writer of
+inference beside the being, not to that loop in particular, and the rule was
+fixed before there was code to break it — the only order in which that is cheap.
+These tests assert what a merge would cost against a fixture, and INV-065 is
+re-armed the moment anything writes an inference log beside the being's.
 """
 
 import json
@@ -76,7 +80,7 @@ def test_the_sel_log_reads_with_the_same_instrument(tmp_path):
 
 
 def test_a_missing_sel_log_is_zero_and_not_an_error(tmp_path):
-    """Before E8.2 the file does not exist, and the weekly read must still
+    """The file does not exist, and the daily read must still
     run rather than failing on an absent loop."""
     s = read_budget(tmp_path / SEL_LOG, window_hours=24)
     assert s.calls == 0 and s.tokens == 0

@@ -412,7 +412,7 @@ def test_the_read_is_taken_from_recorded_readings_and_not_recomputed(store, tmp_
 
 def test_the_surface_regenerates_without_being_asked(tmp_path):
     """R-37e. Behavior: E3.2 built a generator and no rhythm, so the published
-    surface was stale from the moment the being wrote anything — and E8.3's
+    surface was stale from the moment the being wrote anything — and the daily
     daily read is specified against it. A loop reading a page nothing refreshes
     reads yesterday and reports it as today."""
     from newz.store.db import open_db

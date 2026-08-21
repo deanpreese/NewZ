@@ -1,5 +1,35 @@
 # The self-evolving loop — three guides, one cycle, and the brake outside it
 
+> **SUPERSEDED 2026-08-21 by
+> `2026-08-21-phase-3a-the-monitor-and-phase-8-struck.md`.** The loop was not
+> built. Phase 8 is struck and every id it held is resolved in PLAN's §"Where
+> P4's Phase 8 went".
+>
+> **What was built is §11's steps 1–4, and this document said they would pay
+> whether or not the loop was ever switched on** — they did. The instrument
+> registry, the grades and the purpose map, `premises.yaml`, `epics.yaml` with
+> its hashed `Done when` clauses, `hard_core.yaml` and the derived freeze all
+> stand, and Phase 3A reads them on a rhythm. What was struck is steps 5–7: the
+> precedence table, the enablement ladder, the runner and the builder.
+>
+> **What the strike rests on**, measured rather than argued:
+> `2026-08-21-the-loop-arrives-to-an-empty-queue.md`. §9's own R-N2 and R-N4
+> named this outcome — *"an autonomous delivery loop with a True-North circuit
+> breaker, not a self-evolving system"* — and the operator accepted both in §14.
+> What changed is that the premises under that acceptance moved: Phase 3, the
+> loop's designated proving ground, was delivered by hand before the loop
+> existed.
+>
+> **§5.2's argument outlived the loop.** *At n=1 with no held-out baseline it
+> cannot distinguish improving the being from improving the instrument's view of
+> the being, and it has a gradient toward the second because that is cheaper and
+> always works* — that is a true sentence about an agent in a session, so the
+> freeze keeps its job and gets an honest actor.
+>
+> Kept in full, not archived. Six rounds of red team produced the machinery
+> Phase 3A runs on.
+
+
 *2026-08-19. A design proposal for the SEL as the operator specified it across
 this session's exchanges: **read health, results and instrumentation → determine
 next steps → red team → build → restart the being → report → repeat**, guided by

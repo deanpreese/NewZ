@@ -74,9 +74,10 @@ premises:
     metric: nights_slept
     material_change: 2
     carries: >
-      Everything downstream of sleep. P4 Phase 8 makes a fall here a kill
-      condition, because development is measured in nights and a loop that
-      costs sleep is subtracting.
+      Everything downstream of sleep. Phase 8 made a fall here its most
+      important kill condition; the phase is struck and it is a threshold line
+      in the daily email (Phase 3A). Development is measured in nights, and
+      anything that costs sleep is subtracting.
 
   produces-nothing-on-a-rhythm:
     states: "3 pieces, all written by hand for Phase 0's read"

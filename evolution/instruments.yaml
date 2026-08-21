@@ -1,7 +1,7 @@
 # The instrument registry (PLAN E8.1).
 #
 # Every executable in tools/ appears here exactly once. An `instrument` is
-# read-only, is what the SEL and the operator may steer by, and carries the
+# read-only, is what the operator and their agents may steer by, and carries the
 # fields the registry exists to make checkable: what it measures, what it
 # reads, whether a model touched ANY link in its chain, its denominator, and
 # its Rule 0 method line.
@@ -13,13 +13,13 @@
 # model produces operation, never evidence.
 #
 # `canonical: true` marks the frozen set (E3.9) — changing one is an operator
-# act, because the loop steers by these while changing the being that produces
+# act, because whoever steers by these is also changing the being that produces
 # them.
 #
 # Writers: hand-maintained, and tests/test_instruments_registry.py fails the
 # build when a tool is added without a row.
-# Readers: tests/test_instruments_registry.py today; the SEL's state read
-# (E8.3) and the metric-to-purpose map (E2.6) next.
+# Readers: tests/test_instruments_registry.py, the metric-to-purpose map
+# (E2.6), and the daily state email (E3A.3).
 
 version: 1
 
@@ -383,7 +383,7 @@ metrics:
 
   token_share_by_function:
     definition_version: 1
-    serves: [kill:loop-spend, invariant:diet, evidence:S5-E]
+    serves: [invariant:diet, evidence:S5-E]
     emitted_by: tools/budget.py
     grade: mechanical
     unreadable_when: the call log is gitignored and does not travel with a clone (INV-044).
@@ -412,7 +412,7 @@ metrics:
       inverse document frequency over the works corpus. No vocabulary is
       authored and no model is asked what a piece is about (INV-056).
 
-  # ── the mechanical set (E2.9) — what the loop may steer by ────────────
+  # ── the mechanical set (E2.9) — what anything may steer by ────────────
   # Every one is a count or a ratio of counts over rows the being wrote as it
   # lived. No model judgment sits anywhere between the world and the number,
   # which is the whole qualification for carrying a decision (Rule 4).
@@ -502,7 +502,7 @@ metrics:
   deliberation_token_share:
     definition_version: 1
     baselined: true
-    serves: [evidence:S5-E, invariant:diet, kill:loop-spend]
+    serves: [evidence:S5-E, invariant:diet]
     emitted_by: newz/evidence/mechanical.py
     grade: mechanical
     unreadable_when: the call log is gitignored and does not travel with a clone (INV-044).
@@ -715,13 +715,22 @@ purposes:
   decision:phase2: {what: "produces on rhythm but never revises -> the re-read is decorative"}
   decision:phase3: {what: "if exposure would require code rather than config, the dormancy is fake"}
 
-  # Phase 8 kill conditions.
-  kill:reverted-restarts:  {what: "reverted restarts above 1 in 5 over a month"}
-  kill:loop-spend:         {what: "the loop's inference spend exceeding the being's"}
-  kill:nights-slept:       {what: "nights slept falling below the pre-loop baseline"}
-  kill:operator-agreement: {what: "the operator-agreement rate rising while novelty is flat"}
-  kill:plan-drift:         {what: "two consecutive quarterly re-reads finding the plan drifted from TRUE_NORTH"}
-  kill:unmoved-premise:    {what: "a plan-change proposal twice unable to name a moved mechanical premise"}
+  # Phase 8's six kill conditions, after the phase was struck (2026-08-21).
+  #
+  # **Two survive as thresholds and four are removed.** They halted a loop;
+  # there is no loop, so nothing halts. What survives are the two that measure
+  # the BEING rather than the loop's machinery — they become lines in the daily
+  # email, flagged and never acting.
+  #
+  # Removed, with the reason rather than silently: `kill:reverted-restarts`
+  # needed a runner that will not be built; `kill:plan-drift` and
+  # `kill:unmoved-premise` describe a loop proposing plan changes and neither
+  # has a subject any more; `kill:loop-spend` compared the loop's inference
+  # against the being's and PLAN already recorded that it would never fire.
+  # A purpose nothing CAN serve is not steering by faith, it is a dead row —
+  # and `unserved()` exists to report the first, not to accumulate the second.
+  kill:nights-slept:       {what: "nights slept falling below the pre-loop baseline — a line in the daily email, halting nothing"}
+  kill:operator-agreement: {what: "the operator-agreement rate rising while novelty is flat — a line in the daily email, halting nothing"}
 
   # The diet invariant, which is a standing check rather than a phase read.
   invariant:diet: {what: "S2 §9.1 — ingest stays under the looser of two ceilings"}

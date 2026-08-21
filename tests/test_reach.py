@@ -95,7 +95,8 @@ def test_the_server_has_no_host_parameter_to_get_it_wrong_with():
 
 def test_the_hard_core_records_reach_as_the_operators(tmp_path):
     """Behavior: the boundary is written where its enforcer will read it, not
-    only in a proposal. E8.0's gate is what will refuse a diff against it."""
+    only in a proposal, and nothing refuses a diff against it — the gate lists
+    rather than refuses (INV-074)."""
     core = yaml.safe_load((REPO / "evolution" / "hard_core.yaml").read_text())
 
     assert any("reach" in s and "operator" in s for s in core["state"])

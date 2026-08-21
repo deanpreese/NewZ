@@ -7,7 +7,8 @@ wrote a piece at 08:45 on the day the phase closed. `SurfaceScheduler` already
 appeared in `run_newz.py` and is the *noticing* surface, which made this harder
 to notice than it should have been.
 
-It matters beyond tidiness because E8.3 specifies the Watcher's daily read
+It matters beyond tidiness because a page nothing refreshes shows yesterday
+and is read as today; the daily read
 against E3.6's page. A loop reading a page nothing refreshes is a loop reading
 yesterday and reporting it as today.
 

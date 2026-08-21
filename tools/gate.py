@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""The gate, in one command (P4 E8.0 / W5).
+"""The gate, in one command (P4 W5).
 
     python tools/gate.py              # suite, ledger, freeze — exit 0 or 2
-    python tools/gate.py --soak 10    # the suite ten times, for E8.0's Done-when
+    python tools/gate.py --soak 10    # the suite ten times
     python tools/gate.py --quick      # ledger and freeze only, no suite
 
 **Why one command.** Three checks existed and each ran only when a person typed
@@ -16,10 +16,11 @@ was not wanted, and nothing replaced it. Running the gate is an act somebody
 takes, which means the sentence "the suite is green" is a claim about the last
 time someone ran this — no more and no less.
 
-**And it is not a boundary against the loop.** It never was: `--no-verify` was
-one flag and an autonomous builder runs as the same user. The refusal that
-binds one is E8.4's, and `evolution/hard_core.yaml` keeps its `enforcement` gap
-open until then. Recorded here rather than left to be assumed (P4 W5, RT5).
+**And it is not a boundary against an agent.** It never was: `--no-verify` is
+one flag and an agent runs as the same user. Nor is the freeze it runs — this
+invokes `freeze_check --operator`, the mode that lists and does not refuse, so
+nothing here has ever refused a diff. `evolution/hard_core.yaml` records that
+as a standing fact (P4 W5, RT5; E3A.4).
 
 `rebuild_check` is deliberately absent: it restores a backup and generates the
 surface twice, which is a minute of work, and a per-commit check that slow is a

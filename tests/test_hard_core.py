@@ -12,8 +12,9 @@ Three failures this catches:
     `newz/evidence/pursuit.py` stays writable freezes a filename and not a
     measurement.
 
-  - the registry stops saying it is unenforced while it still is. E8.0 is the
-    gate. Until E8.0 is built, a registry that looks enforced and is not is
+  - the registry stops saying nothing refuses a diff while nothing does.
+    Phase 8 is struck and no gate is coming; a registry that looks enforced and
+    is not is
     worse than no registry (INV-044).
 """
 
@@ -97,7 +98,7 @@ def test_plan_is_section_protected_and_says_nothing_checks_it():
 def test_the_registry_says_plainly_that_nothing_refuses_a_diff():
     """The honesty clause, after Phase 8 was struck (P4 E3A.4).
 
-    It used to be tied to E8.0's status — *unenforced until the gate is built*.
+    It used to be tied to a gate's status — *unenforced until it is built*.
     There is no gate coming: `tools/gate.py` runs `freeze_check --operator`,
     the non-refusing mode, so the refusing half has had no caller from the
     start. Behavior: the registry records that as a standing fact rather than
@@ -110,6 +111,9 @@ def test_the_registry_says_plainly_that_nothing_refuses_a_diff():
     assert enforcement, "the registry no longer records that nothing refuses a diff"
     assert not any("E8." in g["detail"] for g in gaps), \
         "a gap still waits on an epic that was struck"
+    assert any("standing fact" in g["detail"] or "nothing is coming" in g["detail"]
+               for g in enforcement), \
+        "the enforcement gap still reads as pending rather than as permanent"
 
 
 def test_the_registry_is_valid_yaml_with_reasons_on_every_path():

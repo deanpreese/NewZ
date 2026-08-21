@@ -1,4 +1,4 @@
-"""The gate (P4 E8.0 / W5).
+"""The gate (P4 W5).
 
 Done-when: a fresh clone installs and runs the suite from a declared
 environment with no hand steps, the suite is green on ten consecutive runs, and

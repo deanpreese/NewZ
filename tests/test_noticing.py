@@ -40,7 +40,7 @@ CLEAN = "<violation_check></violation_check>"
 # `blocked_reason`, so the suite was green in the afternoon and red at 2 a.m.:
 # the 07:00–23:00 wake window is a gate on the being's behaviour and was
 # silently a gate on the test run. A suite that flaps on the hour teaches its
-# operator to ignore a red, which is the argument E8.0 rests on, so the clock
+# operator to ignore a red, so the clock
 # is frozen at a fixed daylight moment for this module — fixtures and gates
 # read the same one, and `test_the_three_am_lesson` still passes its own hours
 # to `in_wake_window`, which is where that behaviour belongs.

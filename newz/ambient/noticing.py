@@ -219,7 +219,7 @@ class SurfaceScheduler:
         reads the wall clock is a test that passes in the afternoon and fails
         at 2 a.m.: four of these failed outside the 07:00–23:00 wake window,
         so the suite was only green in daylight and a nightly gate would have
-        taught its operator to ignore a red (E8.0).
+        taught its operator to ignore a red.
         """
         import asyncio
 

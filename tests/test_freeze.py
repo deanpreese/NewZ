@@ -104,7 +104,7 @@ def test_nothing_enforces_this_automatically_and_that_is_stated():
 
     A guard that looks enforced and is not is worse than no guard, so the
     module says which it is — and what it says changed on 2026-08-21. It used
-    to name E8.0's gate and E8.4's builder as consumers that did not exist yet;
+    to name a gate and a builder as consumers that did not exist yet;
     they will not exist at all, and `tools/gate.py` runs `freeze_check
     --operator`, which lists and does not refuse. Behavior: the module states
     the standing fact and names the party it constrains."""

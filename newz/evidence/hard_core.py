@@ -2,8 +2,8 @@
 (SEL proposal §5).
 
 **The registry is the definition and this is its reader.** §5 enumerated the
-hard core in prose and nothing in the repo encoded it, while E8.2's runner,
-E8.4's gate and the autonomy stage are all specified in terms of it. PLAN's
+hard core in prose and nothing in the repo encoded it, while the runner, the
+gate and the autonomy stage were all specified in terms of it. PLAN's
 Phase 8 never cited §5, so the loop — sent by its own precedence table to read
 PLAN — could not find the boundary rung 1 refuses on.
 
@@ -15,7 +15,8 @@ every tool the instrument registry marks canonical and adds every
 `newz/evidence` module those tools import, which is a superset of §5.2 —
 asserted, not assumed, in tests/test_hard_core.py.
 
-**Nothing here refuses anything.** E8.0's gate is the enforcer and is not
+**Nothing here refuses anything, and nothing is coming that will.** Phase 8
+was struck 2026-08-21, so the gate named as the enforcer is not
 built. This module answers "is this path inside the core?"; acting on the
 answer arrives with the gate.
 """

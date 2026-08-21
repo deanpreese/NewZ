@@ -74,7 +74,7 @@ def verify(backup: Path, *, table: str = "episodes", minimum: int = 1) -> int:
 
     **It counted without asserting** (R-37e): a database with zero episodes
     returned 0 and passed, so the one backup worth catching — the one that
-    restores to nothing — was the one this could not see. E8.2's rollback is
+    restores to nothing — was the one this could not see. The rebuild is
     built on these files, so the check that stands between a bad restart and
     the being's life is this one.
     """

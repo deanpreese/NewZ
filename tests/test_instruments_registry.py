@@ -1,4 +1,4 @@
-"""The instrument registry is complete and the tools are portable (PLAN E8.1).
+"""The instrument registry is complete and the tools are portable (PLAN E3A.0).
 
 Two failures this catches, both of which were live in the tree on 2026-08-19:
 
@@ -64,7 +64,7 @@ def test_every_tool_is_classified_exactly_once():
 
 
 def test_every_instrument_row_carries_the_fields_it_is_for():
-    """Consumer: the SEL's state read (E8.3) and E2.6's map. Behavior: an
+    """Consumer: the daily state email (E3A.3) and E2.6's map. Behavior: an
     instrument cannot enter the registry without saying what it measures, what
     it reads, its denominator, and whether a model touched its chain."""
     for row in _registry()["instruments"]:

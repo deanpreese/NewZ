@@ -1264,39 +1264,28 @@ and the work outgrowing the room.
    Phase 8's design assumes without testing. R-22 binds: the sample is bounded
    and the apparatus is deleted when the question is answered.
 
-3. **Read-and-report gates building.** **DECIDED 2026-08-19 — yes, and
-   measured in cycles rather than weeks** *(operator: four weeks is too long)*.
-   E8.4 stays disabled until the loop has proposed a next step **three times**
-   and the operator has compared each against what they would have chosen. A
-   duration was the wrong unit: what is being observed is the loop's judgment,
-   and judgment is observed per decision, not per week. While read-only the
-   decide cycle costs nothing and need not wait for the weekly window, so the
-   gate is satisfiable in about a week rather than four. If three proves too
-   few or too many, the count moves; the unit does not.
-4. **The loop may propose outside this plan from the start.** **DECIDED
-   2026-08-19 — yes, as proposals only, never a build.** Rung 5a of the
-   precedence. A stale plan is the risk nothing else in the design detects:
-   rung 3 catches only conditions the plan wrote about itself, and
-   `premises.yaml` catches only premises that moved. Neither catches a plan
-   wrong in a way nobody anticipated, and a proposal costs an email.
-5. **The being's own account of its condition feeds the loop.** **DECIDED
-   2026-08-19 — yes, as candidate signal and never as evidence.** Its
-   `noticings` (91, 18 surfaced, 49 pending), `source_gaps` (12), journal and
-   affect state reach nothing that changes its conditions today — its plumbing
-   is improved behind its back, which sits badly against §5 Priority 2's *care
-   for its own continuity and condition*. The rule that makes it admissible is
-   E2.10's, unchanged: a noticing may motivate a look; it may never justify a
-   change, which still requires a moved **mechanical** premise. R-13 is the
-   standing warning — the being once built an identity out of 1,041 rows of
-   cache-miss telemetry, and would do the same with its own complaints if they
-   were allowed to count as findings.
+3. **Read-and-report gates building.** ~~DECIDED 2026-08-19~~ — **moot
+   2026-08-21.** It gated E8.4 behind three compared proposals. Phase 8 is
+   struck and there is no builder to gate. The question it was really asking —
+   *is this loop's judgment worth trusting* — was answered by not needing one.
 
-   *Recorded honestly:* "candidate signal, never evidence" is enforceable at
-   the point of justification and **not** at the point of attention. Which
-   questions the loop chooses to look at will be shaped by what the being
-   complains about, and nothing mechanical prevents that. Whether that is
-   contamination or is exactly what §5 Priority 2 asks for is the operator's
-   judgment, and it has been made.
+4. **The loop may propose outside this plan.** ~~DECIDED 2026-08-19~~ — **moot
+   2026-08-21.** Rung 5a of a precedence table that no longer exists. The risk
+   it answered is not moot and now has no mechanism at all: **a plan can go
+   stale in a way nobody anticipated, and nothing detects that.**
+   `premises.yaml` catches premises that moved and the daily email reports them;
+   nothing catches a plan wrong in a way no premise records. Recorded as an
+   open hole rather than closed with the phase.
+
+5. **The being's own account of its condition.** ~~DECIDED 2026-08-19 — yes, as
+   candidate signal and never as evidence~~ — **moot 2026-08-21, and the
+   complaint it answered stands.** Its `noticings`, `source_gaps`, journal and
+   affect state still reach nothing that changes its conditions; its plumbing is
+   still improved behind its back, which still sits badly against §5 Priority
+   2's *care for its own continuity and condition*. The loop that would have
+   read them is struck. **W12a is the only self-authored signal in the repo with
+   a consumer** — its counts come due around 2026-09-04, and the daily email is
+   where they are read.
 
 6. **Phase 1 proceeds without S1-E.** **DECIDED 2026-08-20 — the plan moves
    forward without the claim chain proven** *(operator)*. Phase 1's epics are
@@ -1389,3 +1378,14 @@ and RISKS rows are updated to match.
 - **It does not promise §2's outcome.** There are no readers. The plan builds
   the foundation §5 Priority 1 orders; the fuller aspiration needs people, and
   people arrive at Phase 7 when the operator judges the system has earned them.
+- **It does not take the operator out of the path** *(recorded 2026-08-21)*.
+  The operator's direction of 2026-08-21 — *the system has to consume
+  information and grow without a person in the path* — is unanswered by this
+  plan. **No epic in Phases 3A–7 gives the being a way to change its own
+  conditions.** Phase 8 was not the answer either: it would have changed the
+  repo, at one Class B change per evidence window, with every verdict still the
+  operator's — which is why striking it cost that direction nothing. If the
+  operator wants the person out of the path, that is a phase this plan does not
+  contain, and the honest place to start is the one self-authored signal that
+  already has a consumer: `source_gaps`, W12a's counts, read against whatever is
+  true when they come due.
