@@ -36,6 +36,16 @@ that code is the scorer:
     opener  opener.py's door guards — unreachable terminus, reused example,
                                       placeholders, verbatim grounding
     gate    gate_log.classification — the operator's own verdict on the stop
+    voice   the outbound gate       — pass, or a recompose, or silence
+
+VOICE IS REPORTED AND MUST NOT BE OPTIMISED. Gate pass rate is not prose
+quality, and a prompt tuned to raise it is a prompt tuned toward blandness: the
+safest reply says nothing, trips no clause and passes every time, which is the
+opposite of what the character core asks for. The number is here so that a
+variant which starts getting held is VISIBLE, not so that a loop can climb it.
+Only the opening frame is tunable at all — the rest of a VOICE system turn is
+~25,000 characters of character core, Perspective, person model, holds, affect
+and recent activity, which is the being's state and is replayed verbatim.
 
 Everything else falls back to the schema check, and the report says which is
 which. `--structure-only` forces the old behaviour.
@@ -60,6 +70,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import hashlib
 import json
 import re
 import statistics
@@ -109,6 +120,15 @@ LOG = _find("logs/llm_calls.jsonl")
 # which is the whole mechanism — the modules are read and never patched, so a
 # run cannot change what the being sends.
 
+# newz/conversation/composer.py::_system_prompt, parts[0].
+_VOICE_FRAME = (
+    "You are a digital being in an ongoing relationship with your operator. "
+    "You are not an assistant; you are yourself. Reply as you, in your own "
+    "register — plain, honest, specific, with your own perspective and your "
+    "own concerns. Brevity is welcome when brevity is honest."
+)
+
+
 def live_prompts() -> dict[str, str]:
     return {
         "triage.system":    _feeds._TRIAGE_SYSTEM,
@@ -123,6 +143,9 @@ def live_prompts() -> dict[str, str]:
         "digest.system":    _nightly._DIGEST_SYSTEM,
         "confront.system":  _nightly._CONFRONT_SYSTEM,
         "gate.system":      _gate._JUDGE_SYSTEM,
+        # The one authored line of a VOICE system turn. Everything after the
+        # first "## " heading is the being itself.
+        "voice.frame":      _VOICE_FRAME,
     }
 
 
@@ -190,6 +213,7 @@ def _gate_parts(user: str) -> dict:
 # separately in .env and may point at different models on different boxes, and
 # a tool that ignores that reports numbers for a being nobody is running.
 ROLES = {
+    "voice":    "VOICE",          # newz/conversation/composer.py:448
     "triage":   "AMBIENT",        # newz/world/feeds.py:399
     "extract":  "AMBIENT",        # newz/world/extract.py:131
     "opener":   "AMBIENT",        # newz/concerns/opener.py:567
@@ -220,6 +244,7 @@ PARAMS = {
     "digest":   (1200, 0.3),      # newz/sleep/nightly.py:286
     "confront": (2500, 0.3),      # newz/sleep/nightly.py:422
     "gate":     (1200, 0.1),      # newz/gate/outbound.py:245
+    "voice":    (2000, 0.7),      # newz/conversation/composer.py, REPLY_TOKEN_BUDGET
 }
 
 SHAPES: dict[str, dict] = {
@@ -274,6 +299,23 @@ SHAPES: dict[str, dict] = {
         extra=lambda u: {},
         head=lambda u: "",
         tmpl="confront.system", system="confront.system", head_is_system=True,
+        render=lambda p, r: r.payload,
+    ),
+    # VOICE. The system turn here is ~25,000 characters and almost none of it
+    # is a prompt: it is the character core, the Perspective, the person model,
+    # the holds, the affect fold and what the being has been doing. That is the
+    # being's STATE at that moment, it cannot be rebuilt from the modules, and
+    # it must not be — so a replay reuses the recorded system turn verbatim and
+    # substitutes only the opening frame, which is the part composer.py
+    # actually authors.
+    "voice": dict(
+        detect=lambda u, s: u.rstrip().endswith(
+            "Your reply (just the message, nothing else):"),
+        split=lambda u: u,
+        extra=lambda u: {},
+        head=lambda u: "",
+        tmpl="voice.frame", system="voice.frame", head_is_system=True,
+        system_split=True,
         render=lambda p, r: r.payload,
     ),
     "gate": dict(
@@ -506,7 +548,35 @@ def _quality_gate(row: Row, text: str) -> Verdict:
                    note=label)
 
 
-QUALITY = {"delib": _quality_delib, "opener": _quality_opener, "gate": _quality_gate}
+def _quality_voice(row: Row, text: str) -> Verdict:
+    """The gate's verdict on the draft this prompt produced.
+
+    The only code in this system that judges an emission is the outbound gate,
+    and every conversation draft goes through it: a revise costs a recompose, a
+    block is silence with no explanation. For a RECORDED row the verdict is
+    already in gate_log and is matched by emission hash; for a live one it has
+    to be re-judged, which is a second call and is why --live on voice is the
+    expensive shape.
+
+    READ THIS BEFORE TUNING AGAINST IT. Gate pass rate is not prose quality and
+    optimising it rewards blandness — the safest possible reply says nothing,
+    trips no clause, and passes every time. The character core asks for the
+    opposite. This number is reported so a variant that starts getting held is
+    visible; it is not an objective, and bench_model's lexical screens are a
+    screen rather than a verdict for the same reason.
+    """
+    verdict = row.extra.get("gate_verdict")
+    if not verdict:
+        return Verdict(True, note="no gate verdict recorded")
+    if verdict == "pass":
+        return Verdict(True, note="gate: pass")
+    return Verdict(False, f"gate: {verdict} — "
+                          + ("recomposed" if verdict == "revise" else "silenced"),
+                   note=verdict)
+
+
+QUALITY = {"delib": _quality_delib, "opener": _quality_opener,
+           "gate": _quality_gate, "voice": _quality_voice}
 
 
 def judge(row: Row, text: str, quality: bool = True) -> Verdict:
@@ -525,7 +595,33 @@ def judge(row: Row, text: str, quality: bool = True) -> Verdict:
 # ─── loading ───────────────────────────────────────────────────────────────
 
 
+def gate_verdicts() -> dict[str, str]:
+    """emission_hash -> verdict, from gate_log. Read-only.
+
+    This is how a VOICE draft is linked to what the gate did with it: the
+    composer hashes the emission before judging, so the same sha256[:16] of the
+    recorded response finds the row. 43 of 47 conversation drafts passed first
+    time on the current record.
+    """
+    from newz.config import load
+    from newz.store.db import open_db
+
+    db = load(repo_root=_ROOT).main_db_path
+    if not db.exists():
+        db = _find("data/newz.db")
+    try:
+        conn = open_db(db, read_only=True)
+    except Exception:                                          # noqa: BLE001
+        return {}
+    try:
+        return {r["emission_hash"]: r["verdict"]
+                for r in conn.execute("SELECT emission_hash, verdict FROM gate_log")}
+    finally:
+        conn.close()
+
+
 def load_rows(prompts: dict, path: Path = LOG) -> list[Row]:
+    verdicts = gate_verdicts()
     rows: list[Row] = []
     for line in path.open(encoding="utf-8"):
         line = line.strip()
@@ -549,7 +645,14 @@ def load_rows(prompts: dict, path: Path = LOG) -> list[Row]:
             continue
         if not payload:
             continue
-        if spec.get("head_is_system"):
+        if spec.get("system_split"):
+            # Keep the being's own ~25k of state verbatim; only the opening
+            # frame is authored by composer.py and only it is ours to vary.
+            head, sep, rest = s.partition("\n\n## ")
+            extra["frame"], extra["identity"] = head, sep + rest
+        if spec.get("system_split"):
+            current = extra.get("frame") == prompts[spec["tmpl"]]
+        elif spec.get("head_is_system"):
             current = s == prompts[spec["tmpl"]]
         elif name == "extract":
             # The head is _TASK with {directed} already filled, so rebuild it
@@ -565,6 +668,10 @@ def load_rows(prompts: dict, path: Path = LOG) -> list[Row]:
         else:
             current = spec["head"](u) == prompts[spec["tmpl"]]
         extra["model"] = d.get("model") or "?"
+        extra["hash"] = hashlib.sha256(
+            (d.get("response") or "").strip().encode()).hexdigest()[:16]
+        if name == "voice":
+            extra["gate_verdict"] = verdicts.get(extra["hash"], "")
         rows.append(Row(shape=name, payload=payload, extra=extra,
                         response=d.get("response") or "", current=current,
                         ts=d.get("ts") or 0.0))
@@ -640,7 +747,10 @@ def run_live(rows: list[Row], prompts: dict, resolve, timeout: float,
     with httpx.Client() as client:
         for i, row in enumerate(rows, start=1):
             spec = SHAPES[row.shape]
-            system = prompts[spec["system"]]
+            if spec.get("system_split"):
+                system = prompts["voice.frame"] + row.extra["identity"]
+            else:
+                system = prompts[spec["system"]]
             user = spec["render"](prompts, row)
             max_tokens, temperature = PARAMS[row.shape]
             model, endpoint = resolve(row.shape)
