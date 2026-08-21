@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sqlite3
 import time
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -352,7 +353,13 @@ def test_the_scheduler_never_raises_into_the_ambient_loop(tmp_path, monkeypatch)
         raise RuntimeError("the store is gone")
 
     monkeypatch.setattr("newz.monitor.run.turn", explode)
-    sched = MonitorScheduler(_cfg(tmp_path), check_interval_s=0.01)
+    # `log_crash` writes `<repo_root>/logs/crash.log`, and every other test here
+    # passes the real repo so `record_all` can read the registries. This one
+    # must not: a test that writes into the being's own failure record makes
+    # eight entries a person will later read as an outage.
+    cfg = _cfg(tmp_path)
+    cfg = replace(cfg, repo_root=tmp_path)
+    sched = MonitorScheduler(cfg, check_interval_s=0.01)
 
     async def drive():
         task = asyncio.create_task(sched.run())
