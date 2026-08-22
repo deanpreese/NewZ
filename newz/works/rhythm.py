@@ -75,9 +75,17 @@ def starts_today(conn: sqlite3.Connection, *, now: float | None = None) -> int:
     against a cap of two — and **two of those three re-reads did nothing at
     all**, they were `nothing_due` turns. A ceiling on one rhythm must not be
     consumed by another, least of all by a turn that found no work.
+
+    **A turn that found nothing did not start anything.** R-25's ceiling is on
+    what is *started* — "deliberations started per day, not completed" — and a
+    `no_subject` row is the record of a turn that found no work. It is written
+    on purpose, so a rhythm with nothing to do is visible rather than looking
+    like one that never ran, but counting it spends the day's allowance on
+    having looked.
     """
     return conn.execute(
-        "SELECT COUNT(*) FROM work_attempts WHERE kind='write' AND ts > ?",
+        "SELECT COUNT(*) FROM work_attempts WHERE kind='write'"
+        " AND outcome NOT IN ('no_subject', 'nothing_due') AND ts > ?",
         ((now or time.time()) - DAY,)).fetchone()[0]
 
 

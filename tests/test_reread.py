@@ -137,11 +137,42 @@ def test_a_piece_is_not_re_read_until_it_is_old_enough(store):
 
 def test_the_reread_ceiling_counts_starts(store):
     """R-25 again, on its own cap: writing and re-reading share one attempt
-    ledger and are budgeted separately."""
-    for _ in range(2):
+    ledger and are budgeted separately.
+
+    **Amended 2026-08-22, and the assertion it replaces was the defect.** This
+    read `starts_today(store) >= 2` after two calls, of which only the first
+    began anything — the second found the piece freshly reviewed and recorded
+    `nothing_due`. So the old assertion passed on a ceiling that counted a turn
+    which started nothing, and the being sat out three consecutive re-reads for
+    it. R-25 caps "deliberations started per day, not completed"; a turn that
+    found no work started nothing."""
+    store.execute(
+        "INSERT INTO works (ts, subject_kind, subject_ref, subject_text,"
+        " chosen_because, title, body, word_count, model, completion_tokens)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?)",
+        (time.time() - 10 * DAY, "concern", 2, "And does it settle?",
+         "it keeps returning", "On settling", "It settles, slowly.", 4,
+         "qwen", 200))
+    store.commit()
+
+    for _ in range(2):                       # two due pieces, two real starts
         reread_once(store, FakeLLM("stands"))
 
-    assert starts_today(store) >= 2
+    assert starts_today(store) == 2
     assert reread_once(store, FakeLLM("stands")).skipped
     assert store.execute(
         "SELECT COUNT(*) FROM work_attempts WHERE kind='write'").fetchone()[0] == 0
+
+
+def test_a_reread_that_found_nothing_due_does_not_spend_the_day(store):
+    """The turn that produced the amendment above. Behavior: `nothing_due` is
+    recorded — so a rhythm with nothing to do is visible rather than looking
+    like one that never ran — and it does not count against the ceiling."""
+    store.execute("UPDATE works SET ts=?", (time.time() - 3600,))
+    store.commit()
+
+    assert reread_once(store, FakeLLM("stands")).skipped
+    assert store.execute(
+        "SELECT outcome FROM work_attempts ORDER BY id DESC LIMIT 1"
+    ).fetchone()[0] == "nothing_due"
+    assert starts_today(store) == 0

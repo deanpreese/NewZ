@@ -57,8 +57,20 @@ class RereadResult:
 
 
 def starts_today(conn: sqlite3.Connection, *, now: float | None = None) -> int:
+    """Re-reads STARTED in the rolling 24h — what R-25 caps.
+
+    **A turn that found nothing did not start anything.** R-25's ceiling is on
+    what is *started* — "deliberations started per day, not completed" — and
+    `no_subject` / `nothing_due` rows are the record of a turn that found no
+    work. They are written on purpose, so a rhythm with nothing to do is
+    visible rather than looking like one that never ran, but counting them
+    spends the day's allowance on having looked. Measured 2026-08-22: two
+    `nothing_due` re-reads and one failure filled a cap of two, and the re-read
+    rhythm sat out three consecutive turns for it.
+    """
     return conn.execute(
-        "SELECT COUNT(*) FROM work_attempts WHERE kind='reread' AND ts > ?",
+        "SELECT COUNT(*) FROM work_attempts WHERE kind='reread'"
+        " AND outcome NOT IN ('no_subject', 'nothing_due') AND ts > ?",
         ((now or time.time()) - DAY,)).fetchone()[0]
 
 

@@ -317,3 +317,27 @@ def test_a_write_attempt_names_its_own_kind(store):
 
     assert store.execute(
         "SELECT kind FROM work_attempts ORDER BY id DESC LIMIT 1").fetchone()[0] == "write"
+
+
+def test_a_turn_that_found_nothing_does_not_spend_the_day(store):
+    """R-25 caps what is *started* — "deliberations started per day, not
+    completed". A `no_subject` row is the record of a turn that found no work;
+    it is written so a rhythm with nothing to do is visible rather than looking
+    like one that never ran. Counting it spends the allowance on having looked.
+    Behavior: only turns that began something count."""
+    from newz.works.rhythm import starts_today
+
+    now = time.time()
+    for outcome in ("no_subject", "no_subject", "no_subject"):
+        store.execute(
+            "INSERT INTO work_attempts (ts, kind, outcome) VALUES (?,'write',?)",
+            (now - 3600.0, outcome))
+    store.commit()
+    assert starts_today(store, now=now) == 0
+
+    for outcome in ("started", "wrote", "failed"):
+        store.execute(
+            "INSERT INTO work_attempts (ts, kind, outcome) VALUES (?,'write',?)",
+            (now - 3600.0, outcome))
+    store.commit()
+    assert starts_today(store, now=now) == 3, "a failed start is still a start"
