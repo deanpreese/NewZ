@@ -120,8 +120,19 @@ class TelegramChannel:
         tg_message_id = raw_mid if isinstance(raw_mid, int) else None
         return update_id, chat_id, text, tg_message_id
 
+    # Doubling from a second, capped: long enough that a lock held for a few
+    # seconds costs one retry rather than twenty, short enough that a message
+    # is not left sitting while the operator waits for an answer.
+    BACKOFF_BASE_S = 1.0
+    BACKOFF_CAP_S = 30.0
+
+    @classmethod
+    def _backoff(cls, failures: int) -> float:
+        return min(cls.BACKOFF_CAP_S, cls.BACKOFF_BASE_S * (2 ** (failures - 1)))
+
     async def run(self, handler: Handler) -> None:
         logger.info("telegram inbound starting (operator chat %s)", self._operator_chat_id)
+        failures = 0
         try:
             while True:
                 for update in await self.get_updates():
@@ -134,12 +145,33 @@ class TelegramChannel:
                         continue
                     try:
                         durable = await handler(*normalized)
-                    except Exception:
-                        logger.exception(
-                            "handler failed for update %s; leaving unconfirmed "
-                            "for redelivery", update_id,
-                        )
+                    except Exception as e:  # noqa: BLE001
+                        failures += 1
+                        wait = self._backoff(failures)
+                        # **Redelivery without a pause is a hot loop.** Leaving
+                        # the update unconfirmed is right — it is how a message
+                        # survives a crash — but `get_updates` returns the same
+                        # pending update immediately, so a transient failure
+                        # became three attempts a second. On 2026-08-21 a write
+                        # lock held for a few seconds produced twenty identical
+                        # tracebacks and the message was lost anyway.
+                        #
+                        # The traceback is logged once. After that it is one
+                        # line, because a wall of the same stack is harder to
+                        # read than the fact that it is still happening.
+                        if failures == 1:
+                            logger.exception(
+                                "handler failed for update %s; leaving "
+                                "unconfirmed, retrying in %.0fs",
+                                update_id, wait)
+                        else:
+                            logger.error(
+                                "handler still failing for update %s "
+                                "(attempt %d): %s: %s — retrying in %.0fs",
+                                update_id, failures, type(e).__name__, e, wait)
+                        await asyncio.sleep(wait)
                         break  # do not confirm this one nor later ones in batch
+                    failures = 0
                     if durable:
                         self._last_update_id = max(self._last_update_id, update_id)
                     else:

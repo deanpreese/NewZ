@@ -63,7 +63,15 @@ def main() -> int:
     if not cfg.telegram_bot_token or not cfg.telegram_chat_id:
         print("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not configured", file=sys.stderr)
         return 1
-    conn = open_db(cfg.main_db_path)
+    # **The connection a person waits on is the most patient, not the least.**
+    # Every background writer opens with 30s — deliberation, noticing, sleep,
+    # the substrate pass — while this one, which records the operator's
+    # messages, took the 5s default. On 2026-08-21 at 19:27 something held the
+    # write lock for seconds and this was the first connection to give up: the
+    # inbound handler failed, Telegram left the update unconfirmed, and the
+    # message was lost. A conversation is the one write in this process that
+    # cannot be retried later by a scheduler.
+    conn = open_db(cfg.main_db_path, busy_timeout_ms=30_000)
     applied = apply_pending(conn, MAIN_SQL)
     if applied:
         logging.info("migrations applied: %s", applied)
