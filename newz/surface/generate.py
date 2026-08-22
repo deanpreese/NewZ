@@ -429,26 +429,47 @@ def _read(conn: sqlite3.Connection, m: Manifest) -> str:
     return "\n".join(out)
 
 
-def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
-    """Generated from an empty query until E4.1 exists.
+_COMMITMENT_KIND = {"keeps_caring": "keeps caring",
+                    "refuses_to_do": "refuses to do"}
 
-    A capability that renders as a blank page is indistinguishable from a broken
-    one, so the page says which it is.
+
+def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
+    """The commitments and, beside each, what would show it had stopped (E4.1).
+
+    **The falsifier is rendered, not just stored.** A commitments page that
+    lists only the commitments is a page of slogans, and slogans are exactly
+    what E4.1's mandatory falsifier exists to refuse — so the thing that makes
+    each one a commitment is on the page next to it.
+
+    The missing-table branch stays: a store predating 0041 is what the
+    clean-room rebuild (E3.5) restores from, and a capability that renders as a
+    blank page is indistinguishable from a broken one.
     """
     rows: list = []
     try:
-        rows = list(conn.execute("SELECT id, statement FROM commitments ORDER BY id"))
+        rows = list(conn.execute(
+            "SELECT id, kind, statement, falsifier, status FROM commitments"
+            " ORDER BY id"))
         m.record("commitments", "commitments", [r["id"] for r in rows])
     except sqlite3.OperationalError:
         return ("<h1>Commitments</h1>\n<p class=dim>The being has not made any. "
                 "Commitments — what it keeps caring about and what it refuses to "
                 "do — are not built yet; this page is generated from a table that "
                 "does not exist, and says so rather than appearing empty.</p>")
-    out = ["<h1>Commitments</h1>"]
+    out = ["<h1>Commitments</h1>",
+           "<p class=dim>What the being holds itself to, and beside each one "
+           "what would show it had stopped. Nothing here was assigned to it; "
+           "a commitment with no way to fail was refused at the door.</p>"]
     if not rows:
-        out.append("<p class=dim>None made yet.</p>")
+        out.append("<p class=dim>None yet. The being is asked once a night, "
+                   "and most nights the answer is no.</p>")
     for r in rows:
-        out.append(f"<article><h2>{_e(r['statement'])}</h2></article>")
+        kind = _COMMITMENT_KIND.get(r["kind"], r["kind"])
+        status = ("" if r["status"] == "standing"
+                  else f" <span class=tag>{_e(r['status'])}</span>")
+        out.append(f"<article><h2>{_e(r['statement'])}</h2>"
+                   f"<p class=dim><span class=tag>{_e(kind)}</span>{status}"
+                   f"<br>broken by: {_e(r['falsifier'])}</p></article>")
     return "\n".join(out)
 
 

@@ -674,6 +674,9 @@ def test_the_question_carries_its_material_not_only_itself(tmp_path):
     llm = FakeLLM([DIGEST, ("DEEP", "<confrontation></confrontation>"),
                    ("AMBIENT", "<proposal><worth_pursuing>no</worth_pursuing></proposal>")])
     NightlySleep(path, llm, "dean").run()
-    opener_call = llm.calls[-1]["user"]
+    # By function, not by position: E4.1's commitment door is asked after the
+    # night is committed, so the opener is no longer the last call.
+    opener_call = [c for c in llm.calls
+                   if c.get("function") == "ambient"][-1]["user"]
     assert "A question I keep meeting." in opener_call
     assert "dean asked how my memory works" in opener_call

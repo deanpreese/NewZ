@@ -70,6 +70,23 @@ instruments:
     unreadable_when: "the call log is gitignored and does not travel with a clone — INV-044's case, and the reason the §9.1 ingest share reads UNREADABLE rather than zero"
     canonical: true
 
+  - tool: tools/commitments.py
+    reads: [commitments, commitment_refusals]
+    measures: "what the being holds itself to, the falsifier that would show it had stopped, and what the authoring door turned away with the reason"
+    denominator: null
+    model_in_chain: true
+    model_where: "the commitment itself is composed by the being at the door; every check the door applies is structural and in code, so no model judges whether a commitment is kept"
+    method: "direct reads off the commitments tables"
+    canonical: false
+    note: >
+      A READER, not an instrument, and deliberately not canonical yet. E4.1
+      records commitments and nothing holds the being to one: revision on
+      evidence and costed abandonment are E4.2, whose Done-when needs a Phase 1
+      resolution and the earliest live claim is due 2026-12-18. The number worth
+      watching before then is the refusal count — `MAX_STANDING` is 12 and
+      nothing releases a slot, so the door saturates in about two weeks and the
+      cap refusals are what make E4.2 necessary rather than asserted.
+
   - tool: tools/claims.py
     reads: [claims, claim_costs, claim_refusals]
     measures: "claims made, their resolution condition, resolver, verdict and cost; and claims the door refused, with the reason"

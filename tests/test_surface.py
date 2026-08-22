@@ -129,14 +129,43 @@ def test_nothing_on_the_surface_reaches_the_network(store, tmp_path):
 
 
 def test_a_capability_that_does_not_exist_says_so(store, tmp_path):
-    """Behavior: commitments arrive with E4.1. The page is generated from a
-    table that does not exist and says which — an absent capability rendering
-    as a blank page is indistinguishable from a broken one."""
+    """Behavior: an absent capability rendering as a blank page is
+    indistinguishable from a broken one, so the page says which it is.
+
+    **E4.1 built the table, and this branch still matters**: E3.5 rebuilds the
+    surface from a VERIFIED BACKUP, and a backup taken before migration 0041
+    has no `commitments` table. The clean room must render a page that says so
+    rather than one that reads as "the being has committed to nothing".
+    """
+    store.execute("DROP TABLE commitments")
     out, _ = _generate(store, tmp_path)
 
     text = (out / "commitments.html").read_text()
     assert "not built yet" in text
     assert "says so rather than appearing empty" in text
+
+
+def test_a_commitment_renders_with_what_would_break_it(store, tmp_path):
+    """E4.1's falsifier is the thing that makes a commitment one, so it is on
+    the page beside it. Behavior: a commitments page listing only statements is
+    a page of slogans, which is what the mandatory falsifier exists to refuse.
+    """
+    store.execute(
+        "INSERT INTO commitments (ts, kind, statement, falsifier, provenance)"
+        " VALUES (?,?,?,?,?)",
+        (time.time(), "refuses_to_do",
+         "I will not close a concern by restating it more carefully.",
+         "a concern closed whose resolution paraphrases its own statement",
+         "perspective:14"))
+    store.commit()
+
+    out, _ = _generate(store, tmp_path)
+    text = (out / "commitments.html").read_text()
+
+    assert "restating it more carefully" in text
+    assert "broken by:" in text
+    assert "paraphrases its own statement" in text
+    assert "refuses to do" in text
 
 
 def test_a_retracted_piece_still_appears(store, tmp_path):

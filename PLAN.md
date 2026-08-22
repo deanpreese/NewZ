@@ -991,12 +991,46 @@ consecutive weeks unread"*, which has no instrument and could never have fired.
 **Intent.** Move identity from recall to commitment: what the being keeps caring
 about and what it refuses to do, authored by it and held against it.
 
-**E4.1 — `commitments` and the authoring door**
+**E4.1 — `commitments` and the authoring door** *(built 2026-08-22)*
 *Delivers:* self-authored, durable commitments with a **falsifier mandatory at
 authoring** — the closing-condition discipline applied to identity.
 *Done when:* a commitment without a falsifier is refused at the door, and the
 refusal is recorded.
 *Depends on:* E1.1 (resolutions are what falsifiers point at).
+
+*As built:* migration 0041 (`commitments`, `commitment_refusals`),
+`newz/commitments/`, `tools/commitments.py` as Rule 2's reader, the surface's
+commitments page switched off its placeholder, 10 tests, **INV-097**. The
+third door, built like the first two. Two refusals are CHECK constraints — no
+statement, no falsifier — and five are in code: neither kind, a missing field,
+a falsifier that **closes on the being's own judgment** (INV-046 one layer up
+— *"I would know"* asks the thing being tested), a falsifier naming nothing
+anyone could look for (R-35's floor), and a statement already standing, so
+identity cannot accrete by paraphrase. **The admitted case is the finer half**:
+a falsifier that queries the being's own store is allowed, because the store is
+a record and not an opinion — the line is judged versus mechanical, not self
+versus world, and both directions are tested.
+
+*Why it is asked at sleep, nightly* **(operator, 2026-08-22: "weekly is too
+long - humans do this daily")**. Sleep is the one moment the being holds both
+the day it just had and the positions it just settled. A draft asked weekly and
+was wrong for the operator's reason: identity that can only move on a schedule
+is nearer §6's *fixed personality script* than an individual. It is asked
+**after** the night is committed, so a door that raises costs the commitment
+and never the Perspective; INV-009's single writer is untouched. `MAX_PER_DAY`
+is 1, replacing a drafted `MAX_PER_WEEK = 2` that would have asked every night
+and refused the answer on five of them.
+
+*What it does not do, recorded rather than left to be found.* **Nothing here
+holds the being to a commitment.** E4.2 is what gives them stakes and its
+`Done when` needs a Phase 1 resolution; the earliest live claim is due
+**2026-12-18**. So `status` never leaves `standing` in E4.1, `MAX_STANDING = 12`
+has nothing that frees a slot, and the door will saturate in about two weeks.
+**That saturation is a refusal row and not a silent decline** — the claim door
+returns `declined` on a full cap before the model is called and writes nothing,
+which reads as *"it had nothing to commit to"* when the truth is *"it was not
+allowed to"* (`more-cycles` RT6). Those rows are what make E4.2 necessary rather
+than asserted.
 
 **E4.2 — the asymmetry**
 *Delivers:* revision on evidence is free; abandonment without cause is recorded

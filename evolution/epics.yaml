@@ -361,7 +361,7 @@ epics:
   E4.1:
     title: '`commitments` and the authoring door'
     phase: 4
-    status: open
+    status: built
     depends_on: [E1.1]
     done_when: mechanical
     done_when_sha: 1a3fd7aee3a15587

@@ -750,9 +750,55 @@ class NightlySleep:
             report.version = version
             logger.info("sleep: wrote perspective v%d (%d tok, novelty %.2f)",
                         version, report.token_count, diff.novelty_rate())
+            # E4.1, and deliberately AFTER the commit: the night is durable
+            # before the door is asked, so a door that raises costs the
+            # commitment and never the Perspective. INV-009 is untouched —
+            # this writes only to `commitments`.
+            self._maybe_commit(conn, items, version, report)
             return report
         finally:
             conn.close()
+
+    def _maybe_commit(self, conn, items: list[Item], version: int,
+                      report: SleepReport) -> None:
+        """Ask whether the day leaves anything to hold itself to (E4.1).
+
+        **Nightly** *(operator, 2026-08-22: "weekly is too long - humans do
+        this daily")*. Sleep is the one moment the being has both the day it
+        just had and the positions it just settled, and identity that can only
+        move on a schedule is nearer §6's "fixed personality script" than an
+        individual.
+
+        The material is what it now holds about itself and what it is
+        unresolved about — `who_i_am` is the section E4.1 exists to change,
+        being four items of which three are things that happened to it.
+        Positions are deliberately NOT included: a commitment sourced from
+        `what_i_hold` would be a claim wearing identity's clothes, and claims
+        already have a door.
+
+        Most nights this declines, which is the ordinary answer.
+        """
+        material = "\n".join(
+            f"- [{it.section}] {it.text}" for it in items
+            if it.section in ("who_i_am", "unresolved"))
+        if not material.strip():
+            return
+        from newz.commitments.door import propose_commitment
+        try:
+            verdict = propose_commitment(
+                conn, self._client, material=material,
+                provenance=f"perspective:{version}",
+                perspective_version=version)
+        except Exception:  # noqa: BLE001 — the night is already durable
+            logger.exception("the commitment door failed (sleep is done)")
+            return
+        if verdict.authored:
+            report.verdicts["commitment_authored"] = (
+                report.verdicts.get("commitment_authored", 0) + 1)
+            logger.info("I committed to something tonight: %d",
+                        verdict.commitment_id)
+        elif verdict.refused:
+            logger.info("commitment refused at the door: %s", verdict.refused)
 
     def _generated_sections(self, conn: sqlite3.Connection, diff) -> dict[str, list[str]]:
         pursuing = [
