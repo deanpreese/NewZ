@@ -10,6 +10,7 @@ and a written subject must not be offered twice.
 from __future__ import annotations
 
 import json
+import time
 
 import pytest
 
@@ -280,3 +281,39 @@ def test_a_written_concern_leaves_the_deliberation_pool(store):
     close_subject(store, piece, write_work(store, piece))
 
     assert 1 not in [c.id for c in load_active(store)]
+
+
+def test_a_reread_does_not_spend_the_writing_days_allowance(store):
+    """2026-08-22: the being wrote nothing for 25 hours. `work_attempts` grew a
+    `kind` column when the re-read rhythm arrived, `reread.starts_today`
+    filtered on it and this one did not — so one write and two re-reads filled
+    a cap of two, and two of those re-reads were `nothing_due` turns that did
+    no work at all. Behavior: the writing ceiling counts writing."""
+    from newz.works.rhythm import starts_today
+
+    now = time.time()
+    for kind in ("reread", "reread", "reread"):
+        store.execute(
+            "INSERT INTO work_attempts (ts, kind, outcome) VALUES (?,?,'nothing_due')",
+            (now - 3600.0, kind))
+    store.commit()
+
+    assert starts_today(store, now=now) == 0, "re-reads are not writing attempts"
+
+    store.execute(
+        "INSERT INTO work_attempts (ts, kind, outcome) VALUES (?,'write','wrote')",
+        (now - 3600.0,))
+    store.commit()
+    assert starts_today(store, now=now) == 1
+
+
+def test_a_write_attempt_names_its_own_kind(store):
+    """It relied on the column's DEFAULT to say what it was, which is how the
+    two rhythms came to share a counter without either saying so. Behavior: the
+    row states its kind."""
+    from newz.works.rhythm import _record
+
+    _record(store, "no_subject", note="none")
+
+    assert store.execute(
+        "SELECT kind FROM work_attempts ORDER BY id DESC LIMIT 1").fetchone()[0] == "write"

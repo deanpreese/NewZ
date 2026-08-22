@@ -65,17 +65,27 @@ class RhythmResult:
 
 
 def starts_today(conn: sqlite3.Connection, *, now: float | None = None) -> int:
-    """Attempts in the rolling 24h — what R-25 caps."""
+    """Writing attempts in the rolling 24h — what R-25 caps.
+
+    **It counted every kind, and re-reads share the table.** `work_attempts`
+    grew a `kind` column when the re-read rhythm arrived; `reread.starts_today`
+    filters on it and this one did not, so a re-read turn spent the writing
+    day's allowance. Two of them are enough: on 2026-08-22 the being wrote
+    nothing for 25 hours because one write and two re-reads sat in the window
+    against a cap of two — and **two of those three re-reads did nothing at
+    all**, they were `nothing_due` turns. A ceiling on one rhythm must not be
+    consumed by another, least of all by a turn that found no work.
+    """
     return conn.execute(
-        "SELECT COUNT(*) FROM work_attempts WHERE ts > ?",
+        "SELECT COUNT(*) FROM work_attempts WHERE kind='write' AND ts > ?",
         ((now or time.time()) - DAY,)).fetchone()[0]
 
 
 def _record(conn: sqlite3.Connection, outcome: str, *, subject=None,
             work_id: int | None = None, note: str = "") -> int:
     cur = conn.execute(
-        "INSERT INTO work_attempts (ts, outcome, subject_kind, subject_ref,"
-        " work_id, note) VALUES (?,?,?,?,?,?)",
+        "INSERT INTO work_attempts (ts, kind, outcome, subject_kind, subject_ref,"
+        " work_id, note) VALUES (?,'write',?,?,?,?,?)",
         (time.time(), outcome,
          subject.kind if subject else None,
          subject.ref if subject else None,
