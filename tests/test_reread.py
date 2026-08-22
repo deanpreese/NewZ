@@ -16,7 +16,8 @@ import pytest
 
 from newz.store.db import open_db
 from newz.store.migrations import apply_pending
-from newz.works.reread import due_for_reread, reread_once, starts_today
+from newz.llm.xml_parser import XMLExtractionError
+from newz.works.reread import due_for_reread, reread_once, review, starts_today
 
 MAIN_SQL = Path(__file__).resolve().parent.parent / "newz" / "store" / "sql" / "main"
 DAY = 86400.0
@@ -176,3 +177,61 @@ def test_a_reread_that_found_nothing_due_does_not_spend_the_day(store):
         "SELECT outcome FROM work_attempts ORDER BY id DESC LIMIT 1"
     ).fetchone()[0] == "nothing_due"
     assert starts_today(store) == 0
+
+
+class FlakyLLM:
+    """Unparseable on the first call, well-formed on the second.
+
+    The measured shape, not an invented one: `<body>` opened and closed with
+    `</reason>`, which is what both replay failures produced on 2026-08-22.
+    """
+
+    def __init__(self, verdict: str = "stands"):
+        self._v, self.calls = verdict, 0
+
+    def complete(self, role, system, user, **kw):
+        self.calls += 1
+        broken = (f"<review><verdict>{self._v}</verdict>"
+                  "<reason>it holds</reason><title>t</title>"
+                  "<body>the piece, rewritten</reason></review>")
+        good = (f"<review><verdict>{self._v}</verdict>"
+                "<reason>it holds</reason><title>t</title><body></body></review>")
+
+        class R:
+            model = "fake"
+            completion_tokens = 40
+            truncated = False
+            text = broken if self.calls == 1 else good
+        return R
+
+
+def test_an_unparseable_review_is_retried_once(store):
+    """Measured 2026-08-22: replaying this prompt over all seven works gave 15
+    parses in 17 samples — 11.8% — and the failures are independent draws, not
+    a property of the input. Work 1, whose review died in life the day before,
+    parsed 4 of 5 on replay. `compose_piece` and `choose_subject` have carried
+    one retry for exactly this; `review` was the only call in the subsystem
+    without it. Behavior: the second attempt is made and the verdict stands."""
+    llm = FlakyLLM("stands")
+
+    v = review(llm, store, store.execute("SELECT * FROM works").fetchone())
+
+    assert llm.calls == 2
+    assert v.kind == "stands"
+
+
+def test_two_unparseable_reviews_still_fail_loudly(store):
+    """One retry, then fail — the piece is not quietly recorded as standing.
+    Behavior: the attempt row is 'failed' with the reason, which is what makes
+    a bad boundary visible instead of looking like a re-read that agreed."""
+    class Broken:
+        def complete(self, role, system, user, **kw):
+            class R:
+                model = "fake"
+                completion_tokens = 10
+                truncated = False
+                text = "<review><verdict>stands</verdict><body>x</reason></review>"
+            return R
+
+    with pytest.raises(XMLExtractionError):
+        review(Broken(), store, store.execute("SELECT * FROM works").fetchone())

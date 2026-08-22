@@ -45,10 +45,17 @@ DAY = 86400.0
 # has 123 concerns and a Perspective to write about, and the constraint worth
 # respecting is not how much it can produce but whether anything reads what it
 # produced. Raise it when there is a reader, not before.
-MAX_STARTS_PER_DAY = 2
+# A piece every six hours, which is four a day *(operator, 2026-08-22)*.
+# **The interval and the ceiling now say the same thing.** They were 4h and 2,
+# so the cadence promised a turn every four hours while the cap allowed two —
+# the ceiling was the real rhythm and the interval was decoration. Six and four
+# agree, and they agree with the surface: PublishScheduler regenerates every
+# six hours, so a piece is written and visible inside one cycle rather than
+# waiting on the next.
+MAX_STARTS_PER_DAY = 4
 # Cadence. Checked often enough that a restart does not lose the day, rarely
 # enough that the ceiling rather than the clock is what binds.
-INTERVAL_S = 4 * 3600.0
+INTERVAL_S = 6 * 3600.0
 BOOT_DELAY_S = 180.0
 
 

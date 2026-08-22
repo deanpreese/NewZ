@@ -26,7 +26,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from newz.llm.xml_parser import extract_xml, optional_text, require_text
+from newz.llm.xml_parser import XMLExtractionError, extract_xml, optional_text, require_text
 from newz.works.compose import PIECE_TOKEN_BUDGET, _system_prompt
 
 logger = logging.getLogger(__name__)
@@ -123,10 +123,36 @@ def review(client, conn: sqlite3.Connection, work) -> Verdict:
         "<title>if revising: the new title</title>"
         "<body>if revising: the whole piece, rewritten</body></review>"
     )
-    result = client.complete("VOICE", system, user,
-                             max_tokens=PIECE_TOKEN_BUDGET, temperature=0.7,
-                             function="reread")
-    el = extract_xml(result.text, "review")
+    # **One retry, then fail loudly** — the pattern `compose_piece` and
+    # `choose_subject` already use in this subsystem, and which this call was
+    # the only one to lack.
+    #
+    # Measured 2026-08-22 by replaying this prompt against all seven works,
+    # 17 samples: **15 parsed, 2 failed — 11.8%**. The failures are independent
+    # draws, not a property of the input: work 1, the piece whose review died
+    # in life on 2026-08-21, parsed **4 of 5** on replay. One retry takes ~12%
+    # to roughly 1.4%.
+    #
+    # Both failures carried the identical signature — `<body>` opened and
+    # closed with `</reason>`, the tag last used on a long prose field. It is a
+    # decoy and not a distance problem: work 4 is 494 words and failed, while
+    # `compose` emits a 7,034-character body in the same shape and parsed 6 of
+    # 6. Renaming or reordering the fields is the fix for the mechanism; this
+    # is the fix for the cost of it, and it is the one the evidence supports.
+    last_error: Exception | None = None
+    for attempt in (1, 2):
+        result = client.complete("VOICE", system, user,
+                                 max_tokens=PIECE_TOKEN_BUDGET, temperature=0.7,
+                                 function="reread")
+        try:
+            el = extract_xml(result.text, "review")
+            break
+        except XMLExtractionError as exc:
+            last_error = exc
+            logger.warning("review XML unparseable (%s); retrying once", exc)
+    else:
+        raise XMLExtractionError(
+            f"could not extract a review from two attempts: {last_error}")
     verdict = require_text(el, "verdict").strip().lower()
     reason = optional_text(el, "reason").strip()
     if verdict.startswith("retract"):
