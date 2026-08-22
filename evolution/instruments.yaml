@@ -155,6 +155,14 @@ not_instruments:
   probes:            # call a model; produce a verdict about the system, not a measurement
     - tools/bench_model.py
     - tools/bench_model_plain.py   # bench_model's cases, thinking params never sent
+    # The pre-expansion bench, kept byte-for-byte from the commit that doubled
+    # the case set (726fd67, 54 -> 108 cases, 12 -> 24 context probes), so an
+    # old leaderboard can be re-run rather than argued about. Registered rather
+    # than exempted: W8's rule is that nothing in tools/ is unclassified, and a
+    # frozen copy of a probe is still a probe. It will read as stale — its own
+    # usage lines still say `python tools/bench_model.py` — and that is the
+    # cost of keeping a comparison baseline honest.
+    - tools/bench_0.py
     - tools/replay_prompts.py      # the repo's prompts on the calls it really made
     - tools/claim_door_probe.py
     - tools/conversation_probe.py
