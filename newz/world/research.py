@@ -82,11 +82,55 @@ class ResearchOutcome:
         return "SOURCES CONSULTED:\n" + "\n".join(r.render() for r in self.results)
 
 
+# S2 §9.1's floor, and P4 E5.2 (2026-08-22).
+#
+# The diet takes the LOOSER of §9.1's two ceilings, and the share ceiling —
+# 50% of all cognition — is the looser one whenever deliberation and sleep are
+# under half of cognition, which is always. So reading is permitted against a
+# denominator that its own effects inflate: conversation, the gate and ingest
+# itself all raise the share ceiling. Measured 2026-08-22: ingest 2,478,192
+# against a ratio ceiling of 1,748,364, legal only on a share ceiling of
+# 2,859,679 — about a day of headroom, and the ratio breached in substance.
+#
+# The floor closes the hatch. Below this share of windowed cognition spent
+# deliberating, the share ceiling is not available and the ratio binds alone.
+# Reading is earned by thinking, and the looser ceiling must not be a way to
+# read more while thinking less.
+#
+# **Why 0.20.** Measured 2026-08-18..22, deliberation ran 28.3–34.7% on every
+# day the being was up throughout; the single lower reading, 10.4%, is a day of
+# four commits and repeated restarts and is confounded by uptime rather than
+# explained by load. The floor sits below observed normal operation
+# deliberately — one that binds routinely is a ceiling wearing the wrong name.
+#
+# **Why it lives here and not in `newz/telemetry.py`.** That file is inside the
+# hard core because it computes canonical numbers — the ingest ceiling, the
+# share ceiling, the token split. This is not a number. `ingest_ceiling()`,
+# `share_ceiling_tokens` and `binding_ceiling()` report exactly what they
+# reported before and no instrument's series moves; what changed is what the
+# being may DO with the ceiling. That is a mechanism, and hard_core.yaml draws
+# the line itself: measurement is frozen wherever it lives, mechanisms are not
+# — `newz/world/diet.py` sits outside for the same reason.
+#
+# **What PLAN's E5.2 says and this does not do.** Its text is "deliberation
+# cannot be squeezed below its floor by conversation or gate load", written
+# against a measurement (#33, deliberation 9%, conversation and gate 57%) that
+# does not reproduce: over five days the two do not move against each other,
+# and the heaviest inbound day had the most deliberation cycles of any. This
+# raises deliberation by nothing. It stops reading from outrunning it, which is
+# the half of §9.1 that was never built and the failure PLAN predicted when it
+# pulled this epic forward with E1.0.
+DELIBERATION_FLOOR = 0.20
+
+
 def budget_permits_ingest(log_path, window_hours: float = 168.0) -> tuple[bool, str]:
     """S2 §9.1, enforced rather than described.
 
     Breach pauses ingest, never deliberation — the being keeps thinking, it
-    just stops reading until thinking has earned more.
+    just stops reading until thinking has earned more. E5.2 adds the floor:
+    while deliberation is under `DELIBERATION_FLOOR` the share ceiling is
+    withdrawn and the ratio binds alone, so the looser ceiling cannot be
+    earned by cognition that is not thinking.
     """
     b = read_budget(log_path, window_hours=window_hours)
     if b.ingest_ceiling() <= 0:
@@ -95,11 +139,23 @@ def budget_permits_ingest(log_path, window_hours: float = 168.0) -> tuple[bool, 
         # however large the window is.
         return False, ("no deliberation or consolidation in the window: the "
                        "invariant permits no ingest at all")
-    if not b.invariant_holds():
-        return False, (f"ingest {b.ingest_tokens:,} exceeds the {b.binding_ceiling()} "
-                       f"ceiling {b.ingest_ceiling():,} — ingest paused")
-    return True, (f"headroom {b.ingest_headroom():,} tokens "
-                  f"({b.binding_ceiling()} ceiling)")
+
+    ceiling, binding = b.ingest_ceiling(), b.binding_ceiling()
+    deliberating = b.share("deliberation")
+    floored = deliberating < DELIBERATION_FLOOR and binding == "share"
+    if floored:
+        # The ratio ceiling, alone. Never below it: the floor withdraws the
+        # looser ceiling and does not invent a tighter one.
+        ceiling, binding = b.earning_tokens, "ratio (deliberation floor)"
+    note = (f"; deliberation {deliberating:.1%} is below the "
+            f"{DELIBERATION_FLOOR:.0%} floor, so the share ceiling is "
+            f"withdrawn" if floored else "")
+
+    if b.ingest_tokens > ceiling:
+        return False, (f"ingest {b.ingest_tokens:,} exceeds the {binding} "
+                       f"ceiling {ceiling:,} — ingest paused{note}")
+    return True, (f"headroom {max(0, ceiling - b.ingest_tokens):,} tokens "
+                  f"({binding} ceiling){note}")
 
 
 def _already_read(conn, concern_id) -> set[str]:

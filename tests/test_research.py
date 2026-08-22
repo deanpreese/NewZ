@@ -66,6 +66,60 @@ def test_a_breach_pauses_ingest_not_deliberation(tmp_path):
     assert out.paused and not out.results       # no fetch was attempted
 
 
+# ── E5.2: the deliberation floor ─────────────────────────────────────────
+
+def test_the_share_ceiling_is_withdrawn_below_the_deliberation_floor(tmp_path):
+    """E5.2. The share ceiling is 50% of ALL cognition, so conversation, the
+    gate and ingest itself inflate the denominator that permits reading.
+    Behavior: with deliberation under the floor, that ceiling is not available
+    and the ratio binds alone — reading the share ceiling would have allowed.
+    """
+    # deliberation 1,000 of 11,500 = 8.7%, under the 20% floor.
+    # share ceiling 5,750; ratio ceiling (deliberation + sleep) 1,500.
+    log = _log(tmp_path, [_call("conversation", 8_000), _call("deliberation", 1_000),
+                          _call("sleep", 500), _call("ingest", 2_000)])
+    ok, why = budget_permits_ingest(log)
+
+    assert not ok, why                       # 2,000 > 1,500, the ratio ceiling
+    assert "ingest paused" in why
+    assert "deliberation floor" in why       # the breach names the floor
+    assert "8.7% is below the 20% floor" in why
+
+    out = research(FakeLLM([]), "anything", log_path=log,
+                   adapters=[StubAdapter([RESULT])], form_queries=False)
+    assert out.paused and not out.results
+
+
+def test_above_the_floor_the_share_ceiling_still_applies(tmp_path):
+    """The other direction, and it must be the other direction: the floor
+    withdraws the looser ceiling, it does not replace it. Behavior: with
+    deliberation above the floor the being may still read past the ratio
+    ceiling, which is the 2026-08-16 sizing this epic must not undo.
+    """
+    # deliberation 3,000 of 9,100 = 33%, above the floor.
+    # ratio ceiling 3,500; share ceiling 4,550; ingest 3,600 sits between them.
+    log = _log(tmp_path, [_call("conversation", 2_000), _call("deliberation", 3_000),
+                          _call("sleep", 500), _call("ingest", 3_600)])
+    ok, why = budget_permits_ingest(log)
+
+    assert ok, why                           # permitted only by the share ceiling
+    assert "share ceiling" in why
+    assert "floor" not in why                # and the floor says nothing
+
+
+def test_the_floor_never_tightens_below_the_ratio_ceiling(tmp_path):
+    """The floor withdraws a ceiling; it does not invent a stricter one. With
+    deliberation under the floor, reading within the ratio is still permitted.
+    """
+    # deliberation 1,000 of 10,000 = 10%, under the floor. Ratio ceiling 1,500.
+    log = _log(tmp_path, [_call("conversation", 7_100), _call("deliberation", 1_000),
+                          _call("sleep", 500), _call("ingest", 1_400)])
+    ok, why = budget_permits_ingest(log)
+
+    assert ok, why                           # 1,400 <= 1,500
+    assert "ratio (deliberation floor)" in why
+
+
 # ── the cascade ──────────────────────────────────────────────────────────
 
 def test_research_extracts_claims_from_results(tmp_path):
