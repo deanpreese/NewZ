@@ -49,7 +49,19 @@ def is_open(reach: str) -> bool:
 
 
 class _Handler(http.server.SimpleHTTPRequestHandler):
-    """Static files, no directory listing, no index anywhere."""
+    """Static files, no directory listing, no index anywhere.
+
+    **The surface is markdown** *(operator, 2026-08-22)*, so `.md` is typed
+    explicitly rather than left to `mimetypes`, which resolves it to
+    `application/octet-stream` on some systems — and an octet-stream is a
+    download prompt, not a page. `text/markdown` is the true type and is what
+    a markdown reader keys off; a plain browser may still offer to save the
+    file rather than render it, which is the honest consequence of publishing
+    documents instead of a website.
+    """
+
+    extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map,
+                      ".md": "text/markdown; charset=utf-8"}
 
     def list_directory(self, path):  # noqa: D102 — no listing, ever
         self.send_error(404, "no index")

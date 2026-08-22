@@ -76,10 +76,10 @@ def test_the_surface_regenerates_into_an_empty_directory(store, tmp_path):
     # earlier version pinned the exact file set and broke the hour E3.4 added
     # robots.txt and the per-piece pages. A surface that is expected to grow
     # should not be asserted as a snapshot.
-    required = {"index.html", "questions.html", "errors.html",
-                "commitments.html", "manifest.json"}
+    required = {"index.md", "questions.md", "errors.md",
+                "commitments.md", "manifest.json"}
     assert required <= {p.name for p in out.iterdir()}
-    assert "On rolling over" in (out / "index.html").read_text()
+    assert "On rolling over" in (out / "index.md").read_text()
 
 
 def test_every_page_traces_to_store_rows(store, tmp_path):
@@ -101,19 +101,28 @@ def test_regenerating_produces_the_same_bytes(store, tmp_path):
     generate(store, a, now=1_000_000.0)
     generate(store, b, now=2_000_000.0)
 
-    for name in ("index.html", "questions.html", "errors.html", "manifest.json"):
+    for name in ("index.md", "questions.md", "errors.md", "manifest.json"):
         assert (a / name).read_bytes() == (b / name).read_bytes(), name
 
 
 def test_there_are_no_hand_authored_pages_anywhere(store, tmp_path):
-    """The epic's own words. Behavior: the repository contains no HTML the
-    generator did not produce — a template file checked in beside the code is a
-    page whose provenance is a person, and the manifest could not trace it."""
-    strays = [p for p in REPO.rglob("*.html")
-              if ".git" not in p.parts and "published" not in p.parts
-              and ".claude" not in p.parts]
+    """The epic's own words. Behavior: no page or fragment of one is a file on
+    disk — every byte of the surface comes from code reading a row, so the
+    manifest can trace all of it.
 
-    assert strays == [], f"hand-authored HTML: {strays}"
+    **This test could not stay an extension check.** It globbed the repo for
+    `*.html`, which worked while the surface was HTML and the repo had none.
+    The surface is markdown now (operator, 2026-08-22) and the repo is full of
+    legitimate markdown — PLAN, INVARIANTS, every proposal — so the same glob
+    renamed would assert the plan does not exist. What the epic actually
+    forbids is a TEMPLATE: a page whose provenance is a person rather than a
+    query, sitting beside the generator, which is what this looks for now.
+    """
+    templates = [p for p in (REPO / "newz" / "surface").rglob("*")
+                 if p.is_file() and p.suffix in {".md", ".html", ".jinja",
+                                                 ".j2", ".mustache", ".tmpl"}]
+
+    assert templates == [], f"hand-authored page content: {templates}"
 
 
 def test_nothing_on_the_surface_reaches_the_network(store, tmp_path):
@@ -122,7 +131,7 @@ def test_nothing_on_the_surface_reaches_the_network(store, tmp_path):
     them a record of every reader."""
     out, _ = _generate(store, tmp_path)
 
-    for page in out.glob("*.html"):
+    for page in out.glob("*.md"):
         text = page.read_text()
         assert not re.search(r'(src|href)\s*=\s*["\']https?://', text), page.name
         assert "<script" not in text.lower(), page.name
@@ -140,7 +149,7 @@ def test_a_capability_that_does_not_exist_says_so(store, tmp_path):
     store.execute("DROP TABLE commitments")
     out, _ = _generate(store, tmp_path)
 
-    text = (out / "commitments.html").read_text()
+    text = (out / "commitments.md").read_text()
     assert "not built yet" in text
     assert "says so rather than appearing empty" in text
 
@@ -160,7 +169,7 @@ def test_a_commitment_renders_with_what_would_break_it(store, tmp_path):
     store.commit()
 
     out, _ = _generate(store, tmp_path)
-    text = (out / "commitments.html").read_text()
+    text = (out / "commitments.md").read_text()
 
     assert "restating it more carefully" in text
     assert "broken by:" in text
@@ -180,7 +189,7 @@ def test_a_retracted_piece_still_appears(store, tmp_path):
     store.commit()
 
     out, manifest = _generate(store, tmp_path)
-    text = (out / "index.html").read_text()
+    text = (out / "index.md").read_text()
 
     assert "On rolling over" in text
     assert "retracted" in text
@@ -199,7 +208,7 @@ def test_the_error_record_shows_what_being_wrong_cost(store, tmp_path):
     store.commit()
 
     out, manifest = _generate(store, tmp_path)
-    text = (out / "errors.html").read_text()
+    text = (out / "errors.md").read_text()
 
     assert "The March release prints below 40." in text
     assert "0.80" in text and "0.30" in text and "released" in text
@@ -233,10 +242,13 @@ def test_every_generated_page_discloses_twice(store, tmp_path):
     a person does. A page disclosing only in metadata discloses to crawlers."""
     out, _ = _generate(store, tmp_path)
 
-    for page in out.glob("*.html"):
+    for page in out.glob("*.md"):
         text = page.read_text()
-        assert '<meta name="disclosure"' in text, page.name
-        assert "<footer>" in text and "digital being" in text, page.name
+        # Front matter is where the old `<meta name="disclosure">` went: the
+        # place a machine reads without parsing prose.
+        assert "\ndisclosure: " in text, page.name
+        assert text.rstrip().endswith("*"), page.name          # the closing line
+        assert "digital being" in text.rsplit("\n---\n", 1)[1], page.name
 
 
 def test_a_disclosure_that_denies_everything_it_must_establish_is_refused(monkeypatch):
@@ -320,23 +332,25 @@ def test_disclosure_survives_regeneration_byte_for_byte(store, tmp_path):
     generate(store, a, now=1.0)
     generate(store, b, now=2.0)
 
-    assert (a / "index.html").read_bytes() == (b / "index.html").read_bytes()
+    assert (a / "index.md").read_bytes() == (b / "index.md").read_bytes()
 
 
 # ── the read, rendered (E3.6) ───────────────────────────────────────────
 
 def _body(page: Path) -> str:
-    """The rendered content, without the stylesheet.
+    """The rendered content, without the front matter, the nav or the footer.
 
-    Asserting against a whole HTML document catches the CSS: an earlier version
-    of the no-aggregate test matched a word in the stylesheet, and the
-    ungraded-metric test matched `max-width: 42rem` while looking for the
-    number 42.
+    Asserting against the whole document catches the furniture. While the
+    surface was HTML this stripped the stylesheet — an earlier no-aggregate
+    test matched a word in the CSS, and the ungraded-metric test matched
+    `max-width: 42rem` while looking for the number 42. Markdown has no
+    stylesheet, but the disclosure and the nav are still content that no
+    assertion about the READING should see.
     """
     text = page.read_text()
-    # After </nav>, not after <nav>: the nav marks the current page with
-    # <strong>, which counts as content if the split is one tag too early.
-    return text.split("</nav>", 1)[1].split("<footer>", 1)[0]
+    after_front = text.split("\n---\n\n", 1)[1]     # past the front matter
+    _nav, _, rest = after_front.partition("\n\n")   # past the nav line
+    return rest.rsplit("\n---\n\n", 1)[0]          # before the disclosure
 
 
 def _reading(conn, metric, value, *, ts, status="ok", note="", window=168.0, dv=1):
@@ -354,9 +368,9 @@ def test_the_read_regenerates_from_empty_with_the_rest(store, tmp_path):
 
     out, manifest = _generate(store, tmp_path)
 
-    assert (out / "read.html").exists()
+    assert (out / "read.md").exists()
     assert manifest["pages"]["read"]["metric_readings"]
-    assert "nights slept" in (out / "read.html").read_text()
+    assert "nights slept" in (out / "read.md").read_text()
 
 
 def test_the_read_shows_unreadable_and_incomplete_where_they_apply(store, tmp_path):
@@ -370,7 +384,7 @@ def test_the_read_shows_unreadable_and_incomplete_where_they_apply(store, tmp_pa
              note="the input begins 96h into a 168h window")
 
     out, _ = _generate(store, tmp_path)
-    text = (out / "read.html").read_text()
+    text = (out / "read.md").read_text()
 
     assert "UNREADABLE" in text and "not in the store by design" in text
     assert "INCOMPLETE" in text and "96h into a 168h window" in text
@@ -390,12 +404,13 @@ def test_the_read_computes_no_aggregate_score(store, tmp_path):
         _reading(store, name, v, ts=now)
 
     out, _ = _generate(store, tmp_path)
-    text = _body(out / "read.html").lower()
+    text = _body(out / "read.md").lower()
 
     for word in ("score", "overall", "health:", "total:", "average",
                  "out of", "% healthy", "summary:"):
         assert word not in text, f"the read has grown an aggregate: {word!r}"
-    assert text.count("<strong>") == 3, "one line per reading, and no more"
+    readings = [ln for ln in text.splitlines() if ln.startswith("- **")]
+    assert len(readings) == 3, "one line per reading, and no more"
 
 
 def test_an_ungraded_metric_is_not_shown_at_all(store, tmp_path):
@@ -406,7 +421,7 @@ def test_an_ungraded_metric_is_not_shown_at_all(store, tmp_path):
 
     out, _ = _generate(store, tmp_path)
 
-    assert "42" not in _body(out / "read.html")
+    assert "42" not in _body(out / "read.md")
 
 
 def test_the_read_shows_the_delta_only_within_one_definition(store, tmp_path):
@@ -418,7 +433,7 @@ def test_the_read_shows_the_delta_only_within_one_definition(store, tmp_path):
     _reading(store, "nights_slept", 7.0, ts=now, dv=2)
 
     out, _ = _generate(store, tmp_path)
-    text = _body(out / "read.html")
+    text = _body(out / "read.md")
 
     assert "no baseline yet" in text
     assert "+2" not in text
@@ -457,7 +472,7 @@ def test_the_surface_regenerates_without_being_asked(tmp_path):
 
     pages = publish(db, out, now=1_787_000_000.0)
 
-    assert pages >= 5 and (out / "read.html").exists()
+    assert pages >= 5 and (out / "read.md").exists()
     assert PublishScheduler(db, out)._interval == 6 * 3600.0
 
 
@@ -477,10 +492,10 @@ def test_regenerating_an_unchanged_store_rewrites_the_same_bytes(tmp_path):
     out = tmp_path / "published"
 
     publish(db, out, now=1_787_000_000.0)
-    before = {p.name: p.read_bytes() for p in out.glob("*.html")}
+    before = {p.name: p.read_bytes() for p in out.glob("*.md")}
     publish(db, out, now=1_787_999_999.0)
 
-    assert {p.name: p.read_bytes() for p in out.glob("*.html")} == before
+    assert {p.name: p.read_bytes() for p in out.glob("*.md")} == before
 
 
 def test_a_page_removed_from_the_store_does_not_survive_a_regeneration(tmp_path):
@@ -526,7 +541,7 @@ def test_the_questions_page_carries_what_it_could_not_answer(tmp_path):
     conn.commit()
     out = tmp_path / "published"
     generate(conn, out, now=1_787_000_000.0)
-    page = (out / "questions.html").read_text()
+    page = (out / "questions.md").read_text()
     conn.close()
 
     assert "Does open interest indicate distress?" in page
@@ -551,7 +566,7 @@ def test_a_gap_recorded_before_the_cause_existed_is_not_a_category(tmp_path):
     conn.commit()
     out = tmp_path / "published"
     generate(conn, out, now=1_787_000_000.0)
-    page = (out / "questions.html").read_text()
+    page = (out / "questions.md").read_text()
     conn.close()
 
     assert "recorded before the cause was" in page

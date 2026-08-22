@@ -141,8 +141,8 @@ def test_the_surface_asks_not_to_be_indexed(tmp_path):
     conn.close()
 
     assert (out / "robots.txt").read_text() == "User-agent: *\nDisallow: /\n"
-    for page in out.glob("*.html"):
-        assert 'content="noindex, nofollow"' in page.read_text(), page.name
+    for page in out.glob("*.md"):
+        assert "\nrobots: noindex, nofollow\n" in page.read_text(), page.name
 
 
 def test_a_piece_keeps_its_address_when_it_is_revised(tmp_path):
@@ -165,15 +165,15 @@ def test_a_piece_keeps_its_address_when_it_is_revised(tmp_path):
     conn.commit()
     out = tmp_path / "pub"
     generate(conn, out, now=1.0)
-    assert (out / "work" / "1.html").exists()
+    assert (out / "work" / "1.md").exists()
 
     conn.execute("UPDATE works SET title='Revised title', body='new' WHERE id=1")
     conn.commit()
     generate(conn, out, now=1.0)
     conn.close()
 
-    assert (out / "work" / "1.html").exists()
-    assert "Revised title" in (out / "work" / "1.html").read_text()
+    assert (out / "work" / "1.md").exists()
+    assert "Revised title" in (out / "work" / "1.md").read_text()
 
 
 # ── attested against a pin, not read from a diff (R-37b) ────────────────

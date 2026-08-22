@@ -50,7 +50,7 @@ def main() -> int:
                     shutil.rmtree(p) if p.is_dir() else p.unlink()
         m = generate(conn, out, now=time.time())
         total = sum(len(ids) for t in m.pages.values() for ids in t.values())
-        print(f"wrote {len(list(out.glob('*.html')))} pages to {out}")
+        print(f"wrote {len(list(out.glob('*.md')))} pages to {out}")
         print(f"traced to {total} store row(s) across "
               f"{len({t for p in m.pages.values() for t in p})} table(s)")
         return 0

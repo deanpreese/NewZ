@@ -42,7 +42,7 @@ def publish(db_path: Path, out_dir: Path, *, now: float | None = None) -> int:
             if p.name != ".gitkeep":
                 shutil.rmtree(p) if p.is_dir() else p.unlink()
         generate(conn, out_dir, now=now or time.time())
-        return len(list(out_dir.glob("*.html")))
+        return len(list(out_dir.glob("*.md")))
     finally:
         conn.close()
 

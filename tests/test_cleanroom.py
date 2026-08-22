@@ -103,12 +103,12 @@ def test_a_generator_that_is_not_deterministic_is_caught(backups):
     which."""
     def unstable(conn, out_dir, *, now):
         generate(conn, out_dir, now=now)
-        (out_dir / "index.html").write_text(f"<p>generated at {now}</p>")
+        (out_dir / "index.md").write_text(f"<p>generated at {now}</p>")
 
     r = C.rebuild(backups, generate_fn=unstable)
 
     assert not r.ok
-    assert "index.html" in r.differing
+    assert "index.md" in r.differing
 
 
 def test_a_generator_that_reads_the_working_directory_is_caught(backups):
@@ -116,11 +116,11 @@ def test_a_generator_that_reads_the_working_directory_is_caught(backups):
     up from the tree the generator happens to sit in shows as a difference."""
     def nosy(conn, out_dir, *, now):
         generate(conn, out_dir, now=now)
-        (out_dir / "index.html").write_text(f"<p>{Path.cwd().name}</p>")
+        (out_dir / "index.md").write_text(f"<p>{Path.cwd().name}</p>")
 
     r = C.rebuild(backups, generate_fn=nosy)
 
-    assert not r.ok and "index.html" in r.differing
+    assert not r.ok and "index.md" in r.differing
 
 
 def test_an_absolute_path_in_the_output_is_caught(backups):
@@ -128,7 +128,7 @@ def test_an_absolute_path_in_the_output_is_caught(backups):
     rather than from something, and would not survive the move it claims to."""
     def leaky(conn, out_dir, *, now):
         generate(conn, out_dir, now=now)
-        (out_dir / "index.html").write_text('<p>built at /Users/dean/x</p>')
+        (out_dir / "index.md").write_text('<p>built at /Users/dean/x</p>')
 
     r = C.rebuild(backups, generate_fn=leaky)
 

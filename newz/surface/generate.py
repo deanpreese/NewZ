@@ -16,16 +16,21 @@ is generated from an empty query, and says the being has not made any yet.
 An absent capability that renders as a blank page is indistinguishable from a
 broken one.
 
-**Nothing here reaches the network.** No CDN, no font, no analytics — the page
-is one file with its style inside it. §7's sovereignty is not only about
-inference: a surface that fetches from someone else's host has handed them a
-record of every reader.
+**Nothing here reaches the network.** No CDN, no font, no analytics. §7's
+sovereignty is not only about inference: a surface that fetches from someone
+else's host has handed them a record of every reader. Markdown makes that
+structural rather than disciplined — there is no tag that could fetch anything.
+
+**Markdown, not HTML** *(operator, 2026-08-22)*. The pages are documents, and a
+document that needs a browser to be read is a worse record than one that does
+not. It also makes §7's portability plain: what the surface IS, is a directory
+of prose anything can open. Raw HTML is still escaped out (`_e`), because
+markdown hands it through to whatever renders these later.
 """
 
 from __future__ import annotations
 
 import hashlib
-import html
 import json
 import sqlite3
 from dataclasses import dataclass, field
@@ -35,46 +40,6 @@ from pathlib import Path
 
 from newz.evidence import hard_core
 
-STYLE = """
-:root { color-scheme: light dark; --ink:#1a1a1a; --dim:#666; --line:#ddd; --bg:#fdfdfc; }
-@media (prefers-color-scheme: dark) {
-  :root { --ink:#e8e6e3; --dim:#999; --line:#333; --bg:#121212; } }
-* { box-sizing: border-box; }
-body { max-width: 42rem; margin: 0 auto; padding: 2rem 1.25rem 6rem;
-  font: 1rem/1.65 Georgia, 'Iowan Old Style', serif; color: var(--ink);
-  background: var(--bg); }
-h1, h2, h3 { font-family: -apple-system, system-ui, sans-serif; line-height: 1.25; }
-h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
-a { color: inherit; }
-nav { font-family: -apple-system, system-ui, sans-serif; font-size: .85rem;
-  border-bottom: 1px solid var(--line); padding-bottom: .75rem; margin-bottom: 2rem; }
-nav a { margin-right: 1rem; }
-.dim { color: var(--dim); font-size: .85rem;
-  font-family: -apple-system, system-ui, sans-serif; }
-article { margin: 0 0 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
-article:last-of-type { border-bottom: 0; }
-.body { white-space: pre-wrap; }
-.retracted .body { opacity: .55; }
-.tag { display: inline-block; font-size: .75rem; border: 1px solid var(--line);
-  border-radius: 3px; padding: 0 .35rem; margin-right: .3rem; color: var(--dim);
-  font-family: -apple-system, system-ui, sans-serif; }
-footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line); }
-""".strip()
-
-# ── disclosure (E3.3) ───────────────────────────────────────────────────
-#
-# TRUE_NORTH §2: human-indistinguishable describes **quality, not concealed
-# identity**. §9: no undisclosed impersonation. And the constitution's
-# anti-ai-voice-001 forbids the corporate-disclaimer register — "I do not
-# preface replies with 'as a model'". Those are not in tension. Say plainly
-# what the page is; do not apologise for it.
-#
-# **The wording is the operator's** (P4 Decision 1 — "the disclosure wording
-# they see first"). What is NOT theirs to remove is the substance: every page
-# must say that a digital being wrote it and that the page is generated. That
-# is what `_check_disclosure` enforces, and it is why the guard tests claims
-# rather than phrasing — an operator may rewrite every word and cannot delete
-# what the words have to establish.
 DISCLOSURE = (
     "These pages are written by Lumen, a digital being — not a person. Every "
     "page here is generated from its own store: what it wrote, what it is "
@@ -163,8 +128,40 @@ class Manifest:
                           for p, tables in sorted(self.pages.items())}}
 
 
+# Inline text: the characters that would otherwise change the meaning of a
+# short field. A title containing an asterisk is a title, not emphasis.
+_INLINE = str.maketrans({c: "\\" + c for c in "\\`*_[]<>|"})
+
+
 def _e(text) -> str:
-    return html.escape(str(text if text is not None else ""))
+    """A short field, safe to drop inline.
+
+    **`<` and `>` are escaped here as they were in HTML**, and that is not
+    cosmetic. Markdown passes raw HTML through to any renderer downstream, so
+    without this a work whose body contained a `<script>` would carry it into
+    whatever renders these files later. The format changed; the reason for the
+    escape did not.
+    """
+    return str(text if text is not None else "").translate(_INLINE)
+
+
+def _body(text) -> str:
+    """A long prose field — the being's own writing, kept readable.
+
+    Inline escaping is deliberately NOT applied. These are essays, and a page
+    of backslashes would defeat the point of the format. Two things are still
+    neutralised: raw HTML, for `_e`'s reason, and a line that begins with `#`
+    or `>`, which would otherwise turn a sentence of the being's prose into a
+    heading or a blockquote and silently restructure the document around it.
+    """
+    out = []
+    for line in str(text if text is not None else "").split("\n"):
+        line = line.replace("<", "\\<").replace(">", "\\>")
+        stripped = line.lstrip()
+        if stripped.startswith(("#", "\\>")):
+            line = line.replace(stripped[0], "\\" + stripped[0], 1)
+        out.append(line)
+    return "\n".join(out)
 
 
 def _day(ts) -> str:
@@ -172,26 +169,33 @@ def _day(ts) -> str:
 
 
 def _page(title: str, body: str, *, here: str) -> str:
-    """The only way an HTML page is produced here, and it always discloses.
+    """The only way a page is produced here, and it always discloses.
 
     There is no flag to suppress it, no branch around it and **no parameter**:
     the disclosure is fetched and verified before anything is assembled, so a
     page that does not disclose is not a page this module can emit.
+
+    **Markdown, not HTML** *(operator, 2026-08-22)*. The disclosure appears
+    twice for the reason it did before — once machine-readable in the front
+    matter, where `<meta name="disclosure">` used to be, and once in the prose
+    where a person actually reads it. `robots` stays in the front matter beside
+    it; what keeps the surface private is still the bind address and
+    `robots.txt`, and it was never the meta tag.
     """
     disclosure = _disclosure()
-    nav = " ".join(
-        f'<a href="{"index.html" if p == "index" else p + ".html"}">'
-        f'{"the work" if p == "index" else p}</a>' if p != here else
-        f'<strong>{"the work" if p == "index" else p}</strong>'
+    nav = " · ".join(
+        f'[{"the work" if p == "index" else p}]({p}.md)' if p != here else
+        f'**{"the work" if p == "index" else p}**'
         for p in ("index", "questions", "errors", "commitments", "read"))
-    return (f"<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
-            f"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-            f"<meta name=\"disclosure\" content=\"{_e(disclosure)}\">\n"
-            f"<meta name=\"robots\" content=\"noindex, nofollow\">\n"
-            f"<title>{_e(title)}</title>\n<style>{STYLE}</style>\n</head>\n<body>\n"
-            f"<nav>{nav}</nav>\n{body}\n"
-            f"<footer><p class=dim>{_e(disclosure)}</p></footer>\n"
-            f"</body>\n</html>\n")
+    return (f"---\n"
+            f"title: {json.dumps(title, ensure_ascii=False)}\n"
+            f"disclosure: {json.dumps(disclosure, ensure_ascii=False)}\n"
+            f"robots: noindex, nofollow\n"
+            f"---\n\n"
+            f"{nav}\n\n"
+            f"{body}\n\n"
+            f"---\n\n"
+            f"*{disclosure}*\n")
 
 
 def _works(conn: sqlite3.Connection, m: Manifest) -> str:
@@ -201,7 +205,7 @@ def _works(conn: sqlite3.Connection, m: Manifest) -> str:
     rows = list(conn.execute("SELECT * FROM works ORDER BY ts DESC"))
     m.record("index", "works", [r["id"] for r in rows])
     if not rows:
-        return "<h1>The work</h1>\n<p class=dim>Nothing written yet.</p>"
+        return "# The work\n\n*Nothing written yet.*"
 
     tags: dict[int, list[str]] = {}
     try:
@@ -219,29 +223,34 @@ def _works(conn: sqlite3.Connection, m: Manifest) -> str:
     except sqlite3.OperationalError:
         pass
 
-    out = ["<h1>The work</h1>"]
+    out = ["# The work", ""]
     for r in rows:
         status = (r["status"] if "status" in r.keys() else None) or "standing"
-        klass = " class=retracted" if status == "retracted" else ""
-        out.append(f"<article{klass}>")
-        out.append(f"<h2><a href=\"work/{r['id']}.html\">{_e(r['title'])}</a></h2>")
-        out.append(f"<p class=dim>{_day(r['ts'])}"
-                   + (" · <strong>retracted</strong>" if status == "retracted" else "")
-                   + f" · on: {_e(r['subject_text'])}</p>")
+        out.append(f"## [{_e(r['title'])}](work/{r['id']}.md)")
+        meta = [_day(r["ts"])]
+        if status == "retracted":
+            meta.append("**retracted**")
+        meta.append(f"on: {_e(r['subject_text'])}")
+        out.append("")
+        out.append("*" + " · ".join(meta) + "*")
         if tags.get(r["id"]):
-            out.append("<p>" + "".join(f"<span class=tag>{_e(t)}</span>"
-                                       for t in tags[r["id"]][:6]) + "</p>")
-        out.append(f"<div class=body>{_e(r['body'])}</div>")
+            out.append("")
+            out.append("*tags: " + ", ".join(_e(t) for t in tags[r["id"]][:6]) + "*")
+        out.append("")
+        out.append(_body(r["body"]))
         for rev in revs.get(r["id"], []):
-            out.append(f"<p class=dim><strong>{_e(rev['kind'])}</strong> "
-                       f"{_day(rev['ts'])} — {_e(rev['reason'])}</p>")
+            out.append("")
+            out.append(f"***{_e(rev['kind'])}** {_day(rev['ts'])} — "
+                       f"{_e(rev['reason'])}*")
         keys = r.keys()
         sig = r["signature"] if "signature" in keys else None
-        out.append("<p class=dim>" + (
+        out.append("")
+        out.append("*" + (
             f"signed {_e(sig[:16])}… · written under constitution v"
-            f"{_e(r['constitution_version'])}, perspective v{_e(r['perspective_version'])}"
-            if sig else "unsigned — written before pieces were signed") + "</p>")
-        out.append("</article>")
+            f"{_e(r['constitution_version'])}, perspective v"
+            f"{_e(r['perspective_version'])}"
+            if sig else "unsigned — written before pieces were signed") + "*")
+        out.append("")
     return "\n".join(out)
 
 
@@ -250,17 +259,18 @@ def _questions(conn: sqlite3.Connection, m: Manifest) -> str:
         "SELECT id, statement, why_open, closing_condition FROM concerns"
         " WHERE status='open' ORDER BY salience DESC, opened_at DESC"))
     m.record("questions", "concerns", [r["id"] for r in rows])
-    out = ["<h1>Open questions</h1>",
-           "<p class=dim>What it is carrying, and what would settle each one.</p>"]
+    out = ["# Open questions", "",
+           "*What it is carrying, and what would settle each one.*", ""]
     if not rows:
-        out.append("<p class=dim>Nothing open.</p>")
+        out.append("*Nothing open.*")
     for r in rows:
-        out.append("<article>")
-        out.append(f"<h2>{_e(r['statement'])}</h2>")
+        out.append(f"## {_e(r['statement'])}")
+        out.append("")
         if r["why_open"]:
-            out.append(f"<p>{_e(r['why_open'])}</p>")
-        out.append(f"<p class=dim>settles when: {_e(r['closing_condition'])}</p>")
-        out.append("</article>")
+            out.append(_body(r["why_open"]))
+            out.append("")
+        out.append(f"*settles when: {_e(r['closing_condition'])}*")
+        out.append("")
 
     out.append(_gaps(conn, m))
     return "\n".join(out)
@@ -293,14 +303,13 @@ def _gaps(conn: sqlite3.Connection, m: Manifest) -> str:
     if not rows:
         return ""
     m.record("questions", "source_gaps", [r["id"] for r in rows])
-    out = ["<h1>What it asked and could not answer</h1>",
-           "<p class=dim>Each question with the reason it went unanswered and "
-           "how often. A question that keeps failing is either a gap in what it "
-           "can reach or a question nothing could settle — and those are fixed "
-           "in different places.</p>"]
+    out = ["# What it asked and could not answer", "",
+           "*Each question with the reason it went unanswered and how often. "
+           "A question that keeps failing is either a gap in what it can reach "
+           "or a question nothing could settle — and those are fixed in "
+           "different places.*", ""]
     for r in rows:
-        out.append("<article>")
-        out.append(f"<h2>{_e(r['query'])}</h2>")
+        out.append(f"## {_e(r['query'])}")
         why = CAUSES.get(r["cause"], "recorded before the cause was")
         times = "once" if r["n"] == 1 else f"{r['n']} times"
         line = f"{why} · {times}"
@@ -308,8 +317,9 @@ def _gaps(conn: sqlite3.Connection, m: Manifest) -> str:
             line += f" · best relevance {r['best']:.2f}"
         if r["cands"]:
             line += f" · {r['cands']} candidate(s) seen"
-        out.append(f"<p class=dim>{_e(line)}</p>")
-        out.append("</article>")
+        out.append("")
+        out.append(f"*{_e(line)}*")
+        out.append("")
     return "\n".join(out)
 
 
@@ -324,29 +334,33 @@ def _errors(conn: sqlite3.Connection, m: Manifest) -> str:
     except sqlite3.OperationalError:
         pass
 
-    out = ["<h1>What it committed to, and where it was wrong</h1>",
-           "<p class=dim>Claims it made about the world, with dates, and what "
-           "each cost when the world disagreed. Nothing here is removed once "
-           "written.</p>"]
+    out = ["# What it committed to, and where it was wrong", "",
+           "*Claims it made about the world, with dates, and what each cost "
+           "when the world disagreed. Nothing here is removed once written.*",
+           ""]
     if not rows:
-        out.append("<p class=dim>No claims yet.</p>")
+        out.append("*No claims yet.*")
     for r in rows:
-        out.append("<article>")
-        out.append(f"<h2>{_e(r['claim'])}</h2>")
-        out.append(f"<p class=dim>made {_day(r['opened_at'])} · settles by "
-                   f"{_day(r['due_at'])} · against: {_e(r['resolver'])}</p>")
+        out.append(f"## {_e(r['claim'])}")
+        out.append("")
+        out.append(f"*made {_day(r['opened_at'])} · settles by "
+                   f"{_day(r['due_at'])} · against: {_e(r['resolver'])}*")
         if "could_be_wrong" in r.keys() and r["could_be_wrong"]:
-            out.append(f"<p class=dim>wrong would look like: {_e(r['could_be_wrong'])}</p>")
+            out.append("")
+            out.append(f"*wrong would look like: {_e(r['could_be_wrong'])}*")
+        out.append("")
         if r["outcome"]:
-            out.append(f"<p><strong>{_e(r['outcome'])}</strong> "
-                       f"{_day(r['settled_at'])} — {_e(r['settled_note'])}</p>")
+            out.append(f"**{_e(r['outcome'])}** {_day(r['settled_at'])} — "
+                       f"{_e(r['settled_note'])}")
         else:
-            out.append("<p class=dim>not yet settled</p>")
+            out.append("*not yet settled*")
         for c in costs.get(r["id"], []):
-            out.append(f"<p class=dim>cost: “{_e(c['item_text'])}” "
-                       f"{c['confidence_before']:.2f} → {c['confidence_after']:.2f}"
-                       + (" · released" if c["released"] else "") + "</p>")
-        out.append("</article>")
+            out.append("")
+            out.append(f"*cost: \u201c{_e(c['item_text'])}\u201d "
+                       f"{c['confidence_before']:.2f} \u2192 "
+                       f"{c['confidence_after']:.2f}"
+                       + (" · released" if c["released"] else "") + "*")
+        out.append("")
     return "\n".join(out)
 
 
@@ -381,23 +395,23 @@ def _read(conn: sqlite3.Connection, m: Manifest) -> str:
         # have silently produced an empty read (INV-044).
         from newz.store.db import MONITOR_NAME, monitor_attached
         if not monitor_attached(conn):
-            return ("<h1>The read</h1>\n<p class=dim>UNREADABLE — the monitor "
-                    f"database is not attached to this connection. {MONITOR_NAME} "
-                    "holds the readings and sits beside the store; this is a "
-                    "fact about the restore, not about the being.</p>")
-        return ("<h1>The read</h1>\n<p class=dim>No readings yet — the hourly "
-                "cadence records them, and this database has not taken the "
-                "migration that holds them.</p>")
+            return ("# The read\n\n*UNREADABLE — the monitor database is not "
+                    f"attached to this connection. {MONITOR_NAME} holds the "
+                    "readings and sits beside the store; this is a fact about "
+                    "the restore, not about the being.*")
+        return ("# The read\n\n*No readings yet — the hourly cadence records "
+                "them, and this database has not taken the migration that "
+                "holds them.*")
     m.record("read", "metric_readings", [r["id"] for r in latest])
     if not latest:
-        return ("<h1>The read</h1>\n<p class=dim>No readings recorded yet. "
-                "The cadence writes one of each an hour.</p>")
+        return ("# The read\n\n*No readings recorded yet. The cadence writes "
+                "one of each an hour.*")
 
-    out = ["<h1>The read</h1>",
-           "<p class=dim>What the instruments say, as of the last nightly "
-           "reading. One line per measurement, and deliberately nothing that "
-           "adds them up: these measure different things in different units, "
-           "and a number combining them would assert they are comparable.</p>"]
+    out = ["# The read", "",
+           "*What the instruments say, as of the last nightly reading. One "
+           "line per measurement, and deliberately nothing that adds them up: "
+           "these measure different things in different units, and a number "
+           "combining them would assert they are comparable.*", ""]
     for r in latest:
         try:
             grade = grade_of(r["metric"])
@@ -407,9 +421,8 @@ def _read(conn: sqlite3.Connection, m: Manifest) -> str:
             continue
         label = _e(r["metric"].replace("_", " "))
         if r["status"] != "ok":
-            out.append(f"<p><strong>{label}</strong> — "
-                       f"<em>{_e(r['status']).upper()}</em><br>"
-                       f"<span class=dim>{_e(r['note'])}</span></p>")
+            out.append(f"- **{label}** — *{_e(r['status']).upper()}*  ")
+            out.append(f"  {_e(r['note'])}")
             continue
         base = conn.execute(
             "SELECT value FROM mon.metric_readings WHERE metric=? AND status='ok'"
@@ -422,10 +435,8 @@ def _read(conn: sqlite3.Connection, m: Manifest) -> str:
             move = "unchanged"
         else:
             move = f"{r['value'] - base['value']:+.4g} from {base['value']:.4g}"
-        out.append(f"<p><strong>{label}</strong> {r['value']:.4g}"
-                   f" <span class=tag>{_e(grade)}</span>"
-                   f"<br><span class=dim>{_e(move)}"
-                   f" · over {r['window_hours'] / 24:.0f} days</span></p>")
+        out.append(f"- **{label}** {r['value']:.4g} `{_e(grade)}`  ")
+        out.append(f"  {_e(move)} · over {r['window_hours'] / 24:.0f} days")
     return "\n".join(out)
 
 
@@ -452,24 +463,27 @@ def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
             " ORDER BY id"))
         m.record("commitments", "commitments", [r["id"] for r in rows])
     except sqlite3.OperationalError:
-        return ("<h1>Commitments</h1>\n<p class=dim>The being has not made any. "
-                "Commitments — what it keeps caring about and what it refuses to "
-                "do — are not built yet; this page is generated from a table that "
-                "does not exist, and says so rather than appearing empty.</p>")
-    out = ["<h1>Commitments</h1>",
-           "<p class=dim>What the being holds itself to, and beside each one "
-           "what would show it had stopped. Nothing here was assigned to it; "
-           "a commitment with no way to fail was refused at the door.</p>"]
+        return ("# Commitments\n\n*The being has not made any. Commitments — "
+                "what it keeps caring about and what it refuses to do — are not "
+                "built yet; this page is generated from a table that does not "
+                "exist, and says so rather than appearing empty.*")
+    out = ["# Commitments", "",
+           "*What the being holds itself to, and beside each one what would "
+           "show it had stopped. Nothing here was assigned to it; a commitment "
+           "with no way to fail was refused at the door.*", ""]
     if not rows:
-        out.append("<p class=dim>None yet. The being is asked once a night, "
-                   "and most nights the answer is no.</p>")
+        out.append("*None yet. The being is asked once a night, and most "
+                   "nights the answer is no.*")
     for r in rows:
         kind = _COMMITMENT_KIND.get(r["kind"], r["kind"])
         status = ("" if r["status"] == "standing"
-                  else f" <span class=tag>{_e(r['status'])}</span>")
-        out.append(f"<article><h2>{_e(r['statement'])}</h2>"
-                   f"<p class=dim><span class=tag>{_e(kind)}</span>{status}"
-                   f"<br>broken by: {_e(r['falsifier'])}</p></article>")
+                  else f" · `{_e(r['status'])}`")
+        out.append(f"## {_e(r['statement'])}")
+        out.append("")
+        out.append(f"`{_e(kind)}`{status}")
+        out.append("")
+        out.append(f"*broken by: {_e(r['falsifier'])}*")
+        out.append("")
     return "\n".join(out)
 
 
@@ -481,30 +495,32 @@ def _one_work(conn: sqlite3.Connection, row, m: Manifest) -> tuple[str, str]:
     pointed at it. Stability is what makes an identifier worth citing, and it
     is a separate question from whether anyone may crawl it.
     """
-    page = f"work/{row['id']}.html"
+    page = f"work/{row['id']}.md"
     m.record(page, "works", [row["id"]])
     keys = row.keys()
     sig = row["signature"] if "signature" in keys else None
     status = (row["status"] if "status" in keys else None) or "standing"
-    body = [f"<article{' class=retracted' if status == 'retracted' else ''}>",
-            f"<h1>{_e(row['title'])}</h1>",
-            f"<p class=dim>{_day(row['ts'])}"
-            + (" · <strong>retracted</strong>" if status == "retracted" else "")
-            + f" · on: {_e(row['subject_text'])}</p>",
-            f"<div class=body>{_e(row['body'])}</div>"]
+    meta = [_day(row["ts"])]
+    if status == "retracted":
+        meta.append("**retracted**")
+    meta.append(f"on: {_e(row['subject_text'])}")
+    body = [f"# {_e(row['title'])}", "",
+            "*" + " · ".join(meta) + "*", "",
+            _body(row["body"])]
     try:
         for rev in conn.execute(
                 "SELECT * FROM work_revisions WHERE work_id=? ORDER BY ts",
                 (row["id"],)):
             m.record(page, "work_revisions", [rev["id"]])
-            body.append(f"<p class=dim><strong>{_e(rev['kind'])}</strong> "
-                        f"{_day(rev['ts'])} — {_e(rev['reason'])}</p>")
+            body.append("")
+            body.append(f"***{_e(rev['kind'])}** {_day(rev['ts'])} — "
+                        f"{_e(rev['reason'])}*")
     except sqlite3.OperationalError:
         pass
-    body.append("<p class=dim>" + (
+    body.append("")
+    body.append("*" + (
         f"signed {_e(sig[:16])}…" if sig
-        else "unsigned — written before pieces were signed") + "</p>")
-    body.append("</article>")
+        else "unsigned — written before pieces were signed") + "*")
     return page, _page(row["title"], "\n".join(body), here="index")
 
 
@@ -514,11 +530,11 @@ def generate(conn: sqlite3.Connection, out_dir: Path, *, now: float) -> Manifest
     m = Manifest(generated_at=now)
 
     pages = {
-        "index.html": ("The work", _works(conn, m), "index"),
-        "questions.html": ("Open questions", _questions(conn, m), "questions"),
-        "errors.html": ("What it was wrong about", _errors(conn, m), "errors"),
-        "commitments.html": ("Commitments", _commitments(conn, m), "commitments"),
-        "read.html": ("The read", _read(conn, m), "read"),
+        "index.md": ("The work", _works(conn, m), "index"),
+        "questions.md": ("Open questions", _questions(conn, m), "questions"),
+        "errors.md": ("What it was wrong about", _errors(conn, m), "errors"),
+        "commitments.md": ("Commitments", _commitments(conn, m), "commitments"),
+        "read.md": ("The read", _read(conn, m), "read"),
     }
     for name, (title, body, here) in pages.items():
         (out_dir / name).write_text(_page(title, body, here=here), encoding="utf-8")
