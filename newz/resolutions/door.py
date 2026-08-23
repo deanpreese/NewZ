@@ -49,7 +49,38 @@ DAY = 86400.0
 # life of this project — S1-E needs at least one position to change BECAUSE the
 # world contradicted it, and a claim that outlives the question is not that.
 MIN_HORIZON_DAYS = 2
-MAX_HORIZON_DAYS = 365
+# **365 was permission the being took, and the prompt's own example was 42.**
+# Measured 2026-08-22, every claim it had ever written, in days:
+#
+#     120  120  120  120  120  128  180  180  180  365  365  365
+#
+# Minimum 120, median 180. `claim_refusals` held ZERO rows, so the ceiling had
+# never once been touched: the long dates were volunteered, not forced. The
+# door showed it a six-week worked example and told it a year was allowed, and
+# it took the permission.
+#
+# **What that cost is not only that S1-E waits until December.** `resolver.py`
+# selects `due_at <= now`, so with nothing due, `resolve_claim` had never run
+# ONCE in life — the fetch, the VERBATIM check (INV-047), the 4-attempt honest
+# failure path, the cost through INV-031, the release through INV-025, and the
+# one `world`-provenance episode sleep ever sees. All tested, none exercised,
+# first execution scheduled for 2026-12-18. The writing rhythm's re-read path
+# crashed the first time it did something real; Phase 1's path is five times
+# larger.
+#
+# **Why 45 and not the 120 first instructed.** 120 refuses three of the twelve
+# live claims and permits nine, leaving the median at 180 — it stops the worst
+# and creates no short claims, because the being's SHORTEST claim ever written
+# is 120. The point is not to trim outliers; it is that consequence has to
+# arrive often enough to be a loop rather than an anecdote.
+#
+# **The cap alone would produce refusals, not shorter claims** — the door
+# refuses an out-of-range horizon and does not ask again. So the prompt does
+# the work and this only enforces it; the two must never ship apart. If
+# `claim_refusals` fills with horizon reasons and claims stop opening, the cap
+# is wrong for this being's subjects: revert to 90, never to 365, and record
+# which subjects could not reach a near source.
+MAX_HORIZON_DAYS = 45
 # The opener's discipline: a carrying cap so the store cannot fill with
 # commitments nobody will ever look at, and a daily rate limit so a
 # miscalibrated door cannot do it in one afternoon. Both are deliberately
@@ -102,7 +133,7 @@ Output ONLY:
   <statement>what will be observed, specifically</statement>
   <settles_when>what exactly would show it true or false</settles_when>
   <resolver>the named source that will show it</resolver>
-  <due_in_days>a whole number of days from today, between 2 and 365</due_in_days>
+  <due_in_days>a whole number of days from today, between 2 and 45</due_in_days>
   <could_be_wrong>what the OTHER outcome looks like — what I would see if this
                   turns out false</could_be_wrong>
 </claim>
@@ -124,6 +155,19 @@ is refused. "The BLS September Employment Situation Summary" names one.
 `due_in_days` is a HORIZON, not a date: how long until the source will have
 spoken. Today's date is given to you above — use it when the statement itself
 needs to name a period, and never guess one.
+
+**Reach for the nearest source that will have spoken.** If what I hold is
+right, something small should be observable soon — not only at the end. A
+thesis about where a market, a rule or a field is going has interim
+checkpoints: the next weekly release, the next monthly print, the next
+scheduled filing, the next quarterly report. Claim the nearest one that would
+still surprise me if it went the other way.
+
+A claim I cannot bring inside the window is usually a claim about the wrong
+observable, not a claim that needs longer. Being wrong in six weeks teaches me
+something; being wrong in a year happens to someone I have already stopped
+being. If nothing my sources will say within 45 days could bear on this, the
+honest answer is `no` — declining costs nothing.
 
 Worked examples, in fields I do not work in, so you have to do the judgment
 rather than reuse the words.

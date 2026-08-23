@@ -14,7 +14,7 @@ import inspect
 from datetime import datetime, timedelta
 
 from newz.resolutions.door import (
-    MAX_OPENED_PER_DAY, MAX_OPEN_CLAIMS, propose_claim,
+    MAX_HORIZON_DAYS, MAX_OPENED_PER_DAY, MAX_OPEN_CLAIMS, propose_claim,
 )
 from newz.resolutions.model import Claim
 from newz.resolutions.store import claims_by_status, open_claim
@@ -192,7 +192,11 @@ def test_the_door_asks_for_a_horizon_and_tells_the_being_what_day_it_is():
 
     assert "<due_in_days>" in door._TASK
     assert "YYYY-MM-DD" not in door._TASK
-    assert "2 and 365" in door._TASK          # the bounds are stated, not guessed
+    # Derived, not spelled: this read "2 and 365" and went stale the moment the
+    # ceiling moved to 45. A test that hardcodes a bound it is checking is a
+    # second place to remember.
+    assert (f"{door.MIN_HORIZON_DAYS} and {door.MAX_HORIZON_DAYS}"
+            in door._TASK)                        # the bounds are stated, not guessed
     assert "<today>" in inspect.getsource(door.propose_claim)
 
 
@@ -256,3 +260,52 @@ def test_the_alternative_is_stored_with_the_claim(store):
     row = store.execute("SELECT could_be_wrong FROM resolutions WHERE id=?",
                         (verdict.claim_id,)).fetchone()
     assert row[0] and "below" in row[0]
+
+
+# ── the horizon, and why it is 45 (2026-08-22) ──────────────────────────────
+
+def test_a_horizon_beyond_the_ceiling_is_refused_and_says_why(store):
+    """Measured 2026-08-22: every claim the being had ever written was 120-365
+    days out, `claim_refusals` held zero rows, and so nothing below the door had
+    executed ONCE in life. Behavior: a horizon past the ceiling is refused and
+    the refusal names the ceiling, so the record distinguishes "it committed to
+    nothing" from "it committed too far out to learn from".
+    """
+    v = propose_claim(store, FakeLLM([("DEEP", _proposal(due="180"))]),
+                      established=ESTABLISHED, concern_statement=CONCERN,
+                      concern_id=1)
+
+    assert not v.opened and v.refused
+    assert f"beyond {MAX_HORIZON_DAYS}" in v.refused
+    row = store.execute("SELECT reason, due_text FROM claim_refusals").fetchone()
+    assert "beyond" in row["reason"] and row["due_text"] == "180"
+
+
+def test_the_cap_and_the_prompt_never_ship_apart(store):
+    """The red team's first objection, made structural. The door refuses an
+    out-of-range horizon and does NOT ask again, so a cap on its own converts a
+    180-day claim into a refusal rather than a 45-day one — it is the prompt
+    that produces short claims and the cap only enforces them.
+
+    Behavior: the instruction that does the work is present, so the two cannot
+    drift apart silently the way the stated bound did.
+    """
+    from newz.resolutions import door
+
+    assert "nearest source that will have spoken" in door._TASK
+    assert "Claim the nearest one" in door._TASK
+    # And declining stays free, or the prompt trades long claims for bad ones.
+    assert "declining costs nothing" in door._TASK
+
+
+def test_a_claim_inside_the_window_still_opens(store):
+    """The other direction. Behavior: the ceiling moved and nothing else did —
+    a well-formed claim at a reachable horizon opens exactly as before.
+    """
+    v = propose_claim(store, FakeLLM([("DEEP", _proposal(due="30"))]),
+                      established=ESTABLISHED, concern_statement=CONCERN,
+                      concern_id=1)
+
+    assert v.opened
+    claim = claims_by_status(store, "open")[0]
+    assert 29 <= (claim.due_at - time.time()) / 86400.0 <= 31
