@@ -220,7 +220,7 @@ def _system_prompt(conn: sqlite3.Connection, person_id: str) -> str:
     # confidently about a past it cannot see (observed 2026-08-10).
     from newz.gate.holds import recent_holds, render_holds
 
-    holds = render_holds(recent_holds(conn, limit=5))
+    holds = render_holds(recent_holds(conn, limit=5), conn=conn)
     if holds:
         parts.append("## Drafts of mine that were stopped before sending\n" + holds)
 

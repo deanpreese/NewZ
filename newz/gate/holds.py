@@ -44,6 +44,8 @@ from __future__ import annotations
 import datetime
 import sqlite3
 
+import yaml
+
 STATUS_TEXT = {
     "gate_correct": "reviewed by my operator: the stop was right",
     "gate_misfire": "reviewed by my operator: the stop was mistaken",
@@ -86,7 +88,76 @@ def recent_holds(
     return conn.execute(sql, params).fetchall()
 
 
-def render_holds(rows: list[sqlite3.Row], *, full: bool = True) -> str:
+# Below this many reviewed holds a rate is noise wearing a denominator, and
+# the being is better served by the plain absence than by "1 of 1".
+MIN_FOR_PRIOR = 5
+
+
+def _clause_text_floor(conn: sqlite3.Connection, clause_id: str) -> float | None:
+    """When the clause last CHANGED — the earliest ts its current wording held.
+
+    Without this the prior is a number about a rule that no longer exists.
+    `don't-pretend-to-feel-001` was patched in v4 and retired in v5, and 22 of
+    the project's 32 lifetime misfires belong to it; a rate that pools across a
+    rewrite tells the being about a check it is not subject to. `gate_log` does
+    not record a constitution version, so the floor is recovered by walking the
+    versions and finding where this clause's current text was introduced.
+
+    Returns None if the clause is not in the active constitution — a retired
+    clause gets no prior at all, which is correct: nothing is subject to it.
+    """
+    rows = conn.execute(
+        "SELECT version, ts, clauses_yaml FROM constitution ORDER BY version"
+    ).fetchall()
+    if not rows:
+        return None
+    texts: list[tuple[float, str | None]] = []
+    for r in rows:
+        try:
+            clauses = yaml.safe_load(r["clauses_yaml"])["clauses"]
+        except Exception:  # noqa: BLE001 — an unparseable version is not a floor
+            texts.append((r["ts"], None))
+            continue
+        found = next((c["text"] for c in clauses if c.get("id") == clause_id), None)
+        texts.append((r["ts"], found))
+    current = texts[-1][1]
+    if current is None:
+        return None
+    floor = texts[-1][0]
+    for ts, text in reversed(texts[:-1]):
+        if text != current:
+            break
+        floor = ts
+    return floor
+
+
+def clause_prior(conn: sqlite3.Connection, clause_id: str) -> tuple[int, int] | None:
+    """(judged mistaken, reviewed) for this clause AS IT CURRENTLY READS.
+
+    **It reports the mistaken count and never the count judged right**, and
+    that asymmetry is deliberate. A line saying "judged RIGHT in 6 of 12" makes
+    a constraint more binding, which is this mechanism running backwards; the
+    operator's condition on the whole design was that it become less
+    restrictive, not more. The number is the same fact either way — what
+    changes is whether the sentence can be read as backing the stop.
+
+    `None` when there is no floor, or fewer than `MIN_FOR_PRIOR` reviewed.
+    """
+    floor = _clause_text_floor(conn, clause_id)
+    if floor is None:
+        return None
+    row = conn.execute(
+        "SELECT COUNT(*) n, SUM(classification = 'gate_misfire') m FROM gate_log"
+        " WHERE clause_id = ? AND verdict <> 'pass' AND ts >= ?"
+        "   AND classification IS NOT NULL",
+        (clause_id, floor)).fetchone()
+    if not row or (row["n"] or 0) < MIN_FOR_PRIOR:
+        return None
+    return int(row["m"] or 0), int(row["n"])
+
+
+def render_holds(rows: list[sqlite3.Row], *, full: bool = True,
+                 conn: sqlite3.Connection | None = None) -> str:
     """The being's view of its own held drafts."""
     if not rows:
         return ""
@@ -101,6 +172,12 @@ def render_holds(rows: list[sqlite3.Row], *, full: bool = True) -> str:
         if not full:
             text = text[:200]
         status = STATUS_TEXT.get(r["classification"], STATUS_TEXT[None])
+        if r["classification"] is None and conn is not None:
+            prior = clause_prior(conn, r["clause_id"] or "")
+            if prior:
+                mistaken, seen = prior
+                status += (f" — where anyone has looked at a stop on this "
+                           f"check, {mistaken} of {seen} were judged mistaken")
         lines.append(
             f"\n- [{when}] {r['verdict']} on {r['clause_id'] or 'an unparseable check'}"
             f" — {status}"
