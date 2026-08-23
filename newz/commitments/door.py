@@ -102,7 +102,15 @@ Output ONLY:
   <kind>keeps_caring|refuses_to_do</kind>
   <statement>what I hold myself to, in one sentence, in the first person</statement>
   <falsifier>what would show I had stopped — specifically, and checkable</falsifier>
+  <drew_on>the numbers of the lines below this came from, comma separated</drew_on>
 </commitment>
+
+<drew_on> is which of the numbered lines below this actually came from — not
+all of them, and not a polite list. If it came from one line, say one. If it
+came from nothing in particular, leave it empty; that is a real answer and
+better than a guess, because these numbers are what the record will show as
+having shaped this, and a padded list makes a commitment look better grounded
+than it was.
 
 If worth_committing is no, leave the other elements empty. **Most nights the
 answer is no**, and that is the ordinary answer. A commitment made to fill the
@@ -197,8 +205,36 @@ def _is_checkable(falsifier: str) -> bool:
     return False
 
 
+def _drew_on(text: str, sources: list[list[str]]) -> list[str]:
+    """Resolve the indices the being named into the episodes behind them (E4.3).
+
+    **The code resolves; the model only names.** An index outside the material
+    is dropped rather than trusted, a non-number is ignored, and naming nothing
+    yields an empty list. Rule 4 is untouched — the being is not being asked
+    whether its commitment is any good, only which lines it read.
+
+    **Empty is a real answer and is kept as one.** The rejected alternative was
+    to attribute the union of everything the door was shown, which would make a
+    commitment formed from one item look grounded in twelve — and INV-033's
+    single-source dominance flag, whose whole purpose is to catch a position
+    resting on one source, would be the thing least able to fire. `what_shaped`
+    already renders "carries no resolvable evidence" for a position whose refs
+    resolve to nothing, and a commitment the being could not trace should say
+    that rather than borrow a mix from its neighbours.
+    """
+    out: list[str] = []
+    for token in re.split(r"[,\s]+", text or ""):
+        if not token.strip().isdigit():
+            continue
+        i = int(token) - 1                      # the material is 1-indexed
+        if 0 <= i < len(sources):
+            out.extend(sources[i])
+    return sorted(set(out), key=out.index)
+
+
 def propose_commitment(conn: sqlite3.Connection, client: LLMClient, *,
                        material: str, provenance: str,
+                       sources: list[list[str]] | None = None,
                        perspective_version: int | None = None,
                        constitution_version: int | None = None,
                        now: float | None = None) -> DoorVerdict:
@@ -245,6 +281,7 @@ def propose_commitment(conn: sqlite3.Connection, client: LLMClient, *,
     kind = text_of("kind").lower().strip()
     statement = text_of("statement")
     falsifier = text_of("falsifier")
+    evidence = _drew_on(text_of("drew_on"), sources or [])
 
     def refuse(reason: str) -> DoorVerdict:
         _record_refusal(conn, reason, kind=kind, statement=statement,
@@ -283,7 +320,7 @@ def propose_commitment(conn: sqlite3.Connection, client: LLMClient, *,
 
     cid = author(conn, Commitment(
         id=None, kind=kind, statement=statement, falsifier=falsifier,
-        provenance=provenance, ts=now,
+        provenance=provenance, ts=now, evidence=evidence,
         perspective_version=perspective_version,
         constitution_version=constitution_version))
     return DoorVerdict(commitment_id=cid)

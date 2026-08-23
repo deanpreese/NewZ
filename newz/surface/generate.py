@@ -474,6 +474,8 @@ def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
     if not rows:
         out.append("*None yet. The being is asked once a night, and most "
                    "nights the answer is no.*")
+    from newz.memory.provenance import what_shaped_commitment
+
     for r in rows:
         kind = _COMMITMENT_KIND.get(r["kind"], r["kind"])
         status = ("" if r["status"] == "standing"
@@ -483,6 +485,27 @@ def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
         out.append(f"`{_e(kind)}`{status}")
         out.append("")
         out.append(f"*broken by: {_e(r['falsifier'])}*")
+        # E4.3: what shaped it, and INV-033's flag. §8 asks that shaping
+        # influences be traceable and open to challenge, and a commitment is
+        # the one thing here the being authored about ITSELF — so a mix that
+        # is all one source is an identity claim resting on one source, which
+        # matters more than it does on an ordinary position.
+        inf = what_shaped_commitment(conn, r["id"])
+        if inf is not None:
+            out.append("")
+            if not inf.total:
+                out.append("*shaped by: nothing traceable — this commitment "
+                           "carries no resolvable evidence*")
+            else:
+                out.append(f"*shaped by {inf.total} episode(s) — the world "
+                           f"{inf.share('world'):.0%} · people "
+                           f"{inf.share('human'):.0%} · itself "
+                           f"{inf.share('self'):.0%}*")
+                top = inf.concentration
+                if top and top[1] > 0.5:
+                    out.append("")
+                    out.append(f"*{top[1]:.0%} of this comes from one source: "
+                               f"`{_e(top[0])}`*")
         out.append("")
     return "\n".join(out)
 

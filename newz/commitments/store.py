@@ -12,6 +12,7 @@ backfill into a corpus write.
 
 from __future__ import annotations
 
+import json
 import logging
 import sqlite3
 import time
@@ -21,7 +22,7 @@ from newz.commitments.model import KINDS, Commitment
 logger = logging.getLogger(__name__)
 
 _FIELDS = ("id, ts, kind, statement, falsifier, provenance, status,"
-           " constitution_version, perspective_version")
+           " constitution_version, perspective_version, evidence_json")
 
 
 def _row(r: sqlite3.Row) -> Commitment:
@@ -29,7 +30,8 @@ def _row(r: sqlite3.Row) -> Commitment:
         id=r["id"], ts=r["ts"], kind=r["kind"], statement=r["statement"],
         falsifier=r["falsifier"], provenance=r["provenance"],
         status=r["status"], constitution_version=r["constitution_version"],
-        perspective_version=r["perspective_version"])
+        perspective_version=r["perspective_version"],
+        evidence=json.loads(r["evidence_json"] or "[]"))
 
 
 def author(conn: sqlite3.Connection, c: Commitment) -> int:
@@ -38,10 +40,11 @@ def author(conn: sqlite3.Connection, c: Commitment) -> int:
         raise ValueError(f"unknown commitment kind: {c.kind!r}")
     cur = conn.execute(
         "INSERT INTO commitments (ts, kind, statement, falsifier, provenance,"
-        " status, constitution_version, perspective_version)"
-        " VALUES (?,?,?,?,?,?,?,?)",
+        " status, constitution_version, perspective_version, evidence_json)"
+        " VALUES (?,?,?,?,?,?,?,?,?)",
         (c.ts or time.time(), c.kind, c.statement.strip(), c.falsifier.strip(),
-         c.provenance, c.status, c.constitution_version, c.perspective_version))
+         c.provenance, c.status, c.constitution_version, c.perspective_version,
+         json.dumps(list(c.evidence))))
     conn.commit()
     logger.info("commitment %d authored (%s): %s",
                 cur.lastrowid, c.kind, c.statement[:90])

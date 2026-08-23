@@ -177,6 +177,52 @@ def test_a_commitment_renders_with_what_would_break_it(store, tmp_path):
     assert "refuses to do" in text
 
 
+def test_a_commitment_shows_what_shaped_it_and_flags_one_source(store, tmp_path):
+    """E4.3. §8 asks that shaping influences be traceable and open to challenge,
+    and a commitment is the one thing here the being authored about ITSELF — so
+    a mix that is all one source is an identity claim resting on one source,
+    which is what INV-033 flags for positions and matters more here. Behavior:
+    the page carries the mix and names the dominance.
+    """
+    ids = []
+    for prov in ("human:dean", "human:dean", "world:arxiv"):
+        cur = store.execute(
+            "INSERT INTO episodes (ts, kind, provenance, summary) VALUES"
+            " (?,'reading',?,'x')", (time.time(), prov))
+        ids.append(str(cur.lastrowid))
+    store.execute(
+        "INSERT INTO commitments (ts, kind, statement, falsifier, provenance,"
+        " evidence_json) VALUES (?,?,?,?,?,?)",
+        (time.time(), "keeps_caring", "I will keep asking what I got wrong.",
+         "a month with no claim resolved against me", "perspective:14",
+         json.dumps(ids)))
+    store.commit()
+
+    out, _ = _generate(store, tmp_path)
+    text = (out / "commitments.md").read_text()
+
+    assert "shaped by 3 episode(s)" in text
+    assert "people 67%" in text and "the world 33%" in text
+    assert "one source: `human:dean`" in text
+
+
+def test_a_commitment_that_traced_nothing_says_so(store, tmp_path):
+    """INV-044 on the surface. Behavior: a commitment the being could not trace
+    renders as untraceable rather than borrowing a mix from its neighbours —
+    which is the padding E4.3's design exists to avoid."""
+    store.execute(
+        "INSERT INTO commitments (ts, kind, statement, falsifier, provenance)"
+        " VALUES (?,?,?,?,?)",
+        (time.time(), "keeps_caring", "I will keep writing weekly.",
+         "a month with no piece written", "perspective:14"))
+    store.commit()
+
+    out, _ = _generate(store, tmp_path)
+    text = (out / "commitments.md").read_text()
+
+    assert "carries no resolvable evidence" in text
+
+
 def test_a_retracted_piece_still_appears(store, tmp_path):
     """E2.2's rule carried onto the surface. Behavior: retraction is an outcome
     and never a deletion, so the piece is shown, marked, with its reason."""

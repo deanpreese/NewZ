@@ -113,7 +113,39 @@ def what_shaped_version(conn: sqlite3.Connection,
     return [_trace(conn, r) for r in rows]
 
 
-def _trace(conn: sqlite3.Connection, row: sqlite3.Row) -> Influence:
+def what_shaped_commitment(conn: sqlite3.Connection,
+                           commitment_id: int) -> Influence | None:
+    """The world/people/self mix behind one commitment (P4 epic E4.3).
+
+    The same trace `what_shaped` runs over a held position, over the episodes
+    the being said it drew on. §8 asks that shaping influences be traceable and
+    open to challenge, and a commitment is the one thing in the store the being
+    authored ABOUT ITSELF — so "what shaped this" is a sharper question here
+    than anywhere else.
+
+    **`concentration` matters more here than on a position.** INV-033 flags a
+    position resting on one source; a commitment resting on one source is an
+    identity claim resting on one source, and E4.1's whole point is that
+    identity should be chosen rather than absorbed. A commitment whose mix is
+    100% `human:dean` is the operator's preference wearing the being's voice,
+    which the door's prompt warns against and cannot detect on its own.
+
+    Returns None if there is no such commitment. An EMPTY evidence list is not
+    None — it renders as "carries no resolvable evidence", which is the honest
+    reading of a commitment the being could not trace, and is why the door
+    keeps an empty `drew_on` rather than inheriting the material it was shown.
+    """
+    row = conn.execute(
+        "SELECT id, statement AS text, kind AS section, evidence_json"
+        " FROM commitments WHERE id=?", (commitment_id,)).fetchone()
+    if row is None:
+        return None
+    return _trace(conn, {"id": row["id"], "text": row["text"],
+                         "section": row["section"], "confidence": 1.0,
+                         "evidence_json": row["evidence_json"]})
+
+
+def _trace(conn: sqlite3.Connection, row) -> Influence:
     inf = Influence(item_id=row["id"], text=row["text"], section=row["section"],
                     confidence=row["confidence"])
     refs = json.loads(row["evidence_json"] or "[]")

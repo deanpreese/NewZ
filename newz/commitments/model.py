@@ -27,7 +27,7 @@ direction with a bound.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # keeps_caring: a direction — what it will keep spending itself on.
 # refuses_to_do: a bound — what it will not do even when it would be easier.
@@ -46,6 +46,10 @@ class Commitment:
     provenance: str                     # perspective:N | work:N | concern:N
     ts: float = 0.0
     status: str = "standing"
+    # Which episodes the being said it drew on (E4.3). Resolved from indices
+    # the door returns, never inherited from the material it was shown — see
+    # migration 0042 for why the union would have suppressed INV-033's flag.
+    evidence: list[str] = field(default_factory=list)
     constitution_version: int | None = None
     perspective_version: int | None = None
 

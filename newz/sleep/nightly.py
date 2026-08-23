@@ -778,15 +778,21 @@ class NightlySleep:
 
         Most nights this declines, which is the ordinary answer.
         """
-        material = "\n".join(
-            f"- [{it.section}] {it.text}" for it in items
-            if it.section in ("who_i_am", "unresolved"))
-        if not material.strip():
+        shown = [it for it in items
+                 if it.section in ("who_i_am", "unresolved")]
+        if not shown:
             return
+        # Numbered, so the door can name what it drew on and the code can
+        # resolve it (E4.3). `sources` is parallel to the lines: index i holds
+        # the episode ids behind line i+1, and nothing is attributed to a
+        # commitment that did not name it — see migration 0042.
+        material = "\n".join(
+            f"{n}. [{it.section}] {it.text}" for n, it in enumerate(shown, 1))
+        sources = [list(it.evidence) for it in shown]
         from newz.commitments.door import propose_commitment
         try:
             verdict = propose_commitment(
-                conn, self._client, material=material,
+                conn, self._client, material=material, sources=sources,
                 provenance=f"perspective:{version}",
                 perspective_version=version)
         except Exception:  # noqa: BLE001 — the night is already durable

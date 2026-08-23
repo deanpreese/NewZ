@@ -1040,13 +1040,41 @@ and costs. Backwards, this entrenches a mediocre early position and manufactures
 one dropped without a resolution is recorded with its cost.
 *Depends on:* E4.1, E1.4.
 
-**E4.3 — what shaped it**
+**E4.3 — what shaped it** *(built 2026-08-22)*
 *Delivers:* commitments render with their provenance, reusing
 `tools/what_shaped.py`.
 *Done when:* each commitment shows the world/people/self mix behind it, and
 single-source dominance is flagged as INV-033 already flags positions.
 *Depends on:* E4.1, E3.2.
 *Hooks:* §8 traceability, INV-033.
+
+*As built:* migration 0042, `what_shaped_commitment` beside `what_shaped` in
+`newz/memory/provenance.py`, rendered on the commitments page and in
+`tools/commitments.py`, 6 tests, **INV-101**.
+
+*It could not be built against what E4.1 stored, and that was the finding.*
+E4.1 recorded `provenance` as `perspective:N` — a moment, not a grounding — and
+`what_shaped` traces `evidence_json`, so there was nothing to trace. **The
+obvious fix would have broken the flag this epic exists to serve**: the door is
+shown the night's `who_i_am` and `unresolved` items, each carrying its own
+evidence, and storing the UNION would attribute everything the being was *shown*
+to whatever it committed to. A commitment formed from one line would look
+grounded in twelve, and INV-033's single-source dominance flag — whose whole
+purpose is to catch a position resting on one source — would be the thing least
+able to fire. A padded evidence set does not merely overstate breadth; it
+suppresses the warning about its absence.
+
+*So the door asks.* The material is numbered, the being answers `<drew_on>` with
+the indices it used, and **the code resolves them** — an index out of range is
+dropped, a non-number ignored, naming nothing keeps an empty list. The model
+names; it does not judge, so Rule 4 is untouched. Empty renders as *carries no
+resolvable evidence* (INV-044) rather than borrowing a mix from its neighbours.
+
+*Why the mix matters more here than on a position.* A commitment whose grounding
+is 100% `human:dean` is the operator's preference wearing the being's voice —
+which the door's prompt warns against and cannot detect on its own. E4.1 exists
+so identity is chosen rather than absorbed, and this is the read that says which
+it was.
 
 **Evidence S4-E.** Commitments exist and are the being's own. At least one
 revised on evidence — Phase 1's resolutions are the intended source. At least one

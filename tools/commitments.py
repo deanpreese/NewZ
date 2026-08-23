@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from newz.commitments.door import MAX_PER_DAY, MAX_STANDING
 from newz.commitments.store import all_commitments, standing, standing_count
 from newz.config import load
+from newz.memory.provenance import what_shaped_commitment
 from newz.store.db import open_db
 
 _KIND = {"keeps_caring": "keeps caring", "refuses_to_do": "refuses to do"}
@@ -38,7 +39,7 @@ def _day(ts: float | None) -> str:
     return datetime.fromtimestamp(ts).strftime("%Y-%m-%d") if ts else "—"
 
 
-def _render(c) -> str:
+def _render(c, conn=None) -> str:
     head = f"[{c.id}] {_KIND.get(c.kind, c.kind)}: {c.statement}"
     out = [textwrap.fill(head, 88, subsequent_indent="      ")]
     out.append(textwrap.fill(f"broken by: {c.falsifier}", 88,
@@ -48,6 +49,23 @@ def _render(c) -> str:
     if c.perspective_version:
         tail += f"  (perspective v{c.perspective_version})"
     out.append(tail)
+    # E4.3, and INV-033's flag. A commitment resting on one source is an
+    # identity claim resting on one source — sharper here than on a position,
+    # because E4.1 exists so identity is chosen rather than absorbed.
+    if conn is not None:
+        inf = what_shaped_commitment(conn, c.id)
+        if inf is not None and inf.total:
+            out.append(f"      shaped by {inf.total} episode(s): the world "
+                       f"{inf.share('world'):.0%} · people "
+                       f"{inf.share('human'):.0%} · itself "
+                       f"{inf.share('self'):.0%}")
+            top = inf.concentration
+            if top and top[1] > 0.5:
+                out.append(f"      ** {top[1]:.0%} of this comes from one "
+                           f"source: {top[0]}")
+        elif inf is not None:
+            out.append("      shaped by: nothing traceable — it named no "
+                       "material it drew on")
     return "\n".join(out)
 
 
@@ -81,7 +99,7 @@ def main() -> int:
         print(f"\n  commitments: {len(rows)} shown, {n} standing"
               f" of {MAX_STANDING}, {MAX_PER_DAY} a day\n")
         for c in rows:
-            print(_render(c))
+            print(_render(c, conn))
             print()
         if not rows:
             print("  (none yet — the door is asked once per sleep, and most"

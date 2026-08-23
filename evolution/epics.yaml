@@ -377,7 +377,7 @@ epics:
   E4.3:
     title: 'what shaped it'
     phase: 4
-    status: open
+    status: built
     depends_on: [E3.2, E4.1]
     done_when: mechanical
     done_when_sha: 1ca35b4a3f1fbddc

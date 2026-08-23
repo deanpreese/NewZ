@@ -1,0 +1,38 @@
+-- What shaped a commitment (P4 epic E4.3), added while the table is empty.
+--
+-- E4.1 stored `provenance` as `perspective:N` — the version the being was on
+-- when it committed. That names a moment, not a grounding, and E4.3's
+-- `Done when` is *"each commitment shows the world/people/self mix behind it,
+-- and single-source dominance is flagged as INV-033 already flags positions"*.
+-- `what_shaped` computes that mix from `evidence_json` on `perspective_items`,
+-- so without the same column here there is nothing for it to trace.
+--
+-- **The obvious fix would have broken the flag it exists to serve.** The door
+-- is shown the night's `who_i_am` and `unresolved` items, each carrying its
+-- own evidence. Storing the union of all of them attributes everything the
+-- being was SHOWN to whatever it committed to — so a commitment formed from
+-- one item would appear grounded in twelve, and INV-033's single-source
+-- dominance flag, whose whole purpose is to catch a position resting on one
+-- source, would be the thing least able to fire. A padded evidence set does
+-- not merely overstate breadth; it suppresses the warning about its absence.
+--
+-- So the door asks. The material is numbered, the being answers `<drew_on>`
+-- with the indices it used, and **the code resolves those indices** — an index
+-- out of range is dropped rather than trusted, and a commitment that names
+-- nothing keeps an empty list rather than inheriting everything. The model
+-- names; it does not judge. Rule 4 is untouched: nothing here asks the being
+-- whether its commitment is any good, only which material it read.
+--
+-- Empty list is a real answer and renders as one: `what_shaped` already says
+-- "carries no resolvable evidence" for a position whose refs resolve to
+-- nothing, and a commitment the being could not trace should say the same
+-- rather than borrow a mix from its neighbours.
+--
+-- Added at 0042 rather than folded into 0041 because 0041 has already been
+-- applied to the live store. The table is still empty, which is why this is a
+-- column addition and not a backfill — and it is the reason to decide the
+-- question now rather than after a fortnight of commitments with no grounding.
+--
+-- Writer: newz/commitments/door.py. Readers: tools/commitments.py and the
+-- surface's commitments page, both through newz/memory/provenance.py.
+ALTER TABLE commitments ADD COLUMN evidence_json TEXT NOT NULL DEFAULT '[]';

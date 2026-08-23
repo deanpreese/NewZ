@@ -30,13 +30,15 @@ def _proposal(**kw) -> str:
         statement="I will not close a concern by restating it more carefully.",
         falsifier="a concern closed whose resolution text is a paraphrase of"
                   " its own statement",
+        drew_on="",
     )
     f.update(kw)
     return (f"<commitment>"
             f"<worth_committing>{f['worth_committing']}</worth_committing>"
             f"<kind>{f['kind']}</kind>"
             f"<statement>{f['statement']}</statement>"
-            f"<falsifier>{f['falsifier']}</falsifier></commitment>")
+            f"<falsifier>{f['falsifier']}</falsifier>"
+            f"<drew_on>{f['drew_on']}</drew_on></commitment>")
 
 
 def _llm(*bodies):
@@ -189,3 +191,90 @@ def test_the_daily_cap_holds_and_the_model_is_never_called(store):
 
     assert v.refused == "cap: daily"
     assert standing_count(store) == MAX_PER_DAY
+
+
+# ── E4.3: what shaped it, and what deliberately does not ────────────────────
+
+def _episode(store, provenance: str) -> int:
+    cur = store.execute(
+        "INSERT INTO episodes (ts, kind, provenance, summary) VALUES"
+        " (?,'reading',?,'x')", (time.time(), provenance))
+    store.commit()
+    return int(cur.lastrowid)
+
+
+def test_only_the_material_it_named_is_attributed_to_it(store):
+    """E4.3's design decision, and the reason the door asks instead of guessing.
+
+    Attributing the union of everything the door was SHOWN would make a
+    commitment formed from one line look grounded in three — and INV-033's
+    single-source dominance flag, whose whole purpose is to catch a position
+    resting on one source, would be the thing least able to fire. A padded
+    evidence set does not merely overstate breadth; it suppresses the warning
+    about its absence.
+    """
+    from newz.memory.provenance import what_shaped_commitment
+
+    a = _episode(store, "human:dean")
+    b = _episode(store, "world:arxiv")
+    c = _episode(store, "world:wikipedia")
+
+    v = propose_commitment(
+        store, _llm(_proposal(drew_on="1")),
+        material="1. [who_i_am] one\n2. [unresolved] two\n3. [unresolved] three",
+        sources=[[str(a)], [str(b)], [str(c)]],
+        provenance="perspective:14")
+
+    assert v.authored
+    inf = what_shaped_commitment(store, v.commitment_id)
+    assert inf.total == 1                      # not 3 — only what it named
+    assert inf.share("human") == 1.0
+    assert inf.concentration[0] == "human:dean"
+
+
+def test_a_commitment_resting_on_one_source_is_visible_as_such(store):
+    """INV-033 one layer up. A commitment whose mix is entirely the operator is
+    the operator's preference wearing the being's voice — which the door's
+    prompt warns against and cannot detect on its own.
+    """
+    from newz.memory.provenance import what_shaped_commitment
+
+    ids = [_episode(store, "human:dean") for _ in range(3)]
+    v = propose_commitment(
+        store, _llm(_proposal(drew_on="1, 2, 3")),
+        material="1. a\n2. b\n3. c",
+        sources=[[str(i)] for i in ids], provenance="perspective:14")
+
+    inf = what_shaped_commitment(store, v.commitment_id)
+    source, share = inf.concentration
+    assert source == "human:dean" and share == 1.0
+
+
+def test_an_index_outside_the_material_is_dropped_not_trusted(store):
+    """The code resolves; the model only names. Rule 4 stays intact because
+    nothing here asks the being whether its commitment is any good."""
+    from newz.memory.provenance import what_shaped_commitment
+
+    a = _episode(store, "world:arxiv")
+    v = propose_commitment(
+        store, _llm(_proposal(drew_on="1, 9, banana, 0, -2")),
+        material="1. a", sources=[[str(a)]], provenance="perspective:14")
+
+    inf = what_shaped_commitment(store, v.commitment_id)
+    assert inf.total == 1 and inf.share("world") == 1.0
+
+
+def test_naming_nothing_stays_empty_rather_than_inheriting(store):
+    """Empty is a real answer and is kept as one — the alternative is exactly
+    the padding this design exists to avoid."""
+    from newz.memory.provenance import what_shaped_commitment
+
+    a = _episode(store, "world:arxiv")
+    v = propose_commitment(
+        store, _llm(_proposal(drew_on="")), material="1. a",
+        sources=[[str(a)]], provenance="perspective:14")
+
+    assert v.authored
+    inf = what_shaped_commitment(store, v.commitment_id)
+    assert inf.total == 0
+    assert "no resolvable evidence" in inf.render()
