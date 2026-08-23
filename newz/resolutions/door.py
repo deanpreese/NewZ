@@ -100,6 +100,59 @@ _EMPTY_RESOLVERS = (
     "common sense", "we will see", "we'll see", "history",
 )
 
+# A resolver the being has not identified yet. Measured 2026-08-23, the first
+# night under the 45-day ceiling: the door admitted
+#
+#   "European Commission Implementing Regulation (EU) 2023/XXXX on the DSA"
+#   "The specific industry report ... (title to be identified upon release)"
+#
+# Neither names a document anyone could fetch. R-35 built `_names_something`
+# for exactly this and pointed it at the STATEMENT, so a well-named statement
+# carried an unnamed resolver straight through.
+_PLACEHOLDER = re.compile(
+    r"\bXXXX+\b|\bTBD\b|\bplaceholder\b"
+    r"|to be (?:determined|identified|confirmed|announced|named|decided)",
+    re.I)
+
+# **A source cannot speak sooner because the ceiling moved.** The night the
+# horizon dropped to 45 days, the being wrote:
+#
+#   claim 10  120d  2026-08-22  "Meta's Quarterly Transparency Report"
+#   claim 14   30d  2026-08-23  "Meta's Quarterly Transparency Report"
+#
+# Same resolver, and claim 10 even named the quarter it settled in. Nothing
+# about Meta changed; the permitted range did, and the being filled the field
+# to fit — R-31's failure one layer up, where the schema compels a number the
+# model cannot know. The prompt asked it to reach for a NEARER SOURCE and it
+# reached for a nearer date instead.
+#
+# So the door checks the one thing it can: a resolver that says how often it
+# publishes is refused when the horizon is shorter than that. Narrow and
+# literal, for `check_resolver`'s reason — a long list teaches the being to
+# phrase around the door rather than to find a source that speaks sooner.
+#
+# **This deliberately makes some subjects unclaimable**, and that is the point.
+# An annual source cannot settle inside a 45-day ceiling at all, so the refusal
+# is recorded and `tools/claims.py --refused` becomes the evidence for whether
+# 45 is too tight for what this being thinks about. The proposal's falsifier 2
+# asked for exactly that read and had no way to produce it while the being
+# could satisfy the range by misdating.
+#
+# **The known hole, stated rather than patched:** the being can pass by dropping
+# the word "quarterly" from a quarterly source's name. That makes the resolver
+# less searchable, which is a different defect the resolver pass will surface as
+# an honest failure rather than a false settlement. Watch `claim_refusals` for
+# cadence reasons falling to zero while long-cadence subjects keep appearing.
+_CADENCE = (
+    (re.compile(r"\b(?:annual|yearly|per annum|year-end|10-K)\b", re.I),
+     365, "annual"),
+    (re.compile(r"\b(?:quarterly|quarter|Q[1-4]\b|10-Q)\b", re.I),
+     90, "quarterly"),
+    (re.compile(r"\bmonthly\b", re.I), 28, "monthly"),
+    (re.compile(r"\b(?:weekly|week)\b", re.I), 7, "weekly"),
+)
+
+
 _SYSTEM = (
     "You decide whether what a digital being has just established commits it "
     "to anything the world could later prove wrong. You respond with XML "
@@ -168,6 +221,19 @@ observable, not a claim that needs longer. Being wrong in six weeks teaches me
 something; being wrong in a year happens to someone I have already stopped
 being. If nothing my sources will say within 45 days could bear on this, the
 honest answer is `no` — declining costs nothing.
+
+**Moving the date does not move the source.** A quarterly report does not
+arrive next month because I would like it to. If the only source that could
+settle this publishes quarterly or annually, then either I find a different
+observable that appears sooner — a filing, a docket, a weekly release, a
+scheduled hearing — or there is no claim here today. Saying a quarterly source
+will have spoken in thirty days is not a short claim, it is a wrong one, and it
+will fail in thirty days having taught me nothing.
+
+**Name a document that exists.** The resolver has to be something someone could
+go and fetch. "The specific report, title to be identified" and an identifier
+with XXXX in it are not sources — if I cannot name it yet, I cannot claim
+against it yet.
 
 Worked examples, in fields I do not work in, so you have to do the judgment
 rather than reuse the words.
@@ -387,9 +453,27 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
             "cannot say what being wrong would look like — a claim whose other"
             " outcome I cannot describe is not a prediction")
 
+    if _PLACEHOLDER.search(resolver) or _PLACEHOLDER.search(statement):
+        return refuse(
+            "the resolver is not a document yet — a title to be identified, or"
+            " an identifier standing in for one, is a source nobody can fetch"
+            " and a claim nobody can settle")
+
     due, why = _parse_due(due_text, now)
     if due is None:
         return refuse(why or "no date")
+
+    days = (due - now) / DAY
+    for pattern, cadence_days, cadence in _CADENCE:
+        if not pattern.search(resolver):
+            continue
+        if days < cadence_days:
+            return refuse(
+                f"a {cadence} source cannot have spoken in {days:.0f} days —"
+                f" it publishes about every {cadence_days}, and moving the date"
+                f" does not move the source. Claim a nearer observable, or this"
+                f" subject does not fit the {MAX_HORIZON_DAYS}-day ceiling")
+        break
 
     try:
         claim_id = open_claim(conn, Claim(

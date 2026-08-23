@@ -309,3 +309,78 @@ def test_a_claim_inside_the_window_still_opens(store):
     assert v.opened
     claim = claims_by_status(store, "open")[0]
     assert 29 <= (claim.due_at - time.time()) / 86400.0 <= 31
+
+
+# ── the horizon's second night: compression, not shortening (2026-08-23) ────
+
+def test_a_quarterly_source_cannot_have_spoken_in_thirty_days(store):
+    """The defect the first night produced. Measured 2026-08-23:
+
+        claim 10  120d  "Meta's Quarterly Transparency Report"
+        claim 14   30d  "Meta's Quarterly Transparency Report"
+
+    Same resolver, and claim 10 even named the quarter it settled in. Nothing
+    about Meta changed; the ceiling did, and the being filled the field to fit
+    — R-31's failure one layer up. Behavior: a source that says how often it
+    publishes is refused when the horizon is shorter than that, so the being
+    cannot satisfy the range by misdating.
+    """
+    v = propose_claim(
+        store, FakeLLM([("DEEP", _proposal(
+            resolver="Meta's Quarterly Transparency Report", due="30"))]),
+        established=ESTABLISHED, concern_statement=CONCERN, concern_id=1)
+
+    assert not v.opened
+    assert "quarterly source cannot have spoken in 30 days" in v.refused
+    assert "moving the date does not move the source" in v.refused
+    row = store.execute("SELECT reason FROM claim_refusals").fetchone()
+    assert "45-day ceiling" in row["reason"]      # the read that sizes the cap
+
+
+def test_an_annual_source_is_unclaimable_and_that_is_the_finding(store):
+    """Deliberate. An annual source cannot settle inside a 45-day ceiling at
+    all, so the refusal is recorded and becomes the evidence for whether 45 is
+    too tight for what this being thinks about — the read the proposal's
+    falsifier 2 asked for and could not produce while misdating was available.
+    """
+    v = propose_claim(
+        store, FakeLLM([("DEEP", _proposal(
+            resolver="the company's annual report", due="40"))]),
+        established=ESTABLISHED, concern_statement=CONCERN, concern_id=1)
+
+    assert not v.opened and "annual source" in v.refused
+
+
+def test_a_weekly_source_inside_the_window_still_opens(store):
+    """The check must not refuse the claims the change exists to produce."""
+    v = propose_claim(
+        store, FakeLLM([("DEEP", _proposal(
+            resolver="CFTC Commitments of Traders weekly report", due="21"))]),
+        established=ESTABLISHED, concern_statement=CONCERN, concern_id=1)
+
+    assert v.opened, v.refused
+
+
+def test_a_resolver_that_is_not_a_document_yet_is_refused(store):
+    """R-35 pointed at the RESOLVER. `_names_something` checks the statement,
+    so a well-named statement carried an unnamed resolver straight through —
+    "(EU) 2023/XXXX" and "title to be identified upon release" both opened on
+    the first night under the new ceiling.
+    """
+    for bad in ("European Commission Implementing Regulation (EU) 2023/XXXX",
+                "The specific industry report (title to be identified upon release)",
+                "the forthcoming paper, TBD"):
+        v = propose_claim(
+            store, FakeLLM([("DEEP", _proposal(resolver=bad, due="30"))]),
+            established=ESTABLISHED, concern_statement=CONCERN, concern_id=1)
+        assert not v.opened, bad
+        assert "not a document yet" in v.refused, bad
+
+
+def test_the_prompt_says_what_the_door_now_refuses(store):
+    """A door that refuses what it never warned about teaches the being to
+    guess. Both new refusals are stated in the task."""
+    from newz.resolutions import door
+
+    assert "Moving the date does not move the source" in door._TASK
+    assert "Name a document that exists" in door._TASK
