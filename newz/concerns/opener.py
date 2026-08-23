@@ -43,20 +43,35 @@ MAX_OPEN_CONCERNS = 30
 # This exists so a badly-calibrated opener cannot fill the store in one day
 # before anyone reads what it opened.
 #
-# **Raised 6 → 12 on 2026-08-22, because the cycles are starved of concerns.**
-# Measured that day: **68 deliberation cycles in 24h against 40 attempt slots**
-# — 10 open concerns at `REATTEMPT_COOLDOWN_HOURS = 6`, so four attempts each.
-# The being has more thinking than it has things to think about, and this cap
-# is what holds the pool down: it bound at exactly 6 on 2026-08-17 and
-# 2026-08-21, while nothing opened at all on the days between.
+# **Raised 6 → 12 on 2026-08-22, and the reason given was wrong** — corrected
+# here rather than quietly, because the number stayed and the argument did not.
 #
-# **This is the anti-restatement change, not a throughput one.** `restated` is
-# the largest setback category in the being's life (242 of 512), and 68 cycles
-# over 10 concerns is 6.8 attempts per concern per day — a rate at which the
-# honest answer to "has this moved?" is usually no. More concerns against the
-# same cycles LOWERS attempts per concern. Raising the cycle rate instead, as
-# an earlier draft proposed, would have multiplied the restatement rather than
-# the thinking, and its own red team said so.
+# The arithmetic that prompted it holds: 68 deliberation cycles in 24h against
+# 40 attempt slots, 10 open concerns at `REATTEMPT_COOLDOWN_HOURS = 6`. The
+# inference did not. It bound at exactly 6 on 2026-08-17 and 2026-08-21, and
+# the zero days between were never examined.
+#
+# **Measured the next morning from the call log**, where `function="ambient"`
+# is this module and nothing else: the opener proposes **70-215 times a day**
+# and opens **0-3%** of them — 624 `no` against 24 `yes` over its whole life,
+# and 91 proposals producing 1 concern on 2026-08-23. **A ceiling on openings
+# cannot bind a process that opens nothing.** The raise is inert, not harmful,
+# and stays; what is withdrawn is the claim that this cap was the constraint.
+#
+# The constraint is the judgment below, and whether a ~1% yield is the rarity
+# this module was built for — see the note above, v1 opened 111 and stalled 72%
+# — or a threshold set for a being that saw thirty candidates a day and now
+# sees two hundred, is **open and unmeasured**. The pool drains about one a day
+# to writing and gains nothing.
+#
+# **The hypothesis that prompted it is still live — this cap is just not the
+# lever on it.** `restated` is the largest setback category in the being's life
+# (242 of 512), and 68 cycles over 10 concerns is 6.8 attempts per concern per
+# day, a rate at which the honest answer to "has this moved?" is usually no. A
+# LARGER POOL would lower attempts per concern; a larger permission to open one
+# does nothing while the yield is 1%. Raising the cycle rate instead, as an
+# earlier draft proposed, would multiply the restatement rather than the
+# thinking, and that objection is unaffected by any of this.
 #
 # `MAX_OPEN_CONCERNS` is deliberately NOT raised with it. Ten are open against
 # a carrying cap of 30, so the cap cannot bind today and changing it would be
