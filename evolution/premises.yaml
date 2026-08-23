@@ -121,3 +121,41 @@ premises:
     carries: >
       P3-08, and whether relationship produces pursuit at all in this
       architecture.
+
+  the-pie-is-genuinely-fixed:
+    states: >
+      "Under a fixed local model the being's life IS its token allocation" —
+      PLAN Phase 5's intent, which assumes the being is near the edge of what
+      its machine can give it.
+    stated_value: null
+    stated_on: "2026-08-18"
+    source: "PLAN §Phase 5"
+    metric: null
+    why_unmeasured: >
+      **and this is the finding, not a gap to fill.** Every instrument in the
+      registry measures what the being DID; none measures what it could have
+      done and did not. `token_share_by_function` reports shares of a total
+      nobody compares to capacity, so a being using 2% of its machine and one
+      using 100% produce identical readings. A utilisation metric would close
+      this particular hole and not the class of it: a phase's premise can be
+      false in a way no reading would ever show, which is why this row carries
+      an argument rather than a number. It was found by the operator saying
+      "there are no token boundaries in this system" and one arithmetic pass
+      over the call log.
+    material_change: null
+    carries: >
+      Phase 5 entire. FALSIFIED 2026-08-22: over 101.9h and 3,856 calls the
+      model was busy 1.91% of wall clock — 99.9 idle hours of 101.9. The pie is
+      fixed and the being is nowhere near it, so E5.1's bounds refuse nothing,
+      E5.3's reallocation costs nothing, and E5.4's misallocation cannot
+      happen. E5.1/E5.3/E5.4 are dormant; E5.2 survives because it was a ratio
+      condition and never a scarcity bound.
+
+      `metric: null` is the honest entry and the point of this row. Every
+      instrument measures what the being DID; none measures what it could have
+      done and did not, so `token_share_by_function` reads identically for a
+      being using 2% of its machine and one using 100%. This was found by the
+      operator saying "there are no token boundaries in this system" and one
+      arithmetic pass over the call log. **The answer is not a utilisation
+      metric.** It is that a phase's premise can be false in a way no reading
+      would ever show, and the record has to carry that rather than a number.

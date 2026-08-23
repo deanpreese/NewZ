@@ -385,7 +385,7 @@ epics:
   E5.1:
     title: 'the activity budget'
     phase: 5
-    status: open
+    status: dormant
     depends_on: []
     done_when: mechanical
     done_when_sha: e8d698d305c0e055
@@ -401,7 +401,7 @@ epics:
   E5.3:
     title: 'being-allocated spend'
     phase: 5
-    status: open
+    status: dormant
     depends_on: [E5.2]
     done_when: in-life
     done_when_sha: c276a7f4e197ee7f
@@ -409,7 +409,7 @@ epics:
   E5.4:
     title: 'misallocation as experience'
     phase: 5
-    status: open
+    status: dormant
     depends_on: [E5.3]
     done_when: in-life
     done_when_sha: 38c43bd08943ed7e

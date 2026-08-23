@@ -1119,11 +1119,65 @@ not real and identity is not being held.
 
 ---
 
-## Phase 5 — an economy it spends
+## Phase 5 — an economy it spends *(its premise is false — measured 2026-08-22)*
 
 **Intent.** Under a fixed local model the being's life *is* its token allocation.
 Make the allocation its own, within hard bounds, on a machine where the pie is
 genuinely fixed.
+
+> **There is no scarcity, so there is no economy** *(operator, 2026-08-22:
+> "there are no token boundaries in this system"; measured the same hour from
+> `logs/llm_calls.jsonl`)*.
+>
+> Over 101.9 hours and 3,856 calls the model was **busy 6,988 seconds — 1.91%
+> of wall clock**. Ingest, the largest consumer of the being's life by every
+> other measure, is **1.17%**. Deliberation is 0.36%. **99.9 hours of 101.9
+> were idle.**
+>
+> The pie is fixed. The being is nowhere near its edge, and that is what the
+> intent above assumes without ever having checked. Taken epic by epic:
+>
+> - **E5.1** — *"the bounds are enforced, not merely reported"*. Bounds on
+>   what? Nothing is contended, so an enforced ceiling refuses nothing that
+>   would otherwise have happened.
+> - **E5.3** — *"an allocation change originates with the being and takes
+>   effect"*. Moving tokens from ingest to deliberation takes nothing from
+>   ingest. A choice that costs nothing is a preference, not an allocation, and
+>   §5's decision rule — *if the ratio only moves when the operator moves it,
+>   the allocation is not the being's* — cannot distinguish the two.
+> - **E5.4** — *"a bad spend is an episode it can learn from"*. An abundant
+>   resource cannot be misallocated.
+>
+> **E5.2 survives, and is built** (2026-08-22, `668cde5`). It was never a
+> scarcity bound: it is a *ratio* condition — reading is earned by thinking —
+> and that is a discipline about attention rather than about running out of
+> anything. Its own epic text is separately wrong for a different reason,
+> recorded below.
+>
+> **What this cost elsewhere.** The `2026-08-22-more-cycles.md` red team let
+> *"one box, one model"* stand as a capacity objection to raising the cycle
+> rate. It is not one — there is roughly 50× headroom — and the lock storm it
+> cited was a concurrency defect, since fixed. The argument against more cycles
+> rests entirely on the other leg: ~68 cycles a day already produce ~50
+> accepted advances against 12 Perspective items a week, so the loss is between
+> advance and Perspective and no cycle rate reaches it.
+>
+> **No instrument would have caught this**, and that is the part worth keeping.
+> Every metric in `instruments.yaml` measures what the being *did*; none
+> measures what it *could have done and did not*. `token_share_by_function`
+> reports shares of a total nobody compares to capacity, so a being using 2% of
+> its machine and a being using 100% produce identical readings. This was found
+> by an operator's flat statement and one arithmetic check, not by the sensor
+> layer, and the answer is not to add a utilisation metric — it is that a
+> phase's premise can be false in a way no reading would ever show.
+>
+> **Where that leaves the phase.** Unscheduled rather than struck: if the
+> being's rate rises far enough for contention to be real, the epics become
+> meaningful again exactly as written. Until then E5.1, E5.3 and E5.4 are
+> **dormant** — correct, deliberately unscheduled, reason stated — which is the
+> status INV-013 established for precisely this case. **Do not build them to
+> close the phase.** S5-E is unreadable for the same reason the epics are
+> dormant: a ratio that moves under no pressure says nothing about who moved it.
 
 **E5.1 — the activity budget**
 *Delivers:* tokens accounted by activity — conversation, gate, deliberation,
