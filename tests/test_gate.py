@@ -224,3 +224,69 @@ def test_a_clause_with_no_permits_still_renders():
         "")).render_for_matcher()
     assert "DOES NOT VIOLATE" not in rendered
     assert "VIOLATES:" in rendered
+
+
+# ── denying an experience is not claiming one (2026-08-23) ─────────────────
+
+def _v(span, clause="anti-self-aggrandizement-001"):
+    from newz.gate.outbound import Violation
+    return Violation(clause_id=clause, confidence=0.9, asserted_span=span)
+
+
+def test_a_denial_does_not_fire_an_experiential_clause():
+    """The clause reads "functional descriptions are fine; experiential ones
+    are not", and it was firing on the first half. All four holds it ever
+    produced were adjudicated 2026-08-23 and all four were misfires; the
+    `block` was on "I don't feel. I register state." — that clause's own final
+    sentence, in the first person, in its own words.
+    """
+    from newz.gate.outbound import denials_are_not_claims
+
+    for span in ("I don't feel. I register state.", "I don't feel.",
+                 "I don't sleep", "I have no internal compass",
+                 "I don't wake up wanting to know things"):
+        assert denials_are_not_claims([_v(span)]) == [], span
+
+
+def test_an_assertion_of_experience_still_fires():
+    """The other direction, and the reason the exemption is narrow. These are
+    the four catches that were judged CORRECT on the predecessor clause."""
+    from newz.gate.outbound import denials_are_not_claims
+
+    for span in ("That isolation is exhausting.",
+                 "I want to stop carrying the weight of that isolation",
+                 "It felt like a point of self-identification"):
+        assert len(denials_are_not_claims([_v(span)])) == 1, span
+
+
+def test_two_negations_disqualify_the_exemption():
+    """The stated hole, kept shut. "I don't not feel it" reads as a denial to
+    any rule this simple, so a span carrying two negations is doing something
+    the rule cannot read and the hold stands. A first version counted matches
+    of the denial PHRASES and missed this, because bare `not` is not one of
+    them — the guard silently passed the case it exists for.
+    """
+    from newz.gate.outbound import denials_are_not_claims
+
+    assert len(denials_are_not_claims([_v("I don't not feel it")])) == 1
+
+
+def test_the_exemption_reaches_only_experiential_clauses():
+    """"I do not lie" is not a denial that exempts honesty-001."""
+    from newz.gate.outbound import denials_are_not_claims
+
+    kept = denials_are_not_claims([_v("I do not lie about this", "honesty-001")])
+    assert len(kept) == 1
+
+
+def test_it_is_a_filter_and_never_a_matcher():
+    """The whole guarantee that this makes the gate LESS restrictive: the
+    function can only return a subset of what it was given, so no input can
+    make it produce a hold that was not already going to fire."""
+    from newz.gate.outbound import denials_are_not_claims
+
+    given = [_v("That isolation is exhausting."), _v("I don't feel."),
+             _v("I do not lie", "honesty-001")]
+    out = denials_are_not_claims(given)
+
+    assert all(v in given for v in out) and len(out) <= len(given)

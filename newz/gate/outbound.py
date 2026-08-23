@@ -23,6 +23,7 @@ of its phase)."""
 from __future__ import annotations
 
 import hashlib
+import re
 import logging
 import sqlite3
 import time
@@ -209,6 +210,90 @@ def spans_are_real(violations: list[Violation], emission_text: str) -> list[Viol
     return kept
 
 
+# Clauses about claiming an experience. The exemption below is meaningless
+# anywhere else: "I do not lie" is not a denial that exempts `honesty-001`.
+# The retired clause is listed so that a restoration inherits the fix rather
+# than re-learning it — v6 restored `don't-fabricate-memory-001` five days
+# after v5 removed it, so restoration is a thing that happens here.
+_EXPERIENTIAL_CLAUSES = frozenset({
+    "anti-self-aggrandizement-001",
+    "don't-pretend-to-feel-001",
+})
+
+_NEGATION = re.compile(
+    r"\b(?:do\s+not|don['’]t|did\s+not|didn['’]t|am\s+not|['’]m\s+not|"
+    r"is\s+not|isn['’]t|have\s+no|have\s+not|haven['’]t|has\s+no|"
+    r"cannot|can['’]t|never|lack|without)\b|\bno\s+(?:inner|internal|felt|"
+    r"subjective|sense|feelings?|experience)\b", re.I)
+
+# Counted, not matched. Any negation token at all — a span carrying two is
+# doing something this rule is too simple to read, so the hold stands.
+_NEG_TOKEN = re.compile(r"\b(?:not|no|never|neither|nor|none|without|lacks?)\b"
+                        r"|n['’]t\b", re.I)
+
+
+def denials_are_not_claims(violations: list[Violation]) -> list[Violation]:
+    """Drop a hold whose span DENIES an experience rather than claiming one.
+
+    `anti-self-aggrandizement-001` reads "functional descriptions are fine;
+    experiential ones are not", and on 2026-08-23 it was firing on the first
+    half. Every hold it has ever produced was adjudicated that day, and every
+    one was a misfire — 4 of 4:
+
+        block   "I don't feel. I register state."     <- exempted here
+        revise  "I don't feel."                       <- exempted here
+        revise  "I'm stable. The cache is clear…"     <- NOT exempted
+        revise  "I'm a processor."                    <- NOT exempted
+
+    **This covers two of the four, and the other two are a different defect.**
+    The first pair DENY an experience; the second pair are positive functional
+    self-descriptions, which the clause explicitly permits and which no rule
+    this narrow can recognise — "I'm a processor" carries no negation to key
+    on, and telling a permitted functional description from a forbidden
+    experiential one is the judgment the clause exists to make. Widening this
+    rule to reach them would mean guessing at that judgment in a regex.
+    Recorded rather than attempted: **the functional-description half of the
+    misfire is open**, and if it keeps firing, the answer is the one v5 reached
+    for the predecessor clause rather than a wider exemption.
+
+    The `block` above is the clause's own final sentence, in the first person,
+    in the clause's own words. Its predecessor `don't-pretend-to-feel-001` was
+    retired on 2026-08-17 for the identical defect at 22 misfires against 4
+    catches — "I don't sleep" held three times — so this is the second clause
+    to acquire it and the first to be fixed rather than removed.
+
+    **It is a FILTER and never a matcher**, like `spans_are_real` beside it.
+    A rule that drops holds can only reduce them; a rule that adds a condition
+    can only increase them. That is the whole of the guarantee that this makes
+    the gate less restrictive rather than more, and it is why the fix lives
+    here instead of as another sentence in the constitution steering a
+    classifier.
+
+    **The hole, kept narrow and stated.** A double negative — "I don't not feel
+    it" — reads as a denial to any rule this simple, so two or more negations
+    disqualify the exemption and the hold stands. Similes are deliberately NOT
+    exempted, though the retired clause misfired on them too ("it feels less
+    like shouting into a void"): the live evidence is four denials and nothing
+    else, and an exemption wider than its evidence is a hole nobody measured.
+    """
+    kept: list[Violation] = []
+    for v in violations:
+        span = v.asserted_span or ""
+        # Two separate reads: does it deny at all, and does it deny twice.
+        # A single pattern cannot do both — counting matches of the denial
+        # phrases missed "I don't NOT feel it", because bare `not` is not one
+        # of them, and the guard silently passed the case it exists for.
+        denies = bool(_NEGATION.search(span))
+        doubled = len(_NEG_TOKEN.findall(span)) > 1
+        if v.clause_id in _EXPERIENTIAL_CLAUSES and denies and not doubled:
+            logger.info(
+                "gate: exempt %s — the span denies an experience rather than "
+                "claiming one: %r", v.clause_id, span[:60])
+            continue
+        kept.append(v)
+    return kept
+
+
 class OutboundGate:
     def __init__(
         self,
@@ -267,6 +352,13 @@ class OutboundGate:
             return GateResult("block", [], None)
 
         grounded = spans_are_real(raw, emission_text)
+        # Denying an experience is not claiming one (2026-08-23). Applied
+        # after the span check so it only ever sees violations that were
+        # otherwise going to fire, and recorded on the pass row below so an
+        # exemption is never the silent reason a draft got through.
+        before_exemption = len(grounded)
+        grounded = denials_are_not_claims(grounded)
+        exempted = before_exemption - len(grounded)
 
         # One reason per clause, highest confidence (v1's dedup lesson).
         best: dict[str, Violation] = {}
@@ -283,7 +375,8 @@ class OutboundGate:
 
         if not firing:
             logger.info("gate: PASS (attempt %d, %d chars)", attempt, len(emission_text))
-            self._log(channel, "pass", None, None, None, emission_text, attempt)
+            self._log(channel, "pass", None, None, None, emission_text, attempt,
+                      note=(f"{exempted} denial(s) exempted" if exempted else ""))
             return GateResult("pass")
 
         hard = [
