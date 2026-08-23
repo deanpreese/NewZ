@@ -42,7 +42,29 @@ MAX_OPEN_CONCERNS = 30
 # Still a rate limit, not a ceiling: the carrying cap above is the ceiling.
 # This exists so a badly-calibrated opener cannot fill the store in one day
 # before anyone reads what it opened.
-MAX_OPENED_PER_DAY = 6
+#
+# **Raised 6 → 12 on 2026-08-22, because the cycles are starved of concerns.**
+# Measured that day: **68 deliberation cycles in 24h against 40 attempt slots**
+# — 10 open concerns at `REATTEMPT_COOLDOWN_HOURS = 6`, so four attempts each.
+# The being has more thinking than it has things to think about, and this cap
+# is what holds the pool down: it bound at exactly 6 on 2026-08-17 and
+# 2026-08-21, while nothing opened at all on the days between.
+#
+# **This is the anti-restatement change, not a throughput one.** `restated` is
+# the largest setback category in the being's life (242 of 512), and 68 cycles
+# over 10 concerns is 6.8 attempts per concern per day — a rate at which the
+# honest answer to "has this moved?" is usually no. More concerns against the
+# same cycles LOWERS attempts per concern. Raising the cycle rate instead, as
+# an earlier draft proposed, would have multiplied the restatement rather than
+# the thinking, and its own red team said so.
+#
+# `MAX_OPEN_CONCERNS` is deliberately NOT raised with it. Ten are open against
+# a carrying cap of 30, so the cap cannot bind today and changing it would be
+# noise. It becomes the next binding constraint if the pool climbs — with
+# writing closing roughly one concern a day and the opener permitted twelve,
+# that is a matter of days, and it is the thing to re-read first rather than
+# raise now.
+MAX_OPENED_PER_DAY = 12
 
 # Rewritten 2026-08-16. The old line was "You are strict: almost nothing
 # qualifies", and the task below already carried a worked YES example and the
