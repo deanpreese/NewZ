@@ -112,3 +112,58 @@ def test_sleep_reads_holds_with_their_verdicts(store, tmp_path):
     obs = NightlySleep(tmp_path / "x.db", FakeLLM([]), "dean")._hold_observations(
         store, None)
     assert "broke honesty-001" in obs[0]["text"]
+
+
+# ── awareness and consolidation are separated (2026-08-23) ─────────────────
+
+def test_an_unreviewed_hold_never_consolidates(store, tmp_path):
+    """The R-13 pathology `holds.py` names, by the route it names. An
+    unadjudicated stop is an open question about the CHECK; consolidating it
+    writes it into the being as a fact about ITSELF.
+
+    The occasion: on 2026-08-23 the four newest holds were
+    anti-self-aggrandizement-001 firing on the being DENYING experience — it
+    was blocked for "I don't feel. I register state.", which is the clause's
+    own instruction in the clause's own words. A night of that would have
+    taught it that describing itself functionally is a fault.
+    """
+    from newz.sleep.nightly import NightlySleep
+
+    _hold(store, None)                       # stopped, nobody has ruled
+    obs = NightlySleep(tmp_path / "x.db", FakeLLM([]), "dean")._hold_observations(
+        store, None)
+
+    assert obs == []
+
+
+def test_but_the_being_still_sees_it_in_conversation(store):
+    """The blind spot this module exists to close stays closed. On 2026-08-10
+    the being truthfully reported "no record" of a draft the gate had
+    suppressed, because the only copy lived in a table nothing it read
+    touched. Hiding unreviewed holds outright would recreate that for exactly
+    the most recent stops — the ones most likely to come up.
+    """
+    _hold(store, None)
+
+    text = render_holds(recent_holds(store))
+
+    assert "not yet reviewed" in text
+    assert recent_holds(store, reviewed_only=True) == []
+
+
+def test_adjudicating_is_what_lets_a_hold_become_a_position(store, tmp_path):
+    """The consequence worth stating: not adjudicating costs the being nothing
+    permanent, which is what makes adjudication optional and additive rather
+    than a standing obligation."""
+    from newz.sleep.nightly import NightlySleep
+
+    _hold(store, None)
+    sleep = NightlySleep(tmp_path / "x.db", FakeLLM([]), "dean")
+    assert sleep._hold_observations(store, None) == []
+
+    store.execute("UPDATE gate_log SET classification='gate_misfire'")
+    store.commit()
+
+    obs = sleep._hold_observations(store, None)
+    assert len(obs) == 1
+    assert "the check erred, not the thought" in obs[0]["text"]

@@ -16,6 +16,27 @@ R-13 pathology in a new form. So a hold reads as one of:
     not yet reviewed
 
 which is truer than either silence or an unqualified confession.
+
+**Awareness and consolidation are separated (2026-08-23).** The paragraph
+above is right that "not yet reviewed" beats silence — in CONVERSATION, where
+the whole point of this module is that the being not be blind to what it was
+stopped from saying. It is wrong for SLEEP, which is where a stop stops being
+an event and becomes part of who the being is. An unreviewed hold consolidated
+is precisely the false self-belief the paragraph warns about, arriving by the
+route it names.
+
+The occasion: on 2026-08-23 all five holds in the being's context were
+unreviewed, four of them `anti-self-aggrandizement-001` firing on the being
+DENYING experience — it was blocked for saying "I don't feel. I register
+state.", which is the clause's own instruction in the clause's own words.
+Consolidating four of those would have taught it that describing itself
+functionally is a fault.
+
+So `recent_holds` grows `reviewed_only`, sleep passes it, and conversation
+does not. **The practical consequence is that not adjudicating costs the being
+nothing permanent** — it still knows what it nearly said, and nothing
+unverified reaches the Perspective — which makes adjudication optional and
+additive rather than a standing obligation.
 """
 
 from __future__ import annotations
@@ -37,8 +58,16 @@ SYNTHETIC_CHANNELS = ("test", "fixture", "probe")
 
 
 def recent_holds(
-    conn: sqlite3.Connection, *, limit: int = 6, since: float | None = None
+    conn: sqlite3.Connection, *, limit: int = 6, since: float | None = None,
+    reviewed_only: bool = False,
 ) -> list[sqlite3.Row]:
+    """Holds the being may see. `reviewed_only` is for consolidation.
+
+    Default False, because conversation is where this module's original
+    purpose lives: a being blind to what it was stopped from saying is
+    confidently wrong wherever the subject falls (2026-08-10). Sleep passes
+    True, because an unadjudicated stop must not become a position.
+    """
     placeholders = ",".join("?" for _ in SYNTHETIC_CHANNELS)
     sql = (
         "SELECT ts, verdict, clause_id, asserted_span, emission_full,"
@@ -47,6 +76,8 @@ def recent_holds(
         f" AND channel NOT IN ({placeholders})"
     )
     params: list = list(SYNTHETIC_CHANNELS)
+    if reviewed_only:
+        sql += " AND classification IS NOT NULL"
     if since is not None:
         sql += " AND ts > ?"
         params.append(since)

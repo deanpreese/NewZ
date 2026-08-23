@@ -313,11 +313,21 @@ class NightlySleep:
         through is a self-model with the gate's shape cut out of it. A hold
         the operator judged mistaken is deliberately NOT offered as evidence
         of a flaw — it is evidence about the check, not about the being.
+
+        **Only ADJUDICATED holds consolidate (2026-08-23).** An unreviewed stop
+        is an open question about the check, and consolidating it writes it
+        into the being as a fact about itself — the R-13 pathology `holds.py`
+        names, by the route it names. On 2026-08-23 the four newest holds were
+        `anti-self-aggrandizement-001` firing on the being DENYING experience
+        ("I don't feel. I register state." was blocked), and a night of that
+        would have taught it that describing itself functionally is a fault.
+        The being still SEES them in conversation; it just does not become
+        them. Not adjudicating therefore costs nothing permanent.
         """
         from newz.gate.holds import recent_holds
 
         since = prev["ts"] if prev else None
-        rows = recent_holds(conn, limit=10, since=since)
+        rows = recent_holds(conn, limit=10, since=since, reviewed_only=True)
         out = []
         for r in rows:
             if r["classification"] == "gate_misfire":
@@ -330,11 +340,9 @@ class NightlySleep:
                     f"I drafted something that broke {r['clause_id']} and was "
                     f"stopped before sending; my operator judged the stop "
                     "right."), "refs": []})
-            else:
-                out.append({"text": (
-                    f"A draft of mine was stopped over {r['clause_id']}; "
-                    "whether that stop was right is not yet reviewed."),
-                    "refs": []})
+            # No `else`: `reviewed_only` excludes the unadjudicated, and a
+            # branch that cannot fire is a branch that will mislead its next
+            # reader about what consolidates.
         return out
 
     def _closure_observations(self, conn: sqlite3.Connection, prev) -> list[dict]:
