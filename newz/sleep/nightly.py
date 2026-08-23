@@ -682,6 +682,12 @@ class NightlySleep:
             # floor is released by the ordinary path (INV-025) rather than by
             # anything the resolver does.
             report.world_costs = len(self._charge_world_costs(conn, items))
+            # E4.2, in the same window and for the same reason: an abandonment
+            # the world did not carry charges the positions the commitment was
+            # made on the strength of, and the ordinary floor (INV-025) carries
+            # out anything it takes under. Deferred from the review that
+            # produced it, exactly as E1.4's cost is deferred from the resolver.
+            self._charge_commitment_costs(conn, items)
             items = self._mature_questions(conn, items, report)
             items, decayed_out = apply_decay(items)
             report.decayed = len(decayed_out)
@@ -755,9 +761,25 @@ class NightlySleep:
             # commitment and never the Perspective. INV-009 is untouched —
             # this writes only to `commitments`.
             self._maybe_commit(conn, items, version, report)
+            self._maybe_change_commitment(conn, report)
             return report
         finally:
             conn.close()
+
+    def _charge_commitment_costs(self, conn, items: list[Item]) -> None:
+        """E4.2's half of the asymmetry. Fails quietly: a cost that raises must
+        not take the night with it, and the change stays unpaid for tomorrow
+        rather than being marked charged."""
+        try:
+            from newz.commitments.asymmetry import apply_change_costs
+
+            apply_change_costs(conn, items)
+        except sqlite3.OperationalError:
+            # A store predating 0043 has no such table. The night is unaffected.
+            logger.debug("commitment costs: table not present yet")
+        except Exception:  # noqa: BLE001
+            logger.exception("charging a commitment change failed (the night "
+                             "continues; the change stays unpaid)")
 
     def _maybe_commit(self, conn, items: list[Item], version: int,
                       report: SleepReport) -> None:
@@ -805,6 +827,29 @@ class NightlySleep:
                         verdict.commitment_id)
         elif verdict.refused:
             logger.info("commitment refused at the door: %s", verdict.refused)
+
+    def _maybe_change_commitment(self, conn, report: SleepReport) -> None:
+        """Ask whether anything standing no longer holds (E4.2).
+
+        Beside the authoring door and after the commit, for the same reason: a
+        review that raises costs the review and never the Perspective. The COST
+        is not applied here — it lands on the next sleep, inside the window
+        where the release floor can carry a position out by the ordinary path.
+        A change awaiting its cost is not a change that escaped one.
+        """
+        try:
+            from newz.commitments.asymmetry import review_standing
+
+            change = review_standing(conn, self._client)
+        except sqlite3.OperationalError:
+            return                      # a store predating 0043
+        except Exception:  # noqa: BLE001 — the night is already durable
+            logger.exception("the commitment review failed (sleep is done)")
+            return
+        if change is None:
+            return
+        key = f"commitment_{change.kind}" + ("_free" if change.free else "")
+        report.verdicts[key] = report.verdicts.get(key, 0) + 1
 
     def _generated_sections(self, conn: sqlite3.Connection, diff) -> dict[str, list[str]]:
         pursuing = [

@@ -462,6 +462,19 @@ def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
             "SELECT id, kind, statement, falsifier, status FROM commitments"
             " ORDER BY id"))
         m.record("commitments", "commitments", [r["id"] for r in rows])
+        # E4.2: what it stopped holding, and whether anything carried it.
+        # Nothing is deleted — E1.5's discipline applied to identity — so a
+        # commitment it dropped is shown with the reason and with whether the
+        # world settled it or it simply changed its mind.
+        changes: dict[int, list] = {}
+        try:
+            for ch in conn.execute(
+                    "SELECT * FROM commitment_changes ORDER BY ts"):
+                changes.setdefault(ch["commitment_id"], []).append(ch)
+            m.record("commitments", "commitment_changes",
+                     [c["id"] for v in changes.values() for c in v])
+        except sqlite3.OperationalError:
+            pass
     except sqlite3.OperationalError:
         return ("# Commitments\n\n*The being has not made any. Commitments — "
                 "what it keeps caring about and what it refuses to do — are not "
@@ -506,6 +519,12 @@ def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
                     out.append("")
                     out.append(f"*{top[1]:.0%} of this comes from one source: "
                                f"`{_e(top[0])}`*")
+        for ch in changes.get(r["id"], []):
+            carried = ("carried by a claim the world settled"
+                       if ch["resolution_id"] else "no claim carried it")
+            out.append("")
+            out.append(f"***{_e(ch['kind'])}** {_day(ch['ts'])} — "
+                       f"{_e(ch['reason'])} ({carried})*")
         out.append("")
     return "\n".join(out)
 

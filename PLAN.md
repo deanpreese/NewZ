@@ -1032,13 +1032,46 @@ which reads as *"it had nothing to commit to"* when the truth is *"it was not
 allowed to"* (`more-cycles` RT6). Those rows are what make E4.2 necessary rather
 than asserted.
 
-**E4.2 — the asymmetry**
+**E4.2 — the asymmetry** *(mechanism complete 2026-08-22 — the epic stays OPEN until its in-life clause fires)*
 *Delivers:* revision on evidence is free; abandonment without cause is recorded
 and costs. Backwards, this entrenches a mediocre early position and manufactures
 §6's "fixed personality script".
 *Done when:* a commitment revised from a Phase 1 resolution costs nothing, and
 one dropped without a resolution is recorded with its cost.
 *Depends on:* E4.1, E1.4.
+
+*What landed:* migration 0043 (`commitment_changes`, `commitment_costs`),
+`newz/commitments/asymmetry.py`, the review and the charge wired into sleep,
+10 tests, **INV-102**.
+
+**Why it is not closed.** Its `Done when` is in-life and neither half has
+happened: there are no commitments yet, and the free half needs a **settled**
+Phase 1 claim, which cannot exist before early October under the horizon set
+the same day. The mechanism is complete and the epic is not, and saying so is
+the E2.2 lesson applied rather than repeated.
+
+*The asymmetry is a join, never a judgment.* A change is free iff it cites a
+`resolutions` row that is actually `status='resolved'` — the being says WHICH
+claim settled it and the code checks whether it settled. Citing an open claim
+is the same as citing nothing. Rule 4 forbids asking the model whether an
+abandonment was justified, and a model asked that would justify all of them.
+
+*Who pays is traced.* The commitment's own `evidence` (E4.3) names what it was
+made on the strength of, and the positions charged are those whose grounding
+includes it. A commitment that traced nothing costs nothing and the row says so
+— dropping something never grounded is a different finding from an abandonment
+nobody paid for (INV-044).
+
+*The cost is deferred, as E1.4's is.* The review runs after the night is
+committed so it cannot cost the Perspective; the charge lands on the next sleep
+inside the window where INV-025's floor can carry a position out by the
+ordinary path.
+
+*The magnitude is a guess and is recorded as one.* `CONFIDENCE_ON_CONTRADICT`,
+because it is what the world's own refutation carries — not because anything
+measured it. P3-05 says the balance is a guess, and this epic's own text names
+the direction it must not run. **Revisit it against the first month of
+abandonments rather than defending it.**
 
 **E4.3 — what shaped it** *(built 2026-08-22)*
 *Delivers:* commitments render with their provenance, reusing
