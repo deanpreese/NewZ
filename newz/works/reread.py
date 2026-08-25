@@ -27,6 +27,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from newz.llm.xml_parser import XMLExtractionError, extract_xml, optional_text, require_text
+from newz.works.appraisal import (MAX_DELIVERY_FAILS, deliverable,
+                                  mark_delivery_failed, render)
 from newz.works.compose import PIECE_TOKEN_BUDGET, _system_prompt
 
 logger = logging.getLogger(__name__)
@@ -54,6 +56,7 @@ class RereadResult:
     work_id: int | None = None
     kind: str = ""
     skipped: str = ""
+    notes_delivered: int = 0
 
 
 def starts_today(conn: sqlite3.Connection, *, now: float | None = None) -> int:
@@ -86,17 +89,56 @@ def _record(conn: sqlite3.Connection, outcome: str, *, work_id=None,
 
 def due_for_reread(conn: sqlite3.Connection, *, min_age_s: float = MIN_AGE_S,
                    now: float | None = None):
-    """The oldest standing piece nobody has looked at recently."""
+    """The oldest standing piece nobody has looked at recently.
+
+    **A piece carrying an undelivered note goes first.** Sixteen pieces at two
+    re-reads a day is an eight-day cycle, and a critique delivered eight days
+    late is a critique of a self the being has already moved past. The jump is
+    bounded twice: a note delivers once, so the piece rejoins the ordinary
+    rotation immediately afterwards, and a note whose turns keep failing stops
+    jumping after `MAX_DELIVERY_FAILS` rather than holding the front of the
+    queue while charging the day's ceiling.
+
+    **The age gate still binds.** A fresh piece with a note waits until it is
+    old enough, because meeting the work as a stranger is the point of the
+    three days and prompt delivery is not worth spending it.
+    """
     now = now or time.time()
-    return conn.execute(
-        "SELECT * FROM works WHERE status='standing' AND ts <= ?"
-        " AND (last_reviewed_at IS NULL OR last_reviewed_at <= ?)"
-        " ORDER BY COALESCE(last_reviewed_at, ts) ASC LIMIT 1",
-        (now - min_age_s, now - min_age_s)).fetchone()
+    args = (now - min_age_s, now - min_age_s)
+    try:
+        return conn.execute(
+            "SELECT * FROM works WHERE status='standing' AND ts <= ?"
+            " AND (last_reviewed_at IS NULL OR last_reviewed_at <= ?)"
+            " ORDER BY (SELECT COUNT(*) FROM work_appraisals a"
+            "           WHERE a.work_id = works.id"
+            "             AND a.delivered_at IS NULL"
+            f"             AND a.deliver_fails < {MAX_DELIVERY_FAILS}) > 0 DESC,"
+            "          COALESCE(last_reviewed_at, ts) ASC LIMIT 1",
+            args).fetchone()
+    except sqlite3.OperationalError:
+        # A store that has not taken 0044 yet. The rhythm predates appraisal
+        # and must not stop for the absence of it.
+        return conn.execute(
+            "SELECT * FROM works WHERE status='standing' AND ts <= ?"
+            " AND (last_reviewed_at IS NULL OR last_reviewed_at <= ?)"
+            " ORDER BY COALESCE(last_reviewed_at, ts) ASC LIMIT 1",
+            args).fetchone()
 
 
-def review(client, conn: sqlite3.Connection, work) -> Verdict:
-    """Read it as a stranger would, and say what it is now worth."""
+def review(client, conn: sqlite3.Connection, work, *, notes=()) -> Verdict:
+    """Read it as a stranger would, and say what it is now worth.
+
+    **`notes` are the operator's, and they arrive here and nowhere else.** An
+    appraisal is retrospective — it is about this piece, which already exists.
+    The same sentence in the composition prompt would be an instruction about
+    how to write the next one, which is how a being learns to write for its
+    operator, so `compose.py` is never given them.
+
+    They are placed AFTER the piece and BEFORE the question, reported as what a
+    person said rather than as a fact about the text. The being is free to
+    leave standing something its operator would not publish; the prompt does
+    not adjudicate that disagreement.
+    """
     system = _system_prompt(conn) + (
         "\n\n## Right now\n"
         "You are re-reading something you wrote a while ago. Read it as if "
@@ -108,7 +150,8 @@ def review(client, conn: sqlite3.Connection, work) -> Verdict:
         f"At the time you chose it because: {work['chosen_because']}\n\n"
         f"# {work['title']}\n\n{work['body']}\n\n"
         "---\n\n"
-        "Does this still hold?\n\n"
+        + (render(notes) + "\n\n---\n\n" if notes else "")
+        + "Does this still hold?\n\n"
         "  stands   — you would still put your name to it. This is the ordinary\n"
         "             answer and needs no defence.\n"
         "  revise   — part of it is wrong or has been overtaken, and you can say\n"
@@ -171,30 +214,72 @@ def review(client, conn: sqlite3.Connection, work) -> Verdict:
     return Verdict("stands", reason)
 
 
-def apply_verdict(conn: sqlite3.Connection, work, v: Verdict) -> None:
-    """Keep what it used to say, then change what it says now."""
+def apply_verdict(conn: sqlite3.Connection, work, v: Verdict, *,
+                  notes=(), commit: bool = True) -> None:
+    """Keep what it used to say, then change what it says now.
+
+    **The signature moves with the text (0044).** This wrote `title` and `body`
+    and left `signature` alone, so the first revision of a signed piece would
+    have made `read_works.py --verify` report it ALTERED — "edited since it was
+    written", which for a body of work is precisely what a signature exists to
+    catch. It never fired because the only two pieces ever revised, works 1 and
+    4, predate E3.1 and are unsigned, while every piece from 6 on is signed.
+    Appraisal exists to cause revisions, so it is the trigger as much as the
+    fix. The prior signature is kept on the revision row beside the prior title
+    and body it attested to: a revised piece is the same piece saying something
+    new, its signature attests to what it says now, and the chain back to what
+    it said before is unbroken.
+
+    **`notes` are stamped here or not at all.** Delivery is recorded in the same
+    transaction as the verdict, so a turn that dies after the model call
+    redelivers rather than swallowing. An unsigned piece keeps `NULL` — a
+    signature computed now would attest to the row rather than to what was
+    written, which is the reason those five were never backfilled.
+    """
+    from newz.works.appraisal import mark_delivered
+
     now = time.time()
     if v.kind == "stands":
         conn.execute("UPDATE works SET last_reviewed_at=? WHERE id=?",
                      (now, work["id"]))
-        conn.commit()
+        mark_delivered(conn, notes, now=now)
+        if commit:
+            conn.commit()
         return
 
-    conn.execute(
-        "INSERT INTO work_revisions (ts, work_id, kind, reason, prior_title,"
-        " prior_body, prior_word_count) VALUES (?,?,?,?,?,?,?)",
-        (now, work["id"], v.kind, v.reason or "(no reason given)",
-         work["title"], work["body"], work["word_count"]))
+    keys = work.keys()
+    prior_sig = work["signature"] if "signature" in keys else None
+    try:
+        conn.execute(
+            "INSERT INTO work_revisions (ts, work_id, kind, reason, prior_title,"
+            " prior_body, prior_word_count, prior_signature)"
+            " VALUES (?,?,?,?,?,?,?,?)",
+            (now, work["id"], v.kind, v.reason or "(no reason given)",
+             work["title"], work["body"], work["word_count"], prior_sig))
+    except sqlite3.OperationalError:
+        # A store that has not taken 0044. Recording the revision matters more
+        # than recording what it superseded.
+        conn.execute(
+            "INSERT INTO work_revisions (ts, work_id, kind, reason, prior_title,"
+            " prior_body, prior_word_count) VALUES (?,?,?,?,?,?,?)",
+            (now, work["id"], v.kind, v.reason or "(no reason given)",
+             work["title"], work["body"], work["word_count"]))
 
     if v.kind == "retracted":
         conn.execute("UPDATE works SET status='retracted', last_reviewed_at=?"
                      " WHERE id=?", (now, work["id"]))
     else:
+        from newz.works.compose import signature_of
+
+        new_sig = None if prior_sig is None else signature_of(
+            work["subject_kind"], work["subject_ref"], v.title, v.body)
         conn.execute(
             "UPDATE works SET title=?, body=?, word_count=?, status='standing',"
-            " last_reviewed_at=? WHERE id=?",
-            (v.title, v.body, len(v.body.split()), now, work["id"]))
-    conn.commit()
+            " last_reviewed_at=?, signature=COALESCE(?, signature) WHERE id=?",
+            (v.title, v.body, len(v.body.split()), now, new_sig, work["id"]))
+    mark_delivered(conn, notes, now=now)
+    if commit:
+        conn.commit()
 
 
 def reread_once(conn: sqlite3.Connection, client, *,
@@ -210,11 +295,16 @@ def reread_once(conn: sqlite3.Connection, client, *,
         _record(conn, "nothing_due", note="no standing piece is old enough")
         return RereadResult(skipped="nothing old enough to re-read")
 
+    notes = deliverable(conn, work["id"])
     attempt = _record(conn, "started", work_id=work["id"])
     try:
-        v = review(client, conn, work)
-        apply_verdict(conn, work, v)
+        v = review(client, conn, work, notes=notes)
+        # `commit=False`: the verdict, the delivery stamp and the outcome are
+        # one transaction. A note is consumed only by a turn that finished.
+        apply_verdict(conn, work, v, notes=notes, commit=False)
     except Exception as e:  # noqa: BLE001
+        conn.rollback()
+        mark_delivery_failed(conn, notes)
         conn.execute("UPDATE work_attempts SET outcome='failed', note=?"
                      " WHERE id=?", (f"{type(e).__name__}: {e}"[:400], attempt))
         conn.commit()
@@ -223,8 +313,12 @@ def reread_once(conn: sqlite3.Connection, client, *,
     conn.execute("UPDATE work_attempts SET outcome=? WHERE id=?",
                  (v.kind, attempt))
     conn.commit()
+    if notes:
+        logger.info("work %d: delivered %d operator note(s)",
+                    work["id"], len(notes))
     logger.info("work %d re-read: %s — %s", work["id"], v.kind, v.reason[:80])
-    return RereadResult(work_id=work["id"], kind=v.kind)
+    return RereadResult(work_id=work["id"], kind=v.kind,
+                        notes_delivered=len(notes))
 
 
 class RereadScheduler:

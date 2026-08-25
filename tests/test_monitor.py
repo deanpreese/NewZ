@@ -109,18 +109,6 @@ def test_a_reader_can_tell_an_absent_monitor_from_an_empty_one(being, tmp_path):
         with_mon.close()
 
 
-def test_the_read_page_says_the_database_is_missing_rather_than_that_there_are_no_readings(being):
-    """E3A.1's falsifier, made a test. Behavior: the two states render
-    differently, because one is a fact about the restore and the other a fact
-    about the being."""
-    from newz.surface.generate import Manifest, _read
-
-    text = _read(being, Manifest(generated_at=0.0))
-
-    assert "monitor database is not attached" in text
-    assert "No readings yet" not in text
-
-
 # ── E3A.2: the readings, hourly, from outside ───────────────────────────
 
 def test_a_turn_needs_nothing_of_the_being_but_its_store(being, tmp_path):

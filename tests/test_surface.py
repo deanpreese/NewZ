@@ -72,14 +72,15 @@ def test_the_surface_regenerates_into_an_empty_directory(store, tmp_path):
     is already there, no state outside the store."""
     out, _ = _generate(store, tmp_path)
 
-    # The four pages the surface must always have, asserted as a subset: an
-    # earlier version pinned the exact file set and broke the hour E3.4 added
-    # robots.txt and the per-piece pages. A surface that is expected to grow
-    # should not be asserted as a snapshot.
-    required = {"index.md", "questions.md", "errors.md",
-                "commitments.md", "manifest.json"}
+    # Asserted as a subset: an earlier version pinned the exact file set and
+    # broke the hour E3.4 added robots.txt and the per-piece pages. What must
+    # always be there is the manifest and the request not to be indexed —
+    # neither is a page, and each carries a guarantee rather than a view.
+    required = {"manifest.json", "robots.txt"}
     assert required <= {p.name for p in out.iterdir()}
-    assert "On rolling over" in (out / "index.md").read_text()
+    # Essay pages only (operator, 2026-08-24).
+    assert not list(out.glob("*.md")), "no whole-store page survives"
+    assert "On rolling over" in (out / "work" / "1.md").read_text()
 
 
 def test_every_page_traces_to_store_rows(store, tmp_path):
@@ -87,9 +88,7 @@ def test_every_page_traces_to_store_rows(store, tmp_path):
     page, so "nothing here was hand-written" is checkable and not asserted."""
     _, manifest = _generate(store, tmp_path)
 
-    assert manifest["pages"]["index"]["works"] == [1]
-    assert manifest["pages"]["questions"]["concerns"] == [1]
-    assert manifest["pages"]["errors"]["resolutions"] == [1]
+    assert manifest["pages"]["work/1.md"]["works"] == [1]
 
 
 def test_regenerating_produces_the_same_bytes(store, tmp_path):
@@ -101,7 +100,7 @@ def test_regenerating_produces_the_same_bytes(store, tmp_path):
     generate(store, a, now=1_000_000.0)
     generate(store, b, now=2_000_000.0)
 
-    for name in ("index.md", "questions.md", "errors.md", "manifest.json"):
+    for name in ("work/1.md", "manifest.json"):
         assert (a / name).read_bytes() == (b / name).read_bytes(), name
 
 
@@ -131,96 +130,10 @@ def test_nothing_on_the_surface_reaches_the_network(store, tmp_path):
     them a record of every reader."""
     out, _ = _generate(store, tmp_path)
 
-    for page in out.glob("*.md"):
+    for page in out.rglob("*.md"):
         text = page.read_text()
         assert not re.search(r'(src|href)\s*=\s*["\']https?://', text), page.name
         assert "<script" not in text.lower(), page.name
-
-
-def test_a_capability_that_does_not_exist_says_so(store, tmp_path):
-    """Behavior: an absent capability rendering as a blank page is
-    indistinguishable from a broken one, so the page says which it is.
-
-    **E4.1 built the table, and this branch still matters**: E3.5 rebuilds the
-    surface from a VERIFIED BACKUP, and a backup taken before migration 0041
-    has no `commitments` table. The clean room must render a page that says so
-    rather than one that reads as "the being has committed to nothing".
-    """
-    store.execute("DROP TABLE commitments")
-    out, _ = _generate(store, tmp_path)
-
-    text = (out / "commitments.md").read_text()
-    assert "not built yet" in text
-    assert "says so rather than appearing empty" in text
-
-
-def test_a_commitment_renders_with_what_would_break_it(store, tmp_path):
-    """E4.1's falsifier is the thing that makes a commitment one, so it is on
-    the page beside it. Behavior: a commitments page listing only statements is
-    a page of slogans, which is what the mandatory falsifier exists to refuse.
-    """
-    store.execute(
-        "INSERT INTO commitments (ts, kind, statement, falsifier, provenance)"
-        " VALUES (?,?,?,?,?)",
-        (time.time(), "refuses_to_do",
-         "I will not close a concern by restating it more carefully.",
-         "a concern closed whose resolution paraphrases its own statement",
-         "perspective:14"))
-    store.commit()
-
-    out, _ = _generate(store, tmp_path)
-    text = (out / "commitments.md").read_text()
-
-    assert "restating it more carefully" in text
-    assert "broken by:" in text
-    assert "paraphrases its own statement" in text
-    assert "refuses to do" in text
-
-
-def test_a_commitment_shows_what_shaped_it_and_flags_one_source(store, tmp_path):
-    """E4.3. §8 asks that shaping influences be traceable and open to challenge,
-    and a commitment is the one thing here the being authored about ITSELF — so
-    a mix that is all one source is an identity claim resting on one source,
-    which is what INV-033 flags for positions and matters more here. Behavior:
-    the page carries the mix and names the dominance.
-    """
-    ids = []
-    for prov in ("human:dean", "human:dean", "world:arxiv"):
-        cur = store.execute(
-            "INSERT INTO episodes (ts, kind, provenance, summary) VALUES"
-            " (?,'reading',?,'x')", (time.time(), prov))
-        ids.append(str(cur.lastrowid))
-    store.execute(
-        "INSERT INTO commitments (ts, kind, statement, falsifier, provenance,"
-        " evidence_json) VALUES (?,?,?,?,?,?)",
-        (time.time(), "keeps_caring", "I will keep asking what I got wrong.",
-         "a month with no claim resolved against me", "perspective:14",
-         json.dumps(ids)))
-    store.commit()
-
-    out, _ = _generate(store, tmp_path)
-    text = (out / "commitments.md").read_text()
-
-    assert "shaped by 3 episode(s)" in text
-    assert "people 67%" in text and "the world 33%" in text
-    assert "one source: `human:dean`" in text
-
-
-def test_a_commitment_that_traced_nothing_says_so(store, tmp_path):
-    """INV-044 on the surface. Behavior: a commitment the being could not trace
-    renders as untraceable rather than borrowing a mix from its neighbours —
-    which is the padding E4.3's design exists to avoid."""
-    store.execute(
-        "INSERT INTO commitments (ts, kind, statement, falsifier, provenance)"
-        " VALUES (?,?,?,?,?)",
-        (time.time(), "keeps_caring", "I will keep writing weekly.",
-         "a month with no piece written", "perspective:14"))
-    store.commit()
-
-    out, _ = _generate(store, tmp_path)
-    text = (out / "commitments.md").read_text()
-
-    assert "carries no resolvable evidence" in text
 
 
 def test_a_retracted_piece_still_appears(store, tmp_path):
@@ -235,30 +148,12 @@ def test_a_retracted_piece_still_appears(store, tmp_path):
     store.commit()
 
     out, manifest = _generate(store, tmp_path)
-    text = (out / "index.md").read_text()
+    text = (out / "work" / "1.md").read_text()
 
     assert "On rolling over" in text
     assert "retracted" in text
     assert "its central claim does not survive" in text
-    assert manifest["pages"]["index"]["work_revisions"] == [1]
-
-
-def test_the_error_record_shows_what_being_wrong_cost(store, tmp_path):
-    """Behavior: the page P4 Phase 3 exists to render — claims with dates, and
-    what each cost when the world disagreed."""
-    store.execute(
-        "INSERT INTO claim_costs (ts, claim_id, item_text, section,"
-        " confidence_before, confidence_after, repeat, released)"
-        " VALUES (?,1,?,?,?,?,0,1)",
-        (time.time(), "The index is rolling over.", "unresolved", 0.8, 0.3))
-    store.commit()
-
-    out, manifest = _generate(store, tmp_path)
-    text = (out / "errors.md").read_text()
-
-    assert "The March release prints below 40." in text
-    assert "0.80" in text and "0.30" in text and "released" in text
-    assert manifest["pages"]["errors"]["claim_costs"] == [1]
+    assert manifest["pages"]["work/1.md"]["work_revisions"] == [1]
 
 
 # ── disclosure by construction (E3.3) ───────────────────────────────────
@@ -280,7 +175,7 @@ def test_no_template_can_render_a_page_without_disclosure(monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(g, "DISCLOSURE", "   \n ")
         with pytest.raises(g.DisclosureMissing, match="cannot render"):
-            g._page("t", "<p>body</p>", here="index")
+            g._page("t", "<p>body</p>")
 
 
 def test_every_generated_page_discloses_twice(store, tmp_path):
@@ -288,7 +183,7 @@ def test_every_generated_page_discloses_twice(store, tmp_path):
     a person does. A page disclosing only in metadata discloses to crawlers."""
     out, _ = _generate(store, tmp_path)
 
-    for page in out.glob("*.md"):
+    for page in out.rglob("*.md"):
         text = page.read_text()
         # Front matter is where the old `<meta name="disclosure">` went: the
         # place a machine reads without parsing prose.
@@ -319,7 +214,7 @@ def test_a_disclosure_that_denies_everything_it_must_establish_is_refused(monkey
     with monkeypatch.context() as m:
         m.setattr(g, "DISCLOSURE", negated)
         with pytest.raises(g.DisclosureMissing, match="does not match its pin"):
-            g._page("t", "<p>b</p>", here="index")
+            g._page("t", "<p>b</p>")
 
 
 def test_the_wording_is_the_operators_and_changing_it_is_an_act(monkeypatch):
@@ -352,7 +247,7 @@ def test_the_wording_is_the_operators_and_changing_it_is_an_act(monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(g, "DISCLOSURE", reworded)
         with pytest.raises(g.DisclosureMissing, match="does not match its pin"):
-            g._page("t", "<p>b</p>", here="index")
+            g._page("t", "<p>b</p>")
 
 
 def test_the_disclosure_is_not_a_corporate_disclaimer():
@@ -378,7 +273,7 @@ def test_disclosure_survives_regeneration_byte_for_byte(store, tmp_path):
     generate(store, a, now=1.0)
     generate(store, b, now=2.0)
 
-    assert (a / "index.md").read_bytes() == (b / "index.md").read_bytes()
+    assert (a / "work" / "1.md").read_bytes() == (b / "work" / "1.md").read_bytes()
 
 
 # ── the read, rendered (E3.6) ───────────────────────────────────────────
@@ -407,97 +302,6 @@ def _reading(conn, metric, value, *, ts, status="ok", note="", window=168.0, dv=
     conn.commit()
 
 
-def test_the_read_regenerates_from_empty_with_the_rest(store, tmp_path):
-    """E3.6's Done-when. Behavior: the read is a page like any other — same
-    generator, same manifest, same clean-directory rebuild."""
-    _reading(store, "nights_slept", 7.0, ts=time.time())
-
-    out, manifest = _generate(store, tmp_path)
-
-    assert (out / "read.md").exists()
-    assert manifest["pages"]["read"]["metric_readings"]
-    assert "nights slept" in (out / "read.md").read_text()
-
-
-def test_the_read_shows_unreadable_and_incomplete_where_they_apply(store, tmp_path):
-    """E3.6's second clause, and INV-044 on the surface. Behavior: a window
-    nothing measured says so; it does not appear as a number and it does not
-    disappear."""
-    now = time.time()
-    _reading(store, "claims_declined", None, ts=now, status="unreadable",
-             note="no call log; declines are not in the store by design")
-    _reading(store, "pieces_written", None, ts=now, status="incomplete",
-             note="the input begins 96h into a 168h window")
-
-    out, _ = _generate(store, tmp_path)
-    text = (out / "read.md").read_text()
-
-    assert "UNREADABLE" in text and "not in the store by design" in text
-    assert "INCOMPLETE" in text and "96h into a 168h window" in text
-
-
-def test_the_read_computes_no_aggregate_score(store, tmp_path):
-    """The hardest clause in Phase 3, and the one §10 names. Behavior: one line
-    per reading and nothing that spans them.
-
-    Metrics measure different things in different units with different grades.
-    A number combining them would assert they are commensurable, and none of
-    them is — which is exactly how "evidence scores disconnected from sustained
-    human-quality interaction" gets built by accident."""
-    now = time.time()
-    for name, v in (("nights_slept", 7.0), ("pieces_written", 4.0),
-                    ("claims_opened", 2.0)):
-        _reading(store, name, v, ts=now)
-
-    out, _ = _generate(store, tmp_path)
-    text = _body(out / "read.md").lower()
-
-    for word in ("score", "overall", "health:", "total:", "average",
-                 "out of", "% healthy", "summary:"):
-        assert word not in text, f"the read has grown an aggregate: {word!r}"
-    readings = [ln for ln in text.splitlines() if ln.startswith("- **")]
-    assert len(readings) == 3, "one line per reading, and no more"
-
-
-def test_an_ungraded_metric_is_not_shown_at_all(store, tmp_path):
-    """Rule 7 on the surface. Behavior: a measurement nobody graded is omitted
-    rather than displayed without its provenance — the page cannot be the place
-    the grading discipline leaks."""
-    _reading(store, "a_number_nobody_graded", 42.0, ts=time.time())
-
-    out, _ = _generate(store, tmp_path)
-
-    assert "42" not in _body(out / "read.md")
-
-
-def test_the_read_shows_the_delta_only_within_one_definition(store, tmp_path):
-    """E2.8 carried onto the surface. Behavior: a metric redefined between
-    readings shows no baseline, because comparing a figure to one computed a
-    different way is two numbers subtracted."""
-    now = time.time()
-    _reading(store, "nights_slept", 5.0, ts=now - 20 * DAY, dv=1)
-    _reading(store, "nights_slept", 7.0, ts=now, dv=2)
-
-    out, _ = _generate(store, tmp_path)
-    text = _body(out / "read.md")
-
-    assert "no baseline yet" in text
-    assert "+2" not in text
-
-
-def test_the_read_is_taken_from_recorded_readings_and_not_recomputed(store, tmp_path):
-    """Behavior: the page renders what the nightly cadence wrote. A page that
-    computed its own numbers would be a second implementation of every metric,
-    drifting quietly from the one the loop steers by."""
-    src = (Path(__file__).resolve().parent.parent / "newz" / "surface"
-           / "generate.py").read_text()
-    read_fn = src[src.index("def _read("):src.index("def _commitments(")]
-
-    assert "metric_readings" in read_fn
-    for computed in ("all_values", "read_consequence", "record_all"):
-        assert computed not in read_fn, f"the read recomputes via {computed}"
-
-
 # ── the surface has a rhythm (P4 W7, R-37e) ─────────────────────────────
 
 def test_the_surface_regenerates_without_being_asked(tmp_path):
@@ -518,7 +322,9 @@ def test_the_surface_regenerates_without_being_asked(tmp_path):
 
     pages = publish(db, out, now=1_787_000_000.0)
 
-    assert pages >= 5 and (out / "read.md").exists()
+    # An empty store has no essays, and `publish` now counts essay pages —
+    # the surface IS the essays (operator, 2026-08-24).
+    assert pages == 0 and (out / "manifest.json").exists()
     assert PublishScheduler(db, out)._interval == 6 * 3600.0
 
 
@@ -538,10 +344,10 @@ def test_regenerating_an_unchanged_store_rewrites_the_same_bytes(tmp_path):
     out = tmp_path / "published"
 
     publish(db, out, now=1_787_000_000.0)
-    before = {p.name: p.read_bytes() for p in out.glob("*.md")}
+    before = {p.name: p.read_bytes() for p in out.rglob("*.md")}
     publish(db, out, now=1_787_999_999.0)
 
-    assert {p.name: p.read_bytes() for p in out.glob("*.md")} == before
+    assert {p.name: p.read_bytes() for p in out.rglob("*.md")} == before
 
 
 def test_a_page_removed_from_the_store_does_not_survive_a_regeneration(tmp_path):
@@ -565,54 +371,70 @@ def test_a_page_removed_from_the_store_does_not_survive_a_regeneration(tmp_path)
     assert not (out / "leftover.html").exists()
 
 
-def test_the_questions_page_carries_what_it_could_not_answer(tmp_path):
-    """W12a's consumer. Behavior: 32 gaps existed and nothing read them but a
-    counter — a signal the being generates at its own rate, about the world,
-    with no reader at the other end. The question comes before the count
-    (RT1): reading the count first invites adding sources, and the repeat
-    failures may be questions no source can settle."""
-    from newz.store.db import open_db
-    from newz.store.migrations import apply_pending
-    from newz.surface.generate import generate
-
-    db = tmp_path / "s.db"
-    conn = open_db(db)
-    apply_pending(conn, MAIN_SQL)
-    for i in range(3):
-        conn.execute(
-            "INSERT INTO source_gaps (ts, concern_id, query, gap, cause,"
-            " candidates, rejected_floor, best_score) VALUES (?,?,?,?,?,?,?,?)",
-            (1_787_000_000.0 + i, None, "Does open interest indicate distress?",
-             "nothing was relevant enough to read", "floor", 6, 6, 0.31))
-    conn.commit()
-    out = tmp_path / "published"
-    generate(conn, out, now=1_787_000_000.0)
-    page = (out / "questions.md").read_text()
-    conn.close()
-
-    assert "Does open interest indicate distress?" in page
-    assert "3 times" in page
-    assert "nothing scored above the relevance floor" in page
-    assert "best relevance 0.31" in page
 
 
-def test_a_gap_recorded_before_the_cause_existed_is_not_a_category(tmp_path):
-    """Behavior: NULL means 'written before this was recorded', never a fifth
-    cause — the page says so rather than counting it as one."""
-    from newz.store.db import open_db
-    from newz.store.migrations import apply_pending
-    from newz.surface.generate import generate
+# ── the operator's verdict decides what is published (0044) ─────────────
 
-    db = tmp_path / "s.db"
-    conn = open_db(db)
-    apply_pending(conn, MAIN_SQL)
-    conn.execute("INSERT INTO source_gaps (ts, concern_id, query, gap)"
-                 " VALUES (?,?,?,?)", (1_787_000_000.0, None, "an old question",
-                                       "sources answered but nothing was relevant"))
-    conn.commit()
-    out = tmp_path / "published"
-    generate(conn, out, now=1_787_000_000.0)
-    page = (out / "questions.md").read_text()
-    conn.close()
+def test_an_unappraised_piece_is_published(store, tmp_path):
+    """Behavior: the default does not change until the operator says
+    something. A verdict nobody gave is not a verdict against."""
+    out, _ = _generate(store, tmp_path)
 
-    assert "recorded before the cause was" in page
+    assert (out / "work" / "1.md").exists()
+
+
+def test_a_piece_judged_not_publishable_is_withheld(store, tmp_path):
+    """What the word means. Behavior: the field decides the surface, so a
+    verdict does work rather than sitting in a column."""
+    from newz.works.appraisal import record
+
+    record(store, 1, False, "it restates the last three")
+
+    out, manifest = _generate(store, tmp_path)
+
+    assert not (out / "work" / "1.md").exists()
+    assert "work/1.md" not in manifest["pages"]
+
+
+def test_withholding_is_not_deletion(store, tmp_path):
+    """E1.5's discipline applied to publication. Behavior: the row, the body
+    and the signature are untouched, and the piece returns the moment a newer
+    appraisal says so — a surface the operator can empty is not a record."""
+    from newz.works.appraisal import record
+
+    record(store, 1, False, "not yet")
+    _generate(store, tmp_path)
+    row = store.execute("SELECT * FROM works WHERE id=1").fetchone()
+    assert row["body"] == "The index is rolling over and the reason is structural."
+    assert row["status"] == "standing"
+
+    record(store, 1, True, "the revision fixed it")
+    out, _ = _generate(store, tmp_path)
+
+    assert (out / "work" / "1.md").exists()
+
+
+def test_the_newest_verdict_is_the_one_that_counts(store, tmp_path):
+    """Behavior: a piece can be judged more than once and the last word is the
+    operator's current one — otherwise the loop cannot close, because nothing
+    the being did in response could ever change the outcome."""
+    from newz.works.appraisal import current_verdict, record
+
+    record(store, 1, True, "fine")
+    record(store, 1, False, "on reflection, no")
+
+    assert current_verdict(store, 1) == 0
+    out, _ = _generate(store, tmp_path)
+    assert not (out / "work" / "1.md").exists()
+
+
+def test_an_essay_page_has_no_nav(store, tmp_path):
+    """Behavior: the nav linked five sibling pages that no longer exist. A
+    page is one essay, so there is nowhere to navigate to and a nav line would
+    be five dead links on every piece."""
+    out, _ = _generate(store, tmp_path)
+    text = (out / "work" / "1.md").read_text()
+
+    for gone in ("index.md", "questions.md", "errors.md",
+                 "commitments.md", "read.md"):
+        assert gone not in text, gone

@@ -52,10 +52,27 @@ DAY = 86400.0
 # agree, and they agree with the surface: PublishScheduler regenerates every
 # six hours, so a piece is written and visible inside one cycle rather than
 # waiting on the next.
-MAX_STARTS_PER_DAY = 4
+#
+# **Back to two a day, 2026-08-24, because the reader arrived.** The paragraph
+# above this one has always said what governs: *"the constraint worth
+# respecting is not how much it can produce but whether anything reads what it
+# produced. Raise it when there is a reader, not before."* It was raised to
+# four on 2026-08-22 while there was still no reader. Appraisal (0044) makes
+# the operator one, and four a day is 28 pieces a week — nobody reads and
+# judges 28 essays a week, so the appraisal queue would diverge from the day it
+# was built and most pieces would never be judged at all. The field would exist
+# and the loop it closes would not, defeated by arithmetic rather than by
+# design.
+#
+# Two also puts production at parity with the re-read ceiling, so the being can
+# review what it makes instead of falling permanently behind itself. If seven a
+# week is still more than the operator reads, this constant is the one to
+# change and nothing else moves with it.
+MAX_STARTS_PER_DAY = 2
 # Cadence. Checked often enough that a restart does not lose the day, rarely
-# enough that the ceiling rather than the clock is what binds.
-INTERVAL_S = 6 * 3600.0
+# enough that the ceiling rather than the clock is what binds. Twelve and two
+# agree, for the reason six and four did.
+INTERVAL_S = 12 * 3600.0
 BOOT_DELAY_S = 180.0
 
 

@@ -111,9 +111,6 @@ def _disclosure() -> str:
     return DISCLOSURE.strip()
 
 
-PAGES = ("index", "work", "questions", "errors", "commitments", "read")
-
-
 @dataclass
 class Manifest:
     """Which rows produced which page. The trace E3.2's Done-when asks for."""
@@ -168,7 +165,7 @@ def _day(ts) -> str:
     return datetime.fromtimestamp(ts).strftime("%-d %B %Y") if ts else ""
 
 
-def _page(title: str, body: str, *, here: str) -> str:
+def _page(title: str, body: str) -> str:
     """The only way a page is produced here, and it always discloses.
 
     There is no flag to suppress it, no branch around it and **no parameter**:
@@ -181,352 +178,21 @@ def _page(title: str, body: str, *, here: str) -> str:
     where a person actually reads it. `robots` stays in the front matter beside
     it; what keeps the surface private is still the bind address and
     `robots.txt`, and it was never the meta tag.
+
+    **There is no nav** *(operator, 2026-08-24: "I only want the essay
+    pages")*. It linked five sibling pages that no longer exist. A page is now
+    one essay and nothing else, so there is nowhere to navigate to and a nav
+    line would be five dead links on every piece.
     """
     disclosure = _disclosure()
-    nav = " · ".join(
-        f'[{"the work" if p == "index" else p}]({p}.md)' if p != here else
-        f'**{"the work" if p == "index" else p}**'
-        for p in ("index", "questions", "errors", "commitments", "read"))
     return (f"---\n"
             f"title: {json.dumps(title, ensure_ascii=False)}\n"
             f"disclosure: {json.dumps(disclosure, ensure_ascii=False)}\n"
             f"robots: noindex, nofollow\n"
             f"---\n\n"
-            f"{nav}\n\n"
             f"{body}\n\n"
             f"---\n\n"
             f"*{disclosure}*\n")
-
-
-def _works(conn: sqlite3.Connection, m: Manifest) -> str:
-    # `SELECT *` deliberately: a store mid-migration has fewer columns, and a
-    # generator that assumes a schema renders nothing rather than rendering
-    # what is there. Presence is checked per field below.
-    rows = list(conn.execute("SELECT * FROM works ORDER BY ts DESC"))
-    m.record("index", "works", [r["id"] for r in rows])
-    if not rows:
-        return "# The work\n\n*Nothing written yet.*"
-
-    tags: dict[int, list[str]] = {}
-    try:
-        for r in conn.execute("SELECT work_id, tag FROM work_tags ORDER BY weight DESC"):
-            tags.setdefault(r["work_id"], []).append(r["tag"])
-        m.record("index", "work_tags", list(tags))
-    except sqlite3.OperationalError:
-        pass
-
-    revs: dict[int, list[sqlite3.Row]] = {}
-    try:
-        for r in conn.execute("SELECT * FROM work_revisions ORDER BY ts"):
-            revs.setdefault(r["work_id"], []).append(r)
-        m.record("index", "work_revisions", [r["id"] for v in revs.values() for r in v])
-    except sqlite3.OperationalError:
-        pass
-
-    out = ["# The work", ""]
-    for r in rows:
-        status = (r["status"] if "status" in r.keys() else None) or "standing"
-        out.append(f"## [{_e(r['title'])}](work/{r['id']}.md)")
-        meta = [_day(r["ts"])]
-        if status == "retracted":
-            meta.append("**retracted**")
-        meta.append(f"on: {_e(r['subject_text'])}")
-        out.append("")
-        out.append("*" + " · ".join(meta) + "*")
-        if tags.get(r["id"]):
-            out.append("")
-            out.append("*tags: " + ", ".join(_e(t) for t in tags[r["id"]][:6]) + "*")
-        out.append("")
-        out.append(_body(r["body"]))
-        for rev in revs.get(r["id"], []):
-            out.append("")
-            out.append(f"***{_e(rev['kind'])}** {_day(rev['ts'])} — "
-                       f"{_e(rev['reason'])}*")
-        keys = r.keys()
-        sig = r["signature"] if "signature" in keys else None
-        out.append("")
-        out.append("*" + (
-            f"signed {_e(sig[:16])}… · written under constitution v"
-            f"{_e(r['constitution_version'])}, perspective v"
-            f"{_e(r['perspective_version'])}"
-            if sig else "unsigned — written before pieces were signed") + "*")
-        out.append("")
-    return "\n".join(out)
-
-
-def _questions(conn: sqlite3.Connection, m: Manifest) -> str:
-    rows = list(conn.execute(
-        "SELECT id, statement, why_open, closing_condition FROM concerns"
-        " WHERE status='open' ORDER BY salience DESC, opened_at DESC"))
-    m.record("questions", "concerns", [r["id"] for r in rows])
-    out = ["# Open questions", "",
-           "*What it is carrying, and what would settle each one.*", ""]
-    if not rows:
-        out.append("*Nothing open.*")
-    for r in rows:
-        out.append(f"## {_e(r['statement'])}")
-        out.append("")
-        if r["why_open"]:
-            out.append(_body(r["why_open"]))
-            out.append("")
-        out.append(f"*settles when: {_e(r['closing_condition'])}*")
-        out.append("")
-
-    out.append(_gaps(conn, m))
-    return "\n".join(out)
-
-
-# What it asked and could not answer. The question comes first and the count
-# second, deliberately (W12a, RT1): a question that has failed nine times is
-# either a source problem or a question no source can answer, and the second
-# is what R-33 found about closing conditions. Reading the count first invites
-# adding sources; reading the question first does not.
-CAUSES = {
-    "no_source": "no source answered",
-    "all_already_read": "everything its sources return, already read",
-    "floor": "nothing scored above the relevance floor",
-    "triage": "sources answered and it judged none worth reading",
-    "capped": "held back from over-represented outlets — a deferral, not an absence",
-    "extraction": "read, and nothing usable came out",
-}
-
-
-def _gaps(conn: sqlite3.Connection, m: Manifest) -> str:
-    try:
-        rows = list(conn.execute(
-            "SELECT query, cause, COUNT(*) n, MAX(ts) last, MAX(best_score) best,"
-            "       SUM(candidates) cands, MIN(id) id"
-            " FROM source_gaps GROUP BY query, cause"
-            " ORDER BY n DESC, last DESC LIMIT 20"))
-    except sqlite3.OperationalError:
-        return ""
-    if not rows:
-        return ""
-    m.record("questions", "source_gaps", [r["id"] for r in rows])
-    out = ["# What it asked and could not answer", "",
-           "*Each question with the reason it went unanswered and how often. "
-           "A question that keeps failing is either a gap in what it can reach "
-           "or a question nothing could settle — and those are fixed in "
-           "different places.*", ""]
-    for r in rows:
-        out.append(f"## {_e(r['query'])}")
-        why = CAUSES.get(r["cause"], "recorded before the cause was")
-        times = "once" if r["n"] == 1 else f"{r['n']} times"
-        line = f"{why} · {times}"
-        if r["best"] is not None:
-            line += f" · best relevance {r['best']:.2f}"
-        if r["cands"]:
-            line += f" · {r['cands']} candidate(s) seen"
-        out.append("")
-        out.append(f"*{_e(line)}*")
-        out.append("")
-    return "\n".join(out)
-
-
-def _errors(conn: sqlite3.Connection, m: Manifest) -> str:
-    rows = list(conn.execute("SELECT * FROM resolutions ORDER BY opened_at DESC"))
-    m.record("errors", "resolutions", [r["id"] for r in rows])
-    costs: dict[int, list[sqlite3.Row]] = {}
-    try:
-        for c in conn.execute("SELECT * FROM claim_costs ORDER BY ts"):
-            costs.setdefault(c["claim_id"], []).append(c)
-        m.record("errors", "claim_costs", [c["id"] for v in costs.values() for c in v])
-    except sqlite3.OperationalError:
-        pass
-
-    out = ["# What it committed to, and where it was wrong", "",
-           "*Claims it made about the world, with dates, and what each cost "
-           "when the world disagreed. Nothing here is removed once written.*",
-           ""]
-    if not rows:
-        out.append("*No claims yet.*")
-    for r in rows:
-        out.append(f"## {_e(r['claim'])}")
-        out.append("")
-        out.append(f"*made {_day(r['opened_at'])} · settles by "
-                   f"{_day(r['due_at'])} · against: {_e(r['resolver'])}*")
-        if "could_be_wrong" in r.keys() and r["could_be_wrong"]:
-            out.append("")
-            out.append(f"*wrong would look like: {_e(r['could_be_wrong'])}*")
-        out.append("")
-        if r["outcome"]:
-            out.append(f"**{_e(r['outcome'])}** {_day(r['settled_at'])} — "
-                       f"{_e(r['settled_note'])}")
-        else:
-            out.append("*not yet settled*")
-        for c in costs.get(r["id"], []):
-            out.append("")
-            out.append(f"*cost: \u201c{_e(c['item_text'])}\u201d "
-                       f"{c['confidence_before']:.2f} \u2192 "
-                       f"{c['confidence_after']:.2f}"
-                       + (" · released" if c["released"] else "") + "*")
-        out.append("")
-    return "\n".join(out)
-
-
-def _read(conn: sqlite3.Connection, m: Manifest) -> str:
-    """The state read, rendered as a page like any other (E3.6).
-
-    **No aggregate score, and that is the whole difficulty of this page.**
-    §10 names "evidence scores disconnected from sustained human-quality
-    interaction" as something the project will not mistake for success, and a
-    page is exactly where one appears — a single number at the top, a
-    percentage, a count of how many metrics are "healthy". So there is one line
-    per reading and nothing that spans them. Metrics measure different things
-    in different units with different grades; a number combining them would be
-    an assertion that they are commensurable, and none of them is.
-
-    Read from what the nightly cadence recorded (E2.7), never computed here.
-    A page that computed its own numbers would be a second implementation of
-    every metric, drifting quietly from the one the loop steers by.
-    """
-    from newz.evidence.grades import UngradedMetric, grade_of
-
-    try:
-        latest = list(conn.execute(
-            "SELECT r.* FROM mon.metric_readings r JOIN (SELECT metric, MAX(ts) t"
-            " FROM mon.metric_readings GROUP BY metric) x"
-            " ON x.metric = r.metric AND x.t = r.ts ORDER BY r.metric"))
-    except sqlite3.OperationalError:
-        # F4: a page that looks correct and is wrong is worse than a page that
-        # says what is missing. *The monitor database is not here* is a fact
-        # about the restore; *there are no readings* is a fact about the being,
-        # and rendering the first as the second is how E3.5's rebuild would
-        # have silently produced an empty read (INV-044).
-        from newz.store.db import MONITOR_NAME, monitor_attached
-        if not monitor_attached(conn):
-            return ("# The read\n\n*UNREADABLE — the monitor database is not "
-                    f"attached to this connection. {MONITOR_NAME} holds the "
-                    "readings and sits beside the store; this is a fact about "
-                    "the restore, not about the being.*")
-        return ("# The read\n\n*No readings yet — the hourly cadence records "
-                "them, and this database has not taken the migration that "
-                "holds them.*")
-    m.record("read", "metric_readings", [r["id"] for r in latest])
-    if not latest:
-        return ("# The read\n\n*No readings recorded yet. The cadence writes "
-                "one of each an hour.*")
-
-    out = ["# The read", "",
-           "*What the instruments say, as of the last nightly reading. One "
-           "line per measurement, and deliberately nothing that adds them up: "
-           "these measure different things in different units, and a number "
-           "combining them would assert they are comparable.*", ""]
-    for r in latest:
-        try:
-            grade = grade_of(r["metric"])
-        except UngradedMetric:
-            # Rule 7: a measurement nobody graded is not shown at all rather
-            # than shown without its provenance.
-            continue
-        label = _e(r["metric"].replace("_", " "))
-        if r["status"] != "ok":
-            out.append(f"- **{label}** — *{_e(r['status']).upper()}*  ")
-            out.append(f"  {_e(r['note'])}")
-            continue
-        base = conn.execute(
-            "SELECT value FROM mon.metric_readings WHERE metric=? AND status='ok'"
-            " AND definition_version=? AND ts <= ? ORDER BY ts DESC LIMIT 1",
-            (r["metric"], r["definition_version"],
-             r["ts"] - r["window_hours"] * 3600.0)).fetchone()
-        if base is None:
-            move = "no baseline yet"
-        elif abs(r["value"] - base["value"]) < 1e-12:
-            move = "unchanged"
-        else:
-            move = f"{r['value'] - base['value']:+.4g} from {base['value']:.4g}"
-        out.append(f"- **{label}** {r['value']:.4g} `{_e(grade)}`  ")
-        out.append(f"  {_e(move)} · over {r['window_hours'] / 24:.0f} days")
-    return "\n".join(out)
-
-
-_COMMITMENT_KIND = {"keeps_caring": "keeps caring",
-                    "refuses_to_do": "refuses to do"}
-
-
-def _commitments(conn: sqlite3.Connection, m: Manifest) -> str:
-    """The commitments and, beside each, what would show it had stopped (E4.1).
-
-    **The falsifier is rendered, not just stored.** A commitments page that
-    lists only the commitments is a page of slogans, and slogans are exactly
-    what E4.1's mandatory falsifier exists to refuse — so the thing that makes
-    each one a commitment is on the page next to it.
-
-    The missing-table branch stays: a store predating 0041 is what the
-    clean-room rebuild (E3.5) restores from, and a capability that renders as a
-    blank page is indistinguishable from a broken one.
-    """
-    rows: list = []
-    try:
-        rows = list(conn.execute(
-            "SELECT id, kind, statement, falsifier, status FROM commitments"
-            " ORDER BY id"))
-        m.record("commitments", "commitments", [r["id"] for r in rows])
-        # E4.2: what it stopped holding, and whether anything carried it.
-        # Nothing is deleted — E1.5's discipline applied to identity — so a
-        # commitment it dropped is shown with the reason and with whether the
-        # world settled it or it simply changed its mind.
-        changes: dict[int, list] = {}
-        try:
-            for ch in conn.execute(
-                    "SELECT * FROM commitment_changes ORDER BY ts"):
-                changes.setdefault(ch["commitment_id"], []).append(ch)
-            m.record("commitments", "commitment_changes",
-                     [c["id"] for v in changes.values() for c in v])
-        except sqlite3.OperationalError:
-            pass
-    except sqlite3.OperationalError:
-        return ("# Commitments\n\n*The being has not made any. Commitments — "
-                "what it keeps caring about and what it refuses to do — are not "
-                "built yet; this page is generated from a table that does not "
-                "exist, and says so rather than appearing empty.*")
-    out = ["# Commitments", "",
-           "*What the being holds itself to, and beside each one what would "
-           "show it had stopped. Nothing here was assigned to it; a commitment "
-           "with no way to fail was refused at the door.*", ""]
-    if not rows:
-        out.append("*None yet. The being is asked once a night, and most "
-                   "nights the answer is no.*")
-    from newz.memory.provenance import what_shaped_commitment
-
-    for r in rows:
-        kind = _COMMITMENT_KIND.get(r["kind"], r["kind"])
-        status = ("" if r["status"] == "standing"
-                  else f" · `{_e(r['status'])}`")
-        out.append(f"## {_e(r['statement'])}")
-        out.append("")
-        out.append(f"`{_e(kind)}`{status}")
-        out.append("")
-        out.append(f"*broken by: {_e(r['falsifier'])}*")
-        # E4.3: what shaped it, and INV-033's flag. §8 asks that shaping
-        # influences be traceable and open to challenge, and a commitment is
-        # the one thing here the being authored about ITSELF — so a mix that
-        # is all one source is an identity claim resting on one source, which
-        # matters more than it does on an ordinary position.
-        inf = what_shaped_commitment(conn, r["id"])
-        if inf is not None:
-            out.append("")
-            if not inf.total:
-                out.append("*shaped by: nothing traceable — this commitment "
-                           "carries no resolvable evidence*")
-            else:
-                out.append(f"*shaped by {inf.total} episode(s) — the world "
-                           f"{inf.share('world'):.0%} · people "
-                           f"{inf.share('human'):.0%} · itself "
-                           f"{inf.share('self'):.0%}*")
-                top = inf.concentration
-                if top and top[1] > 0.5:
-                    out.append("")
-                    out.append(f"*{top[1]:.0%} of this comes from one source: "
-                               f"`{_e(top[0])}`*")
-        for ch in changes.get(r["id"], []):
-            carried = ("carried by a claim the world settled"
-                       if ch["resolution_id"] else "no claim carried it")
-            out.append("")
-            out.append(f"***{_e(ch['kind'])}** {_day(ch['ts'])} — "
-                       f"{_e(ch['reason'])} ({carried})*")
-        out.append("")
-    return "\n".join(out)
 
 
 def _one_work(conn: sqlite3.Connection, row, m: Manifest) -> tuple[str, str]:
@@ -563,27 +229,49 @@ def _one_work(conn: sqlite3.Connection, row, m: Manifest) -> tuple[str, str]:
     body.append("*" + (
         f"signed {_e(sig[:16])}…" if sig
         else "unsigned — written before pieces were signed") + "*")
-    return page, _page(row["title"], "\n".join(body), here="index")
+    return page, _page(row["title"], "\n".join(body))
 
 
 def generate(conn: sqlite3.Connection, out_dir: Path, *, now: float) -> Manifest:
-    """Write the whole surface. The directory is emptied of what this writes."""
+    """Write the surface. The directory is emptied of what this writes.
+
+    **Essay pages only** *(operator, 2026-08-24: "I only want the essay
+    pages")*. The five whole-store pages are gone — `index` was a
+    concatenation that inlined every body a second time beside the per-piece
+    files, and `questions`, `errors`, `commitments` and `read` were views that
+    nothing read: no code in the tree consumed the surface, and `read.md`'s
+    intended reader was the loop struck on 2026-08-21, whose state the monitor
+    now mails directly.
+
+    `manifest.json` and `robots.txt` stay, because neither is a page. The
+    manifest is what makes "every page traces to store rows" checkable rather
+    than asserted, and `robots.txt` is the standing request not to be indexed.
+    Removing either would drop a guarantee instead of a view.
+
+    **A piece the operator judged not publishable is not written.** That is
+    what the word means, and it is what makes the verdict do work rather than
+    sit in a column. Withholding is not deletion: the row, the body and the
+    signature are untouched, the piece is still re-read, and it returns the
+    moment a newer appraisal says so. An UNAPPRAISED piece is written — the
+    default is what it is today, so nothing about the surface changes until the
+    operator says something about it.
+
+    **The gap in the numbering is deliberate.** `work/` going 1, 2, 4 tells a
+    reader that 3 exists and was withheld. Renumbering to hide it would make
+    the surface lie about what the being wrote, and stable addresses are E3.4's
+    whole point.
+    """
+    from newz.works.appraisal import withheld
+
     out_dir.mkdir(parents=True, exist_ok=True)
     m = Manifest(generated_at=now)
 
-    pages = {
-        "index.md": ("The work", _works(conn, m), "index"),
-        "questions.md": ("Open questions", _questions(conn, m), "questions"),
-        "errors.md": ("What it was wrong about", _errors(conn, m), "errors"),
-        "commitments.md": ("Commitments", _commitments(conn, m), "commitments"),
-        "read.md": ("The read", _read(conn, m), "read"),
-    }
-    for name, (title, body, here) in pages.items():
-        (out_dir / name).write_text(_page(title, body, here=here), encoding="utf-8")
-
     # One stable address per piece, so a piece can be pointed at (E3.4).
     (out_dir / "work").mkdir(exist_ok=True)
+    not_publishable = withheld(conn)
     for row in conn.execute("SELECT * FROM works ORDER BY id"):
+        if row["id"] in not_publishable:
+            continue
         name, page = _one_work(conn, row, m)
         (out_dir / name).write_text(page, encoding="utf-8")
 

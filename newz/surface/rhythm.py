@@ -42,7 +42,10 @@ def publish(db_path: Path, out_dir: Path, *, now: float | None = None) -> int:
             if p.name != ".gitkeep":
                 shutil.rmtree(p) if p.is_dir() else p.unlink()
         generate(conn, out_dir, now=now or time.time())
-        return len(list(out_dir.glob("*.md")))
+        # Essay pages live under work/ (operator, 2026-08-24). A top-level
+        # glob counted five whole-store pages that no longer exist and
+        # would now log "0 pages" on a healthy pass.
+        return len(list(out_dir.glob("work/*.md")))
     finally:
         conn.close()
 

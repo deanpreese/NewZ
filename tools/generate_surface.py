@@ -7,6 +7,10 @@
 
 Every page comes from a query and `manifest.json` records which rows. Nothing
 is hand-authored, nothing is incremental, and nothing reaches the network.
+
+The surface is the essays and nothing else *(operator, 2026-08-24)*: one file
+per piece under `work/`, plus the manifest and `robots.txt`. A piece whose
+newest appraisal says it is not publishable is not written.
 """
 
 from __future__ import annotations
@@ -37,7 +41,12 @@ def main() -> int:
                 if not out.exists():
                     print(f"{out} does not exist — nothing to compare")
                     return 1
-                names = sorted(p.name for p in Path(tmp).iterdir())
+                # Recursive: the essay pages live under work/ (operator,
+                # 2026-08-24), and a flat iterdir would compare a directory
+                # entry rather than the pages inside it — reporting "identical"
+                # for a surface whose every piece had changed.
+                names = sorted(str(p.relative_to(tmp))
+                               for p in Path(tmp).rglob("*") if p.is_file())
                 match, mismatch, errors = filecmp.cmpfiles(tmp, out, names, shallow=False)
                 for n in mismatch + errors:
                     print(f"  DIFFERS  {n}")
@@ -50,7 +59,7 @@ def main() -> int:
                     shutil.rmtree(p) if p.is_dir() else p.unlink()
         m = generate(conn, out, now=time.time())
         total = sum(len(ids) for t in m.pages.values() for ids in t.values())
-        print(f"wrote {len(list(out.glob('*.md')))} pages to {out}")
+        print(f"wrote {len(list(out.glob('work/*.md')))} essay page(s) to {out}")
         print(f"traced to {total} store row(s) across "
               f"{len({t for p in m.pages.values() for t in p})} table(s)")
         return 0

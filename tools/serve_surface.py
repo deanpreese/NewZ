@@ -26,7 +26,7 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     cfg = load()
     out = cfg.repo_root / "published"
-    if not out.exists() or not (out / "index.md").exists():
+    if not out.exists() or not any(out.glob("work/*.md")):
         print("nothing generated yet — run tools/generate_surface.py first")
         return 1
 
