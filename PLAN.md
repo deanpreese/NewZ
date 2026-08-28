@@ -1163,6 +1163,31 @@ rather than buried: if the being's process dies there is no email at all, and
 silence is the alarm.** Every partial failure is still reported; only total
 death is silent.
 
+*The second cost of being inside the being, found 2026-08-28.* **A change to the
+evidence layer needs a restart, and the commit that made one said it did not.**
+`record_all` imports `consequence`, `definitions`, `derived` and `mechanical`
+lazily, inside the function, so a long-lived process resolves each of them at
+whatever moment it first takes a turn. E1.10 was committed at 13:55 into a
+process that had started at 13:24 and had not yet taken one; its 14:09 turn
+imported the new `derived.py` against a producer already cached from before the
+edit, and raised `consequence_rate declares ['retrodictions_settled'] and the
+nightly pass did not produce them`. **A fresh interpreter ran the same code
+clean.** Old producer, new consumer, one process.
+
+**It was contained, which is the part that is not a defect.** `run.py` caught
+it, wrote `reading ok=0` with the exception to `monitor_log`, and did not raise
+into the ambient loop — E3A.2's own `Done when`, holding. The being kept
+advancing and reading throughout, the failed run is what the next daily email
+reports, and the cost was one hourly reading, which E2.7 reports as `INCOMPLETE`
+rather than as a number.
+
+So the rule the `Restart:` trailer needs is narrower than "did the being's code
+change": **anything the monitor imports is the being's code**, because the
+monitor is in its process. E1.10's commit reasoned that the metric layer is read
+by tools and by the monitor rather than by the being, and that distinction does
+not exist here. It is the 2026-08-21 decision's cost in a second form, recorded
+the way the first one is rather than left to be rediscovered.
+
 **E3A.3 — the daily state email** *(built 2026-08-21)*
 *Delivers:* the same command, at or after `NEWZ_MONITOR_SEND_HOUR`, sends one
 message to `GMAIL_TO`. Liveness first, then hours since the last reading, then
