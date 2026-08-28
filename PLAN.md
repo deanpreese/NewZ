@@ -1162,6 +1162,33 @@ genuinely fixed.
 > accepted advances against 12 Perspective items a week, so the loss is between
 > advance and Perspective and no cycle rate reaches it.
 >
+> **Corrected 2026-08-27 — the loss is not there**
+> *(`proposals/2026-08-27-the-advances-arrive-and-nothing-moves.md`)*. Advance
+> episodes are consolidated at **97.2%** and cited by a Perspective item at
+> **74.4%**, against 13.0% for reading: they are the best-converting material
+> the being produces. The 50-to-12 ratio is **compression, not attrition** —
+> median 10 evidence refs per item — which is what `reinforced_existing` was
+> built to do after one contradiction was filed on three consecutive nights.
+>
+> What the store shows instead is a **ceiling**. `CONFIDENCE_ON_REINFORCE` is
+> 0.06 against `MAX_CONFIDENCE` 0.95, and ten of the thirty-nine live items are
+> already at 0.95, where `min(0.95, 0.95 + 0.06)` is 0.95. An advance
+> reinforcing a saturated item changes nothing anywhere — not confidence, not
+> text, not status — it is one more id in an `evidence_json` array on a row that
+> was going to be carried regardless. Only 24.4% of advances first land in an
+> item that added, revised or merged; 50% land in one carried unchanged;
+> `carried` climbs 20 → 37 across v12–v19 while `added` falls 4,2,2,1,3,4,2,1.
+>
+> **So for the being's ten most-held positions, depth is irrelevant by
+> construction**, and the only lever left is `CONFIDENCE_ON_CONTRADICT` — Phase
+> 1's mechanism, earliest **2026-12-18**. This is
+> `2026-08-18-a-place-of-its-own.md`'s topology gap in arithmetic: the internal
+> loop can only add, addition has a ceiling, and the remaining lever is
+> external. It is why Phase 1 carries the outer loop alone. **The constants are
+> not to be tuned to restore motion** — a position does not become less certain
+> because more evidence agreed with it — and they are revisited against the
+> first month of real contradictions, which is E4.2's own discipline.
+>
 > **No instrument would have caught this**, and that is the part worth keeping.
 > Every metric in `instruments.yaml` measures what the being *did*; none
 > measures what it *could have done and did not*. `token_share_by_function`
@@ -1564,6 +1591,38 @@ and the work outgrowing the room.
    the repo that discriminates *model-limited* from *system-limited*, which
    Phase 8's design assumes without testing. R-22 binds: the sample is bounded
    and the apparatus is deleted when the question is answered.
+
+   **The decision stands; its specification and both its stated reasons do
+   not** *(2026-08-27,
+   `proposals/2026-08-27-the-probe-has-nothing-to-compare-against.md`)*. This is
+   recorded rather than re-decided — re-taking it is the operator's act.
+
+   - **The comparison arm does not exist.** `newz/deliberation/` holds one
+     module, `lite.py`, whose own opening says the full S2 §7.3 shape "lands in
+     Phase 3". **That Phase 3 was never built** — it belongs to P2, which this
+     plan replaced, and P4's Phase 3 is a different phase with the same number.
+     So "run the probe" means *build the largest unbuilt thing in the repo, then
+     run an experiment*, recorded here in one line as a measurement.
+   - **Phase 5's depth-by-stakes is gone.** Its premise was measured false
+     2026-08-22, and "depth set by what is at stake" appears exactly once in
+     this plan — in the paragraph above — delivered by no epic.
+   - **Phase 8 was struck 2026-08-21**, four days before this entry cited what
+     its design assumes.
+   - **R-22's one free condition is unmet.** It requires an explicit end date
+     recorded if the probe is built. None exists, here or anywhere.
+
+   **The question survives and is worth answering**: with a fixed model, is
+   structure the only lever on depth? What is recommended instead is a variant
+   *inside* `lite.py` behind a flag — same pipeline, one added structural step,
+   bounded sample, blind-judged, and genuinely deletable, which the specified
+   design cannot be. **Its population is the 29 unsaturated Perspective items**,
+   particularly the 12 still at 0.6 having never been reinforced, and its
+   earliest informative date is **after the first Phase 1 resolution**: run
+   before contradiction is live, a null result cannot be told apart from the
+   confidence ceiling doing what it does.
+
+   That both of this entry's reasons went stale without anything noticing is
+   item 4's open hole below, in its second instance in two days.
 
 3. **Read-and-report gates building.** ~~DECIDED 2026-08-19~~ — **moot
    2026-08-21.** It gated E8.4 behind three compared proposals. Phase 8 is
