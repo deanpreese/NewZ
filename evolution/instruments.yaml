@@ -185,6 +185,11 @@ not_instruments:
     - tools/conversation_probe.py
     - tools/opener_probe.py
     - tools/redteam_ingest.py
+    # Does the being USE E1.9's clause? The mechanism is tested; whether it is
+    # reached is a behaviour, and the two door calls after the epic shipped
+    # produced nothing, which at an ~81% decline rate means nothing at all. A
+    # probe is what this project uses instead of inferring it from silence.
+    - tools/retrodiction_probe.py
     # Exercises resolve_claim against real open claims on a throwaway copy of
     # the store, because `workable_claims` selects `due_at <= now` and nothing
     # had ever been due — the whole path was untested in life with four days

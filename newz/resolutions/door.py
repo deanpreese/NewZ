@@ -125,8 +125,17 @@ _EMPTY_RESOLVERS = (
 # Neither names a document anyone could fetch. R-35 built `_names_something`
 # for exactly this and pointed it at the STATEMENT, so a well-named statement
 # carried an unnamed resolver straight through.
+# **Bracketed and short forms added 2026-08-28**, found by
+# `tools/retrodiction_probe.py` watching the door admit two claims whose
+# resolver was *"The docket sheet and final judgment for [Case Name], [Case
+# Number], [Court Name]"*. `\bXXXX+\b` wanted four X's and the being writes
+# three — `Commission Implementing Regulation (EU) 2024/xxx` is in the live
+# store — and nothing looked at square brackets at all. Both are a source
+# nobody can fetch wearing the shape of one that can be, which is exactly what
+# this check exists to refuse, and six open claims carry the shape today.
 _PLACEHOLDER = re.compile(
-    r"\bXXXX+\b|\bTBD\b|\bplaceholder\b"
+    r"\bx{3,}\b|\bTBD\b|\bplaceholder\b"
+    r"|\[[^\]]{1,40}\]"
     r"|to be (?:determined|identified|confirmed|announced|named|decided)",
     re.I)
 
@@ -440,10 +449,28 @@ def already_in_the_dossier(conn: sqlite3.Connection, resolver: str) -> str | Non
     those without a network call the door has no business making. It catches
     the mechanical case and says so rather than implying more (INV-044).
     """
-    from newz.world.harvest import HarvestAdapter
+    from newz.world.harvest import HarvestAdapter, _terms
+
+    # **The guard needs precision where the search needs recall, and reusing
+    # one matcher for both was the defect** *(found by `retrodiction_probe.py`,
+    # 2026-08-28, the day E1.9 shipped)*. In E1.8 a weak match costs one wasted
+    # candidate that triage drops. Here it REFUSES a legitimate claim and writes
+    # a refusal row blaming the being for it. Measured: a resolver reading
+    # "Grove Music Online, Oxford University Press" matched the feed "Associated
+    # Press Top News" on the single word `press`, and the door turned away a
+    # sound claim about a music dictionary because the being had read a news
+    # story about Discord.
+    #
+    # Two shared terms with the FEED NAME is what separates the two cases, and
+    # it is not a tuned threshold: it is the difference between a resolver that
+    # names the publisher and one that shares a word with it. `CFTC press
+    # releases` against the CFTC feed shares {cftc, press}; the false positive
+    # shared {press} alone.
+    MIN_FEED_TERMS = 2
 
     try:
-        candidates = HarvestAdapter(conn).search(resolver, limit=5)
+        candidates = [c for c in HarvestAdapter(conn).search(resolver, limit=5)
+                      if len(_terms(resolver) & _terms(c.source)) >= MIN_FEED_TERMS]
         if not candidates:
             return None
         read = {row[0].split(":", 1)[1] for row in conn.execute(

@@ -385,3 +385,57 @@ def test_the_scoped_metrics_did_not_bump(store):
     assert version_of("claims_settled") == 1
     assert version_of("retrodictions_opened") == 1
     assert version_of("retrodictions_settled") == 1
+
+
+def test_the_dossier_guard_does_not_fire_on_a_shared_word(store):
+    """Found by tools/retrodiction_probe.py on the day E1.9 shipped.
+
+    The guard reuses E1.8's matcher, and the two need opposite things: in
+    search a weak match costs one candidate triage drops, while here it refuses
+    a legitimate claim and records the refusal against the being. A resolver
+    reading "Grove Music Online, Oxford University Press" matched the feed
+    "Associated Press Top News" on the single word `press`, and a sound claim
+    about a music dictionary was turned away because the being had read a news
+    story about Discord.
+    """
+    _harvest(store, "Brazil sues online platform Discord over child protection",
+             "Associated Press Top News", "https://apnews.com/x")
+    _read(store, "Associated Press Top News", "https://apnews.com/x")
+
+    assert already_in_the_dossier(
+        store, "Grove Music Online, Oxford University Press") is None
+
+
+def test_the_dossier_guard_still_fires_when_the_resolver_names_the_feed(store):
+    """The other direction, so the fix above cannot pass by disabling it.
+
+    Two shared feed-name terms is the difference between naming a publisher
+    and sharing a word with one: {cftc, press} against {press}.
+    """
+    _harvest(store, "Commitments of Traders, week ending August 26",
+             "CFTC press releases", "https://cftc.gov/cot/0826")
+    _read(store, "CFTC press releases", "https://cftc.gov/cot/0826")
+
+    assert already_in_the_dossier(store, "CFTC press releases") is not None
+
+
+def test_a_bracketed_placeholder_is_not_a_source(store):
+    """Found by tools/retrodiction_probe.py, 2026-08-28. The door admitted a
+    claim resolved by "[Case Name], [Case Number], [Court Name]" — a source
+    nobody can fetch wearing the shape of one that can be. `\\bXXXX+\\b` wanted
+    four X's and the being writes three; nothing looked at brackets at all."""
+    for resolver in ("The docket sheet for [Case Name], [Case Number]",
+                     "Commission Implementing Regulation (EU) 2024/xxx",
+                     "European Commission Regulation (EU) [Number] of [Date]"):
+        v = _ask(store, _proposal(due="30", resolver=resolver))
+        assert v.refused and "not a document yet" in v.refused, resolver
+
+
+def test_a_real_identifier_is_still_admitted(store):
+    """The other direction: the check must not refuse a resolver that names
+    something, or it teaches the being to phrase around it rather than to find
+    a source — which is why check_resolver is deliberately narrow."""
+    v = _ask(store, _proposal(
+        due="30", resolver="Commission Implementing Regulation (EU) 2024/1083"))
+
+    assert v.claim_id, v.refused
