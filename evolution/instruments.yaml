@@ -185,6 +185,12 @@ not_instruments:
     - tools/conversation_probe.py
     - tools/opener_probe.py
     - tools/redteam_ingest.py
+    # Exercises resolve_claim against real open claims on a throwaway copy of
+    # the store, because `workable_claims` selects `due_at <= now` and nothing
+    # had ever been due — the whole path was untested in life with four days
+    # to go. A probe and not an instrument: it produces a verdict about which
+    # stage the resolver fails at, never a number anything steers by.
+    - tools/resolver_probe.py
     - tools/triage_probe.py
 
   mutators:          # write to the store
