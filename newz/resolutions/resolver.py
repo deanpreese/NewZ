@@ -142,6 +142,37 @@ def _record_failure(conn: sqlite3.Connection, claim_id: int, why: str) -> None:
     logger.info("claim %d not settled: %s", claim_id, why[:120])
 
 
+def _resolution_adapters(conn: sqlite3.Connection, adapters):
+    """The harvest first, then the ordinary set (E1.8).
+
+    The being subscribes to 61 feeds and `default_adapters()` indexes none of
+    them, so before this the one mechanism that can tell the being it was
+    wrong could not see the documents its own feeds had already delivered.
+    Measured 2026-08-28: claim 22 names *"Federal Open Market Committee (FOMC)
+    Statement or Meeting Minutes"* as its resolver, and those minutes were in
+    `harvest_log` from 2026-08-19, offered and unread, while the resolution
+    pass returned Wikipedia's article about the release.
+
+    **First, because order is what it changes.** `research()` walks adapters
+    in order and dedupes by url, so putting the harvest ahead means the
+    being's own subscribed source is the one that survives when two adapters
+    return the same document. Nothing is refused by being later; everything
+    still passes the relevance floor, triage, the share caps and INV-047.
+
+    `adapters` given explicitly is honoured untouched — the probes and the
+    tests pass stubs, and a caller that named its sources meant them.
+    """
+    if adapters is not None:
+        return adapters
+    from newz.world.harvest import HarvestAdapter
+    from newz.world.sources import default_adapters
+
+    ordinary = default_adapters()
+    fetcher = next((getattr(a, "_f", None) for a in ordinary
+                    if getattr(a, "_f", None) is not None), None)
+    return [HarvestAdapter(conn, fetcher), *ordinary]
+
+
 def resolve_claim(conn: sqlite3.Connection, client: LLMClient, claim: Claim, *,
                   log_path, adapters=None, embedder=None,
                   now: float | None = None) -> ResolveOutcome:
@@ -157,7 +188,8 @@ def resolve_claim(conn: sqlite3.Connection, client: LLMClient, claim: Claim, *,
     # go into the query, because searching for the claim alone finds
     # commentary and searching for the source alone finds its front page.
     query = f"{claim.resolver}: {claim.claim}"
-    found = research(client, query, log_path=log_path, adapters=adapters,
+    found = research(client, query, log_path=log_path,
+                     adapters=_resolution_adapters(conn, adapters),
                      embedder=embedder, conn=conn, concern_id=None)
 
     if found.paused:

@@ -512,6 +512,177 @@ publishing source. It demonstrates the being will **use** a terminus when the
 material offers one; it does not show it will find one when the material does
 not. That is what the week in life tests.
 
+### Four epics added 2026-08-28, and the ordering the probe corrected
+
+*Design:* `proposals/2026-08-28-a-third-of-a-bit-a-day.md`. *Measurement:*
+`tools/resolver_probe.py`, run the day the proposal was written.
+
+**The signal is a third of a bit a day.** Nineteen of the thirty-one open claims
+settle within sixty days — **0.317 externally-graded events per day** against
+103 deliberation cycles and 50 advances, so the being takes about **159**
+actions it grades itself for every one the world grades, and
+`positions_changed_by_world` is 0. Phase 1 carries the outer loop alone, and
+this is the rate at which it carries it.
+
+**Two structural limits sit under that, and nobody had multiplied them
+together.** Post-cap claims have a **29.7-day mean horizon** against
+`MAX_OPEN_CLAIMS = 40`, so sustainable throughput is **40 ÷ 29.7 = 1.35
+settlements a day** against an open rate of 3.0. Thirty-one are open.
+
+**The probe corrected the ordering before anything was built.** The proposal's
+first form put the retrodictive claim first, on the reasoning that latency was
+the constraint. `resolve_claim` had never executed once in life —
+`workable_claims` selects `due_at <= now` and nothing had ever been due — so the
+three claims due 2026-09-02 were run against a throwaway copy of the store, with
+the expectation recorded before the calls. **The expectation was wrong.** The
+result was **H3, three of three**: the resolver executes end to end, retrieval
+succeeds, and the verdict honestly refuses to settle — *"the material defines
+what the H.4.1 report is but does not contain the specific data values."*
+
+**So reachability is the binding constraint, not latency**, and E1.8 comes
+before E1.9 rather than after it. Seventeen of thirty-one open claims name
+numeric data releases — Fed H.4.1, USDA NASS, FOMC, CME, ICE/DXY — against an
+adapter set of wikipedia, arxiv, openalex, pubmed, sec_edgar and gdelt, which
+finds descriptions of a statistical release and never its values. Six more name
+a placeholder that is not a source at all: *"(EU) 2023/XXXX"*, *"[Number] of
+[Date]"*, *"The specific academic paper or preprint identified by its title and
+authors"*. `check_resolver` refuses *"time will tell"* and admits every one of
+these. A retrodictive claim naming Fed H.4.1 fails identically, so E1.9 built
+first would have bought latency on claims that still could not settle.
+
+**This is E1.7's own recorded caveat, one layer down.** It says the probe there
+*"demonstrates the being will use a terminus when the material offers one; it
+does not show it will find one when the material does not."* What E1.8 answers
+is the case where the material offers a terminus and the terminus cannot be
+reached — which reads as a named source and behaves as none.
+
+**E1.8 — the resolver reads what the being already has**
+
+> **Replaced 2026-08-28, before it was built, and the first form is kept
+> below.** E1.8 was first written as a reachability refusal at the door: a
+> claim whose named resolver the adapters return nothing for would be turned
+> away. Measuring it against the live claims to size the check is what showed
+> it was wrong, and it would have done harm — applied to claim 22 it refuses a
+> claim about the FOMC minutes, and **the FOMC minutes had arrived in the
+> being's own harvest on 2026-08-19.**
+>
+> `data/feeds.yaml:3` carries `Federal Reserve press releases`, enabled, and
+> six of its items have been harvested and offered. `default_adapters()`
+> returns Wikipedia, arXiv, OpenAlex, PubMed and SEC EDGAR, and
+> `newz/world/research.py` contains no reference to `harvest_log`, `feeds` or
+> `feed_state`. **The being does not name unreachable sources. It names
+> sources it subscribes to, whose documents arrive, and the resolver looks
+> somewhere else.** When it went for H.4.1 it found Wikipedia's article
+> *about* H.4.1 while the Federal Reserve's own feed sat unread in the store.
+>
+> The first form is not softened into the second — they are different epics,
+> and this one is smaller. The correction is recorded here because a criterion
+> that changes after a measurement should be visible as an act, which is what
+> `done_when_sha` pins.
+
+*Delivers:* the being's own harvest reachable on a resolution pass. A source
+over `harvest_log` — the items its 61 subscribed feeds actually delivered —
+consulted **before** the academic adapters when a claim is being settled, the
+item read at the url the feed gave. It is not added to ordinary research: a feed
+item already reaches the being through the menu, and putting the harvest on both
+paths would double-count the diet and change the reading rhythm E1.0 set.
+*Done when:* a claim whose resolver names a subscribed feed is settled from an
+item that feed delivered; the harvest is consulted before the academic adapters
+on a resolution pass and on no other path; and an item is offered by title and
+outlet against the resolver rather than by a hand-authored mapping.
+*Depends on:* E1.2.
+*Hooks:* INV-012, since this is a reach for the world and stays inside
+deliberation. INV-047 is untouched — the verbatim check still decides, and this
+only changes where the material it checks against can come from. **Rule 4 is not
+engaged:** matching a resolver to a feed the operator already curated is
+mechanical, and nothing here judges the being.
+
+*As built* **(mechanism complete 2026-08-28 — the epic stays OPEN)**:
+`newz/world/harvest.py`, a `HarvestAdapter` duck-typed to the adapter protocol,
+placed ahead of `default_adapters()` by `_resolution_adapters` in
+`newz/resolutions/resolver.py`; 13 tests. Two refinements the measurement forced,
+both against the live claim set. **The publisher must match**, not merely the
+headline — a resolver names a source, and without that clause claims 21 and 31
+ranked a Bloomberg Opinion column above the Federal Reserve's own feed. And
+**function words are not a match**: the feed *"The Hindu"* shares *"the"* with
+almost every resolver ever written, and matched eight of the thirty-one open
+claims that way, offering Indian domestic politics as the source that would
+settle a European Commission regulation. Candidates went 25 of 31 to 9 of 31,
+and all four Federal Reserve claims moved onto the Federal Reserve's feed.
+
+*Why it is not closed.* Its first clause is **in-life** — *settled from an item
+that feed delivered* — and no test closes that. Against the live store the
+adapter now returns, for claim 22, the exact document its resolver names:
+`[Federal Reserve press releases] Minutes of the Federal Open Market Committee,
+July 28-29`. Whether that settles the claim is for the resolver and INV-047 to
+say, on a pass that has not run yet. The mechanism is complete and the epic is
+not, which is E2.2's lesson applied rather than repeated (E4.2 and E6.1 are
+recorded the same way) — and it is the exact fault this epic exists to answer,
+since E1.3 was classed mechanical and closed while its own path had never once
+executed.
+
+*What it does not fix, recorded rather than left to be found.* Six of the
+thirty-one open claims name a placeholder that is not a source at all — *"(EU)
+2023/XXXX"*, *"[Number] of [Date]"*, *"The specific academic paper or preprint
+identified by its title and authors"*. `check_resolver` refuses *"time will
+tell"* and admits every one of these, and no adapter change reaches them. That
+is a door question and it is not this epic; it is recorded here so the next
+reader does not assume E1.8 covered it.
+
+**E1.9 — the claim that is already true**
+*Delivers:* a second kind of claim, whose named resolver has **already
+published**, settled on the next resolver pass rather than on a date. The
+horizon floor of 2 days is a proxy for *"not already in the dossier"*, and the
+thing it stands in for is checkable directly: a resolver already in
+`ingest_log` is refused. Retrodictions carry their own daily cap and do not
+consume `MAX_OPEN_CLAIMS`, whose arithmetic is about unresolved inventory and
+whose full-pool decline currently writes nothing at all.
+*Done when:* a claim naming an already-read source is refused and recorded; a
+zero-horizon claim naming an unread source is admitted and settles on the next
+pass; a forecast's horizon, caps and refusals are unchanged; a retrodiction does
+not consume the carrying pool; and a full pool produces a refusal row rather
+than a silent decline.
+*Depends on:* E1.8.
+*Hooks:* INV-045, INV-046. The silent decline is folded here because this is the
+epic that touches the pool's accounting: PLAN already names that shape as wrong
+for E4.1's cap — *"reads as 'it had nothing to commit to' when the truth is 'it
+was not allowed to'"* — and the claim door has the same silence today.
+
+**E1.10 — the two kinds never average**
+*Delivers:* the claim series kept separable — `claims_settled`, `claims_opened`
+and `consequence_rate` reporting forecasts and retrodictions apart, each with
+its own `definition_version`, the reset recorded with its reason.
+*Done when:* no delta is computed across the two kinds, the definition change is
+a row in `metric_definition_changes`, and both readers show the split.
+*Depends on:* E1.9.
+*Hooks:* **E2.8**, which exists because a series that changes meaning without
+saying so reads a change of mechanism as a change in the being — the "novelty"
+mistake, and the two kinds carry different epistemics, so this is that mistake
+arriving on schedule. **Rule 7. And E3.9**: the emitters are
+`newz/evidence/mechanical.py`, `newz/evidence/derived.py`, `tools/claims.py` and
+`evolution/instruments.yaml`, all inside the freeze, so this epic is an operator
+act and must not travel inside E1.9's commit.
+
+**E1.11 — consequence within a cycle**
+*Delivers:* the loop closing at the rate the mechanism permits — a claim the
+being made about the world settled from a world source in the cycle it was
+opened, and the cost reaching the position that generated it.
+*Done when:* at least one retrodictive claim is settled from a world source
+within one deliberation cycle of opening, and its outcome reaches a position
+through INV-031.
+*Depends on:* E1.4, E1.9, E1.10.
+*Hooks:* S1-E, and this is E1.3 and E1.4's own clause at a latency that lets it
+happen more than once. **In-life:** it stays open until it fires, which is the
+E2.2 lesson recorded rather than repeated, as E4.2 and E6.1 are.
+
+**What these four do not do.** They do not touch Rule 4, Rule 6, the freeze or
+the hard core, and they add no instrument. They raise the rate at which the
+world can contradict the being; they hand it nothing it does not already have.
+**The generate half of §5 Priority 1.5 is untouched by this phase and stays
+so** — the proposal's ordering argument is that unlocking it before the signal
+exists is drift with a steering wheel, and the diet handover it names as the
+first candidate waits on E1.11.
+
 **No audience required.** The world's facts settle claims whether or not anyone
 is watching. This is the one phase that closes the loop with one operator and no
 readers.
@@ -527,6 +698,16 @@ the grounding mix (baseline ≤17%); and whether ingest breaches §9.1. Falsifi-
 cation and the reversion condition are in the proposal's §5 — if coverage does
 not rise, the answer is a rotation floor, never the old filter, whose
 demonstrated behaviour is that 27 curated sources contribute nothing forever.
+
+**S1-E is not readable on the first due date, measured 2026-08-28.** The three
+claims due 2026-09-02 were run through `resolve_claim` on a copy of the store
+and all three reached H3 — the resolver works, and the material cannot settle
+them. They will fail four times each over three days (`MAX_ATTEMPTS`,
+`RETRY_AFTER_HOURS`), stop being retried, and **stay open with nothing raised**.
+An unsettleable claim also never leaves the pool, so the carrying cap is filled
+by exactly the claims that can never drain it. This does not change Decision 6,
+which deferred the read rather than dating it; it says the read waits on E1.8
+and not on a calendar.
 
 **Decision rule** *(deferred 2026-08-20 by operator decision 6 — the plan
 proceeds without waiting; the four live claims resolve from 2026-12-18 and S1-E

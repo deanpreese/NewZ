@@ -125,6 +125,60 @@ epics:
     done_when: mechanical
     done_when_sha: 75a7e05bcdcd99ab
 
+  # Added 2026-08-28. Design: proposals/2026-08-28-a-third-of-a-bit-a-day.md.
+  # The ordering was corrected by tools/resolver_probe.py on the day the
+  # proposal was written: the retrodictive claim was drafted first on the
+  # reasoning that latency bound the signal, and the probe found reachability
+  # binds it instead — H3 on three of three, the resolver sound and the named
+  # sources unreachable. E1.8 therefore precedes E1.9 rather than following it.
+  # E1.8 was replaced 2026-08-28 before it was built. Its first form was a
+  # reachability refusal at the door; measuring it against the live claims
+  # showed it would refuse a claim about the FOMC minutes while those minutes
+  # sat unread in the being's own harvest. The sha moves with the criterion,
+  # which is the act this pin exists to make visible.
+  E1.8:
+    title: 'the resolver reads what the being already has'
+    phase: 1
+    status: open
+    depends_on:
+    - E1.2
+    # in-life, not mechanical: the first clause is "settled from an item that
+    # feed delivered", and no test closes that. The mechanism is complete and
+    # the epic is not — E2.2's lesson, as E4.2 and E6.1 are recorded.
+    done_when: in-life
+    done_when_sha: 211dccf16a6cdc39
+
+  E1.9:
+    title: 'the claim that is already true'
+    phase: 1
+    status: open
+    depends_on:
+    - E1.8
+    done_when: mechanical
+    done_when_sha: b70e084bb8b8ae46
+
+  E1.10:
+    title: 'the two kinds never average'
+    phase: 1
+    status: open
+    depends_on:
+    - E1.9
+    done_when: mechanical
+    done_when_sha: b60aa99247c2ae0e
+
+  E1.11:
+    title: 'consequence within a cycle'
+    phase: 1
+    status: open
+    # Registry order matches PLAN's parsed order, which is a string sort —
+    # 'E1.10' < 'E1.4' — not a numeric one. The drift check compares the lists.
+    depends_on:
+    - E1.10
+    - E1.4
+    - E1.9
+    done_when: in-life
+    done_when_sha: 1ded43a832142b82
+
   E2.1:
     title: 'writing as a rhythm'
     phase: 2
