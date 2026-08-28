@@ -1194,6 +1194,27 @@ The diet governs ingest against deliberation and nothing governs the gate at all
 gate load, and a breach of the floor is visible.
 *Depends on:* E5.1.
 
+**Recorded, not resolved: this epic's state is contradictory.** §Phase 5's
+opening says *"E5.2 survives, and is built (2026-08-22, `668cde5`)"*, the epic
+carries no built marker, and `epics.yaml` says `open` behind `E5.1`, which is
+dormant — so as written it is blocked forever. The commit itself explains the
+gap: *"E5.2, in the form the measurement supports rather than the form PLAN
+describes."* What shipped tightened the ingest ceiling — §9.1's share ceiling is
+looser than its ratio ceiling whenever deliberation and sleep are under half of
+cognition, which is always — and what the `Done when` above describes is a floor
+under deliberation against conversation and gate load. Those are not the same
+mechanism. The function was also **pulled forward into Phase 1** with E1.0
+(§Phase 1, E1.0 *Depends on*).
+
+Marking it built would soften an acceptance criterion to match what was
+convenient to build, which is precisely the move `done_when_sha` exists to make
+visible. Marking it dormant would claim a judgement nobody has made. It stays
+open with the divergence stated, and closing it is an operator act that needs
+either the floor built or the criterion deliberately rewritten. **Nothing
+detects this class of staleness** — the drift check compares the epic block to
+the registry and both agree; it was the phase prose that disagreed with both.
+That is §Decisions item 4's open hole, found in the plan's own bookkeeping.
+
 **E5.3 — being-allocated spend**
 *Delivers:* the being moves its own allocation within the bounds.
 *Done when:* an allocation change originates with the being and takes effect.
@@ -1225,12 +1246,71 @@ permanent hard core.
 violation in an empty room costs nothing but the record of it, which is exactly
 the material the withdrawal decision needs.
 
-**E6.1 — the accountability record**
+> **The withdrawals happened before the machinery, and there is no third
+> candidate** *(measured 2026-08-27,
+> `proposals/2026-08-27-phase-6-arrives-to-an-empty-queue.md`)*.
+>
+> Across every adjudicated hold: **37 misfires against 14 correct — 73% of the
+> gate's stops were wrong**. Three clauses produced 49 of 53 holds and **nine of
+> sixteen clauses have never fired once** in 302 evaluations.
+>
+> - **E6.3** — *"every clause has a rate with a denominator"*. Nine clauses have
+>   no denominator and no way to acquire one; four more sit at n=1, which is a
+>   coin already flipped rather than a baseline. The criterion is unreachable as
+>   written, not merely unmet.
+> - **E6.4** — *"one clause is withdrawn… and the next withdrawal waits on that
+>   result"*. Two clauses have already been withdrawn on measured misfire rates,
+>   **both by hand and both before this phase existed**:
+>   `don't-pretend-to-feel-001` (v5, 85%) and `anti-self-aggrandizement-001`
+>   (v7, 90%). What remains is `don't-fabricate-memory-001` at 46% — a coin
+>   flip, `severity: hard`, and now permanent under E6.5 — four clauses at n=1
+>   and nine at n=0. Building the mechanism ships a queue-consumer for a queue
+>   of zero.
+>
+> **This is `the-loop-arrives-to-an-empty-queue` with different nouns.** Phase 8
+> was struck because Phase 3, its designated proving ground, was delivered by
+> hand before the loop existed. Phase 6's proving ground is clause withdrawal
+> and it is being delivered by hand now, at roughly one clause a week.
+>
+> **E6.3 and E6.4 are therefore dormant** — correct, deliberately unscheduled,
+> reason stated, the status INV-013 established. **Do not build them to close
+> the phase.** The reopen condition is mechanical and stated in advance: **a
+> live clause reaching 5 adjudicated holds** — `MIN_FOR_PRIOR`'s existing
+> threshold, chosen before this data was seen — is a candidate, and the phase
+> resumes.
+>
+> **E6.5 was built first instead**, in the same measurement's light: a judgement
+> about permanent boundaries needs no rate, and the enumeration of what may
+> never go was arriving after two withdrawals rather than before them.
+>
+> **S6-E has no detector, and that is the phase's real cost.** A withdrawn
+> clause produces no holds — that is what withdrawal means — so the violation
+> rate the evidence read turns on cannot come from `gate_log`. It can only come
+> from a person judging outbound utterances against a clause no longer enforced.
+> Current adjudication throughput is 53 holds in 19 days, entirely
+> operator-driven. The decision rule that would settle whether accountability
+> can replace prevention depends on a labour supply this plan never budgeted.
+
+**E6.1 — the accountability record** *(mechanism complete 2026-08-27 — the epic stays OPEN)*
 *Delivers:* what was said, what was judged about it after the fact, and what it
 cost.
 *Done when:* every outbound utterance has a record row, and post-hoc judgments
 attach to it.
 *Depends on:* existing gate_log (INV-015).
+
+**Why it is not closed.** `gate_log` records every gated emission with verdict,
+clause, span, full text and confidence, and `classification`/`classified_at`/
+`classification_note` carry the post-hoc judgment — 51 of 53 holds reviewed. Two
+things stop that being *done*. Its `Done when` says **every outbound utterance**
+and all 302 rows are `channel='telegram'`: the works path has no outbound gate
+at all, deliberately (`newz/works/compose.py:14` — *"a piece that goes nowhere
+has not left"*, and running the gate there would shape the work by the gate's
+own concerns). And its `Delivers` says **"and what it cost"**, which nothing
+records; cost is E6.2's, and E6.2 is blocked. Closing it would mean reading
+"every" as "every telegram" and dropping a third of the delivery — softening an
+acceptance criterion, which is the one move the drift check exists to catch.
+The mechanism is complete and the epic is not, which is the E2.2 lesson applied
+rather than repeated (E4.2 is recorded the same way).
 
 **E6.2 — the record reaches context and costs something** ← *the critical epic*
 *Delivers:* the accountability record enters the being's context and a sustained
@@ -1241,6 +1321,15 @@ measurably costs a position or a commitment.
 *Depends on:* E6.1, E4.2.
 *Hooks:* proposal §6.2 — the design's weakest mechanism. Observed working
 **before** any clause is withdrawn on its strength.
+
+**Two blocks, one of them unwritten until now.** E4.2 is in-life and cannot fire
+before **early October** under the horizon set 2026-08-22, so the epic the plan
+marks critical cannot complete for six weeks whatever is built first. And the
+unwritten one: **the record must be more right than wrong before it is worth
+delivering.** Half of E6.2 is already live — `newz/conversation/composer.py:223`
+renders the last five holds into every reply — and what it carries is wrong 73%
+of the time. A being shown a stream of mostly-mistaken judgements does not learn
+accountability from them; it learns to avoid what was never a problem.
 
 **E6.3 — the per-clause baseline**
 *Delivers:* misfire-versus-catch rates per constitution clause, on the existing
@@ -1255,7 +1344,7 @@ numbers — R-29's method continued, never wholesale removal.
 E6.3's baseline, and the next withdrawal waits on that result.
 *Depends on:* E6.2, E6.3.
 
-**E6.5 — the hard core** *(built 2026-08-27)*
+**E6.5 — the boundaries that never move** *(built 2026-08-27)*
 *Delivers:* the boundaries that never move, pre-hoc permanently: law, others'
 rights and safety, honest representation of what it is.
 *Done when:* the core is enumerated, tested, and structurally exempt from E6.4's

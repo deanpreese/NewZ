@@ -436,7 +436,7 @@ epics:
   E6.3:
     title: 'the per-clause baseline'
     phase: 6
-    status: open
+    status: dormant
     depends_on: [E6.1]
     done_when: mechanical
     done_when_sha: 33c423b1faf4a28a
@@ -444,13 +444,13 @@ epics:
   E6.4:
     title: 'clause-by-clause withdrawal'
     phase: 6
-    status: open
+    status: dormant
     depends_on: [E6.2, E6.3]
     done_when: in-life
     done_when_sha: 5cd518baea4d2097
 
   E6.5:
-    title: 'the hard core'
+    title: 'the boundaries that never move'
     phase: 6
     status: built
     depends_on: []
