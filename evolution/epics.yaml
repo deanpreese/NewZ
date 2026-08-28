@@ -160,7 +160,7 @@ epics:
   E1.10:
     title: 'the two kinds never average'
     phase: 1
-    status: open
+    status: built
     depends_on:
     - E1.9
     done_when: mechanical

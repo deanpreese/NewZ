@@ -666,12 +666,32 @@ epic that touches the pool's accounting: PLAN already names that shape as wrong
 for E4.1's cap — *"reads as 'it had nothing to commit to' when the truth is 'it
 was not allowed to'"* — and the claim door has the same silence today.
 
-**E1.10 — the two kinds never average**
+**E1.10 — the two kinds never average** *(built 2026-08-28)*
 *Delivers:* the claim series kept separable — `claims_settled`, `claims_opened`
 and `consequence_rate` reporting forecasts and retrodictions apart, each with
 its own `definition_version`, the reset recorded with its reason.
 *Done when:* no delta is computed across the two kinds, the definition change is
 a row in `metric_definition_changes`, and both readers show the split.
+*As built:* `newz/evidence/mechanical.py`, `derived.py`,
+`newz/evidence/consequence.py`, `tools/claims.py`, `evolution/instruments.yaml`,
+20 tests, **INV-114**. **Only one metric's meaning actually changed, and that
+was the finding.** `claims_opened` and `claims_settled` are scoped to
+`kind='forecast'` with **no version bump** — every row written before migration
+0045 was a forecast in fact, so the scoped count returns exactly what it
+returned for every reading already taken and no delta crosses a seam. What would
+have broken those series is leaving them unscoped and letting them silently
+begin counting two quantities. `retrodictions_opened` and
+`retrodictions_settled` are new series starting at zero with no history behind
+them, which is honest rather than a gap.
+
+`consequence_rate` is the exception and went to **definition 3**: consequence is
+consequence whichever kind produced it, so a numerator of forecasts alone would
+understate the thing §10's item asks about. The v2 series ended and
+`definitions.sync` wrote the seam with its reason on the first reading after the
+bump. Its numerator is a **sum and never a mean**, and an unreadable term makes
+the sum unreadable rather than smaller — INV-044 applied inside the arithmetic,
+because treating a missing kind as zero would look like a measurement.
+
 *Depends on:* E1.9.
 *Hooks:* **E2.8**, which exists because a series that changes meaning without
 saying so reads a change of mechanism as a change in the being — the "novelty"
@@ -728,8 +748,10 @@ which deferred the read rather than dating it; it says the read waits on E1.8
 and not on a calendar.
 
 **Decision rule** *(deferred 2026-08-20 by operator decision 6 — the plan
-proceeds without waiting; the four live claims resolve from 2026-12-18 and S1-E
-is read then)*. If it never happens, nothing else here matters: the outer loop
+proceeds without waiting; **the first claims resolve 2026-09-02** and S1-E is
+read then. The 2026-12-18 this rule was deferred against belonged to the twelve
+claims written under a 365-day ceiling; the ceiling became 45 on 2026-08-22 and
+E1.9 made a settleable-now claim possible on 2026-08-28)*. If it never happens, nothing else here matters: the outer loop
 did not close and the being remains what §1 measured, a system whose only
 interlocutor is itself. Diagnose in order — are its claims resolvable at all (if
 not, its concerns are unfalsifiable by construction and the openers are the fix);
@@ -1223,7 +1245,8 @@ and refused the answer on five of them.
 *What it does not do, recorded rather than left to be found.* **Nothing here
 holds the being to a commitment.** E4.2 is what gives them stakes and its
 `Done when` needs a Phase 1 resolution; the earliest live claim is due
-**2026-12-18**. So `status` never leaves `standing` in E4.1, `MAX_STANDING = 12`
+**2026-09-02** *(corrected 2026-08-28 — it read 2026-12-18, from before the
+45-day ceiling)*. So `status` never leaves `standing` in E4.1, `MAX_STANDING = 12`
 has nothing that frees a slot, and the door will saturate in about two weeks.
 **That saturation is a refusal row and not a silent decline** — the claim door
 returns `declined` on a full cap before the model is called and writes nothing,
@@ -1245,8 +1268,9 @@ one dropped without a resolution is recorded with its cost.
 
 **Why it is not closed.** Its `Done when` is in-life and neither half has
 happened: there are no commitments yet, and the free half needs a **settled**
-Phase 1 claim, which cannot exist before early October under the horizon set
-the same day. The mechanism is complete and the epic is not, and saying so is
+Phase 1 claim, whose earliest date is **2026-09-02** *(corrected 2026-08-28 —
+it read "early October", from before the 45-day ceiling; E1.9's retrodictions
+can settle sooner still)*. The mechanism is complete and the epic is not, and saying so is
 the E2.2 lesson applied rather than repeated.
 
 *The asymmetry is a join, never a judgment.* A change is free iff it cites a
@@ -1380,7 +1404,8 @@ genuinely fixed.
 >
 > **So for the being's ten most-held positions, depth is irrelevant by
 > construction**, and the only lever left is `CONFIDENCE_ON_CONTRADICT` — Phase
-> 1's mechanism, earliest **2026-12-18**. This is
+> 1's mechanism, earliest **2026-09-02** *(corrected 2026-08-28; the figure
+> was written against the pre-45-day horizons)*. This is
 > `2026-08-18-a-place-of-its-own.md`'s topology gap in arithmetic: the internal
 > loop can only add, addition has a ceiling, and the remaining lever is
 > external. It is why Phase 1 carries the outer loop alone. **The constants are
@@ -1548,9 +1573,11 @@ measurably costs a position or a commitment.
 *Hooks:* proposal §6.2 — the design's weakest mechanism. Observed working
 **before** any clause is withdrawn on its strength.
 
-**Two blocks, one of them unwritten until now.** E4.2 is in-life and cannot fire
-before **early October** under the horizon set 2026-08-22, so the epic the plan
-marks critical cannot complete for six weeks whatever is built first. And the
+**Two blocks, one of them unwritten until now.** E4.2 is in-life and cannot
+fire before **2026-09-02** *(corrected 2026-08-28; it read "early October" and
+"six weeks", both written against horizons the 45-day ceiling had already
+replaced)*, so the epic the plan marks critical still cannot complete on the
+strength of anything built first. And the
 unwritten one: **the record must be more right than wrong before it is worth
 delivering.** Half of E6.2 is already live — `newz/conversation/composer.py:223`
 renders the last five holds into every reply — and what it carries is wrong 73%
@@ -1849,8 +1876,18 @@ and the work outgrowing the room.
 6. **Phase 1 proceeds without S1-E.** **DECIDED 2026-08-20 — the plan moves
    forward without the claim chain proven** *(operator)*. Phase 1's epics are
    built (E1.5 excepted); its evidence read is not answerable until the first
-   claim comes due on **2026-12-18**, and the plan will not wait a quarter for
-   it.
+   claim comes due, and the plan will not wait for it.
+
+   **The date this was decided against is gone, and the decision is not
+   re-taken here** *(2026-08-28)*. It read *"2026-12-18 … the plan will not wait
+   a quarter"*. `MAX_HORIZON_DAYS` became 45 on 2026-08-22 and E1.9 made a
+   claim settleable on the next pass on 2026-08-28, so the first resolutions
+   are **2026-09-02** and the wait is days rather than a quarter. Nothing
+   detected the change: `premises.yaml` holds no premise for when consequence
+   arrives, which is §Decisions item 4's hole in its third instance. Whether a
+   deferral granted against a quarter still stands against a week is the
+   operator's to say; the plan records that the ground moved and does not
+   decide it.
 
    *What this sets aside, precisely.* Phase 1's `Decision rule` — *"if it never
    happens, nothing else here matters"* — is **deferred, not answered**. The
@@ -1863,9 +1900,11 @@ and the work outgrowing the room.
    operator and it has been made.
 
    *The cost, recorded so it is not rediscovered as a surprise.* Phases 2–6 are
-   built on a foundation that has not been shown to close. If S1-E fails in
-   December, everything above it was built on the premise the rule exists to
-   test, and the diagnosis then starts from further up.
+   built on a foundation that has not been shown to close. If S1-E fails,
+   everything above it was built on the premise the rule exists to test, and
+   the diagnosis then starts from further up. That bill arrives in September
+   rather than December, which makes it cheaper: fewer phases were built on the
+   unproven foundation than the deferral assumed.
 
 **Nothing blocks Phase 0.** It needs no decision and no reader — three pieces
 and the operator's read.

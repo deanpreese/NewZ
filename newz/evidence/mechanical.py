@@ -169,14 +169,41 @@ def episodes_recorded(conn: sqlite3.Connection, *, since: float) -> Value:
 
 
 def claims_settled(conn: sqlite3.Connection, *, since: float) -> Value:
-    """Claims the resolver settled in the window.
+    """FORECASTS the resolver settled in the window.
 
     `consequence_rate`'s numerator, which had no registered metric behind it
-    until now — the derivation queried `resolutions` directly while declaring
-    it derived from `claims_opened`, which is a different quantity entirely.
+    until 2026-08-20 — the derivation queried `resolutions` directly while
+    declaring it derived from `claims_opened`, which is a different quantity
+    entirely.
+
+    **Scoped to forecasts, and the series is unbroken by that (E1.10).** Every
+    claim written before migration 0045 was a forecast in fact, because
+    `MIN_HORIZON_DAYS = 2` forbade anything settleable now — so restricting the
+    count to `kind='forecast'` returns exactly what it always returned for
+    every reading already taken, and no version bump is owed. What would have
+    broken the series is leaving it unscoped: from 2026-08-28 it would silently
+    have begun counting two quantities that test different things.
     """
     return _scalar(conn, "SELECT COUNT(*) FROM resolutions"
-                         " WHERE settled_at IS NOT NULL AND settled_at >= ?", (since,))
+                         " WHERE kind='forecast' AND settled_at IS NOT NULL"
+                         " AND settled_at >= ?", (since,))
+
+
+def retrodictions_settled(conn: sqlite3.Connection, *, since: float) -> Value:
+    """Retrodictions the resolver settled in the window (E1.9, E1.10).
+
+    A separate series because it is a separate quantity. A forecast tests the
+    being's model of where things are going; a retrodiction tests whether its
+    assertions about the world are true. Averaging them would read a change of
+    mechanism as a change in the being, which is E2.8's "novelty" mistake, and
+    the whole reason `resolutions.kind` exists.
+
+    It starts at zero on 2026-08-28 with no history behind it, and that is
+    honest rather than a gap: nothing before that date could have been one.
+    """
+    return _scalar(conn, "SELECT COUNT(*) FROM resolutions"
+                         " WHERE kind='retrodiction' AND settled_at IS NOT NULL"
+                         " AND settled_at >= ?", (since,))
 
 
 def perspective_items_developed(conn: sqlite3.Connection, *, since: float) -> Value:
@@ -253,6 +280,7 @@ def all_values(conn: sqlite3.Connection, repo_root: Path, *, now: float,
         # metric with a grade, a series and a definition version (R-37c).
         "episodes_recorded": episodes_recorded(conn, since=since),
         "claims_settled": claims_settled(conn, since=since),
+        "retrodictions_settled": retrodictions_settled(conn, since=since),
         "perspective_items_developed": perspective_items_developed(conn, since=since),
         "perspective_novelty": perspective_novelty(conn, since=since),
     }

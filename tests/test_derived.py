@@ -118,11 +118,27 @@ def test_an_unreadable_input_makes_the_derivation_unreadable_and_says_which():
     than that something is."""
     v = D.consequence_rate(D.Inputs("consequence_rate", {
         "claims_settled": Value(2.0),
+        "retrodictions_settled": Value(1.0),
         "advances_offered": Value(unreadable="the door's log is absent"),
     }))
 
     assert v.value is None
     assert v.unreadable == "the door's log is absent"
+
+
+def test_an_unreadable_numerator_term_is_not_a_smaller_numerator():
+    """E1.10. The numerator is now a sum of two series, and INV-044 applies
+    inside it: a term that was not measured makes the sum unreadable rather
+    than making it smaller. Silently treating a missing kind as zero would
+    understate consequence and look like a measurement."""
+    v = D.consequence_rate(D.Inputs("consequence_rate", {
+        "claims_settled": Value(2.0),
+        "retrodictions_settled": Value(unreadable="the kind column is absent"),
+        "advances_offered": Value(110.0),
+    }))
+
+    assert v.value is None
+    assert v.unreadable
 
 
 def test_a_derivation_cannot_read_an_input_it_does_not_declare():
@@ -153,10 +169,25 @@ def test_consequence_rate_is_s1e_stated_as_a_ratio():
     reads today."""
     v = D.consequence_rate(D.Inputs("consequence_rate", {
         "claims_settled": Value(0.0),
+        "retrodictions_settled": Value(0.0),
         "advances_offered": Value(110.0),
     }))
 
     assert v.value == 0.0, "an advance with nothing settled is a consequence rate of zero"
+
+
+def test_consequence_counts_both_kinds(store=None):
+    """E1.10's one meaning change. Consequence is consequence whichever kind
+    produced it: a retrodiction settled against the world is the world telling
+    the being something it did not manufacture, which is what §10's item asks.
+    A numerator of forecasts alone would understate it."""
+    v = D.consequence_rate(D.Inputs("consequence_rate", {
+        "claims_settled": Value(1.0),
+        "retrodictions_settled": Value(3.0),
+        "advances_offered": Value(100.0),
+    }))
+
+    assert v.value == 0.04
 
 
 def test_autonomy_is_measured_against_the_world_share_not_a_position_count():

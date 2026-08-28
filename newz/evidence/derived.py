@@ -71,7 +71,8 @@ GRADE_ORDER = ("model-graded", "mixed", "known-biased", "mechanical")
 DERIVED_FROM = {
     "volume_against_development": ("episodes_recorded", "perspective_items_developed"),
     "restatement_rate": ("perspective_novelty",),
-    "consequence_rate": ("claims_settled", "advances_offered"),
+    "consequence_rate": ("claims_settled", "retrodictions_settled",
+                         "advances_offered"),
     "autonomy_against_world_grounding": (
         "advances_offered", "pieces_written", "self_grounding_share"),
 }
@@ -161,14 +162,45 @@ def restatement_rate(i: Inputs) -> Value:
     return Value(round(1.0 - novelty.value, 4))
 
 
+def _sum_counts(*values: Value) -> Value:
+    """Add counts, propagating UNREADABLE rather than treating it as zero.
+
+    INV-044's discipline in arithmetic: a numerator missing one of its terms is
+    not a smaller numerator, it is a figure nobody can read.
+    """
+    total = 0.0
+    for v in values:
+        if v is None or getattr(v, "unreadable", None):
+            return Value(unreadable=(getattr(v, "unreadable", None)
+                                     or "a term of the sum is missing"))
+        if v.value is None:
+            return Value(unreadable="a term of the sum has no value")
+        total += v.value
+    return Value(total)
+
+
 def consequence_rate(i: Inputs) -> Value:
-    """Claims settled per advance accepted.
+    """Claims of EITHER kind settled per advance accepted.
 
     §10's "novelty without relevance or consequence". Advances accumulating
-    while nothing is ever settled is that item, measured — and today it is
-    exactly zero, which is S1-E stated as a ratio.
+    while nothing is ever settled is that item, measured — and until 2026-09-02
+    it is exactly zero, which is S1-E stated as a ratio.
+
+    **Definition 3, and this is the one place E1.10 changes a meaning.** The
+    other claim metrics are scoped to `kind='forecast'` and keep their series
+    unbroken, because every row before migration 0045 was a forecast in fact.
+    This one is different: consequence is consequence whichever kind produced
+    it — a retrodiction settled against the world is the world telling the
+    being something it did not manufacture, which is exactly what §10's item
+    asks about — so counting only forecasts here would understate the thing the
+    metric exists to measure. Adding the second numerator ends the v2 series and
+    `definitions.sync` records the seam.
+
+    The two kinds are still never averaged: they are separate series everywhere
+    they are reported, and this is a sum rather than a mean.
     """
-    return _ratio(i["claims_settled"], i["advances_offered"], digits=4,
+    settled = _sum_counts(i["claims_settled"], i["retrodictions_settled"])
+    return _ratio(settled, i["advances_offered"], digits=4,
                   no_denominator="no advance was accepted in the window")
 
 

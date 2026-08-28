@@ -315,3 +315,73 @@ def test_the_schema_refuses_a_kind_it_does_not_know(store):
             " resolver, due_at, provenance, status, kind)"
             " VALUES (?,?,?,?,?,?,'open','someday')",
             (time.time(), "c", "cond", "a report", time.time(), "concern:1"))
+
+
+# ── E1.10: the two kinds never average ───────────────────────────────────
+
+def _settled(store, kind, n=1):
+    now = time.time()
+    for i in range(n):
+        store.execute(
+            "INSERT INTO resolutions (opened_at, claim, resolution_condition,"
+            " resolver, due_at, provenance, status, outcome, settled_at, kind)"
+            " VALUES (?,?,?,?,?,?,'resolved','held',?,?)",
+            (now, f"{kind} {i}", "a source says so", "a named report", now,
+             "concern:1", now, kind))
+    store.commit()
+
+
+def test_the_two_series_never_mix(store):
+    """E1.10's first clause. `claims_settled` keeps its exact meaning — every
+    row before migration 0045 was a forecast in fact — and the new quantity
+    gets its own series rather than being folded into the old one."""
+    from newz.evidence.mechanical import claims_settled, retrodictions_settled
+
+    _settled(store, "forecast", 2)
+    _settled(store, "retrodiction", 3)
+    since = time.time() - DAY
+
+    assert claims_settled(store, since=since).value == 2
+    assert retrodictions_settled(store, since=since).value == 3
+
+
+def test_the_reader_shows_both(store):
+    """E1.10's third clause, at the layer `tools/claims.py` renders from."""
+    from pathlib import Path
+
+    from newz.evidence.consequence import read
+
+    _settled(store, "forecast", 2)
+    _settled(store, "retrodiction", 3)
+
+    c = read(store, Path("."), now=time.time(), hours=168.0)
+
+    assert c.resolution.settled == 2
+    assert c.resolution.settled_retrodictions == 3
+
+
+def test_the_definition_change_is_recorded_with_its_reason():
+    """E1.10's second clause. `consequence_rate` is the one metric whose
+    meaning genuinely changed — consequence is consequence whichever kind
+    produced it — so its v2 series ends and the seam carries the reason.
+
+    A bump with no stated reason raises rather than resetting a baseline
+    silently, which is what E2.8 exists to prevent.
+    """
+    from newz.evidence.definitions import reason_for, version_of
+
+    assert version_of("consequence_rate") == 3
+    why = reason_for("consequence_rate", 3)
+    assert "BOTH kinds" in why
+    assert "E1.9" in why and "E1.10" in why
+
+
+def test_the_scoped_metrics_did_not_bump(store):
+    """The other half of the argument, asserted rather than trusted: scoping
+    to forecasts broke no series, so no version moved and no seam exists."""
+    from newz.evidence.definitions import version_of
+
+    assert version_of("claims_opened") == 1
+    assert version_of("claims_settled") == 1
+    assert version_of("retrodictions_opened") == 1
+    assert version_of("retrodictions_settled") == 1

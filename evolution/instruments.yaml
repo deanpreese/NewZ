@@ -272,7 +272,50 @@ metrics:
     serves: [evidence:S1-E, decision:phase1]
     emitted_by: tools/claims.py
     grade: mechanical
-    reason: a count of resolutions rows; the door's verdict is structural, not judged.
+    reason: >
+      a count of `resolutions` rows with `kind='forecast'`; the door's verdict is
+      structural, not judged.
+
+      **Scoped to forecasts 2026-08-28 (E1.10) with no version bump, and that is
+      correct rather than convenient.** Every row written before migration 0045 was
+      a forecast in fact — `MIN_HORIZON_DAYS = 2` forbade anything settleable now —
+      so the scoped count returns exactly what it returned for every reading already
+      taken and no delta crosses a seam. What would have broken the series is
+      leaving it unscoped and letting it silently begin counting two quantities.
+      `retrodictions_opened` carries the other one.
+
+  retrodictions_opened:
+    definition_version: 1
+    baselined: true
+    serves: [evidence:S1-E, decision:phase1]
+    emitted_by: tools/claims.py
+    grade: mechanical
+    reason: >
+      a count of `resolutions` rows with `kind='retrodiction'` — claims about what
+      is already true and the being did not yet know (E1.9). A separate series from
+      `claims_opened` rather than folded into it, because the two test different
+      things: a forecast tests the being's model of where things are going, a
+      retrodiction tests whether its assertions about the world are true. Averaging
+      them would read a change of mechanism as a change in the being, which is
+      E2.8's "novelty" mistake and the reason `resolutions.kind` exists.
+
+      It starts at zero on 2026-08-28 with no history behind it. That is honest
+      rather than a gap: `MIN_HORIZON_DAYS = 2` forbade anything settleable now,
+      so nothing before that date could have been one.
+
+  retrodictions_settled:
+    definition_version: 1
+    baselined: true
+    serves: [evidence:S1-E, tn10:novelty-without-consequence]
+    emitted_by: newz/evidence/mechanical.py
+    grade: mixed
+    reason: >
+      a count of `resolutions` rows with `kind='retrodiction'` the resolver settled
+      in the window. Mixed for exactly the reason `claims_settled` is: a settlement
+      is a model's verdict, but one E1.3 constrains mechanically — the verdict is
+      accepted only if its quote occurs VERBATIM in the fetched material. A
+      judgment behind a mechanical gate is neither `mechanical` nor plainly
+      `model-graded`.
 
   claims_refused:
     definition_version: 1
@@ -675,9 +718,9 @@ metrics:
           is unchanged; what it is 1 − novelty *of* is not.
 
   consequence_rate:
-    definition_version: 2
+    definition_version: 3
     baselined: true
-    derived_from: [claims_settled, advances_offered]
+    derived_from: [claims_settled, retrodictions_settled, advances_offered]
     serves: [tn10:novelty-without-consequence, evidence:S1-E]
     emitted_by: newz/evidence/derived.py
     grade: model-graded
@@ -687,6 +730,21 @@ metrics:
       that item, and today it is exactly zero, which is S1-E stated as a ratio.
       Model-graded because the denominator counts what judge_advance accepted.
     definition_history:
+      - version: 3
+        why: >
+          the numerator counts claims of BOTH kinds (E1.9, E1.10). Consequence is
+          consequence whichever kind produced it — a retrodiction settled against
+          the world is the world telling the being something it did not
+          manufacture, which is exactly what §10's item asks about — so a
+          numerator of forecasts alone would understate the thing this metric
+          exists to measure.
+
+          **This is the one metric E1.10 changes the meaning of.** The others are
+          scoped to `kind='forecast'` and keep unbroken series, because every row
+          written before migration 0045 was a forecast in fact. Here the quantity
+          genuinely grew, so the v2 series ends and `definitions.sync` records the
+          seam. The two kinds are still never averaged: they are separate series
+          everywhere they are reported, and this is a sum rather than a mean.
       - version: 2
         why: >
           the inputs are the ones it actually computes. It declared

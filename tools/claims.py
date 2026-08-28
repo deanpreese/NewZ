@@ -129,6 +129,11 @@ def _s1e(conn, repo_root) -> int:
     print(peek(conn, "advances_offered", d.advances, window_hours=hours).render())
     print(peek(conn, "claims_opened", d.opened, window_hours=hours).render(
         note=f"{d.per_advance:.0%} of advances" if d.per_advance is not None else ""))
+    # E1.10: shown beside `claims_opened`, never summed with it. A forecast
+    # tests the being's model of where things are going; a retrodiction tests
+    # whether its assertions about the world are true.
+    print(peek(conn, "retrodictions_opened", d.retrodictions,
+               window_hours=hours).render(note="already true when claimed"))
     print(peek(conn, "claims_refused", d.refused, window_hours=hours).render())
     for reason, n in sorted(d.refusal_reasons.items(), key=lambda kv: -kv[1]):
         print(f"        {reason:<44} {n:>3}")
@@ -138,8 +143,10 @@ def _s1e(conn, repo_root) -> int:
     s = r.resolution
     print(f"\n  resolution{' ' * 50}{tag('claims_opened')}")
     print(f"    open, past due               {s.due:>6}")
-    print(f"    settled in window            {s.settled:>6}"
+    print(f"    forecasts settled            {s.settled:>6}"
           + (f"   median {s.median_latency_days:.0f}d to settle" if s.median_latency_days else ""))
+    print(f"    retrodictions settled        {s.settled_retrodictions:>6}"
+          "   settled on the pass that found them")
     print(f"    still open                   {s.unsettled:>6}")
     print(f"    upheld / contradicted        {s.upheld:>6} / {s.contradicted}")
 

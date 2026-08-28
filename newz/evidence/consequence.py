@@ -48,7 +48,8 @@ DAY = 86400.0
 @dataclass
 class DoorRead:
     advances: int = 0
-    opened: int = 0
+    opened: int = 0                      # forecasts (E1.10)
+    retrodictions: int = 0               # claims about what is already true
     refused: int = 0
     refusal_reasons: dict[str, int] = field(default_factory=dict)
     declined: int | None = None          # None = unreadable
@@ -62,7 +63,8 @@ class DoorRead:
 @dataclass
 class ResolutionRead:
     due: int = 0
-    settled: int = 0
+    settled: int = 0                     # forecasts
+    settled_retrodictions: int = 0
     unsettled: int = 0
     upheld: int = 0
     contradicted: int = 0
@@ -154,8 +156,19 @@ def read(conn: sqlite3.Connection, repo_root: Path, *, now: float,
     door = DoorRead()
     door.advances = conn.execute(
         "SELECT COUNT(*) FROM concern_advances WHERE ts >= ?", (since,)).fetchone()[0]
+    # **Counted apart, never averaged (E1.10).** A forecast tests the being's
+    # model of where things are going; a retrodiction tests whether its
+    # assertions about the world are true. `claims_opened` keeps its meaning
+    # exactly — every row before migration 0045 was a forecast in fact, since
+    # MIN_HORIZON_DAYS forbade anything settleable now — so the scoping breaks
+    # no series and owes no version bump. What would have broken it is leaving
+    # the count unscoped and letting it silently become two quantities.
     door.opened = conn.execute(
-        "SELECT COUNT(*) FROM resolutions WHERE opened_at >= ?", (since,)).fetchone()[0]
+        "SELECT COUNT(*) FROM resolutions"
+        " WHERE kind='forecast' AND opened_at >= ?", (since,)).fetchone()[0]
+    door.retrodictions = conn.execute(
+        "SELECT COUNT(*) FROM resolutions"
+        " WHERE kind='retrodiction' AND opened_at >= ?", (since,)).fetchone()[0]
     refusals = conn.execute(
         "SELECT reason FROM claim_refusals WHERE ts >= ?", (since,)).fetchall()
     door.refused = len(refusals)
@@ -170,8 +183,12 @@ def read(conn: sqlite3.Connection, repo_root: Path, *, now: float,
         (now,)).fetchone()[0]
     settled = conn.execute(
         "SELECT outcome, opened_at, settled_at FROM resolutions"
-        " WHERE settled_at IS NOT NULL AND settled_at >= ?", (since,)).fetchall()
+        " WHERE kind='forecast' AND settled_at IS NOT NULL"
+        " AND settled_at >= ?", (since,)).fetchall()
     res.settled = len(settled)
+    res.settled_retrodictions = conn.execute(
+        "SELECT COUNT(*) FROM resolutions WHERE kind='retrodiction'"
+        " AND settled_at IS NOT NULL AND settled_at >= ?", (since,)).fetchone()[0]
     res.unsettled = conn.execute(
         "SELECT COUNT(*) FROM resolutions WHERE status='open'").fetchone()[0]
     lat = []

@@ -200,6 +200,10 @@ def record_all(conn: sqlite3.Connection, repo_root, *,
     values: dict[str, Value] = {
         "advances_offered": Value(c.door.advances),
         "claims_opened": Value(c.door.opened),
+        # E1.10: a separate series, never folded into claims_opened. The two
+        # kinds test different things and averaging them would read a change of
+        # mechanism as a change in the being.
+        "retrodictions_opened": Value(c.door.retrodictions),
         "claims_refused": Value(c.door.refused),
         "claims_declined": Value(c.door.declined, unreadable=c.door.unreadable),
         "positions_changed_by_world": Value(c.positions.by_world),
