@@ -151,7 +151,7 @@ epics:
   E1.9:
     title: 'the claim that is already true'
     phase: 1
-    status: open
+    status: built
     depends_on:
     - E1.8
     done_when: mechanical

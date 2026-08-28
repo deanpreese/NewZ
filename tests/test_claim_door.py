@@ -17,7 +17,7 @@ from newz.resolutions.door import (
     MAX_HORIZON_DAYS, MAX_OPENED_PER_DAY, MAX_OPEN_CLAIMS, propose_claim,
 )
 from newz.resolutions.model import Claim
-from newz.resolutions.store import claims_by_status, open_claim
+from newz.resolutions.store import claims_by_status, get_claim, open_claim
 
 from tests.conftest import FakeLLM
 
@@ -123,8 +123,31 @@ def test_a_claim_with_no_readable_horizon_is_refused(store):
     assert claims_by_status(store) == []
 
 
-def test_a_date_already_past_is_not_a_prediction(store):
+def test_a_date_already_past_is_a_retrodiction_now(store):
+    """Changed by E1.9, 2026-08-28, and it is the epic rather than a slip.
+
+    A past date used to be refused as "not a prediction". It is not a
+    prediction, and it is still a claim the being does not grade: what makes a
+    claim a test is that something outside it settles the answer, not that the
+    answer is in the future. What the old rule was really protecting against —
+    claiming what is already in the dossier — is now checked directly by
+    `already_in_the_dossier`, which is exact where a date was a proxy.
+    """
     verdict = _ask(store, _proposal(due=_due(-3), tag="due"))
+
+    assert verdict.claim_id, verdict.refused
+    assert get_claim(store, verdict.claim_id).kind == "retrodiction"
+
+
+def test_a_horizon_under_two_days_is_still_refused(store):
+    """The floor did not go: only zero and below became a different kind.
+
+    A claim due tomorrow is the bad case the floor was written for — too soon
+    for a source to have spoken, too late to be about what already happened —
+    and it is neither a forecast that can fail nor a retrodiction that can be
+    checked against the dossier.
+    """
+    verdict = _ask(store, _proposal(due="1", tag="due"))
 
     assert verdict.refused and "already happened" in verdict.refused
 
@@ -158,12 +181,26 @@ def test_the_daily_rate_limit_stops_the_door_before_it_spends(store):
     verdict = propose_claim(store, FakeLLM([]), established=ESTABLISHED,
                             concern_statement=CONCERN, concern_id=7)
 
-    assert verdict.declined and not verdict.refused
+    # E1.9 deliberately leaves the DAILY cap a silent decline. It is a rate
+    # limit that is expected to bind on a productive day and says nothing about
+    # the being's supply of claims; a row every time it fired would be noise.
+    # The carrying cap below is the one that was lying, and it is the one that
+    # now writes.
+    assert verdict.declined
+    assert store.execute("SELECT COUNT(*) FROM claim_refusals").fetchone()[0] == 0
 
 
-def test_the_carrying_cap_stops_the_door_before_it_spends(store):
+def test_the_carrying_cap_refuses_a_forecast_and_says_so(store):
     """Distinct from the rate limit: claims opened long ago still count while
-    they are open, so the store cannot fill with commitments nobody reads."""
+    they are open, so the store cannot fill with commitments nobody reads.
+
+    **It no longer stops the door BEFORE it spends, and that is E1.9 rather
+    than a regression.** A full forecast pool leaves the retrodictive route
+    open, so the door has to ask before it knows which route this proposal
+    takes — the kind is derived from the horizon the model returns. The call is
+    spent only when something could still have opened; when neither route can,
+    the cap is still evaluated first and nothing is spent.
+    """
     old = time.time() - 90 * 86400
     for i in range(MAX_OPEN_CLAIMS):
         open_claim(store, Claim(
@@ -171,10 +208,15 @@ def test_the_carrying_cap_stops_the_door_before_it_spends(store):
             resolver="a named report", due_at=time.time() + 30 * 86400,
             provenance="concern:1", opened_at=old), models=set())
 
-    verdict = propose_claim(store, FakeLLM([]), established=ESTABLISHED,
-                            concern_statement=CONCERN, concern_id=7)
+    verdict = _ask(store, _proposal())
 
-    assert verdict.declined
+    # E1.9: a full pool is a REFUSAL, not a silent decline. Declining writes
+    # nothing and reads as "it had nothing to claim"; the truth here is "it was
+    # not allowed to", and the row is what tells those apart.
+    assert verdict.refused and "pool is full" in verdict.refused
+    row = store.execute(
+        "SELECT reason FROM claim_refusals ORDER BY id DESC LIMIT 1").fetchone()
+    assert row and "pool is full" in row[0]
 
 
 def test_the_door_asks_for_a_horizon_and_tells_the_being_what_day_it_is():

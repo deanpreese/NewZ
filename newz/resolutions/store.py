@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 _FIELDS = ("id, opened_at, claim, resolution_condition, resolver, due_at,"
            " provenance, status, outcome, settled_at, settled_by, settled_note,"
-           " attempts, last_attempt_at, last_failure")
+           " attempts, last_attempt_at, last_failure, kind")
 
 # Rule 4, in the only form the store can enforce it: a resolver that names the
 # being's own substrate is not a world source. Phrases first — a claim resolved
@@ -89,11 +89,11 @@ def open_claim(conn: sqlite3.Connection, claim: Claim, *,
     try:
         cur = conn.execute(
             "INSERT INTO resolutions (opened_at, claim, resolution_condition,"
-            " resolver, due_at, provenance, status, could_be_wrong)"
-            " VALUES (?, ?, ?, ?, ?, ?, 'open', ?)",
+            " resolver, due_at, provenance, status, could_be_wrong, kind)"
+            " VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?)",
             (claim.opened_at or now, claim.claim, claim.resolution_condition,
              claim.resolver, claim.due_at, claim.provenance,
-             claim.could_be_wrong))
+             claim.could_be_wrong, claim.kind))
     except sqlite3.IntegrityError as e:
         # The schema's refusals, given back in the language of the failure
         # rather than as "CHECK constraint failed" — the door (E1.2) has to
@@ -143,7 +143,11 @@ def _row(r: sqlite3.Row) -> Claim:
         status=r["status"], outcome=r["outcome"], settled_at=r["settled_at"],
         settled_by=r["settled_by"], settled_note=r["settled_note"],
         attempts=r["attempts"], last_attempt_at=r["last_attempt_at"],
-        last_failure=r["last_failure"])
+        last_failure=r["last_failure"],
+        # Defaulted rather than indexed directly: a store mid-migration has the
+        # rows without the column, and a reader that raises there would take
+        # the resolver down with it. Every pre-0045 row is a forecast in fact.
+        kind=(r["kind"] if "kind" in r.keys() else "forecast"))
 
 
 def get_claim(conn: sqlite3.Connection, claim_id: int) -> Claim | None:

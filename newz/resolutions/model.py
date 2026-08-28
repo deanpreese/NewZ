@@ -35,6 +35,19 @@ from dataclasses import dataclass
 OUTCOMES = ("held", "contradicted")
 STATUSES = ("open", "resolved")
 
+# What a claim is about in time (E1.9, 2026-08-28).
+#
+# `forecast` is every claim written before this: something the world has not
+# said yet, dated 2 to 45 days out. `retrodiction` is a claim about what is
+# ALREADY the case and the being does not yet know — just as ungraded by the
+# being, and settled on the next resolver pass instead of in a month.
+#
+# They are named apart because they test different things and must never be
+# averaged: a forecast tests the being's model of where things are going, a
+# retrodiction tests whether its assertions about the world are true. E1.10 is
+# where the metric split lands; this is where the fact is recorded.
+KINDS = ("forecast", "retrodiction")
+
 
 @dataclass
 class Claim:
@@ -44,6 +57,7 @@ class Claim:
     resolver: str
     due_at: float
     provenance: str                    # concern:N | position:N | work:N | conversation:N
+    kind: str = "forecast"             # forecast | retrodiction (E1.9)
     opened_at: float = 0.0
     status: str = "open"
     outcome: str | None = None
@@ -68,3 +82,8 @@ class Claim:
 
     def is_due(self, now: float) -> bool:
         return self.is_open and self.due_at <= now
+
+    @property
+    def is_retrodiction(self) -> bool:
+        """Already true when it was claimed, so due the moment it is opened."""
+        return self.kind == "retrodiction"

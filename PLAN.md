@@ -629,7 +629,7 @@ tell"* and admits every one of these, and no adapter change reaches them. That
 is a door question and it is not this epic; it is recorded here so the next
 reader does not assume E1.8 covered it.
 
-**E1.9 — the claim that is already true**
+**E1.9 — the claim that is already true** *(built 2026-08-28)*
 *Delivers:* a second kind of claim, whose named resolver has **already
 published**, settled on the next resolver pass rather than on a date. The
 horizon floor of 2 days is a proxy for *"not already in the dossier"*, and the
@@ -642,6 +642,24 @@ zero-horizon claim naming an unread source is admitted and settles on the next
 pass; a forecast's horizon, caps and refusals are unchanged; a retrodiction does
 not consume the carrying pool; and a full pool produces a refusal row rather
 than a silent decline.
+*As built:* migration 0045 (`resolutions.kind`, CHECK, defaulting to
+`forecast`), `newz/resolutions/door.py`, 16 tests, **INV-113**. **The kind is
+derived from the horizon and never asked for** — a horizon of 0 is the being
+saying the source has already spoken — so there is no second field that can
+disagree with the date, and no row can be a retrodiction dated a month out.
+`MIN_HORIZON_DAYS` stays for everything above zero: a claim due tomorrow is
+still refused, too soon for a source to have spoken and too late to be about
+what already happened.
+
+*What the build changed that the epic did not say.* **A full pool no longer
+stops the door before it spends**, and that is the epic rather than a
+regression: with the forecast pool full a retrodiction can still open, so the
+door must ask before it knows which route the proposal takes. The caps are
+therefore evaluated twice — once before the call, to skip it when NEITHER route
+could open, and again against the kind that came back. A first version checked
+the forecast daily cap before the call and silently declined retrodictions with
+it; the tautological test that hid it was rewritten rather than kept.
+
 *Depends on:* E1.8.
 *Hooks:* INV-045, INV-046. The silent decline is folded here because this is the
 epic that touches the pool's accounting: PLAN already names that shape as wrong

@@ -89,6 +89,22 @@ MAX_HORIZON_DAYS = 45
 MAX_OPEN_CLAIMS = 40
 MAX_OPENED_PER_DAY = 4
 
+# E1.9, 2026-08-28. A retrodiction settles on the next resolver pass, so its
+# residency in the open pool is minutes and Little's law gives it no inventory
+# cost — `MAX_OPEN_CLAIMS` is a cap on UNRESOLVED inventory and counts
+# forecasts alone. What still applies is the rate: the reason the daily cap
+# exists is that "a miscalibrated door cannot do it in one afternoon", and a
+# door miscalibrated about the past is no better than one miscalibrated about
+# the future.
+#
+# **Why 4 here too, and not more.** The being opens 3.0 claims a day against a
+# cap of 4 and presses against it on its productive days, so 4 is the rate it
+# has actually shown rather than a number chosen to make the arithmetic in
+# E1.9's proposal come out. If retrodictions turn out to be easy to write and
+# the cap binds every day, that is a measurement worth having before the cap
+# moves — and the refusal rows below are what make it visible.
+MAX_RETRODICTIONS_PER_DAY = 4
+
 # Resolvers that name no source. Each of these produces a claim that stays
 # open forever while looking settled-in-principle, which is the failure mode
 # the whole table exists to prevent. Kept short and literal for the reason
@@ -186,7 +202,7 @@ Output ONLY:
   <statement>what will be observed, specifically</statement>
   <settles_when>what exactly would show it true or false</settles_when>
   <resolver>the named source that will show it</resolver>
-  <due_in_days>a whole number of days from today, between 2 and 45</due_in_days>
+  <due_in_days>a whole number of days from today, between 2 and 45 — or 0, see below</due_in_days>
   <could_be_wrong>what the OTHER outcome looks like — what I would see if this
                   turns out false</could_be_wrong>
 </claim>
@@ -204,6 +220,18 @@ be checked: the source will be searched for, and a statement with no name, no
 place, no date and no identifier gives it nothing to search. "The agency's
 figure will differ from the market's value" names neither agency nor market and
 is refused. "The BLS September Employment Situation Summary" names one.
+
+**A claim can be about what is ALREADY the case and I do not yet know it.**
+If the source has already spoken — the release is out, the report is filed, the
+figure is published — and I am asserting what it says without having read it,
+then `due_in_days` is **0** and it settles on the next pass instead of in a
+month. That is not a weaker claim: I can be wrong about what the record says,
+and `could_be_wrong` still has to describe the world in which the source shows
+otherwise. It is a stronger one, because I find out.
+
+The one thing it may not be is a restatement of something I have already read.
+If I already know the answer because it is in my own dossier, there is nothing
+to find out and the honest answer is `no`.
 
 `due_in_days` is a HORIZON, not a date: how long until the source will have
 spoken. Today's date is given to you above — use it when the statement itself
@@ -364,7 +392,7 @@ def _parse_due(text: str, now: float) -> tuple[float | None, str | None]:
                           " 'I was right eventually'")
         days = float(num.group(1))
         due = now + days * DAY
-    if days < MIN_HORIZON_DAYS:
+    if 0 < days < MIN_HORIZON_DAYS:
         return None, (f"due in {days:.1f} days — a claim about what has already"
                       " happened is not a prediction")
     if days > MAX_HORIZON_DAYS:
@@ -374,14 +402,62 @@ def _parse_due(text: str, now: float) -> tuple[float | None, str | None]:
 
 
 def open_claims_count(conn: sqlite3.Connection) -> int:
+    """Unresolved FORECASTS. The carrying cap's denominator (E1.9).
+
+    A retrodiction is due the moment it is opened and leaves the pool on the
+    next pass, so counting it here would let a claim that occupies the store
+    for minutes displace one that occupies it for a month.
+    """
     return conn.execute(
-        "SELECT COUNT(*) FROM resolutions WHERE status='open'").fetchone()[0]
+        "SELECT COUNT(*) FROM resolutions"
+        " WHERE status='open' AND kind='forecast'").fetchone()[0]
 
 
-def opened_today(conn: sqlite3.Connection, *, now: float | None = None) -> int:
+def opened_today(conn: sqlite3.Connection, *, now: float | None = None,
+                 kind: str = "forecast") -> int:
     return conn.execute(
-        "SELECT COUNT(*) FROM resolutions WHERE opened_at > ?",
-        ((now or time.time()) - DAY,)).fetchone()[0]
+        "SELECT COUNT(*) FROM resolutions WHERE opened_at > ? AND kind = ?",
+        ((now or time.time()) - DAY, kind)).fetchone()[0]
+
+
+def already_in_the_dossier(conn: sqlite3.Connection, resolver: str) -> str | None:
+    """Has the being already read the material this resolver names? (E1.9)
+
+    `MIN_HORIZON_DAYS = 2` exists as a proxy for this — its own comment says
+    "a claim due tomorrow about something already in the dossier is not a
+    prediction" — and a date cannot tell "already settled in the world" from
+    "already read by me". Only the second is cheating, and it is checkable
+    directly, so the retrodictive door checks the thing rather than the proxy.
+
+    **Local and exact, with no network.** E1.8's `HarvestAdapter` reads
+    `harvest_log`, so asking it what this resolver names costs one query. If
+    what comes back is a url the being has already READ — `ingest_log` with
+    `skipped IS NULL` — then the answer is in the dossier and the claim is a
+    restatement of something it read, not a test of anything.
+
+    Returns the reason to refuse, or None. **A miss is not a pass**: the
+    adapters can reach sources the harvest cannot, and nothing here can check
+    those without a network call the door has no business making. It catches
+    the mechanical case and says so rather than implying more (INV-044).
+    """
+    from newz.world.harvest import HarvestAdapter
+
+    try:
+        candidates = HarvestAdapter(conn).search(resolver, limit=5)
+        if not candidates:
+            return None
+        read = {row[0].split(":", 1)[1] for row in conn.execute(
+            "SELECT source FROM ingest_log WHERE skipped IS NULL"
+            " AND source LIKE '%:%'")}
+    except sqlite3.Error as e:  # noqa: BLE001
+        logger.info("dossier check unavailable: %s", e)
+        return None
+    for c in candidates:
+        if c.url and c.url in read:
+            return (f"I have already read what {c.source} published on this"
+                    f" ({c.title[:80]}) — a claim I can settle from my own"
+                    " dossier tests nothing")
+    return None
 
 
 def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
@@ -395,10 +471,43 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
     concern that did not move has nothing new to be wrong about.
     """
     now = now or time.time()
-    if open_claims_count(conn) >= MAX_OPEN_CLAIMS:
-        return DoorVerdict(declined=True)
-    if opened_today(conn, now=now) >= MAX_OPENED_PER_DAY:
-        return DoorVerdict(declined=True)
+
+    # **Two routes now, and a cap on one is not a cap on the other (E1.9).**
+    # A forecast is bounded by the carrying pool and by its daily rate; a
+    # retrodiction leaves the pool on the next pass, so only its rate binds.
+    # Which route a proposal takes is not known until the model has answered —
+    # the kind is derived from the horizon — so the caps are evaluated twice:
+    # here, to avoid spending a DEEP call when NEITHER route could open, and
+    # again below against the kind that actually came back.
+    pool_full = open_claims_count(conn) >= MAX_OPEN_CLAIMS
+    forecast_rate_full = opened_today(conn, now=now) >= MAX_OPENED_PER_DAY
+    retro_rate_full = (opened_today(conn, now=now, kind="retrodiction")
+                       >= MAX_RETRODICTIONS_PER_DAY)
+
+    def _pool_refusal() -> DoorVerdict:
+        """**A full pool is a refusal, not a decline.**
+
+        Declining writes nothing, by design: "nothing here is worth claiming"
+        is the ordinary answer and is not held against the being. A cap is the
+        opposite — the being was not asked at all — and a silent one reads as
+        "it had nothing to claim" when the truth is "it was not allowed to".
+        PLAN names that shape as wrong for E4.1's cap and the claim door had it
+        too. Measured 2026-08-28: 31 of 40 open, opening at 3.0/day against a
+        throughput ceiling of 1.35/day, so this was days from firing and would
+        have been invisible when it did.
+        """
+        reason = (f"the open pool is full — {MAX_OPEN_CLAIMS} forecasts are"
+                  " waiting on their dates, so I was not asked whether this was"
+                  " worth claiming")
+        _record_refusal(conn, concern_id, reason)
+        return DoorVerdict(refused=reason)
+
+    if (pool_full or forecast_rate_full) and retro_rate_full:
+        # Nothing could open by either route, so nothing is spent finding out.
+        # The pool is the one that gets a row: a rate limit is expected to bind
+        # on a productive day and says nothing about the being's supply of
+        # claims, while a full pool is the state that was lying.
+        return _pool_refusal() if pool_full else DoorVerdict(declined=True)
 
     body = (f"<today>{datetime.fromtimestamp(now):%Y-%m-%d}</today>\n"
             f"<concern>{concern_statement}</concern>\n"
@@ -464,8 +573,31 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
         return refuse(why or "no date")
 
     days = (due - now) / DAY
+
+    # **Which kind this is, decided by the horizon and nothing else (E1.9).**
+    # A horizon of zero is the being saying the source has already spoken, so
+    # the fact is derived rather than asked for: no new field in the prompt, no
+    # second thing that can disagree with the date, and a row that cannot be
+    # `retrodiction` with a date a month out.
+    kind = "retrodiction" if days <= 0 else "forecast"
+
+    if kind == "retrodiction":
+        if retro_rate_full:
+            return DoorVerdict(declined=True)
+        # The cadence table below asks whether a source can have spoken in the
+        # time allowed. For a retrodiction it already has, by construction, so
+        # the question is the other one: had the being already read it?
+        dossier = already_in_the_dossier(conn, resolver)
+        if dossier:
+            return refuse(dossier)
+    else:
+        if pool_full:
+            return _pool_refusal()
+        if forecast_rate_full:
+            return DoorVerdict(declined=True)
+
     for pattern, cadence_days, cadence in _CADENCE:
-        if not pattern.search(resolver):
+        if kind == "retrodiction" or not pattern.search(resolver):
             continue
         if days < cadence_days:
             return refuse(
@@ -478,14 +610,14 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
     try:
         claim_id = open_claim(conn, Claim(
             id=None, claim=statement, resolution_condition=condition,
-            resolver=resolver, due_at=due, opened_at=now,
+            resolver=resolver, due_at=due, opened_at=now, kind=kind,
             could_be_wrong=alternative,
             provenance=provenance or (f"concern:{concern_id}" if concern_id
                                       else "deliberation")))
     except UnsettleableClaim as e:
         return refuse(str(e))
 
-    logger.info("claim %d opened from concern %s, due %s (%s): %s", claim_id,
+    logger.info("%s %d opened from concern %s, due %s (%s): %s", kind, claim_id,
                 concern_id, datetime.fromtimestamp(due).strftime("%Y-%m-%d"),
                 due_text, statement[:80])
     return DoorVerdict(claim_id=claim_id)
