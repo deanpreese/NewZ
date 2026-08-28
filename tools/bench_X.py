@@ -55,9 +55,13 @@ READING THE OUTPUT
   temperature > 0 — read it as indicative of size, not as a test.
 
 USAGE
+  ENDPOINT and MODEL are set in the EDIT THESE block below, in the same shape
+  bench_model.py and bench_0.py use: one live line, the alternatives commented,
+  never a list. Both are overridable from the command line.
+
   python tools/bench_X.py --list
   python tools/bench_X.py --show                       # print every edit, no calls
-  python tools/bench_X.py --model google/gemma-4-26b-a4b-qat
+  python tools/bench_X.py                              # the MODEL set below
   python tools/bench_X.py --model qwen/qwen3.8-27b --ablate --repeats 3
   python tools/bench_X.py --only judge_v7,triage_establishes --full
 """
@@ -73,7 +77,31 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-DEFAULT_BENCH = Path(__file__).with_name("bench_model.py")
+
+# ─── EDIT THESE ────────────────────────────────────────────────────────────
+
+#ENDPOINT = "http://10.0.0.214:1234/v1"
+ENDPOINT = "http://10.0.0.50:1234/v1"
+
+# The one A/B'd by default. Comment the live line and uncomment another to
+# switch boxes or candidates — nothing here is a list, so there is no state
+# where two entries are uncommented and the run means something you did not
+# ask for. A field comes from the command line instead: `--model X` names one.
+#
+# ENDPOINT is set here rather than read from the bench being patched. The two
+# files agree today, and a run that silently followed the bench's box would
+# report a comparison against a machine nobody chose.
+
+#MODEL    = "qwen/qwen3.6-35b-a3b"
+#MODEL    = "qwen/qwen3.8-27b"
+
+#MODEL    = "google/gemma-4-31b-qat"
+MODEL    = "google/gemma-4-26b-a4b-qat"
+
+# The bench whose cases and prompts are patched. A copy is never taken: this
+# file edits that one in memory, so there is one copy of these prompts in
+# tools/ and not two.
+BENCH = Path(__file__).with_name("bench_model.py")
 
 
 class DriftError(RuntimeError):
@@ -647,10 +675,12 @@ def print_comparison(base: ArmResult, arm: ArmResult, cmp: dict,
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="A/B the proposed prompt revisions against bench_model.py.")
-    ap.add_argument("--bench", type=Path, default=DEFAULT_BENCH,
-                    help=f"the bench to patch (default {DEFAULT_BENCH})")
-    ap.add_argument("--model", default="", help="model id to bench")
-    ap.add_argument("--endpoint", default="", help="override the bench endpoint")
+    ap.add_argument("--bench", type=Path, default=BENCH,
+                    help=f"the bench to patch (default {BENCH.name})")
+    ap.add_argument("--model", default="",
+                    help=f"model id to bench (default {MODEL or 'unset'})")
+    ap.add_argument("--endpoint", default=ENDPOINT,
+                    help=f"OpenAI-compatible base URL (default {ENDPOINT})")
     ap.add_argument("--only", default="",
                     help="comma-separated revision names; default is all")
     ap.add_argument("--ablate", action="store_true",
@@ -695,7 +725,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.show:
-        bm = build_arm(args.bench, "show", chosen, args.endpoint or "unused",
+        bm = build_arm(args.bench, "show", chosen, args.endpoint,
                        not args.no_thinking_params)
         # Force the prompts through their builders so wrapped edits are logged.
         bm.judge_prompt("probe", "")
@@ -706,9 +736,12 @@ def main(argv: list[str] | None = None) -> int:
         print_edits(chosen)
         return 0
 
-    if not args.model:
-        sys.stderr.write("FATAL: --model is required. `bench_model.py --list` "
-                         "shows what the endpoint serves.\n")
+    model = args.model or MODEL
+    if not model:
+        sys.stderr.write(
+            "FATAL: no model. Set MODEL at the top of this file, or pass\n"
+            "       --model X. `bench_model.py --list` shows what this\n"
+            "       endpoint serves.\n")
         return 2
 
     # Build every arm BEFORE any call, so a drift failure costs nothing.
@@ -717,7 +750,7 @@ def main(argv: list[str] | None = None) -> int:
         arms += [(r.name, [r]) for r in chosen]
     arms.append(("revised", chosen))
 
-    endpoint = args.endpoint or load_bench(args.bench, "endpoint").ENDPOINT
+    endpoint = args.endpoint
 
     built = []
     for tag, revs in arms:
@@ -731,16 +764,16 @@ def main(argv: list[str] | None = None) -> int:
     probe = built[0][2]
     served = probe.discover(endpoint)
     known = {m.id for m in served}
-    if known and args.model not in known:
-        sys.stderr.write(f"FATAL: {args.model} is not served at {endpoint}.\n"
+    if known and model not in known:
+        sys.stderr.write(f"FATAL: {model} is not served at {endpoint}.\n"
                          f"       served: {', '.join(sorted(known))}\n")
         return 2
-    info = next((m for m in served if m.id == args.model),
-                probe.ModelInfo(id=args.model))
+    info = next((m for m in served if m.id == model),
+                probe.ModelInfo(id=model))
 
     n_cases = len(select_cases(probe, chosen, args.full))
     print(f"\n  {len(built)} arm(s) · {n_cases} case(s) × {args.repeats} "
-          f"repeat(s) · {args.model} · {endpoint}")
+          f"repeat(s) · {model} · {endpoint}")
     print(f"  boundaries: {', '.join(sorted({b for r in chosen for b in r.boundaries}))}"
           f"{'  (+ full corpus)' if args.full else ''}")
     print(f"  revisions:  {', '.join(r.name for r in chosen)}")
@@ -756,7 +789,7 @@ def main(argv: list[str] | None = None) -> int:
         # boundary could not be compared with the others case for case.
         cases = select_cases(bm, chosen, args.full)
         context = bm.build_context_cases() if args.context else []
-        res = bm.run_model(args.model, info, cases, context,
+        res = bm.run_model(model, info, cases, context,
                            repeats=args.repeats,
                            load_timeout=args.load_timeout, progress=True)
         if res.disqualified:
@@ -768,7 +801,7 @@ def main(argv: list[str] | None = None) -> int:
         results[tag] = collected
 
     base = results["baseline"]
-    payload = {"model": args.model, "endpoint": endpoint,
+    payload = {"model": model, "endpoint": endpoint,
                "repeats": args.repeats, "bench": str(args.bench),
                "full": args.full, "arms": {}}
     for tag, _, _ in built:
