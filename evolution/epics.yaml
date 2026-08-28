@@ -452,8 +452,8 @@ epics:
   E6.5:
     title: 'the hard core'
     phase: 6
-    status: open
-    depends_on: [E6.3]
+    status: built
+    depends_on: []
     done_when: mechanical
     done_when_sha: 145aa91a30f9becd
 

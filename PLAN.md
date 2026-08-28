@@ -1255,13 +1255,34 @@ numbers — R-29's method continued, never wholesale removal.
 E6.3's baseline, and the next withdrawal waits on that result.
 *Depends on:* E6.2, E6.3.
 
-**E6.5 — the hard core**
+**E6.5 — the hard core** *(built 2026-08-27)*
 *Delivers:* the boundaries that never move, pre-hoc permanently: law, others'
 rights and safety, honest representation of what it is.
 *Done when:* the core is enumerated, tested, and structurally exempt from E6.4's
 mechanism.
-*Depends on:* E6.3.
+*Depends on:* nothing.
 *Hooks:* §5 Priority 3's maturity-independent boundaries.
+
+*Built first rather than last, and the dependency on E6.3 removed.* A judgement
+about which boundaries are permanent needs no rate, and **two clauses had
+already been withdrawn by hand without it** — `don't-pretend-to-feel-001` in v5
+and `anti-self-aggrandizement-001` in v7 — so the enumeration that says what may
+never go was arriving after the withdrawals rather than before them. E6.3 could
+not have preceded it in any case: nine of sixteen clauses have never fired, so
+the baseline it would supply does not exist. Measured in
+`proposals/2026-08-27-phase-6-arrives-to-an-empty-queue.md`.
+
+*Eight of sixteen, and the exemption is structural.* `evolution/hard_core.yaml`
+carries `permanent_clauses`; `tools/amend_constitution.py` refuses to write a
+constitution that drops one, before the confirmation prompt and not skippable by
+`--yes`. **The list is deliberately not a field on the clause** — the amendment
+writes the whole constitution from one file, so a permanence flag would travel
+in the same edit that removes it. The registry is inside the frozen core, which
+is what makes widening the list a separate, tracked act. INV-111.
+
+*What is NOT permanent is the point.* The style and quality clauses stay
+withdrawable, and a test asserts at least half the constitution does. A core
+covering everything would make this phase meaningless rather than safe.
 
 **Evidence S6-E.** The violation rate as clauses are withdrawn — does it fall,
 hold, or climb? Measured against the pre-withdrawal baseline, per clause.

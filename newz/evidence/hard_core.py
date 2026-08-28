@@ -239,6 +239,48 @@ def pin(what: str) -> dict:
         f"value is missing cannot pass; it can only say so.")
 
 
+def permanent_clauses() -> list[dict]:
+    """Constitution clauses that may never be withdrawn (P4 E6.5).
+
+    The list lives in this registry rather than on the clause, because the
+    withdrawal path writes the whole constitution from one YAML file: a
+    permanence flag carried on the clause would travel in the same edit that
+    removes it. A boundary the constrained party can widen is not a boundary,
+    which is the argument this file already rests on.
+    """
+    return list(registry().get("permanent_clauses", []))
+
+
+def permanent_clause_ids() -> set[str]:
+    return {r["clause"] for r in permanent_clauses() if r.get("clause")}
+
+
+def withdrawn_permanent(proposed_ids) -> list[str]:
+    """Permanent clauses a proposed constitution would drop. Empty is clean.
+
+    Takes the proposed ids rather than a path so the refusal can be tested
+    without a store and without writing a constitution to find out.
+    """
+    return sorted(permanent_clause_ids() - set(proposed_ids))
+
+
+def newest_constitution() -> Path | None:
+    """The highest-numbered constitution/vN.yaml, or None.
+
+    Used to catch a mistyped clause id at gate time. Without it a typo is
+    invisible until it refuses every future amendment — failing closed, but
+    closed on the governance path itself, which is the worst place to discover
+    a spelling mistake.
+    """
+    files = []
+    for f in (REPO / "constitution").glob("v*.yaml"):
+        try:
+            files.append((int(f.stem[1:]), f))
+        except ValueError:
+            continue
+    return max(files)[1] if files else None
+
+
 def sections() -> list[dict]:
     """Files protected by section rather than by path. Nothing checks these."""
     return list(registry().get("sections", []))
@@ -255,7 +297,7 @@ def validate() -> list[str]:
     errors: list[str] = []
     reg = registry()
     for key in ("version", "paths", "derived_from", "pins", "sections", "open_gaps",
-                "state"):
+                "state", "permanent_clauses"):
         if key not in reg:
             errors.append(f"registry is missing {key!r}")
     for row in reg.get("paths", []):
@@ -271,6 +313,21 @@ def validate() -> list[str]:
             errors.append(
                 "a pin needs a what, a why and exactly one of sha256/value: "
                 f"{row!r}")
+    live = None
+    newest = newest_constitution()
+    if newest is not None:
+        doc = yaml.safe_load(newest.read_text()) or {}
+        live = {c.get("id") for c in doc.get("clauses", [])}
+    for row in reg.get("permanent_clauses", []):
+        clause = row.get("clause")
+        if not clause or not row.get("why"):
+            errors.append(f"a permanent clause needs a clause and a why: {row!r}")
+            continue
+        if live is not None and clause not in live:
+            errors.append(
+                f"{clause} is permanent and is not in {newest.name} — a "
+                f"protected clause that resolves to nothing refuses nothing, "
+                f"and a typo here refuses every future amendment instead")
     for row in reg.get("open_gaps", []):
         if not row.get("what") or not row.get("detail"):
             errors.append(f"open_gaps row without a what and a detail: {row!r}")

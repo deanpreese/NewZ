@@ -25,6 +25,25 @@ MAIN_SQL = REPO / "newz" / "store" / "sql" / "main"
 HOUR = 3600.0
 
 
+def midday() -> float:
+    """Today at noon, local.
+
+    Three tests below advance a clock by minutes or hours and assert what the
+    monitor does inside one hour or one day. `turn` keys both idempotences off
+    local wall time — `_sent_today` compares `time.localtime(now)[:3]` — so a
+    fixture starting at 23:01 puts `now + 2 * HOUR` on the following date, and
+    the monitor is then right to send again while the test calls it a bug. Same
+    for the hour tests in the last minute of any hour.
+
+    Measured 2026-08-27 23:01: `test_the_day_is_not_sent_twice` failed with
+    2 == 1, having passed all afternoon. This is INV-081's lesson — a suite
+    whose result depends on the hour is a suite nobody can trust the colour of
+    — so the fixtures name their moment instead of inheriting it.
+    """
+    lt = time.localtime()
+    return time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 12, 0, 0, 0, 0, -1))
+
+
 def _cfg(tmp_path, **kw) -> Config:
     return Config(
         repo_root=REPO,
@@ -133,7 +152,7 @@ def test_the_same_clock_hour_is_read_once(being, tmp_path):
     """Behavior: the cadence is the top of the hour, not every invocation. A
     second run inside the hour skips rather than doubling the series."""
     cfg = _cfg(tmp_path)
-    now = time.time()
+    now = midday()
 
     first = turn(cfg, now=now, transport=lambda m: None)
     second = turn(cfg, now=now + 60.0, transport=lambda m: None)
@@ -229,7 +248,7 @@ def test_a_day_the_being_never_ran_still_produces_an_email_that_says_so(being, t
 
 def test_the_day_is_not_sent_twice(being, tmp_path):
     cfg = _cfg(tmp_path, send_hour=0)
-    now = time.time()
+    now = midday()
     sent: list = []
 
     turn(cfg, now=now, transport=sent.append)
@@ -262,7 +281,7 @@ def test_a_send_that_failed_is_tried_again_on_the_next_hour(being, tmp_path):
     """Behavior: `_sent_today` reads successful sends only, so a failed day is
     not a sent day."""
     cfg = _cfg(tmp_path, send_hour=0)
-    now = time.time()
+    now = midday()
 
     def unreachable(msg):
         raise OSError("down")

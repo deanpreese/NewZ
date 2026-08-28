@@ -130,8 +130,8 @@ import httpx
 
 # ─── EDIT THESE ────────────────────────────────────────────────────────────
 
-ENDPOINT = "http://10.0.0.214:1234/v1"
-#ENDPOINT = "http://10.0.0.50:1234/v1"
+#ENDPOINT = "http://10.0.0.214:1234/v1"
+ENDPOINT = "http://10.0.0.50:1234/v1"
 
 # The one benched by default. Comment the live line and uncomment another to
 # switch boxes or candidates — nothing here is a list, so there is no state
@@ -140,14 +140,15 @@ ENDPOINT = "http://10.0.0.214:1234/v1"
 # everything the endpoint serves, `--models a,b,c` names one.
 #MODEL    = "qwen_qwen3.6-35b-a3b"
 MODEL    = "qwen/qwen3.6-35b-a3b"
-#MODEL    = "qwen/qwen3.6-27b"
+#MODEL    = "qwen/qwen3.8-27b"
 #MODEL    = "qwen/qwen3.5-9b"
 #MODEL    = "qwen3.8-27b"
+#MODEL    = "qwen3.8-27b@iq4_xs"
 #MODEL    = "google/gemma-4-31b-qat"
 #MODEL    = "liquid/lfm2-24b-a2b"
 #MODEL    = "lfm2-24b-a2b"
 #MODEL    = "openai/gpt-oss-20b"
-MODEL    = "gemma-4-12b-it-nvfp4"
+#MODEL    = "gemma-4-12b-it-nvfp4"
 #MODEL    = "google/gemma-4-12b"
 
 # What the composite is made of. These encode a judgement: the gate is the

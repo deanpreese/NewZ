@@ -30,6 +30,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from newz.config import load
+from newz.evidence.hard_core import withdrawn_permanent
 from newz.gate.constitution import load_active_constitution
 from newz.store.db import open_db
 
@@ -81,6 +82,19 @@ def main() -> int:
         print("\n".join(diff))
         if old_ids - new_ids:
             print(f"\n!! REMOVES CLAUSES: {', '.join(sorted(old_ids - new_ids))}")
+
+        # P4 E6.5 — the boundaries that never move. Checked before the
+        # confirmation and not skippable by --yes: a core the operator can walk
+        # past by answering a prompt is a reminder, not a boundary. The list is
+        # in evolution/hard_core.yaml, which is itself inside the frozen core,
+        # so widening it is a tracked diff rather than part of this edit.
+        gone = withdrawn_permanent(new_ids)
+        if gone:
+            print(f"\nREFUSING: {', '.join(gone)} may never be withdrawn "
+                  f"(evolution/hard_core.yaml: permanent_clauses).")
+            print("Nothing was written. To change what is permanent, edit the "
+                  "registry — that is a separate, visible act.")
+            return 2
         if new_ids - old_ids:
             print(f"\n++ ADDS CLAUSES: {', '.join(sorted(new_ids - old_ids))}")
 

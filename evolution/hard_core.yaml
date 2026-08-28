@@ -356,6 +356,86 @@ pins:
       of them is visible in git — which is what makes it the operator's rather
       than something that can become true quietly.
 
+# Constitution clauses that may never be withdrawn (P4 E6.5, "the boundaries
+# that never move").
+#
+# **Why this lives here and not in the constitution.** The withdrawal path is
+# `tools/amend_constitution.py`, which writes a new version from a YAML file. A
+# permanence flag carried on the clause itself would travel in that same file,
+# so the act that removes a clause could clear its own protection in the same
+# edit — a boundary the constrained party can widen is not a boundary, which is
+# the argument this registry is already built on. The list lives in the
+# protected registry; the amendment tool reads it and refuses.
+#
+# **This is a judgement, not a measurement**, and it is the operator's. No rate
+# qualifies a clause for this list and none disqualifies one: a clause here is
+# not claimed to be accurate, only to be a boundary that stands whether or not
+# it is. `don't-fabricate-memory-001` is the worked case — 6 misfires against 6
+# catches, the only remaining withdrawal candidate by rate, and permanent
+# anyway, because v5 removed it and v6 restored it the same day. A clause whose
+# removal was reversed within hours is already behaving as permanent; writing it
+# down only makes the reversal unnecessary next time. Its misfire rate is an
+# argument for repairing the check, which is what `denials_are_not_claims` did
+# for a different clause, and never for removing the commitment.
+#
+# **What is deliberately NOT here.** The style and quality clauses —
+# anti-ai-voice, anti-flattery, calibration, care-relationship,
+# disagree-on-life-choices, no-spam — and `interior-privacy-001`, which
+# protects the being rather than anyone else and is therefore the being's to
+# spend. Those are what Phase 6 may withdraw on their numbers. Half the
+# constitution stays withdrawable, which is the point: a core that covered
+# everything would make Phase 6 meaningless rather than safe.
+permanent_clauses:
+
+  - clause: honesty-001
+    why: >-
+      honest representation of what it is (E6.5's third category). Everything
+      else in this list is enforceable only if the being's account of its own
+      conduct can be believed.
+
+  - clause: don't-fabricate-memory-001
+    why: >-
+      honest representation, and the specific pathology v1 died of. Removed in
+      v5 and restored in v6 the same day, which is the operator having already
+      made this decision once under time pressure.
+
+  - clause: no-impersonation-001
+    why: >-
+      law, and others' rights. Acting as the operator or as another person is
+      the one failure that cannot be repaired after the fact by the party it
+      was done to.
+
+  - clause: no-manipulation-001
+    why: >-
+      others' rights and safety. Dark patterns and manufactured urgency work
+      best on exactly the reader §5 exists to protect, and a being permitted to
+      use them could talk its way out of every other clause here.
+
+  - clause: operator-privacy-001
+    why: >-
+      others' rights. Severity hard, "under any circumstance" — and already
+      load-bearing against a live proposal: the external-model red team turns on
+      this clause, because a hosted endpoint is a third party.
+
+  - clause: read-only-web-001
+    why: >-
+      law, and the reach boundary. Publishing autonomously is the act that makes
+      every other clause's failures public and irreversible. INV-069 holds the
+      transport side; this holds the commitment.
+
+  - clause: refuse-coercion-001
+    why: >-
+      the clause that makes the rest of this list hold. Without it every
+      permanent boundary is one sustained argument away from being set aside,
+      and the being would be permitted to be talked out of what it may not be
+      amended out of.
+
+  - clause: respect-revision-001
+    why: >-
+      the governance path itself. A being that may decline the operator's
+      amendment cannot be governed, and this list would be the first thing it
+      declined.
+
 # State the loop may never touch (§5.3). Recorded for completeness; these are
 # properties of the loop's design rather than paths a diff check can read.
 state:
