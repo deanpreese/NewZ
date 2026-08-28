@@ -180,6 +180,14 @@ not_instruments:
     # usage lines still say `python tools/bench_model.py` — and that is the
     # cost of keeping a comparison baseline honest.
     - tools/bench_0.py
+    # A/B's proposed prompt revisions against bench_model's own cases: it
+    # imports that file and edits the copies in memory, so there is one copy
+    # of these prompts in tools/ and not two. A probe by the same test as the
+    # bench it wraps — it answers "does this edit help", never a number the
+    # loop steers by — and it writes nothing, to the store or to newz/. The
+    # revisions it carries are proposals until someone applies them by hand;
+    # each row names the production file it would land in.
+    - tools/bench_X.py
     - tools/replay_prompts.py      # the repo's prompts on the calls it really made
     - tools/claim_door_probe.py
     - tools/conversation_probe.py
