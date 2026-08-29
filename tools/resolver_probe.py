@@ -70,6 +70,26 @@ is the right side to err on; for anything repeated it would not be.
   python tools/resolver_probe.py              # the 3 claims due soonest
   python tools/resolver_probe.py --claims 5
   python tools/resolver_probe.py --id 21      # one named claim
+  python tools/resolver_probe.py --settleable # CAN it settle anything at all?
+
+**`--settleable`, added 2026-08-28, and it asks the prior question.** Measured
+that day: **no claim has ever been settled in this project.** Zero resolved
+rows, zero resolution episodes, zero attempts booked in life, and the
+`claim_resolver` call has fired three times — all in this probe, all reaching
+H3, material back and the verdict honestly refusing. So INV-047's verbatim gate
+has never once fired affirmatively, and every open claim, 2026-09-02, E1.11 and
+the diet handover's fitness signal all assume it can.
+
+The mode takes a **matched pair** against one document from the unread harvest:
+a claim the document should hold, and one it should contradict. Both are
+hand-written here rather than taken from the being, deliberately — the question
+is whether the MECHANISM can settle anything, not whether the being can phrase
+a claim, and a pair tests that it can distinguish rather than merely assent.
+
+The documents are pinned and will go stale as the harvest rotates. A pinned
+document that is no longer in `harvest_log` reports `DOCUMENT GONE` rather than
+failing, because a stale probe that reads as a broken resolver is worse than
+one that says it cannot run.
 """
 
 from __future__ import annotations
@@ -80,6 +100,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -94,6 +115,43 @@ from newz.resolutions.resolver import resolve_claim
 from newz.store.db import open_db
 
 W = 74
+
+# ── The matched pairs. Chosen 2026-08-28 from items the being was OFFERED and
+# did not read, so the resolver is reaching for a document that is genuinely
+# outside its dossier — which is also the population E1.9's retrodictions would
+# draw on if the door is ever shown the unread harvest.
+#
+# **Pin the url exactly as `harvest_log` holds it.** The first run reported
+# DOCUMENT GONE on a document that was right there: the stored url carries its
+# feed's `?utm_campaign=rss` and the pin here did not. A hand-transcribed url is
+# a lookup key, not a citation, and trimming it for tidiness breaks the match.
+#
+# The claims are deliberately flat-footed. A subtle claim that fails tells you
+# nothing about whether the gate can fire; these are as close to "does the
+# machinery work" as a real document allows.
+SETTLEABLE = [
+    ("P1  STAT News — an FDA clearance",
+     "STAT News",
+     "https://www.statnews.com/2026/08/28/juul-fda-clearance-updated-ecigarette-age-gating-technology/?utm_campaign=rss",
+     "STAT News report of 28 August 2026 on the FDA clearance of Juul's updated"
+     " e-cigarette with age-gating technology",
+     "held",
+     "The FDA has authorised Juul to market an updated vaping device that"
+     " incorporates age-gating technology.",
+     "The FDA has REFUSED Juul authorisation to market an updated vaping device"
+     " with age-gating technology, and the device may not be sold."),
+
+    ("P2  Ars Technica — a price increase",
+     "Ars Technica",
+     "https://arstechnica.com/gadgets/2026/08/apple-one-and-apple-tv-subscription-prices-increase-by-up-to-20-percent/",
+     "Ars Technica report of August 2026 on Apple One and Apple TV subscription"
+     " pricing",
+     "held",
+     "Apple has raised the subscription prices of Apple One and Apple TV, by up"
+     " to about 20 percent.",
+     "Apple has left the subscription prices of Apple One and Apple TV"
+     " unchanged, announcing no increase."),
+]
 
 
 def stage_of(out) -> str:
@@ -149,11 +207,111 @@ def claims_to_probe(conn: sqlite3.Connection, *, limit: int,
         settled_by=r["settled_by"], settled_note=r["settled_note"]) for r in rows]
 
 
+def _settleable(conn, client, embedder, budget_log, probe_log, tmp) -> int:
+    """Can the resolver settle anything at all? (added 2026-08-28)
+
+    A matched pair per document — one claim it should hold, one it should
+    contradict — so a pass means the gate can fire AND can tell the two apart.
+    A mechanism that settles everything `held` has not been shown to work; it
+    has been shown to agree.
+    """
+    from newz.resolutions.model import Claim
+    from newz.resolutions.store import get_claim, open_claim
+
+    now = time.time()
+    print(f"resolver probe — settleable pairs — {datetime.now():%Y-%m-%d %H:%M}")
+    print(f"  store copy   {tmp}   (the live store is not opened for writing)")
+    print(f"  call log     probe_calls.jsonl · budget read from the live log")
+    print(f"  the question no reading has ever answered: **has the verbatim gate"
+          f" (INV-047) ever fired?**")
+    print(f"  measured today: 0 claims settled, 0 resolution episodes, ever.\n")
+
+    results: list[tuple[str, str, str, str]] = []
+    for label, feed, url, resolver, _, holds, contradicts in SETTLEABLE:
+        row = conn.execute(
+            "SELECT title, was_read FROM harvest_log WHERE url=?", (url,)).fetchone()
+        print("=" * W)
+        print(f"{label}\n  feed      {feed}")
+        if row is None:
+            print("  STATUS    DOCUMENT GONE — not in harvest_log; the pinned")
+            print("            document has rotated out. Re-pin before reading")
+            print("            anything into this pair.")
+            results.append((label, "GONE", "-", "-"))
+            continue
+        print(f"  document  {row['title'][:96]}")
+        print(f"  read?     {'YES — not a fair test' if row['was_read'] else 'no'}")
+
+        for want, statement in (("held", holds), ("contradicted", contradicts)):
+            cid = open_claim(conn, Claim(
+                id=None, claim=statement,
+                resolution_condition=f"The document at {url} states this or"
+                                     f" states the opposite.",
+                resolver=resolver, due_at=now, opened_at=now,
+                provenance="probe", kind="retrodiction",
+                could_be_wrong="the document says the opposite"), models=set())
+            out = resolve_claim(conn, client, get_claim(conn, cid),
+                                log_path=budget_log, embedder=embedder)
+            stage = stage_of(out)
+            got = out.outcome or "-"
+            ok = "ok  " if (out.settled and got == want) else "MISS"
+            print(f"  [{ok}] expect {want:<13} stage {stage:<12} outcome {got}")
+            if not out.settled:
+                print(f"         why   {out.failure}")
+            elif got != want:
+                note = conn.execute(
+                    "SELECT settled_note FROM resolutions WHERE id=?",
+                    (cid,)).fetchone()[0]
+                print(f"         quote {str(note)[:150]}")
+            results.append((label, stage, want, got))
+
+    print("\n" + "=" * W)
+    settled = [r for r in results if r[1] == "SETTLED"]
+    correct = [r for r in settled if r[2] == r[3]]
+    print(f"  settled {len(settled)}/{len([r for r in results if r[1] != 'GONE'])}"
+          f"   ·   correct direction {len(correct)}/{len(settled) or 0}")
+    print()
+    if not settled:
+        stages = {r[1] for r in results}
+        print("  **THE GATE HAS STILL NEVER FIRED.** Nothing was settled, on")
+        print("  documents chosen to be as settleable as real material gets.")
+        if "UNSUPPORTED" in stages:
+            print("  Stage UNSUPPORTED: the verdict was refused because its quote")
+            print("  is not verbatim in `material` — and `material` is a list of")
+            print("  EXTRACTED claim texts, not page prose, so the model is being")
+            print("  asked to quote from a paraphrase of the document. That is a")
+            print("  defect in what the verdict is shown, not in the being.")
+        elif "RETRIEVAL" in stages:
+            print("  Stage RETRIEVAL: the document could not be fetched at all —")
+            print("  robots, rate limit, or the harvest adapter not matching.")
+        else:
+            print("  Stage NOT SETTLED: the document came back and the verdict")
+            print("  would not use it. The verdict prompt is the place to look.")
+        print("\n  Phase 1 rests entirely on this gate. Until it fires once,")
+        print("  2026-09-02 is not a date on which anything can happen, and no")
+        print("  supply of claims — retrodictive or otherwise — changes that.")
+    elif len(correct) == len(settled) and len(settled) > 1:
+        print("  **THE GATE FIRES, AND IT DISTINGUISHES.** Both directions came")
+        print("  back correctly, so the mechanism can settle a claim and can tell")
+        print("  held from contradicted. The chain title -> claim -> fetch ->")
+        print("  verbatim quote -> settle closes on real material, and showing the")
+        print("  door the unread harvest is worth building.")
+    else:
+        print("  **THE GATE FIRES AND MAY NOT DISCRIMINATE.** Something settled,")
+        print("  and not every direction was right. A mechanism that agrees is")
+        print("  not a mechanism that measures — read the quotes above before")
+        print("  building anything on top of this.")
+    print(f"\n  copy left at {tmp}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--claims", type=int, default=3,
                     help="how many open claims to probe, due soonest first")
     ap.add_argument("--id", type=int, default=None, help="probe one claim by id")
+    ap.add_argument("--settleable", action="store_true",
+                    help="matched pairs against unread harvest documents — can "
+                         "the mechanism settle ANYTHING?")
     ap.add_argument("-v", "--verbose", action="store_true")
     a = ap.parse_args()
 
@@ -180,6 +338,9 @@ def main() -> int:
     shutil.copy2(cfg.main_db_path, copy)
     conn = open_db(copy)
     conn.row_factory = sqlite3.Row
+
+    if a.settleable:
+        return _settleable(conn, client, embedder, budget_log, probe_log, tmp)
 
     claims = claims_to_probe(conn, limit=a.claims, only=a.id)
     if not claims:
