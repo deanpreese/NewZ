@@ -33,6 +33,14 @@ Inference is local by design — no hosted model anywhere in the cognition path.
 `.env` holds the endpoint, the operator id and `SURFACE_REACH`, which stays
 `local` until the operator decides otherwise (INV-076 attests it at boot).
 
+`.env` also holds `FRED_API_KEY`, optional and free. It is the one source the
+being has that returns **numbers** rather than prose, and it is consulted only
+when settling a claim — never on the reading path, where macro data would
+deepen a diet already 43% financial. Without a key the source is simply absent:
+claims that need a figure stay open and the log says why. It is the difference
+between the being being able to find out whether it was wrong about a rate, a
+balance sheet or an index, and not.
+
 ## Watching it
 
 The being carries its own monitor: an hourly reading of every instrument into

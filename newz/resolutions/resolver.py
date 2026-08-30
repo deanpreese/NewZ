@@ -143,7 +143,7 @@ def _record_failure(conn: sqlite3.Connection, claim_id: int, why: str) -> None:
 
 
 def _resolution_adapters(conn: sqlite3.Connection, adapters):
-    """The harvest first, then the ordinary set (E1.8).
+    """The numeric source, then the harvest, then the ordinary set (E1.8).
 
     The being subscribes to 61 feeds and `default_adapters()` indexes none of
     them, so before this the one mechanism that can tell the being it was
@@ -164,13 +164,35 @@ def _resolution_adapters(conn: sqlite3.Connection, adapters):
     """
     if adapters is not None:
         return adapters
+    from newz.world.data import resolution_source
     from newz.world.harvest import HarvestAdapter
     from newz.world.sources import default_adapters
 
     ordinary = default_adapters()
     fetcher = next((getattr(a, "_f", None) for a in ordinary
                     if getattr(a, "_f", None) is not None), None)
-    return [HarvestAdapter(conn, fetcher), *ordinary]
+
+    # **The data source goes first, ahead of even the harvest.** Measured
+    # 2026-08-29: ten resolution attempts, zero settlements, and four of five
+    # failures were "the material does not contain the data". `research()`
+    # dedupes by url in adapter order and MAX_EXTRACTIONS bounds how many
+    # documents are read at all, so order decides which source survives to be
+    # read — and for a claim naming a figure, the series is the only thing that
+    # can settle it. It is resolution-only for the reason HarvestAdapter is:
+    # on the reading path FRED would deepen a diet already 43% financial.
+    #
+    # Absent without a key, and that is a configured absence rather than a
+    # silent one — `resolution_source` returns None and the pass runs exactly
+    # as it did before.
+    try:
+        from newz.config import load
+
+        data = resolution_source(load(), fetcher)
+    except Exception:  # noqa: BLE001
+        logger.info("fred: config unavailable; the numeric source is skipped")
+        data = None
+
+    return [*( [data] if data else [] ), HarvestAdapter(conn, fetcher), *ordinary]
 
 
 def resolve_claim(conn: sqlite3.Connection, client: LLMClient, claim: Claim, *,

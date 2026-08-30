@@ -53,6 +53,11 @@ class Config:
     # The send hour is deliberately AFTER sleep and never triggered BY it: a
     # report gated on the thing it reports is silent on the day that matters.
     monitor_send_hour: int = 5
+    # The one numeric data source (E1.8 follow-on, 2026-08-29). Free, and the
+    # operator registers for it: without a key the adapter returns nothing and
+    # says so rather than pretending, which is Rule 3's shape applied inward —
+    # reach is a config value, never a code change.
+    fred_api_key: str | None = None
     gmail_user: str | None = None
     gmail_password: str | None = None
     gmail_to: str | None = None
@@ -124,6 +129,7 @@ def load(repo_root: Path | None = None, env_file: str | os.PathLike | None = Non
         sleep_hour=int(env.get("NEWZ_SLEEP_HOUR") or 3),
         monitor_send_hour=int(env.get("NEWZ_MONITOR_SEND_HOUR")
                               or (int(env.get("NEWZ_SLEEP_HOUR") or 3) + 2)),
+        fred_api_key=env.get("FRED_API_KEY"),
         gmail_user=env.get("GMAIL_USER"),
         gmail_password=env.get("GMAIL_PASS"),
         gmail_to=env.get("GMAIL_TO"),
