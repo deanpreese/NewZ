@@ -276,6 +276,7 @@ def research(
     concern_id: int | None = None,
     max_results: int = MAX_RESULTS_PER_SOURCE,
     fetcher=None,
+    as_experience: bool = True,
 ) -> ResearchOutcome:
     out = ResearchOutcome(query=query)
 
@@ -435,7 +436,25 @@ def research(
             # unlike the being's own conclusions about it (INV-030).
             # A source that yielded nothing is in ingest_log and stops
             # there; it is accounting, not something lived.
-            if claims:
+            #
+            # **`as_experience=False` is the resolution pass, and it is a
+            # correction rather than an option** *(2026-08-30, on the
+            # operator's reading that the numeric source would weight
+            # things)*. E1.3 says a resolution writes "the one episode this
+            # phase produces", and E1.4 says the refuting material "is
+            # deliberately not added to the item's evidence". Reusing
+            # `research()` did neither: ten resolution attempts wrote **52
+            # reading episodes** into the corpus — retrievable, consolidatable,
+            # eligible to become Perspective evidence — none of which the being
+            # chose to read. A resolution read is an AUDIT, not a choice, and
+            # the material fetched to check a claim becoming evidence for the
+            # position that produced the claim is R-24's self-echo in a new
+            # place.
+            #
+            # The read is still RECORDED: `record_read` above is untouched, so
+            # the diet accounting, the outlet share caps and the already-read
+            # dedup all keep working. What stops is the corpus entry.
+            if claims and as_experience:
                 from newz.store.episodes import write_episode
 
                 asserts = "; ".join(t for t, _ in claims[:5])

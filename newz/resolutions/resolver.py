@@ -210,9 +210,15 @@ def resolve_claim(conn: sqlite3.Connection, client: LLMClient, claim: Claim, *,
     # go into the query, because searching for the claim alone finds
     # commentary and searching for the source alone finds its front page.
     query = f"{claim.resolver}: {claim.claim}"
+    # **`as_experience=False`**: this pass records what it read and writes no
+    # reading episodes. The one episode a resolution produces is the
+    # `resolution` episode below, which is what E1.3 says and what reusing
+    # `research()` had quietly stopped being true — 52 corpus entries from ten
+    # attempts, none of them something the being chose to read.
     found = research(client, query, log_path=log_path,
                      adapters=_resolution_adapters(conn, adapters),
-                     embedder=embedder, conn=conn, concern_id=None)
+                     embedder=embedder, conn=conn, concern_id=None,
+                     as_experience=False)
 
     if found.paused:
         # Not a failure of the claim — the diet said no. Give back the
