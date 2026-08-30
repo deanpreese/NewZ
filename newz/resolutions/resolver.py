@@ -20,6 +20,15 @@ v1's Stanford CRU lesson, applied to being right instead of to opening
 questions. A verdict the material does not contain is discarded and the claim
 stays open.
 
+**"What was fetched" means the documents, and did not until 2026-08-30.**
+`material` was the extractor's account of them, written by a model asked about
+this very claim, so the check compared the model's paraphrase to the model's
+paraphrase. The first claim this project ever settled was settled that way: the
+claim restated with "(e.g.," swapped for "(specifically citing", against a
+source that says nothing about Sweden and nothing about statistical
+significance. The bodies now lead the material and the extracted claims follow
+them.
+
 **INV-012.** The web is reached only inside deliberation, so this runs there
 and nowhere else — never in the ambient loop, never on a timer of its own.
 """
@@ -65,6 +74,14 @@ Answer `no` unless the material actually says. Not settling is the ordinary
 outcome: sources are slow, partial, and often about something adjacent. A
 claim left open costs nothing; a claim settled on material that did not say
 so destroys the only record of my being wrong that I have.
+
+The material below is the SOURCE DOCUMENTS as published, and beneath them a
+short list of points a reader drew from them. **Quote the documents.** A point
+in that list is someone's summary of a document, and a summary written by a
+reader who already knew the claim will echo the claim's own words back — so a
+quote taken from there can look like confirmation when the document says
+nothing of the kind. If the words that settle this are only in the summary and
+not in a document, the answer is `no`.
 
 You are not judging whether the claim is reasonable, or whether I argued it
 well. Only whether this material shows what happened.
@@ -207,7 +224,35 @@ def resolve_claim(conn: sqlite3.Connection, client: LLMClient, claim: Claim, *,
         out.failure = f"ingest paused: {found.paused}"
         return out
 
-    material = "\n".join(f"- {t}" for t, _ in found.claims)
+    # **What the verdict is shown, and what INV-047 checks against** — the
+    # documents as published, not the extractor's account of them
+    # (2026-08-30).
+    #
+    # It was the account, and the account is written by a model that was
+    # ASKED ABOUT THIS CLAIM: `extract_claims(question=query)` under
+    # `_DIRECTED`. So the first claim this project ever settled was settled on
+    # a sentence its source does not contain — the claim itself with "(e.g.,"
+    # swapped for "(specifically citing", against a Wikipedia article that says
+    # nothing about Sweden, nothing about statistical significance, and names
+    # Britain, Argentina and Brazil where the claim names the UK, Sweden and
+    # Germany. The verbatim gate compared the model's paraphrase to the model's
+    # paraphrase, which is the failure it exists to prevent, one indirection
+    # deep.
+    #
+    # Narrower than "the extractor confabulates": `resolver_probe --settleable`
+    # settled a matched pair 2-of-2 in BOTH directions the day before, because
+    # that document plainly said the thing. Directed extraction confabulates
+    # agreement precisely when the document is SILENT on the question — which
+    # is exactly when the check is the only thing standing.
+    #
+    # The extracted claims still lead. They are what a directed reader found
+    # worth pointing at, and a verdict that can quote one of those is quoting
+    # the document too, since a faithful extraction is a substring of nothing
+    # but is *supported* by the body that follows it.
+    document_text = "\n\n".join(
+        f"--- {url} ---\n{body}" for url, body in found.documents.items())
+    extracted = "\n".join(f"- {t}" for t, _ in found.claims)
+    material = "\n\n".join(x for x in (document_text, extracted) if x)
     if not material:
         out.failure = "nothing came back from the source"
         _record_failure(conn, claim.id, out.failure)

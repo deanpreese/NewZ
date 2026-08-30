@@ -64,6 +64,11 @@ class ResearchOutcome:
     already_read: int = 0           # found again, and read before (R1)
     full_text_reads: int = 0        # documents read past the abstract (S2 §9.1)
     hostile_documents: int = 0      # quarantined whole, any chunk manipulative
+    # url -> the text as fetched, for anything that must check a claim against
+    # the source rather than against a summary of it (2026-08-30). Only
+    # documents read in full appear: an abstract is the adapter's blurb, not
+    # something the world published.
+    documents: dict = field(default_factory=dict)
     # W12a — which filter rejected, and how much. The pass held these and threw
     # them away, so a gap could say "nothing was relevant enough to read"
     # without saying whether the floor cut everything at 0.34 or a model read
@@ -217,6 +222,15 @@ class DeepRead:
     chunks: int = 0
     quarantined: int = 0
     hostile: str = ""          # set when ANY chunk attempted manipulation
+    # **What the world actually published** (2026-08-30). The body was fetched,
+    # chunked, extracted from and then dropped, so nothing downstream could
+    # check a verdict against the DOCUMENT — only against the extractor's
+    # account of it. INV-047 exists to stop "the model's opinion wearing the
+    # world's clothes" and was comparing the model's paraphrase to the model's
+    # paraphrase. Empty when the document was quarantined as hostile: a source
+    # that tried to instruct the reader supplies no text either, exactly as it
+    # supplies no claims.
+    body: str = ""
 
 
 def _fetcher_for(adapters) -> object | None:
@@ -265,7 +279,7 @@ def read_document(client: LLMClient, result, *, question: str,
         return None
 
     pieces = chunk(body)
-    out = DeepRead(chunks=len(pieces))
+    out = DeepRead(chunks=len(pieces), body=body)
     seen: set[str] = set()
     failures = 0
     for piece in pieces:
@@ -275,6 +289,11 @@ def read_document(client: LLMClient, result, *, question: str,
             out.hostile = ex.manipulation or "manipulation"
             out.quarantined += ex.quarantined
             out.claims = []
+            # The body goes with the claims. A document that tried to instruct
+            # the reader must not reach a later prompt as "what the source
+            # published" — that is the injection surface INV-042 narrows, and
+            # a verdict call is a prompt like any other.
+            out.body = ""
             return out
         if not ex.usable:
             # One chunk failing does not discard the others: the guarantee is
@@ -449,6 +468,8 @@ def research(
             claims, depth, chunks, quarantined = (
                 deep.claims, "full", deep.chunks, deep.quarantined)
             out.full_text_reads += 1
+            if deep.body:
+                out.documents[result.url] = deep.body
         else:
             # Directed at the concern. `query` IS the concern statement —
             # lite.py passes `choice.concern.statement` — so the extractor is
