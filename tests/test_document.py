@@ -102,6 +102,55 @@ def test_a_short_body_is_a_stub_not_a_document():
     assert not looks_like_stub("word " * 200)
 
 
+# ── short is not empty, and data is short (2026-08-29) ───────────────────
+
+CSV = ("observation_date,DGS10\n2026-08-03,4.70\n2026-08-04,4.63\n"
+       "2026-08-21,4.74\n2026-08-27,4.67\n")
+
+
+def test_a_short_data_body_is_not_a_stub():
+    """Measured 2026-08-29, and it made a whole class of source unreadable.
+
+    A FRED CSV carrying a month of daily 10-year Treasury yields — the
+    complete answer to the claim being resolved — is 327 characters and was
+    discarded by the length floor as a paywall interstitial. The deep read
+    returned None, depth stayed `abstract`, and the verdict said "the material
+    only defines the series". Prose and data have opposite length signatures
+    for the same information.
+    """
+    assert not looks_like_stub(CSV, reduced=False)
+
+
+def test_the_floor_is_unchanged_for_html():
+    """The floor is not loosened where it was earned. Its justification is
+    what REDUCTION does to a shell, and paywalls are HTML."""
+    assert looks_like_stub(CSV)
+
+
+def test_paywall_markers_still_apply_to_text():
+    """An error page served as text/plain is still an error page — it is the
+    markers, not the length, that identify one."""
+    assert looks_like_stub("Access denied. " * 40, reduced=False)
+
+
+def test_an_empty_body_is_a_stub_however_it_arrived():
+    assert looks_like_stub("   \n  ", reduced=False)
+
+
+def test_fetch_document_keeps_a_short_csv():
+    """End to end: the branch that decides `reduced` is the same branch that
+    decides how the body was produced, so the two cannot drift apart."""
+    got = fetch_document("https://example.org/series.csv", _Fetcher(CSV))
+
+    assert got is not None
+    assert "2026-08-21,4.74" in got
+
+
+def test_fetch_document_still_drops_a_short_html_shell():
+    shell = "<html><body><p>Subscribe now to continue.</p></body></html>"
+    assert fetch_document("https://example.org/a", _Fetcher(shell)) is None
+
+
 # ── the cap ──────────────────────────────────────────────────────────────
 
 def test_a_long_document_is_capped():

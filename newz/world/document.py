@@ -49,6 +49,21 @@ MAX_DOC_CHARS = 12_000
 # Below this, whatever came back is a stub — a paywall interstitial, a
 # cookie wall, a JS shell. Treated as a failed fetch so the caller keeps the
 # abstract rather than extracting claims about subscription offers.
+#
+# **It applies to reduced HTML only, corrected 2026-08-29.** The floor
+# conflated SHORT with EMPTY, and prose and data have opposite length
+# signatures for the same information: measured that day, a FRED CSV carrying
+# a month of daily 10-year Treasury yields — 19 observations, the complete
+# answer to the claim being resolved — is 327 characters and was discarded as
+# a paywall stub. Nothing downstream ever saw it; the deep read returned None,
+# depth stayed `abstract`, and the verdict said "the material only defines the
+# series". A whole class of source was unreadable on a length test.
+#
+# The docstring below already said why the floor is safe — "a paywall page
+# reduces to almost nothing" — and that premise is about REDUCTION. A body
+# that never went through `reduce_html` was never a shell, because paywalls
+# are HTML. So the floor stays exactly as strict where it was earned and does
+# not apply where its reason does not hold.
 MIN_USEFUL_CHARS = 400
 
 _PAYWALL_MARKERS = (
@@ -60,13 +75,22 @@ _PAYWALL_MARKERS = (
 _TEXTUAL = ("text/html", "text/plain", "application/xhtml")
 
 
-def looks_like_stub(text: str) -> bool:
+def looks_like_stub(text: str, *, reduced: bool = True) -> bool:
     """A paywall or shell rather than a document.
 
     Checked on the REDUCED text: a paywall page reduces to almost nothing,
     and what little survives is the pitch.
+
+    `reduced=False` says the body arrived as text and was never reduced — a
+    CSV, a JSON series, a plain-text release. The length floor does not apply
+    to it, because the floor's whole justification is what reduction does to a
+    shell. The paywall MARKERS still apply: an error page served as text/plain
+    is still an error page, and it is the markers rather than the length that
+    identify one.
     """
-    if len(text) < MIN_USEFUL_CHARS:
+    if reduced and len(text) < MIN_USEFUL_CHARS:
+        return True
+    if not text.strip():
         return True
     head = " ".join(text[:1200].lower().split())
     return any(m in head for m in _PAYWALL_MARKERS)
@@ -167,10 +191,11 @@ def fetch_document(url: str, fetcher, *, max_chars: int = MAX_DOC_CHARS) -> str 
         logger.info("document: %s is a PDF — not read", url[:80])
         return None
 
-    body = reduce_html(raw) if "<" in raw[:2000] else " ".join(raw.split())
+    is_html = "<" in raw[:2000]
+    body = reduce_html(raw) if is_html else " ".join(raw.split())
     if not body:
         return None
-    if looks_like_stub(body):
+    if looks_like_stub(body, reduced=is_html):
         logger.info("document: %s reduced to a stub (%d chars) — treating as "
                     "unfetched", url[:80], len(body))
         return None
