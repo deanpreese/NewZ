@@ -113,105 +113,6 @@ from newz.memory.embeddings import Embedder
 from newz.resolutions.model import Claim
 from newz.resolutions.resolver import resolve_claim
 from newz.store.db import open_db
-from newz.world.sources import Fetcher, SearchResult
-
-
-class _OneDocument:
-    """The minimal stand-in for a data adapter: it returns one document.
-
-    `resolve_claim` reaches the world through `research()`, which walks
-    adapters — so testing whether a numeric series can settle a claim means
-    giving the resolver an adapter that returns the series, not naming its url
-    in the claim. Everything downstream is untouched: the 0.35 floor, triage,
-    `read_document`, extraction, the DEEP verdict and INV-047's verbatim check
-    all run exactly as they do in life.
-    """
-
-    name = "data"
-
-    def __init__(self, url: str, title: str):
-        self._f = Fetcher()
-        self._r = SearchResult(title=title, summary=title, url=url,
-                               source="data")
-
-    def search(self, query: str, *, limit: int = 3):
-        return [self._r]
-
-W = 74
-
-# ── The matched pairs. Chosen 2026-08-28 from items the being was OFFERED and
-# did not read, so the resolver is reaching for a document that is genuinely
-# outside its dossier — which is also the population E1.9's retrodictions would
-# draw on if the door is ever shown the unread harvest.
-#
-# **Pin the url exactly as `harvest_log` holds it.** The first run reported
-# DOCUMENT GONE on a document that was right there: the stored url carries its
-# feed's `?utm_campaign=rss` and the pin here did not. A hand-transcribed url is
-# a lookup key, not a citation, and trimming it for tidiness breaks the match.
-#
-# The claims are deliberately flat-footed. A subtle claim that fails tells you
-# nothing about whether the gate can fire; these are as close to "does the
-# machinery work" as a real document allows.
-SETTLEABLE = [
-    ("P1  STAT News — an FDA clearance",
-     "STAT News",
-     "https://www.statnews.com/2026/08/28/juul-fda-clearance-updated-ecigarette-age-gating-technology/?utm_campaign=rss",
-     "STAT News report of 28 August 2026 on the FDA clearance of Juul's updated"
-     " e-cigarette with age-gating technology",
-     "held",
-     "The FDA has authorised Juul to market an updated vaping device that"
-     " incorporates age-gating technology.",
-     "The FDA has REFUSED Juul authorisation to market an updated vaping device"
-     " with age-gating technology, and the device may not be sold."),
-
-    ("P2  Ars Technica — a price increase",
-     "Ars Technica",
-     "https://arstechnica.com/gadgets/2026/08/apple-one-and-apple-tv-subscription-prices-increase-by-up-to-20-percent/",
-     "Ars Technica report of August 2026 on Apple One and Apple TV subscription"
-     " pricing",
-     "held",
-     "Apple has raised the subscription prices of Apple One and Apple TV, by up"
-     " to about 20 percent.",
-     "Apple has left the subscription prices of Apple One and Apple TV"
-     " unchanged, announcing no increase."),
-
-    # **P3 tests the precondition for a data adapter, added 2026-08-29.**
-    # Measured that day: five retrodictions, ten attempts, zero settlements,
-    # and four of the five failures say the material did not contain the DATA —
-    # "only bibliographic citations and abstracts", "no data from the League of
-    # Nations Statistical Yearbook". The being has no source that returns a
-    # number: its six adapters are encyclopedia and papers, and its 61 feeds are
-    # news and essays. Every claim needing a figure is unsettleable by
-    # construction, including the four forecasts due 2026-09-02, which name the
-    # Fed H.4.1, the NY Fed H.15, USDA NASS and ICE DXY.
-    #
-    # The proposed fix is a resolution-only data adapter. Its precondition is
-    # the question INV-047 asks: **a number in a table is not prose**, so can a
-    # rendered series survive fetch, extraction and the VERBATIM check?
-    #
-    # **The first version of this pair did not test that**, and the mistake is
-    # kept here because it is the easiest one to make twice. `resolve_claim`
-    # SEARCHES — query = "resolver: claim" through `_resolution_adapters` — and
-    # never fetches a url named in the claim. So pinning a FRED url proved only
-    # that no adapter reaches FRED, which was the premise. `feed=None` now
-    # builds a one-shot adapter returning exactly that document, which is the
-    # minimal stand-in for the adapter being proposed, and the run tests the
-    # gate rather than the reach.
-    #
-    # The values are real, taken from the series on 2026-08-29 rather than
-    # guessed, so the pair tests discrimination rather than assent.
-    ("P3  FRED — a numeric series (the data-adapter precondition)",
-     None,
-     "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10"
-     "&cosd=2026-08-01&coed=2026-08-28",
-     "FRED series DGS10, the 10-year Treasury constant maturity yield, as"
-     " published by the Federal Reserve Bank of St Louis",
-     "held",
-     "The 10-year Treasury constant maturity yield (FRED series DGS10) was"
-     " 4.74 percent on 2026-08-21.",
-     "The 10-year Treasury constant maturity yield (FRED series DGS10) was"
-     " 3.10 percent on 2026-08-21."),
-]
 
 
 def stage_of(out) -> str:
@@ -289,21 +190,17 @@ def _settleable(conn, client, embedder, budget_log, probe_log, tmp) -> int:
     results: list[tuple[str, str, str, str]] = []
     for label, feed, url, resolver, _, holds, contradicts in SETTLEABLE:
         print("=" * W)
-        print(f"{label}\n  feed      {feed or 'EXTERNAL — not from the harvest'}")
-        row = None if feed is None else conn.execute(
+        print(f"{label}\n  feed      {feed}")
+        row = conn.execute(
             "SELECT title, was_read FROM harvest_log WHERE url=?", (url,)).fetchone()
-        if feed is None:
-            print(f"  document  {url[:96]}")
-            print("  read?     n/a — a source the being does not subscribe to")
-        elif row is None:
+        if row is None:
             print("  STATUS    DOCUMENT GONE — not in harvest_log; the pinned")
             print("            document has rotated out. Re-pin before reading")
             print("            anything into this pair.")
             results.append((label, "GONE", "-", "-"))
             continue
-        else:
-            print(f"  document  {row['title'][:96]}")
-            print(f"  read?     {'YES — not a fair test' if row['was_read'] else 'no'}")
+        print(f"  document  {row['title'][:96]}")
+        print(f"  read?     {'YES — not a fair test' if row['was_read'] else 'no'}")
 
         for want, statement in (("held", holds), ("contradicted", contradicts)):
             cid = open_claim(conn, Claim(
@@ -313,10 +210,8 @@ def _settleable(conn, client, embedder, budget_log, probe_log, tmp) -> int:
                 resolver=resolver, due_at=now, opened_at=now,
                 provenance="probe", kind="retrodiction",
                 could_be_wrong="the document says the opposite"), models=set())
-            adapters = ([_OneDocument(url, resolver)] if feed is None else None)
             out = resolve_claim(conn, client, get_claim(conn, cid),
-                                log_path=budget_log, embedder=embedder,
-                                adapters=adapters)
+                                log_path=budget_log, embedder=embedder)
             stage = stage_of(out)
             got = out.outcome or "-"
             ok = "ok  " if (out.settled and got == want) else "MISS"
