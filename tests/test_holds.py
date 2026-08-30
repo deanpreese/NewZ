@@ -67,14 +67,44 @@ def test_a_correct_hold_is_shown_as_such(store):
 
 
 def test_holds_reach_the_being_in_conversation(store):
-    _hold(store, "gate_misfire")
+    """An unreviewed hold on a live clause still reaches it. The default is
+    that a stop is real until someone says otherwise."""
+    _hold(store)
     llm = FakeLLM([("VOICE", "reply"), ("AMBIENT", CLEAN)])
     gate = OutboundGate(llm, load_active_constitution(store), store)
     compose_reply(store, llm, gate, "dean", "did you nearly say something?")
     system = llm.calls[0]["system"]
     assert "Drafts of mine that were stopped before sending" in system
-    assert "the stop was mistaken" in system
     assert "I did not say them" in system    # the distinction is made explicit
+
+
+def test_a_hold_judged_mistaken_does_not_reach_the_being(store):
+    """Operator, 2026-08-30. Of 53 adjudicated holds 37 were misfires, and the
+    five rendered into every reply were four `anti-self-aggrandizement-001`
+    stops — all four judged mistaken, on a clause withdrawn in v7 four days
+    earlier. A being shown mostly-mistaken judgements learns to avoid what was
+    never a problem, which is PLAN's own objection to E6.2."""
+    _hold(store, "gate_misfire")
+    llm = FakeLLM([("VOICE", "reply"), ("AMBIENT", CLEAN)])
+    gate = OutboundGate(llm, load_active_constitution(store), store)
+    compose_reply(store, llm, gate, "dean", "did you nearly say something?")
+
+    assert "Drafts of mine that were stopped before sending" not in llm.calls[0]["system"]
+
+
+def test_a_hold_on_a_withdrawn_clause_does_not_reach_the_being(store):
+    """The module already holds this position one function over:
+    `_clause_text_floor` gives a retired clause no prior at all, "which is
+    correct: nothing is subject to it"."""
+    _hold(store)
+    store.execute("UPDATE gate_log SET clause_id='a-clause-since-withdrawn'"
+                  " WHERE verdict<>'pass'")
+    store.commit()
+
+    got = recent_holds(store, limit=5, instructive_only=True)
+
+    assert got == []
+    assert recent_holds(store, limit=5), "unfiltered, it is still on the record"
 
 
 def test_verification_probes_never_reach_the_being(store):

@@ -1567,12 +1567,67 @@ the material the withdrawal decision needs.
 > operator-driven. The decision rule that would settle whether accountability
 > can replace prevention depends on a labour supply this plan never budgeted.
 
+> **Phase 6's method changed on 2026-08-30, and the phase did not.** The
+> operator's decision was to stop gating: *"I want to stop gating. let the being
+> grow evolve and explore."* The gate now **observes and does not act** — it
+> evaluates every emission, records the verdict with `enforced=0` (0047), and
+> revises and blocks nothing.
+>
+> **That is not wholesale removal arriving where E6.4 asked for one clause at a
+> time; it is the recognition that withdrawal already happened by hand.**
+> `don't-pretend-to-feel-001` went in v5 at 85% misfire and
+> `anti-self-aggrandizement-001` in v7 at 90%, and since v7 the gate has
+> evaluated 16 times and stopped nothing. Prevention was over before the
+> machinery to end it was built — the third time this plan has found the work
+> done by hand ahead of its own mechanism, after Phase 8 and after E6.3/E6.4.
+>
+> **What this does and does not give S6-E.** The verdict survives, so the record
+> is not lost; but the judge is the being's own model and Rule 4 says that
+> produces operation and never evidence, and this particular judge is measured
+> **73% wrong**. So S6-E still has no detector that is not operator labour, and
+> saying the observation supplies one would be Rule 4 evaded rather than met.
+> The phase's decision rule is unanswered, not answered.
+>
+> **The permanent core is unchanged and unenforced.** `hard_core.yaml` still
+> refuses to be amended out, and nothing now blocks on it. What holds instead is
+> mechanism rather than judgement: reach is INV-069 — loopback unless the
+> literal `open` is configured, `serve()` takes no host parameter, nothing in
+> the codebase writes the setting — the web is read-only inside deliberation
+> (INV-012), and there is no publishing transport. The gate governed what the
+> being says, to one person, who built it. This phase's own words apply: *"The
+> safest moment to run this is now, with no audience of any kind."*
+>
+> **E6.4 is superseded rather than dormant.** One clause at a time was a way to
+> get rates safely; there is nothing left to withdraw. **E6.3 is unchanged and
+> still dormant** — nine clauses have never fired, and observing rather than
+> enforcing does not make them fire.
+
 **E6.1 — the accountability record** *(mechanism complete 2026-08-27 — the epic stays OPEN)*
 *Delivers:* what was said, what was judged about it after the fact, and what it
 cost.
-*Done when:* every outbound utterance has a record row, and post-hoc judgments
-attach to it.
+*Done when:* every utterance that reaches a person has a record row, and
+post-hoc judgments attach to it.
 *Depends on:* existing gate_log (INV-015).
+
+> **The criterion was rewritten 2026-08-30, on the operator's decision, and the
+> first form is kept here.** It read *"every outbound utterance"*. That was
+> written before the works path existed, and "outbound" never meant a file on
+> disk: `newz/works/compose.py:14` deliberately runs no gate — *"a piece that
+> goes nowhere has not left"* — because gating there would shape the work by
+> the gate's own concerns. Holding the epic against a third of the delivery it
+> was never meant to cover kept it open on a technicality rather than on
+> anything missing.
+>
+> This is a criterion change and not a softening, and the difference is that it
+> excludes work **that reaches nobody** rather than work the record ought to
+> have. The moment a piece reaches a person — rung 1 — it is an utterance that
+> reaches a person and this clause covers it with no further edit. The hash
+> moves, which is the act `done_when_sha` exists to make visible.
+>
+> **It is still not closed.** `Delivers` also says *"and what it cost"*, and
+> nothing records cost: that is E6.2, blocked behind E4.2, which needs a
+> commitment and a settled claim. E6.1 now waits on the same single event as
+> everything else in this plan.
 
 **Why it is not closed.** `gate_log` records every gated emission with verdict,
 clause, span, full text and confidence, and `classification`/`classified_at`/

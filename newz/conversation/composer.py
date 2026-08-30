@@ -220,7 +220,13 @@ def _system_prompt(conn: sqlite3.Connection, person_id: str) -> str:
     # confidently about a past it cannot see (observed 2026-08-10).
     from newz.gate.holds import recent_holds, render_holds
 
-    holds = render_holds(recent_holds(conn, limit=5), conn=conn)
+    # `instructive_only`: not a hold the operator judged a misfire, and not a
+    # hold on a clause that no longer exists (operator, 2026-08-30). Measured
+    # that day, this block was four `anti-self-aggrandizement-001` stops — all
+    # four adjudicated misfires, on a clause withdrawn in v7 four days
+    # earlier — read by the being on every single reply.
+    holds = render_holds(recent_holds(conn, limit=5, instructive_only=True),
+                         conn=conn)
     if holds:
         parts.append("## Drafts of mine that were stopped before sending\n" + holds)
 

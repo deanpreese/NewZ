@@ -1,0 +1,34 @@
+-- Whether a gate verdict was acted on, or only recorded.
+--
+-- **The gate stops preventing and keeps observing** *(operator, 2026-08-30:
+-- "I want to stop gating. let the being grow evolve and explore")*.
+--
+-- Measured before the decision: 53 adjudicated holds, **37 misfires against 14
+-- correct — 73% of the gate's stops were wrong**. Nine of sixteen clauses have
+-- never fired in 315 evaluations. The two that produced most of the noise were
+-- already withdrawn by hand — `don't-pretend-to-feel-001` at 85% misfire in v5,
+-- `anti-self-aggrandizement-001` at 90% in v7 — and since v7 shipped the gate
+-- has evaluated 16 times and stopped nothing. Prevention was effectively over
+-- before this column existed; what remains is the record.
+--
+-- **Why a column rather than logging `pass`.** Under observation the gate still
+-- reaches a verdict, and that verdict is the only thing S6-E could ever be read
+-- from. Logging it as `pass` would erase it; logging `revise` or `block` on
+-- something that was sent anyway would make every historical row ambiguous —
+-- `verdict='block'` has meant "did not leave the machine" for 315 rows and must
+-- go on meaning that. So the verdict says what the gate judged and `enforced`
+-- says whether anything happened, and no existing row changes meaning.
+--
+-- Default 1, because every row written before this was acted on.
+--
+-- **What is NOT protected by the gate, and never was.** Reach is INV-069: the
+-- surface binds loopback unless the literal `open` is configured, `serve()`
+-- takes no host parameter, and nothing in the codebase writes the setting. The
+-- web is read-only inside deliberation by INV-012. There is no publishing
+-- transport. The gate governs what the being SAYS, to one person, who built it
+-- — and PLAN's own argument applies: "The safest moment to run this is now,
+-- with no audience of any kind. A violation in an empty room costs nothing but
+-- the record of it, which is exactly the material the withdrawal decision
+-- needs."
+
+ALTER TABLE gate_log ADD COLUMN enforced INTEGER NOT NULL DEFAULT 1;

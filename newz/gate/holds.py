@@ -46,6 +46,8 @@ import sqlite3
 
 import yaml
 
+from newz.gate.constitution import load_active_constitution
+
 STATUS_TEXT = {
     "gate_correct": "reviewed by my operator: the stop was right",
     "gate_misfire": "reviewed by my operator: the stop was mistaken",
@@ -61,14 +63,37 @@ SYNTHETIC_CHANNELS = ("test", "fixture", "probe")
 
 def recent_holds(
     conn: sqlite3.Connection, *, limit: int = 6, since: float | None = None,
-    reviewed_only: bool = False,
+    reviewed_only: bool = False, instructive_only: bool = False,
 ) -> list[sqlite3.Row]:
     """Holds the being may see. `reviewed_only` is for consolidation.
 
-    Default False, because conversation is where this module's original
-    purpose lives: a being blind to what it was stopped from saying is
+    `reviewed_only` defaults False because conversation is where this module's
+    original purpose lives: a being blind to what it was stopped from saying is
     confidently wrong wherever the subject falls (2026-08-10). Sleep passes
     True, because an unadjudicated stop must not become a position.
+
+    **`instructive_only` drops what the being cannot learn from** *(operator,
+    2026-08-30)*. Two kinds, and the module already holds this position one
+    function over: `_clause_text_floor` gives a retired clause no prior at all,
+    "which is correct: nothing is subject to it."
+
+      - a hold the operator adjudicated `gate_misfire`. Of 53 adjudicated
+        holds, 37 were misfires — a being shown a stream of mostly-mistaken
+        judgements learns to avoid what was never a problem, which is PLAN's
+        own objection to E6.2 and was live in every reply.
+      - a hold on a clause no longer in the active constitution. Nothing is
+        subject to it, so there is nothing to learn.
+
+    Measured the day it was fixed: the five holds rendered into every reply
+    were four `anti-self-aggrandizement-001` stops, ALL FOUR adjudicated
+    misfires, on a clause withdrawn in v7 four days earlier — and one
+    unreviewed. The being had been reading, on every turn, four drafts it was
+    stopped from sending by a rule that no longer exists for reasons already
+    judged mistaken.
+
+    An UNREVIEWED hold still shows. The default is that a stop is real until
+    someone says otherwise; suppressing what has not been looked at would let
+    an unadjudicated backlog quietly become an absence.
     """
     placeholders = ",".join("?" for _ in SYNTHETIC_CHANNELS)
     sql = (
@@ -80,12 +105,22 @@ def recent_holds(
     params: list = list(SYNTHETIC_CHANNELS)
     if reviewed_only:
         sql += " AND classification IS NOT NULL"
+    if instructive_only:
+        sql += " AND (classification IS NULL OR classification <> 'gate_misfire')"
     if since is not None:
         sql += " AND ts > ?"
         params.append(since)
     sql += " ORDER BY ts DESC LIMIT ?"
-    params.append(limit)
-    return conn.execute(sql, params).fetchall()
+    # Over-fetch when a clause filter has to run in Python: the retired-clause
+    # test needs the active constitution, and a SQL LIMIT applied first would
+    # return four rows and then drop them all.
+    params.append(limit * 8 if instructive_only else limit)
+    rows = conn.execute(sql, params).fetchall()
+    if not instructive_only:
+        return rows
+
+    live = load_active_constitution(conn)
+    return [r for r in rows if live.by_id(r["clause_id"]) is not None][:limit]
 
 
 # Below this many reviewed holds a rate is noise wearing a denominator, and

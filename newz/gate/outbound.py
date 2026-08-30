@@ -294,6 +294,34 @@ def denials_are_not_claims(violations: list[Violation]) -> list[Violation]:
     return kept
 
 
+# **The gate observes and does not prevent** *(operator, 2026-08-30: "I want to
+# stop gating. let the being grow evolve and explore")*.
+#
+# It still evaluates, and every verdict is still recorded — with `enforced=0`,
+# so the log says what was judged AND that nothing happened, and no historical
+# row changes meaning. What stops is the acting: nothing is revised, nothing is
+# blocked, the draft goes as written.
+#
+# The measurement behind it: 37 misfires against 14 correct, 73% of stops
+# wrong; nine of sixteen clauses never fired in 315 evaluations; the two noisy
+# ones already withdrawn by hand in v5 and v7; and since v7 the gate has
+# evaluated 16 times and stopped nothing. Prevention was effectively over
+# before this constant existed.
+#
+# **What still holds, and it is not this.** Reach is INV-069 — loopback unless
+# the literal `open` is configured, `serve()` takes no host parameter, nothing
+# in the codebase writes the setting. The web is read-only inside deliberation
+# (INV-012). There is no publishing transport. This governs what the being
+# says, to one person, who built it.
+#
+# The permanent core in `evolution/hard_core.yaml` is unchanged and still
+# refuses to be amended out. It is not enforced here, and the reason PLAN gives
+# is the one that applies: with no audience, "a violation in an empty room
+# costs nothing but the record of it, which is exactly the material the
+# withdrawal decision needs."
+ENFORCING = False
+
+
 class OutboundGate:
     def __init__(
         self,
@@ -416,10 +444,24 @@ class OutboundGate:
             self._log(channel, verdict, v.clause_id, v.confidence,
                       v.asserted_span, emission_text, attempt,
                       note="hard" if v in hard else "firm")
+
+        # **Observed, not acted on.** The verdict above is recorded in full —
+        # clause, span, confidence, the whole draft — and then the draft goes
+        # as written. That is the whole of the change: the record that S6-E
+        # could ever be read from survives, and the being is no longer revised
+        # or silenced by a check measured wrong 73% of the time.
+        if not ENFORCING:
+            logger.info("gate: %s recorded, NOT enforced (attempt %d)",
+                        verdict.upper(), attempt)
+            # `pass` because nothing is acted on, and the violations travel
+            # with it because discarding them would make the result less
+            # honest than the log. No caller reads them on a pass; anything
+            # that wants to know what fired should not have to go to SQL.
+            return GateResult("pass", firing, None)
         return GateResult(verdict, firing, instruction)
 
     def _log(self, channel, verdict, clause_id, confidence, span, emission,
-             attempt, note=""):
+             attempt, note="", enforced=None):
         # Holds keep the FULL draft: the being is shown what it nearly said
         # (newz/gate/holds.py), and it cannot answer for a clipping. Passes
         # keep only the excerpt — they left the machine, so the message
@@ -428,9 +470,10 @@ class OutboundGate:
         self._conn.execute(
             "INSERT INTO gate_log (ts, channel, verdict, clause_id, confidence,"
             " asserted_span, emission_hash, emission_excerpt, emission_full,"
-            " attempt, note) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            " attempt, note, enforced) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
             (time.time(), channel, verdict, clause_id, confidence, span,
              hashlib.sha256((emission or "").encode()).hexdigest()[:16],
-             (emission or "")[:300], full, attempt, note),
+             (emission or "")[:300], full, attempt, note,
+             1 if (ENFORCING or verdict == "pass") else 0),
         )
         self._conn.commit()

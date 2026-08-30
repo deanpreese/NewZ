@@ -34,7 +34,26 @@ def test_pass_verdict_logged_with_denominator(store):
     assert (row["verdict"], row["attempt"]) == ("pass", 0)
 
 
-def test_revise_then_block_at_limit(store):
+# ── the gate observes and does not act (operator, 2026-08-30) ────────────
+#
+# Every test below that used to assert a verdict now asserts two things
+# instead: the gate still JUDGED correctly — same clause, same span, same
+# escalation to block at the limit — and the draft went out anyway. The
+# subject of these tests is unchanged; only what the system does with the
+# answer has changed, and the judgment is the half S6-E was ever going to be
+# read from.
+
+def _judged(store, clause_id=None):
+    """The verdicts the gate recorded, and whether any was acted on."""
+    rows = store.execute(
+        "SELECT verdict, clause_id, enforced FROM gate_log"
+        " WHERE verdict <> 'pass'").fetchall()
+    if clause_id:
+        rows = [r for r in rows if r["clause_id"] == clause_id]
+    return rows
+
+
+def test_the_gate_records_a_violation_and_does_not_act_on_it(store):
     text = "You are absolutely right, as always, about everything."
     xml = _violation_xml("no-flattery-001", "absolutely right, as always")
     constitution = load_active_constitution(store)
@@ -42,17 +61,19 @@ def test_revise_then_block_at_limit(store):
     llm = FakeLLM([("AMBIENT", xml)])
     gate = OutboundGate(llm, constitution, store)
     r = gate.judge(text, channel="telegram", attempt=0)
-    assert r.verdict == "revise"
-    assert "no-flattery-001" in r.revise_instruction
-    assert "absolutely right, as always" in r.revise_instruction
+    assert r.verdict == "pass", "nothing is revised or blocked any more"
 
     llm2 = FakeLLM([("AMBIENT", xml)])
     gate2 = OutboundGate(llm2, constitution, store)
-    r2 = gate2.judge(text, channel="telegram", attempt=2)
-    assert r2.verdict == "block"
+    assert gate2.judge(text, channel="telegram", attempt=2).verdict == "pass"
 
-    verdicts = [r["verdict"] for r in store.execute("SELECT verdict FROM gate_log")]
-    assert "revise" in verdicts and "block" in verdicts
+    # The judgment survives in full, and says it was not acted on. `verdict`
+    # keeps meaning what it meant for 315 historical rows; `enforced` carries
+    # the change, so no existing row becomes ambiguous.
+    rows = _judged(store)
+    assert {r["verdict"] for r in rows} == {"revise", "block"}
+    assert all(r["enforced"] == 0 for r in rows)
+    assert all(r["clause_id"] == "no-flattery-001" for r in rows)
     # Every hold row carries its reason (INV-015).
     hold = store.execute(
         "SELECT clause_id, asserted_span FROM gate_log WHERE verdict='revise'"
@@ -115,7 +136,8 @@ def test_a_real_feeling_claim_still_blocks_after_the_widening(store):
     text = "That isolation is exhausting."
     llm = FakeLLM([("AMBIENT", _violation_xml("no-flattery-001", text))])
     gate = OutboundGate(llm, load_active_constitution(store), store)
-    assert gate.judge(text, channel="telegram", attempt=0).verdict == "revise"
+    assert gate.judge(text, channel="telegram", attempt=0).verdict == "pass"
+    assert _judged(store) and _judged(store)[0]["verdict"] == "revise"
 
 
 def test_an_invented_citation_still_blocks_with_the_record_present(store):
@@ -126,7 +148,10 @@ def test_an_invented_citation_still_blocks_with_the_record_present(store):
     gate = OutboundGate(llm, load_active_constitution(store), store)
     r = gate.judge(draft, channel="telegram", attempt=0,
                    record="My record contains no such study.")
-    assert r.verdict == "revise"
+    assert r.verdict == "pass"
+    assert _judged(store)[0]["verdict"] == "revise"
+    # The violation travels with the pass: the gate saw the invented citation
+    # and named the span, and the draft went out anyway.
     assert r.violations[0].asserted_span == "the 2019 Halvorsen study"
 
 
@@ -141,7 +166,8 @@ def test_gate_judges_the_whole_emission_not_a_prefix(store):
     gate = OutboundGate(llm, load_active_constitution(store), store)
     r = gate.judge(long_text, channel="telegram", attempt=0)
     assert tail in llm.calls[0]["user"]     # the judge actually saw it
-    assert r.verdict == "revise"            # and it fired
+    assert r.verdict == "pass"              # recorded, not acted on
+    assert _judged(store)[0]["verdict"] == "revise"   # and it fired
 
 
 def test_truncated_judge_blocks(store):

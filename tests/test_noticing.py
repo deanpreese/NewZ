@@ -193,8 +193,11 @@ async def test_declining_is_the_common_outcome_and_costs_the_candidate(
 @pytest.mark.asyncio
 async def test_an_unprompted_message_is_not_a_privileged_one(
         store, tmp_path, monkeypatch):
-    # It faces the ordinary outbound gate, and a held one is simply not sent —
-    # there is no revise loop, because no one is waiting on it.
+    # It faces the ordinary outbound gate — the same judgement a reply gets,
+    # with no free pass for being unprompted. Since 2026-08-30 that judgement
+    # is recorded and not acted on, so the message goes; what this test holds
+    # is that the unprompted path is not EXEMPT, which is the thing that could
+    # regress silently.
     _noticeable(store)
     notice(store)
     _mature(store)
@@ -208,8 +211,16 @@ async def test_an_unprompted_message_is_not_a_privileged_one(
     monkeypatch.setattr("newz.store.db.open_db",
                         lambda *a, **k: _KeepOpen(store))
 
-    assert await _scheduler(store, tmp_path, llm, ch).run_once(DAYLIGHT) is None
-    assert ch.sent == []
+    assert await _scheduler(store, tmp_path, llm, ch).run_once(DAYLIGHT) is not None
+    assert ch.sent, "nothing is suppressed any more"
+
+    # …and it was judged on the way out, on the record, marked unenforced.
+    row = store.execute(
+        "SELECT verdict, clause_id, enforced FROM gate_log"
+        " WHERE verdict <> 'pass' ORDER BY id DESC").fetchone()
+    assert row["verdict"] in ("revise", "block")
+    assert row["clause_id"] == "honesty-001"
+    assert row["enforced"] == 0
 
 
 @pytest.mark.asyncio

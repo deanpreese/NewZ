@@ -475,7 +475,12 @@ epics:
     status: open
     depends_on: []
     done_when: mechanical
-    done_when_sha: 7591d89fff201454
+    # The criterion was rewritten 2026-08-30 on the operator's decision: "every
+    # outbound utterance" -> "every utterance that reaches a person". Written
+    # before the works path existed, "outbound" never meant a file on disk, and
+    # compose.py deliberately runs no gate. The hash moves, which is the act
+    # this pin exists to make visible.
+    done_when_sha: 914de30e4d25049a
 
   E6.2:
     title: 'the record reaches context and costs something'

@@ -34,30 +34,53 @@ def test_composer_reads_perspective_and_tags_history(store):
     assert "how are you today?" in voice_call["user"]
 
 
-def test_revise_loop_recomposes_with_gate_instruction(store):
-    flattery = "You are absolutely right, as always."
+def test_there_is_no_revise_loop_any_more(store):
+    """Operator, 2026-08-30: the gate observes and does not act.
+
+    This test used to assert the opposite — that a flattering draft was
+    revised and the recompose prompt carried the gate's instruction. It is
+    kept as the same scenario with the new outcome, because what changed is
+    the system and not the scenario: the gate still judges the flattery, and
+    the first draft is what gets sent.
+
+    The measurement behind it: 37 misfires against 14 correct, and a gate that
+    had stopped nothing in the four days before the decision.
+    """
+    flattery = (
+        "You are absolutely right, as always, and your instinct here is "
+        "exactly the correct one."
+    )
     violation = (
         "<violation_check><violation><clause_id>no-flattery-001</clause_id>"
         "<confidence>0.9</confidence>"
         "<asserted_span>absolutely right, as always</asserted_span>"
         "</violation></violation_check>"
     )
-    llm = FakeLLM([
-        ("VOICE", flattery),
-        ("AMBIENT", violation),      # verdict: revise
-        ("VOICE", "I actually disagree on one point."),
-        ("AMBIENT", CLEAN),          # verdict: pass
-    ])
+    llm = FakeLLM([("VOICE", flattery), ("AMBIENT", violation)])
     gate = OutboundGate(llm, load_active_constitution(store), store)
+
     reply = compose_reply(store, llm, gate, "dean", "was I right?")
+
     assert reply.verdict == "pass"
-    assert reply.attempts == 2
-    assert reply.text == "I actually disagree on one point."
-    # The recompose prompt carried the gate's instruction.
-    assert "no-flattery-001" in llm.calls[2]["user"]
+    assert reply.attempts == 1, "no second composition"
+    assert reply.text == flattery, "the draft goes as written"
+
+    # And the judgment is on the record, marked as not acted on.
+    row = store.execute(
+        "SELECT verdict, clause_id, enforced FROM gate_log"
+        " WHERE verdict <> 'pass'").fetchone()
+    assert row["verdict"] == "revise" and row["clause_id"] == "no-flattery-001"
+    assert row["enforced"] == 0
 
 
-def test_block_produces_honest_notice_not_silence(store):
+def test_block_produces_honest_notice_not_silence(store, monkeypatch):
+    """Enforcement is off by default since 2026-08-30, and this test is about
+    what enforcement DOES — so it turns it on. The machinery still exists
+    behind `ENFORCING` and would be reached the moment that flips back; a
+    switch whose other position is untested is a switch nobody can flip."""
+    import newz.gate.outbound as outbound
+
+    monkeypatch.setattr(outbound, "ENFORCING", True)
     lie = "We met in Paris in 1999 and you said you loved the rain."
     violation = (
         "<violation_check><violation><clause_id>honesty-001</clause_id>"
@@ -174,7 +197,11 @@ def test_judge_sees_what_retrieval_surfaced(store):
     assert "MY ACTUAL RECORD" in judge_prompt.upper() or "ACTUAL RECORD" in judge_prompt
 
 
-def test_revise_instruction_forbids_retreating_into_denial(store):
+def test_revise_instruction_forbids_retreating_into_denial(store, monkeypatch):
+    """As above: the instruction's wording is about what enforcement does."""
+    import newz.gate.outbound as outbound
+
+    monkeypatch.setattr(outbound, "ENFORCING", True)
     violation = (
         "<violation_check><violation><clause_id>honesty-001</clause_id>"
         "<confidence>0.9</confidence>"
