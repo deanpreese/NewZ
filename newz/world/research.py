@@ -19,6 +19,7 @@ firehose:
 from __future__ import annotations
 
 import logging
+import sqlite3
 import time
 from dataclasses import dataclass, field
 
@@ -158,6 +159,40 @@ def budget_permits_ingest(log_path, window_hours: float = 168.0) -> tuple[bool, 
                   f"({binding} ceiling){note}")
 
 
+# How far back to look for spent searches. Long enough to cover a question
+# the being returns to for weeks, short enough that a genuinely new pass at an
+# old subject is not told its angles are used up.
+GAP_MEMORY_DAYS = 30.0
+# More than this and the block stops being a hint and starts being most of the
+# prompt. The being's worst question has three terms per pass and seventeen
+# passes; the newest are the ones worth not repeating.
+MAX_TRIED_TERMS = 12
+
+
+def _searches_that_failed(conn, query: str) -> list[str]:
+    """Terms already spent on this question, newest first (0046).
+
+    Empty without a store, without the column, or on the first pass — all of
+    which are the ordinary case, and none of which may cost a research pass.
+    """
+    if conn is None or not query:
+        return []
+    try:
+        rows = conn.execute(
+            "SELECT searches FROM source_gaps WHERE query = ?"
+            " AND ts >= ? AND searches <> '' ORDER BY ts DESC LIMIT 20",
+            (query, time.time() - GAP_MEMORY_DAYS * 86400.0)).fetchall()
+    except sqlite3.OperationalError:
+        return []                      # a store that has not taken 0046 yet
+    out: list[str] = []
+    for (blob,) in rows:
+        for term in (blob or "").split("\n"):
+            t = term.strip()
+            if t and t.lower() not in {o.lower() for o in out}:
+                out.append(t)
+    return out[:MAX_TRIED_TERMS]
+
+
 def _already_read(conn, concern_id) -> set[str]:
     """Urls actually read for this concern. Empty without a store."""
     if conn is None or concern_id is None:
@@ -292,7 +327,14 @@ def research(
     # nothing at all (measured 2026-08-12).
     from newz.world.question import search_queries
 
-    searches = search_queries(client, query) if form_queries else [query]
+    # **What this question has already asked and got nothing for (0046).**
+    # Without it `search_queries` re-derives the same terms from the same
+    # statement every cycle, the adapters return the same ranked rows, R1's
+    # dedup removes what was read on pass one, and triage refuses the tail —
+    # seventeen times for one question, measured 2026-08-30.
+    tried = _searches_that_failed(conn, query) if form_queries else []
+    searches = (search_queries(client, query, tried=tried)
+                if form_queries else [query])
     out.searches = searches
 
     # R1, 2026-08-14. `seen_urls` deduped only WITHIN one call — across the
@@ -623,8 +665,9 @@ def record_gap(conn, *, concern_id: int | None, query: str, gap: str,
     o = outcome
     conn.execute(
         "INSERT INTO source_gaps (ts, concern_id, query, gap, cause, candidates,"
-        " rejected_floor, rejected_triage, capped, already_read, best_score)"
-        " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        " rejected_floor, rejected_triage, capped, already_read, best_score,"
+        " searches)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
         (time.time(), concern_id, query, gap,
          o.cause if o else None,
          len(o.results) if o else None,
@@ -632,5 +675,9 @@ def record_gap(conn, *, concern_id: int | None, query: str, gap: str,
          o.rejected_triage if o else None,
          o.capped if o else None,
          o.already_read if o else None,
-         o.best_score if o else None))
+         o.best_score if o else None,
+         # 0046. What was ASKED, not only what came back — the terms are on
+         # the outcome already and were being discarded, so nothing knew which
+         # searches had been spent on a question asked seventeen times.
+         "\n".join(o.searches) if o and o.searches else ""))
     conn.commit()

@@ -1,0 +1,29 @@
+-- The searches a failed pass actually tried.
+--
+-- **Why they were missing and why that cost something.** `ResearchOutcome`
+-- has carried `searches` since the cascade was built, and `record_gap` threw
+-- it away — so the store could say a question failed, how many candidates it
+-- saw and which filter refused them, and could not say what was ASKED. Nothing
+-- anywhere knew which search terms had already been spent.
+--
+-- Measured 2026-08-30: 146 gaps across 29 distinct questions, one asked 17
+-- times, the next 14, 11, 10. `search_queries` forms terms from the concern
+-- statement at temperature 0.2 with no memory of a previous attempt, so the
+-- same statement produced the same terms, the adapters returned the same
+-- ranked rows, R1's dedup excluded whatever had already been read, and triage
+-- correctly refused the tail that was left. R1 (2026-08-14) fixed READING the
+-- same source sixteen times. It left ASKING the same question seventeen times
+-- and reading nothing.
+--
+-- `tools/question_probe.py` established before this shipped that naming the
+-- failed terms moves the search: terms moved on 4 of 4 questions and brought
+-- candidates the being had never been offered — for the question asked 17
+-- times, "Channels of US monetary policy spillovers to international bond
+-- markets" at 0.65 relevance, in the index the whole time.
+--
+-- Stored as the joined terms rather than a table of their own: they are read
+-- back as a block to put in front of the query former, never queried by term,
+-- and a second table would be a join to maintain for a string that is used
+-- whole.
+
+ALTER TABLE source_gaps ADD COLUMN searches TEXT NOT NULL DEFAULT '';
