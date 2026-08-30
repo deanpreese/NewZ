@@ -198,6 +198,11 @@ not_instruments:
     # produced nothing, which at an ~81% decline rate means nothing at all. A
     # probe is what this project uses instead of inferring it from silence.
     - tools/retrodiction_probe.py
+    # Does telling the query former what already failed change what it finds?
+    # 146 gaps across 29 questions, one asked 17 times, and `question.py` has
+    # no memory of a previous attempt — so the same terms return the same
+    # candidates and R1's dedup leaves only the tail for triage to refuse.
+    - tools/question_probe.py
     # Exercises resolve_claim against real open claims on a throwaway copy of
     # the store, because `workable_claims` selects `due_at <= now` and nothing
     # had ever been due — the whole path was untested in life with four days
