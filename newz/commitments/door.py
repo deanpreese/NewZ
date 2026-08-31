@@ -39,11 +39,13 @@ Perspective (INV-009's single writer is untouched — this writes only to
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import re
 import sqlite3
 import time
 from dataclasses import dataclass
+from datetime import datetime
 
 from newz.commitments.model import KINDS, Commitment
 from newz.commitments.store import (author, authored_since, standing,
@@ -232,6 +234,69 @@ def _drew_on(text: str, sources: list[list[str]]) -> list[str]:
     return sorted(set(out), key=out.index)
 
 
+# How many nights of declines the door is shown. Nine is the whole record
+# today; the bound is here so a year of ordinary nights cannot become the
+# prompt.
+DECLINE_ROWS = 14
+
+
+def _material_sha(material: str) -> str:
+    return hashlib.sha1(material.encode("utf-8")).hexdigest()[:16]
+
+
+def _record_decline(conn: sqlite3.Connection, *, material: str,
+                    perspective_version: int | None, now: float) -> None:
+    """The ordinary answer, written down (0048).
+
+    A decline is not a refusal and does not go in `commitment_refusals` — that
+    table measures the door's strictness and this would corrupt its
+    denominator. It goes here so the door can be told tomorrow what it did
+    tonight.
+    """
+    try:
+        conn.execute(
+            "INSERT INTO commitment_declines (ts, perspective_version,"
+            " material_sha, material_lines) VALUES (?,?,?,?)",
+            (now, perspective_version, _material_sha(material),
+             len(material.splitlines())))
+        conn.commit()
+    except sqlite3.OperationalError:   # a store predating 0048
+        logger.debug("commitment declines: table not present yet")
+
+
+def _decline_history(conn: sqlite3.Connection, material: str) -> str:
+    """What this door has already answered, and against what (2026-08-31).
+
+    **It states the count and draws no conclusion from it.** Nine declines may
+    mean the being has nothing to commit to, or may mean the question stopped
+    landing; the door is the thing entitled to decide which, and a prompt that
+    told it "you have been declining too long" would be answering for it.
+
+    The repeat count is the half that could not be inferred: the material is
+    the whole of `who_i_am` and `unresolved`, and `restatement_rate` is 0.935,
+    so being asked again about the same seventeen lines is the ordinary case
+    rather than the exception.
+    """
+    try:
+        rows = conn.execute(
+            "SELECT ts, material_sha FROM commitment_declines"
+            " ORDER BY ts DESC LIMIT ?", (DECLINE_ROWS,)).fetchall()
+    except sqlite3.OperationalError:
+        return ""
+    if not rows:
+        return ""
+    sha = _material_sha(material)
+    same = sum(1 for r in rows if r[1] == sha)
+    last = datetime.fromtimestamp(rows[0][0]).strftime("%Y-%m-%d")
+    lines = [f"I have been asked this and answered no {len(rows)} time(s), "
+             f"most recently {last}."]
+    if same:
+        lines.append(f"{same} of those were against exactly the material below"
+                     " — the same lines, unchanged.")
+    return "<what_i_have_already_answered>\n{}\n</what_i_have_already_answered>".format(
+        "\n".join(lines))
+
+
 def propose_commitment(conn: sqlite3.Connection, client: LLMClient, *,
                        material: str, provenance: str,
                        sources: list[list[str]] | None = None,
@@ -259,7 +324,10 @@ def propose_commitment(conn: sqlite3.Connection, client: LLMClient, *,
         _record_refusal(conn, f"cap: {MAX_PER_DAY} already authored today")
         return DoorVerdict(refused="cap: daily")
 
+    history = _decline_history(conn, material)
     body = f"<material>\n{material}\n</material>"
+    if history:
+        body = f"{history}\n\n{body}"
     try:
         result = client.complete("DEEP", _SYSTEM, f"{_TASK}\n\n{body}",
                                  max_tokens=500, temperature=0.3,
@@ -276,6 +344,8 @@ def propose_commitment(conn: sqlite3.Connection, client: LLMClient, *,
         return (el.text or "").strip() if el is not None and el.text else ""
 
     if text_of("worth_committing").lower() != "yes":
+        _record_decline(conn, material=material,
+                        perspective_version=perspective_version, now=now)
         return DoorVerdict(declined=True)
 
     kind = text_of("kind").lower().strip()

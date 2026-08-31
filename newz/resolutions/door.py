@@ -230,6 +230,14 @@ place, no date and no identifier gives it nothing to search. "The agency's
 figure will differ from the market's value" names neither agency nor market and
 is refused. "The BLS September Employment Situation Summary" names one.
 
+**What my resolvers have actually done is below, and it is my own record.**
+Named is not the same as reached. When I go to settle a claim I search for the
+source I named and read what comes back, and `<what_my_resolvers_did>` is what
+came back the last time — attempts spent, whether anything settled, and the
+reason verbatim when it did not. Nothing there forbids naming a source again.
+It is the difference between a source I have never tried and one that has
+returned bibliographies four times.
+
 **A claim can be about what is ALREADY the case and I do not yet know it.**
 If the source has already spoken — the release is out, the report is filed, the
 figure is published — and I am asserting what it says without having read it,
@@ -410,16 +418,93 @@ def _parse_due(text: str, now: float) -> tuple[float | None, str | None]:
     return due, None
 
 
+# How much of the record the door is shown. Twelve covers every resolver ever
+# tried today with room to spare; the bound exists so that a year of attempts
+# cannot crowd out the concern the claim is actually about.
+HISTORY_ROWS = 12
+# The failure reason is the informative half and it is one sentence of model
+# prose. Enough to say WHAT was missing, short enough that twelve of them do
+# not become the prompt.
+FAILURE_CHARS = 130
+
+
+def _resolver_history(conn: sqlite3.Connection) -> str:
+    """The being's own record of what its named sources returned (2026-08-31).
+
+    Renders `resolver_track_record` for the prompt. It reports the store and
+    editorialises nothing: a claim the store calls settled is reported settled,
+    whatever anyone later thinks of that settlement.
+
+    Empty until something has been attempted, and the tag is then omitted
+    entirely rather than rendered hollow — a door told "0 attempts, 0 settled"
+    before any claim has come due would be reading a fact about the calendar as
+    a fact about its sources.
+    """
+    from newz.resolutions.store import resolver_track_record
+
+    try:
+        rows, totals = resolver_track_record(conn, limit=HISTORY_ROWS)
+    except sqlite3.Error:                       # pragma: no cover - defensive
+        logger.debug("resolver history unavailable; the door proceeds without it")
+        return ""
+    if not rows:
+        return ""
+
+    lines = [f"I have named {totals['resolvers']} distinct resolvers across "
+             f"{totals['claims']} claims. {totals['tried']} have been tried, "
+             f"over {totals['attempts']} attempts, and {totals['settled']} "
+             "settled."]
+    for r in rows:
+        verdict = (f"settled {r['outcome']}" if r["status"] == "resolved"
+                   else "not settled")
+        lines.append(f'  "{(r["resolver"] or "").strip()}" — '
+                     f'{r["attempts"]} attempt(s), {verdict}')
+        if r["status"] != "resolved" and r["last_failure"]:
+            why = " ".join((r["last_failure"] or "").split())[:FAILURE_CHARS]
+            lines.append(f'      what came back: "{why}"')
+    body = "\n".join(lines)
+    return f"<what_my_resolvers_did>\n{body}\n</what_my_resolvers_did>"
+
+
 def open_claims_count(conn: sqlite3.Connection) -> int:
-    """Unresolved FORECASTS. The carrying cap's denominator (E1.9).
+    """LIVE unresolved forecasts. The carrying cap's denominator (E1.9).
 
     A retrodiction is due the moment it is opened and leaves the pool on the
     next pass, so counting it here would let a claim that occupies the store
     for minutes displace one that occupies it for a month.
+
+    **Two kinds of claim are open and are not inventory** *(2026-08-31)*. The
+    cap exists so the being cannot accumulate "commitments nobody will ever
+    look at"; a claim nobody will ever look at again is the opposite of what
+    it is meant to hold back.
+
+    A claim that has spent `MAX_ATTEMPTS` is one the resolver has given up on.
+    It stays OPEN, deliberately — E1.3 is explicit that nothing happened, so
+    nothing is closed and no verdict is invented — and `workable_claims` has
+    already stopped selecting it. Counting it against the cap makes the pool a
+    one-way ratchet: measured 2026-08-31, three claims were one pass from that
+    state and the pool was at 39 of 40.
+
+    A claim whose horizon exceeds the CURRENT `MAX_HORIZON_DAYS` was admitted
+    by a rule that no longer exists. Twelve such claims — the first twelve this
+    project ever made, under a 365-day ceiling that became 45 on 2026-08-22,
+    one of them due 2027-08-22 — held 31% of the pool against a door that
+    would refuse every one of them today. The claims themselves are untouched:
+    still open, still dated, still resolvable, still the permanent record E1.5
+    requires. What changes is that a cap does not count what its own door would
+    not admit.
     """
+    # Imported here rather than at module scope: the attempt ceiling belongs
+    # to the resolver pass, and the door reads it rather than owning a second
+    # copy that could drift from it.
+    from newz.resolutions.resolver import MAX_ATTEMPTS
+
     return conn.execute(
         "SELECT COUNT(*) FROM resolutions"
-        " WHERE status='open' AND kind='forecast'").fetchone()[0]
+        " WHERE status='open' AND kind='forecast'"
+        "   AND attempts < ?"
+        "   AND (due_at - opened_at) <= ?",
+        (MAX_ATTEMPTS, MAX_HORIZON_DAYS * DAY)).fetchone()[0]
 
 
 def opened_today(conn: sqlite3.Connection, *, now: float | None = None,
@@ -538,7 +623,8 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
 
     body = (f"<today>{datetime.fromtimestamp(now):%Y-%m-%d}</today>\n"
             f"<concern>{concern_statement}</concern>\n"
-            f"<established>{established}</established>")
+            f"<established>{established}</established>\n"
+            f"{_resolver_history(conn)}")
     try:
         result = client.complete("DEEP", _SYSTEM, f"{_TASK}\n\n{body}",
                                  max_tokens=600, temperature=0.3,

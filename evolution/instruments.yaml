@@ -209,6 +209,13 @@ not_instruments:
     # to go. A probe and not an instrument: it produces a verdict about which
     # stage the resolver fails at, never a number anything steers by.
     - tools/resolver_probe.py
+    # Would a reachability check at the claim door refuse anything? Built to
+    # prove yes and answered no: every open claim's resolver returns candidates
+    # from some adapter, because the adapters are keyword search engines. It
+    # reads the store read-only, calls no model, and produced the measurement
+    # that redirected the 2026-08-31 proposal away from the check it was
+    # written to justify.
+    - tools/reach_probe.py
     - tools/triage_probe.py
 
   mutators:          # write to the store

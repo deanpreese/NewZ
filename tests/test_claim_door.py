@@ -14,7 +14,8 @@ import inspect
 from datetime import datetime, timedelta
 
 from newz.resolutions.door import (
-    MAX_HORIZON_DAYS, MAX_OPENED_PER_DAY, MAX_OPEN_CLAIMS, propose_claim,
+    MAX_HORIZON_DAYS, MAX_OPENED_PER_DAY, MAX_OPEN_CLAIMS, _resolver_history,
+    open_claims_count, propose_claim,
 )
 from newz.resolutions.model import Claim
 from newz.resolutions.store import claims_by_status, get_claim, open_claim
@@ -201,11 +202,15 @@ def test_the_carrying_cap_refuses_a_forecast_and_says_so(store):
     spent only when something could still have opened; when neither route can,
     the cap is still evaluated first and nothing is spent.
     """
+    # Opened long ago and dated 30 days after that — a lawful horizon, so
+    # these are inventory. Before 2026-08-31 the due date here was 30 days
+    # from NOW, which recorded a 120-day horizon: claims the current door
+    # would refuse, which no longer fill a cap they could not pass.
     old = time.time() - 90 * 86400
     for i in range(MAX_OPEN_CLAIMS):
         open_claim(store, Claim(
             id=None, claim=f"old claim {i}", resolution_condition="a source says so",
-            resolver="a named report", due_at=time.time() + 30 * 86400,
+            resolver="a named report", due_at=old + 30 * 86400,
             provenance="concern:1", opened_at=old), models=set())
 
     verdict = _ask(store, _proposal())
@@ -426,3 +431,96 @@ def test_the_prompt_says_what_the_door_now_refuses(store):
 
     assert "Moving the date does not move the source" in door._TASK
     assert "Name a document that exists" in door._TASK
+
+
+# ── the door's own record (2026-08-31) ───────────────────────────────────
+
+def _claim_row(store, *, resolver, attempts, status="open", outcome=None,
+               failure=None, kind="forecast", horizon_days=10.0):
+    now = time.time()
+    store.execute(
+        "INSERT INTO resolutions (opened_at, claim, resolution_condition,"
+        " resolver, due_at, provenance, status, outcome, settled_at, attempts,"
+        " last_failure, kind) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        (now, "a claim", "a condition", resolver, now + horizon_days * 86400.0,
+         "concern:1", status, outcome, now if status == "resolved" else None,
+         attempts, failure, kind))
+    store.commit()
+
+
+def test_the_door_is_shown_what_its_resolvers_returned(store):
+    """22 attempts had reached the being through no channel at all."""
+    _claim_row(store, resolver="League of Nations Statistical Yearbook",
+               attempts=3, failure="The material contains no industrial "
+                                   "production data for the UK or France.")
+
+    body = _resolver_history(store)
+
+    assert "what_my_resolvers_did" in body
+    assert "League of Nations Statistical Yearbook" in body
+    assert "3 attempt(s), not settled" in body
+    assert "contains no industrial production data" in body
+
+
+def test_a_settled_claim_is_reported_as_the_store_has_it(store):
+    """The door reports the store and editorialises nothing."""
+    _claim_row(store, resolver="Wikipedia", attempts=3, status="resolved",
+               outcome="held", failure="an earlier failure")
+
+    body = _resolver_history(store)
+
+    assert "settled held" in body
+    # The failure that preceded a settlement is not what came back.
+    assert "an earlier failure" not in body
+
+
+def test_nothing_attempted_shows_no_history_at_all(store):
+    _claim_row(store, resolver="Federal Reserve H.4.1", attempts=0)
+
+    assert _resolver_history(store) == ""
+
+
+def test_resolvers_are_not_merged_by_similarity(store):
+    """Rule 4: whether two sources are the same source is the being's call."""
+    _claim_row(store, resolver="League of Nations, Statistical Yearbook 1933",
+               attempts=3, failure="no data")
+    _claim_row(store, resolver="League of Nations Statistical Yearbook (1939)",
+               attempts=2, failure="no data")
+
+    body = _resolver_history(store)
+
+    assert "Statistical Yearbook 1933" in body
+    assert "Yearbook (1939)" in body
+    assert body.count("attempt(s)") == 2
+
+
+# ── the cap counts live inventory (2026-08-31) ───────────────────────────
+
+def test_a_claim_the_resolver_gave_up_on_is_not_inventory(store):
+    from newz.resolutions.resolver import MAX_ATTEMPTS
+
+    _claim_row(store, resolver="a source", attempts=MAX_ATTEMPTS)
+
+    assert open_claims_count(store) == 0
+
+
+def test_a_claim_the_current_door_would_refuse_is_not_inventory(store):
+    """Twelve claims made under a 365-day ceiling held 31% of the pool."""
+    _claim_row(store, resolver="a source", attempts=0,
+               horizon_days=MAX_HORIZON_DAYS + 1)
+
+    assert open_claims_count(store) == 0
+
+
+def test_an_ordinary_open_forecast_still_counts(store):
+    _claim_row(store, resolver="a source", attempts=1,
+               horizon_days=MAX_HORIZON_DAYS - 1)
+
+    assert open_claims_count(store) == 1
+
+
+def test_a_retrodiction_still_never_counts(store):
+    _claim_row(store, resolver="a source", attempts=0, kind="retrodiction",
+               horizon_days=0.0)
+
+    assert open_claims_count(store) == 0

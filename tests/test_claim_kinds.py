@@ -193,7 +193,7 @@ def test_neither_route_open_means_nothing_is_spent(store):
     for i in range(MAX_OPEN_CLAIMS):
         open_claim(store, Claim(
             id=None, claim=f"old {i}", resolution_condition="a source says so",
-            resolver="a named report", due_at=now + 30 * DAY,
+            resolver="a named report", due_at=now - 60 * DAY,
             provenance="concern:1", opened_at=now - 90 * DAY), models=set())
     for i in range(MAX_RETRODICTIONS_PER_DAY):
         open_claim(store, Claim(
@@ -215,7 +215,7 @@ def test_a_full_forecast_pool_no_longer_declines_in_silence(store):
     for i in range(MAX_OPEN_CLAIMS):
         open_claim(store, Claim(
             id=None, claim=f"old {i}", resolution_condition="a source says so",
-            resolver="a named report", due_at=now + 30 * DAY,
+            resolver="a named report", due_at=now - 60 * DAY,
             provenance="concern:1", opened_at=now - 90 * DAY), models=set())
 
     verdict = _ask(store, _proposal(due="30"))
@@ -236,7 +236,7 @@ def test_a_full_forecast_pool_still_lets_a_retrodiction_through(store):
     for i in range(MAX_OPEN_CLAIMS):
         open_claim(store, Claim(
             id=None, claim=f"old {i}", resolution_condition="a source says so",
-            resolver="a named report", due_at=now + 30 * DAY,
+            resolver="a named report", due_at=now - 60 * DAY,
             provenance="concern:1", opened_at=now - 90 * DAY), models=set())
 
     verdict = _ask(store, _proposal(due="0"))

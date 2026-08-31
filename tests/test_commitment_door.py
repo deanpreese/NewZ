@@ -278,3 +278,77 @@ def test_naming_nothing_stays_empty_rather_than_inheriting(store):
     inf = what_shaped_commitment(store, v.commitment_id)
     assert inf.total == 0
     assert "no resolvable evidence" in inf.render()
+
+
+# ── the door's own history (0048, 2026-08-31) ────────────────────────────
+
+def test_a_decline_is_recorded_and_is_not_a_refusal(store):
+    """The ordinary answer was the one answer nothing kept.
+
+    Nine nightly asks, nine declines, and `commitment_refusals` empty because
+    the structural checks were never reached — so nothing in the store could
+    say the door had been asked at all.
+    """
+    v = propose_commitment(store, _llm(_proposal(worth_committing="no")),
+                           material=MATERIAL, provenance="perspective:14",
+                           perspective_version=14)
+
+    assert not v.authored and not v.refused and v.declined
+    row = store.execute("SELECT perspective_version, material_lines,"
+                        " material_sha FROM commitment_declines").fetchone()
+    assert row["perspective_version"] == 14
+    assert row["material_lines"] == len(MATERIAL.splitlines())
+    assert row["material_sha"]
+    # A decline must never reach the strictness denominator.
+    assert store.execute(
+        "SELECT COUNT(*) FROM commitment_refusals").fetchone()[0] == 0
+
+
+def test_an_authored_commitment_records_no_decline(store):
+    propose_commitment(store, _llm(_proposal()), material=MATERIAL,
+                       provenance="perspective:14", perspective_version=14)
+
+    assert store.execute(
+        "SELECT COUNT(*) FROM commitment_declines").fetchone()[0] == 0
+
+
+def test_the_second_night_is_told_what_the_first_answered(store):
+    """5c863d7 with different nouns: the door stops asking blind."""
+    propose_commitment(store, _llm(_proposal(worth_committing="no")),
+                       material=MATERIAL, provenance="perspective:14",
+                       perspective_version=14)
+
+    llm = _llm(_proposal(worth_committing="no"))
+    propose_commitment(store, llm, material=MATERIAL,
+                       provenance="perspective:15", perspective_version=15)
+
+    asked = llm.calls[-1]["user"]
+    assert "what_i_have_already_answered" in asked
+    assert "answered no 1 time(s)" in asked
+    # The repeat is the half that could not be inferred from a count.
+    assert "1 of those were against exactly the material below" in asked
+
+
+def test_different_material_is_not_reported_as_a_repeat(store):
+    propose_commitment(store, _llm(_proposal(worth_committing="no")),
+                       material=MATERIAL, provenance="perspective:14",
+                       perspective_version=14)
+
+    llm = _llm(_proposal(worth_committing="no"))
+    propose_commitment(store, llm, material=MATERIAL + "\n- [unresolved] new",
+                       provenance="perspective:15", perspective_version=15)
+
+    asked = llm.calls[-1]["user"]
+    assert "answered no 1 time(s)" in asked
+    assert "against exactly the material below" not in asked
+
+
+def test_the_first_night_ever_is_shown_no_history(store):
+    """A door told '0 declines' before it has ever been asked would be
+    reading a fact about the calendar as a fact about itself."""
+    llm = _llm(_proposal(worth_committing="no"))
+    propose_commitment(store, llm, material=MATERIAL,
+                       provenance="perspective:14", perspective_version=14)
+
+    asked = llm.calls[-1]["user"]
+    assert "what_i_have_already_answered" not in asked

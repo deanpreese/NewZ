@@ -181,3 +181,41 @@ def contradicted_claims(conn: sqlite3.Connection, *,
     return [_row(r) for r in conn.execute(
         f"SELECT {_FIELDS} FROM resolutions WHERE outcome='contradicted'"
         " ORDER BY settled_at DESC LIMIT ?", (limit,))]
+
+
+def resolver_track_record(conn: sqlite3.Connection, *,
+                          limit: int = 12) -> tuple[list[sqlite3.Row], dict]:
+    """What every resolver the being has named actually did (2026-08-31).
+
+    The claim door was a pure function of the present moment — today's date,
+    today's concern, today's advance — so the being named the Federal Reserve
+    H.4.1 release a fourth time with exactly the confidence it named it the
+    first, while `last_failure` recorded, in a column nothing read, that its
+    sources were returning bibliographies. Twenty-two failed attempts reached
+    the being through no channel at all: `_record_failure` writes a column and
+    `write_episode` fires only on the settled path.
+
+    **No grouping and no normalisation, deliberately.** A first draft clustered
+    resolvers by shared tokens, which merged three differently-worded League of
+    Nations Yearbook claims into one line — and that merge is a judgment about
+    which sources are the same source. Rule 4 puts that judgment with the being
+    rather than with a similarity threshold nobody could defend. The rows are
+    reported one per claim, most-attempted first, and the being reads three
+    Yearbook lines and draws its own conclusion.
+
+    **Attempts are the qualification.** A claim whose date has not arrived has
+    no track record to report, so the detail covers what has actually been
+    tried and the summary carries the rest.
+    """
+    rows = conn.execute(
+        "SELECT resolver, attempts, status, outcome, last_failure"
+        " FROM resolutions WHERE attempts > 0"
+        " ORDER BY attempts DESC, id DESC LIMIT ?", (limit,)).fetchall()
+    totals = conn.execute(
+        "SELECT COUNT(*) AS claims,"
+        "       COUNT(DISTINCT resolver) AS resolvers,"
+        "       COALESCE(SUM(attempts), 0) AS attempts,"
+        "       COALESCE(SUM(status = 'resolved'), 0) AS settled,"
+        "       COALESCE(SUM(attempts > 0), 0) AS tried"
+        " FROM resolutions").fetchone()
+    return rows, dict(totals)
