@@ -469,7 +469,22 @@ def test_the_cooldown_not_the_interval_is_what_bounds_regrinding(tmp_path):
     assert choose_concern([just_tried, rested], now=now).concern.id == 2
 
 
-def test_a_being_with_everything_cooling_is_never_left_with_nothing(tmp_path):
+def test_everything_cooling_sends_the_being_to_read_instead(tmp_path):
+    """**Criterion reversed 2026-08-31, and the old one is quoted below.**
+
+    This asserted `choice.concern is not None  # bypass, rather than idling`.
+    The bypass can only fire when every open concern is inside its six hours,
+    which is only true when the pool is small — so it did nothing while the
+    pool was healthy and fired every cycle once it was not. Concern 116 took
+    330 hours to accumulate its five stalls; concern 144, opened the morning
+    the pool ran dry, took 8.3. The pool reached zero and deliberation
+    stopped.
+
+    Idling is not the alternative any more. `_explore` was built 2026-08-15
+    for this exact state, books no attempt and charges no setback, and its own
+    docstring says nothing to work with "is the strongest reason to go and
+    find some".
+    """
     from newz.concerns.scoring import choose_concern
 
     now = time.time()
@@ -477,7 +492,24 @@ def test_a_being_with_everything_cooling_is_never_left_with_nothing(tmp_path):
                        closing_condition="c", last_attempted_at=now - 60)
                for i in (1, 2)]
     choice = choose_concern(cooling, now=now)
-    assert choice.concern is not None      # bypass, rather than idling
+    assert choice.concern is None
+    assert "cooling" in choice.reason
+
+
+def test_the_unspent_budget_floor_is_the_one_thing_that_crosses_the_cooldown(
+        tmp_path):
+    """S2 §7.1's escape hatch survives, and is now the ONLY bypass.
+
+    It differs from the old one by firing once every four hours instead of
+    every cycle, which is the whole of the damage the old one did."""
+    from newz.concerns.scoring import choose_concern
+
+    now = time.time()
+    cooling = [Concern(id=i, statement=f"q{i}", why_open="w",
+                       closing_condition="c", last_attempted_at=now - 60)
+               for i in (1, 2)]
+    choice = choose_concern(cooling, now=now, allow_cooling=True)
+    assert choice.concern is not None
 
 
 # ── S2 §7.1's state-driven trigger (P2 Phase 3.1, pulled forward) ────────
@@ -526,8 +558,15 @@ def test_a_paused_diet_no_longer_stops_the_being_thinking(tmp_path):
     conn = open_db(path)
     record_advance(conn, cid, summary="Established once.", kind="reasoning",
                    evidence=[])
-    conn.execute("UPDATE concerns SET last_attempted_at=? WHERE id=?",
-                 (time.time() + 60, cid))          # attempted AFTER the advance
+    # Attempted AFTER the advance — the §7.1 trigger's condition — and outside
+    # REATTEMPT_COOLDOWN_HOURS, which since 2026-08-31 is checked first. The
+    # ordering is the point; `+60` was only ever shorthand for it, and the
+    # advance ROW has to move too or the dossier still reads as new.
+    conn.execute("UPDATE concern_advances SET ts=? WHERE concern_id=?",
+                 (time.time() - 20 * 3600, cid))
+    conn.execute("UPDATE concerns SET last_advanced_at=?, last_attempted_at=?"
+                 " WHERE id=?",
+                 (time.time() - 20 * 3600, time.time() - 7 * 3600, cid))
     _busy_loop(conn, cid)
     conn.close()
 
@@ -548,8 +587,15 @@ def test_a_setback_from_a_paused_cycle_is_recorded_but_not_charged(tmp_path):
     conn = open_db(path)
     record_advance(conn, cid, summary="Established once.", kind="reasoning",
                    evidence=[])
-    conn.execute("UPDATE concerns SET last_attempted_at=? WHERE id=?",
-                 (time.time() + 60, cid))
+    # Attempted AFTER the advance — the §7.1 trigger's condition — and outside
+    # REATTEMPT_COOLDOWN_HOURS, which since 2026-08-31 is checked first. The
+    # ordering is the point; `+60` was only ever shorthand for it, and the
+    # advance ROW has to move too or the dossier still reads as new.
+    conn.execute("UPDATE concern_advances SET ts=? WHERE concern_id=?",
+                 (time.time() - 20 * 3600, cid))
+    conn.execute("UPDATE concerns SET last_advanced_at=?, last_attempted_at=?"
+                 " WHERE id=?",
+                 (time.time() - 20 * 3600, time.time() - 7 * 3600, cid))
     _busy_loop(conn, cid)
     conn.close()
 
@@ -598,8 +644,15 @@ def test_an_unchanged_dossier_still_runs_when_reading_might_bring_something(
     conn = open_db(path)
     record_advance(conn, cid, summary="Established once.", kind="reasoning",
                    evidence=[])
-    conn.execute("UPDATE concerns SET last_attempted_at=? WHERE id=?",
-                 (time.time() + 60, cid))
+    # Attempted AFTER the advance — the §7.1 trigger's condition — and outside
+    # REATTEMPT_COOLDOWN_HOURS, which since 2026-08-31 is checked first. The
+    # ordering is the point; `+60` was only ever shorthand for it, and the
+    # advance ROW has to move too or the dossier still reads as new.
+    conn.execute("UPDATE concern_advances SET ts=? WHERE concern_id=?",
+                 (time.time() - 20 * 3600, cid))
+    conn.execute("UPDATE concerns SET last_advanced_at=?, last_attempted_at=?"
+                 " WHERE id=?",
+                 (time.time() - 20 * 3600, time.time() - 7 * 3600, cid))
     _busy_loop(conn, cid)
     conn.close()
 
@@ -617,7 +670,7 @@ def test_new_material_since_the_last_attempt_always_warrants_a_run(tmp_path):
     # record_advance stamps last_attempted_at itself, so the backdating has to
     # come after it: the advance is newer than the last attempt.
     conn.execute("UPDATE concerns SET last_attempted_at=? WHERE id=?",
-                 (time.time() - 3600, cid))
+                 (time.time() - 7 * 3600, cid))   # past REATTEMPT_COOLDOWN_HOURS
     conn.commit()
     conn.close()
 
@@ -675,7 +728,7 @@ def test_a_cycle_that_DID_read_is_charged_exactly_as_before(tmp_path):
     # Attempted BEFORE the advance, so the dossier counts as changed and the
     # state trigger lets the cycle run.
     conn.execute("UPDATE concerns SET last_attempted_at=? WHERE id=?",
-                 (time.time() - 3600, cid))
+                 (time.time() - 7 * 3600, cid))   # past REATTEMPT_COOLDOWN_HOURS
     _busy_loop(conn, cid)
     conn.commit()
     conn.close()
@@ -810,7 +863,7 @@ def test_an_advance_that_supersedes_is_not_judged_against_what_it_replaces(tmp_p
     record_advance(conn, cid, summary="The bridge is a structural isomorphism "
                    "between Montaigne and Jung.", kind="reasoning", evidence=[])
     conn.execute("UPDATE concerns SET last_attempted_at=? WHERE id=?",
-                 (time.time() - 3600, cid))
+                 (time.time() - 7 * 3600, cid))   # past REATTEMPT_COOLDOWN_HOURS
     _busy_loop(conn, cid)
     conn.commit()
     old = load_dossier(conn, cid).advances[0]["id"]
@@ -841,7 +894,7 @@ def test_a_hallucinated_supersedes_label_retires_nothing(tmp_path):
     record_advance(conn, cid, summary="Established once.", kind="reasoning",
                    evidence=[])
     conn.execute("UPDATE concerns SET last_attempted_at=? WHERE id=?",
-                 (time.time() - 3600, cid))
+                 (time.time() - 7 * 3600, cid))   # past REATTEMPT_COOLDOWN_HOURS
     _busy_loop(conn, cid)
     conn.commit()
     conn.close()
@@ -867,7 +920,7 @@ def test_a_genuine_duplicate_is_still_caught_when_nothing_is_superseded(tmp_path
                    "market makers hedge regulatory tail risk directly.",
                    kind="reasoning", evidence=[])
     conn.execute("UPDATE concerns SET last_attempted_at=? WHERE id=?",
-                 (time.time() - 3600, cid))
+                 (time.time() - 7 * 3600, cid))   # past REATTEMPT_COOLDOWN_HOURS
     _busy_loop(conn, cid)
     conn.commit()
     conn.close()

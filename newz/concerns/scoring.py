@@ -17,8 +17,24 @@ tempted to "simplify" one of them needs to know what it cost:
               of all v1 setbacks. Gentler than stall drag, because being
               blocked is a correct report about a gap, not the being circling.
   cooldown    a floor, not a preference: no amount of salience makes it right
-              to re-ask a question answered twenty minutes ago. Bypassed when
-              everything is cooling, so the being is never left with nothing.
+              to re-ask a question answered twenty minutes ago. **It used to be
+              bypassed when everything was cooling, "so the being is never left
+              with nothing", and that bypass emptied the concern pool on
+              2026-08-31.** It can only fire when every open concern is inside
+              its six hours, which is only ever true when the pool is small —
+              so it did nothing while the pool was healthy and fired every
+              cycle once it was not. Measured: concern 116 took 330 hours to
+              accumulate its five stalls and concern 144, opened the morning
+              the pool ran dry, took 8.3. One setback per 65 hours became one
+              per 1.5, the pool went to zero, and deliberation stopped.
+
+              The reasoning was right when idleness was the only alternative.
+              It is not any more: `_explore` was built 2026-08-15 for exactly
+              this state and its own docstring says nothing to work with "is
+              the strongest reason to go and find some". Returning None here
+              routes there, books no attempt and charges no setback. This
+              function's own docstring already said it — "a being with nothing
+              to pursue should say so rather than manufacture a pursuit".
 
 Review change from v1: affect fit is accepted as an optional scalar rather
 than an AffectState object — affect machinery lands later (S2 §6.3), and the
@@ -79,7 +95,8 @@ def score_concern(concern: Concern, *, now: float, valence: float | None = None)
 
 
 def choose_concern(
-    concerns: list[Concern], *, now: float, valence: float | None = None
+    concerns: list[Concern], *, now: float, valence: float | None = None,
+    allow_cooling: bool = False,
 ) -> ConcernChoice:
     """Pick what to pursue. Deterministic; ties broken by id.
 
@@ -93,7 +110,22 @@ def choose_concern(
     eligible = [c for c in active
                 if c.hours_since_attempted(now) >= REATTEMPT_COOLDOWN_HOURS]
     cooling = len(active) - len(eligible)
-    if not eligible:            # never leave the being with nothing
+    if not eligible and not allow_cooling:
+        # Everything is inside its cooldown. That is not a reason to re-ask
+        # the question answered twenty minutes ago; it is a reason to go and
+        # read. `run_once` sends a None choice to `_explore`, which books no
+        # attempt and charges no setback.
+        return ConcernChoice(None, 0.0,
+                             f"all {cooling} cooling — nothing is eligible",
+                             len(concerns))
+    if not eligible:
+        # S2 §7.1's floor, and the ONLY thing that may cross the cooldown:
+        # nothing has been attempted for `UNSPENT_BUDGET_AFTER_S`, so the
+        # being really is idling and thinking is what earns reading back.
+        # The caller owns that judgment; this function is only told the
+        # answer. The old unconditional bypass differed by firing every
+        # cycle rather than once every four hours, which is the whole of the
+        # damage it did.
         eligible, cooling = active, 0
 
     scored = sorted(

@@ -417,6 +417,29 @@ class Deliberator:
         logger.info("opened concern %d from research: %s",
                     cid, proposal.concern.statement[:90])
 
+    def _maybe_revive(self, conn, open_now: int) -> int:
+        """Put back one slowly-circled concern when the pool is starving.
+
+        One per cycle, deliberately: the pool should refill at the rate the
+        being can actually work, and a sweep that revived all 26 candidates
+        at once would hand it a backlog it would re-stall in a day. See 0049
+        for what makes a candidate, and `revive` for why it cannot produce an
+        immortal concern.
+        """
+        from newz.concerns.store import MIN_OPEN_CONCERNS, revivable, revive
+
+        if open_now >= MIN_OPEN_CONCERNS:
+            return 0
+        try:
+            candidates = revivable(conn)
+        except sqlite3.OperationalError:      # a store predating 0049
+            logger.debug("concern revival: table not present yet")
+            return 0
+        if not candidates:
+            return 0
+        revive(conn, candidates[0])
+        return 1
+
     def _explore(self, conn) -> tuple[str, list[str]]:
         """Read the world when there is nothing to read it FOR.
 
@@ -484,13 +507,29 @@ class Deliberator:
             resolved = self._settle_due_claims(conn)
 
             concerns = load_active(conn)
-            choice = choose_concern(concerns, now=time.time())
+            # S2 §7.1's floor, computed here because `_nothing_to_work_with`
+            # runs AFTER the choice and so never sees a cycle the cooldown
+            # turned away. Without this the floor could not fire at all once
+            # the cooldown became real (2026-08-31).
+            quiet_for = time.time() - (conn.execute(
+                "SELECT MAX(ts) FROM deliberation_log").fetchone()[0] or 0)
+            choice = choose_concern(
+                concerns, now=time.time(),
+                allow_cooling=quiet_for >= UNSPENT_BUDGET_AFTER_S)
             if choice.concern is None:
                 # Nothing to pursue is a reason to go looking, not a reason to
                 # stop. See _explore: this return used to be the trap.
+                #
+                # And before looking outward, look at what was let go (0049).
+                # On 2026-08-31 the pool was 102 stalled and 0 open, and
+                # `_explore` could not help because the opener correctly
+                # refuses the research-question concerns it brings back. A
+                # concern that circled slowly is a hard one, not a dead one.
+                revived = self._maybe_revive(conn, len(concerns))
                 _, opened = self._explore(conn)
                 return DeliberationResult(
-                    skipped=("no active concerns — explored instead"
+                    skipped=(f"{choice.reason} — explored instead"
+                             + (f", revived {revived}" if revived else "")
                              + (f", opened {len(opened)}" if opened else "")),
                     considered=len(concerns), opened=opened)
             working_on = choice.concern.id

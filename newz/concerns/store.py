@@ -420,3 +420,89 @@ def _statement_of(conn: sqlite3.Connection, concern_id: int) -> str:
     row = conn.execute(
         "SELECT statement FROM concerns WHERE id=?", (concern_id,)).fetchone()
     return row["statement"] if row else f"concern {concern_id}"
+
+
+# A concern that circled this fast was not hard, it was impossible. Measured
+# 2026-08-31 across all 102 stalled concerns: 69 accumulated a setback a day
+# or faster, 27 did not. The threshold separates them and is not tuned finer
+# than the measurement supports.
+REVIVE_RATE_PER_DAY = 1.0
+# Long enough that a concern which stalled this morning is not revived this
+# afternoon; short enough that a day's quiet is a real chance to come back.
+REVIVE_QUIET_HOURS = 24.0
+# Below this many open concerns the pool is starving: at
+# REATTEMPT_COOLDOWN_HOURS = 6 five concerns supply under one eligible attempt
+# an hour against three cycles, so the being is already exploring most cycles.
+# Revival is a rescue, not a top-up — the opener maintains the pool, and
+# `opener.py` puts its target at ten.
+MIN_OPEN_CONCERNS = 5
+
+
+def revivable(conn: sqlite3.Connection, *, now: float | None = None):
+    """Stalled concerns that circled SLOWLY, best candidate first.
+
+    Rate, not count. `stall_count` treats five circles over 330 hours and five
+    over 8.3 as the same object; the first is a hard concern and the second is
+    one the pool was too small to leave alone. See 0049.
+    """
+    now = now or time.time()
+    rows = conn.execute(
+        "SELECT c.id, c.stall_count,"
+        "       COUNT(s.id) AS n,"
+        "       MIN(s.ts) AS first_ts,"
+        "       MAX(s.ts) AS last_ts"
+        "  FROM concerns c JOIN concern_setbacks s ON s.concern_id = c.id"
+        " WHERE c.status = 'stalled'"
+        " GROUP BY c.id HAVING COUNT(s.id) >= 2").fetchall()
+    out = []
+    for r in rows:
+        if (now - r["last_ts"]) / 3600.0 < REVIVE_QUIET_HOURS:
+            continue
+        span_days = (r["last_ts"] - r["first_ts"]) / 86400.0
+        if span_days <= 0:
+            continue
+        rate = r["n"] / span_days
+        if rate >= REVIVE_RATE_PER_DAY:
+            continue
+        out.append({"id": r["id"], "rate": rate, "setbacks": r["n"],
+                    "over_days": span_days, "stall_count": r["stall_count"],
+                    "quiet_h": (now - r["last_ts"]) / 3600.0})
+    # Slowest circler first; a longer silence breaks the tie.
+    out.sort(key=lambda d: (d["rate"], -d["quiet_h"]))
+    return out
+
+
+def revive(conn: sqlite3.Connection, cand: dict, *,
+           now: float | None = None) -> None:
+    """Put one stalled concern back, one attempt at a time.
+
+    `stall_count` is decremented rather than reset: the revival buys a single
+    attempt, and a concern that circles again lands straight back where it
+    was. `last_attempted_at` is deliberately untouched — the candidate has
+    been quiet for a day, so it is already past its cooldown and can be
+    worked on the cycle after this one.
+    """
+    now = now or time.time()
+    # Decrement whichever counter actually stalled it. Concerns 54 and 59 sit
+    # at stall_count 0 and blocked_count 8: they went out on BLOCKED_LIMIT,
+    # and taking a stall off them would buy nothing at all.
+    row = conn.execute(
+        "SELECT stall_count, blocked_count FROM concerns WHERE id=?",
+        (cand["id"],)).fetchone()
+    stalls, blocked = int(row["stall_count"]), int(row["blocked_count"])
+    if stalls >= STALL_LIMIT:
+        stalls -= 1
+    elif blocked >= BLOCKED_LIMIT:
+        blocked -= 1
+    left = stalls
+    conn.execute(
+        "UPDATE concerns SET status='open', stall_count=?, blocked_count=?"
+        " WHERE id=?", (stalls, blocked, cand["id"]))
+    conn.execute(
+        "INSERT INTO concern_revivals (ts, concern_id, setbacks, over_days,"
+        " stall_count) VALUES (?,?,?,?,?)",
+        (now, cand["id"], cand["setbacks"], round(cand["over_days"], 2), left))
+    conn.commit()
+    logger.info("revived concern %d: %d setbacks over %.1f days (%.2f/day),"
+                " stall_count now %d", cand["id"], cand["setbacks"],
+                cand["over_days"], cand["rate"], left)

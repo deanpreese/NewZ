@@ -216,6 +216,11 @@ not_instruments:
     # that redirected the 2026-08-31 proposal away from the check it was
     # written to justify.
     - tools/reach_probe.py
+    # Where does a deliberation cycle stop? It walks `run_once`'s stages with a
+    # wall clock on each, against a throwaway copy. Written 2026-09-01 to test
+    # the hypothesis that the resolution pass had hung the loop; it had not —
+    # `load_active` returned 0 and the being had no concerns left at all.
+    - tools/cycle_probe.py
     - tools/triage_probe.py
 
   mutators:          # write to the store

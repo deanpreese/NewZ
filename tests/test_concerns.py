@@ -66,11 +66,21 @@ def test_cooldown_prevents_asking_the_same_question_back_to_back():
     assert choose_concern([hot, cool], now=NOW).concern.id == 2
 
 
-def test_cooldown_never_leaves_the_being_with_nothing():
+def test_everything_cooling_yields_none_so_the_cycle_goes_reading():
+    """**Criterion reversed 2026-08-31.** This asserted a concern came back
+    anyway. See test_deliberation.py for the measurement: the bypass fired
+    only when the pool was small, and emptied it."""
     everything_hot = [_c(i, last_attempted_at=NOW - 0.5 * HOUR) for i in (1, 2)]
     choice = choose_concern(everything_hot, now=NOW)
-    assert choice.concern is not None
+    assert choice.concern is None
+    assert "cooling" in choice.reason
     assert choice.considered == 2
+
+
+def test_the_budget_floor_still_crosses_the_cooldown():
+    everything_hot = [_c(i, last_attempted_at=NOW - 0.5 * HOUR) for i in (1, 2)]
+    choice = choose_concern(everything_hot, now=NOW, allow_cooling=True)
+    assert choice.concern is not None
 
 
 def test_no_active_concerns_yields_none_not_an_invented_pursuit():
@@ -216,8 +226,8 @@ def test_the_lexical_fallback_cannot_catch_paraphrase_and_says_so():
 # "that appear in the dossier above".
 
 
-def _concern():
-    return Concern(id=None, statement="Does the premium co-move?",
+def _concern(statement: str = "Does the premium co-move?"):
+    return Concern(id=None, statement=statement,
                    why_open="it bears on how I read signals",
                    closing_condition="a comparison settles it",
                    origin="conversation", opened_at=time.time())
@@ -394,3 +404,84 @@ def test_advances_carry_a_label_the_being_can_name(store):
     d = load_dossier(store, cid)
     assert f"[adv-{d.advances[0]['id']}]" in d.render()
     assert d.live_advance_ids() == {d.advances[0]["id"]}
+
+
+# ── revival: a concern that circled slowly is not a dead one (0049) ──────
+
+def _stalled_with_setbacks(conn, cid, *, n, over_days, quiet_hours,
+                           stall_count=5, blocked_count=0):
+    import time as _t
+    now = _t.time()
+    last = now - quiet_hours * 3600
+    first = last - over_days * 86400
+    for i in range(n):
+        ts = first + (last - first) * (i / max(1, n - 1))
+        conn.execute("INSERT INTO concern_setbacks (concern_id, ts, kind,"
+                     " brief, source_ref) VALUES (?,?,?,?,?)",
+                     (cid, ts, "restated", "circled", None))
+    conn.execute("UPDATE concerns SET status='stalled', stall_count=?,"
+                 " blocked_count=? WHERE id=?", (stall_count, blocked_count, cid))
+    conn.commit()
+
+
+def test_a_slow_circler_is_revivable_and_a_fast_one_is_not(store):
+    from newz.concerns.store import create_concern, revivable
+
+    slow = create_concern(store, _concern("circled five times in two weeks"))
+    fast = create_concern(store, _concern("circled five times in a morning"))
+    _stalled_with_setbacks(store, slow, n=5, over_days=13.6, quiet_hours=30)
+    _stalled_with_setbacks(store, fast, n=5, over_days=0.35, quiet_hours=30)
+
+    ids = [c["id"] for c in revivable(store)]
+    assert slow in ids                      # 0.37/day — hard, not impossible
+    assert fast not in ids                  # 14/day — the pool was too small
+
+
+def test_a_concern_that_just_stalled_is_left_alone(store):
+    from newz.concerns.store import create_concern, revivable
+
+    cid = create_concern(store, _concern("stalled an hour ago"))
+    _stalled_with_setbacks(store, cid, n=5, over_days=13.6, quiet_hours=1)
+
+    assert [c["id"] for c in revivable(store)] == []
+
+
+def test_revival_buys_exactly_one_attempt(store):
+    from newz.concerns.model import STALL_LIMIT
+    from newz.concerns.store import create_concern, revivable, revive
+
+    cid = create_concern(store, _concern("hard, not impossible"))
+    _stalled_with_setbacks(store, cid, n=5, over_days=13.6, quiet_hours=30,
+                           stall_count=STALL_LIMIT)
+
+    revive(store, revivable(store)[0])
+
+    row = store.execute("SELECT status, stall_count FROM concerns WHERE id=?",
+                        (cid,)).fetchone()
+    assert row["status"] == "open"
+    assert row["stall_count"] == STALL_LIMIT - 1     # one more circle, not five
+    assert store.execute(
+        "SELECT COUNT(*) FROM concern_revivals").fetchone()[0] == 1
+    # The record of having stalled is not erased by coming back.
+    assert store.execute(
+        "SELECT COUNT(*) FROM concern_setbacks WHERE concern_id=?",
+        (cid,)).fetchone()[0] == 5
+
+
+def test_a_blocked_out_concern_has_its_blocked_count_decremented(store):
+    """Concerns 54 and 59 sit at stall_count 0 and blocked_count 8 — taking a
+    stall off them would buy nothing."""
+    from newz.concerns.model import BLOCKED_LIMIT
+    from newz.concerns.store import create_concern, revivable, revive
+
+    cid = create_concern(store, _concern("the world never answered"))
+    _stalled_with_setbacks(store, cid, n=8, over_days=14.0, quiet_hours=400,
+                           stall_count=0, blocked_count=BLOCKED_LIMIT)
+
+    revive(store, revivable(store)[0])
+
+    row = store.execute("SELECT status, stall_count, blocked_count FROM"
+                        " concerns WHERE id=?", (cid,)).fetchone()
+    assert row["status"] == "open"
+    assert row["stall_count"] == 0
+    assert row["blocked_count"] == BLOCKED_LIMIT - 1
