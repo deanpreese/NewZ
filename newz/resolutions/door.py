@@ -418,14 +418,38 @@ def _parse_due(text: str, now: float) -> tuple[float | None, str | None]:
     return due, None
 
 
-# How much of the record the door is shown. Twelve covers every resolver ever
-# tried today with room to spare; the bound exists so that a year of attempts
-# cannot crowd out the concern the claim is actually about.
-HISTORY_ROWS = 12
+# How much of the record the door is shown. **Twelve was too many, measured in
+# life 2026-08-31.** The first version put 3,215 characters in front of the
+# door — 36% of a 10,282-character prompt — and in the 12.3 hours that
+# followed, 24 asks produced one proposal and zero opened claims against a
+# prior rate of 3.14 a day, with the yes-rate falling 24% to 4%. That is this
+# change's own recorded reversion condition arriving early, and the diagnosis
+# it points at is not the content but the volume: at `reasoning_effort:
+# "none"`, a third of the prompt spent on what did not work makes "no" the
+# cheap answer, which is the same thumb on the scale as the commitment door's
+# "most nights the answer is no".
+#
+# The record is not softened, only compressed. Every resolver ever tried still
+# appears with its attempts and its verdict; what shrinks is the prose.
+HISTORY_ROWS = 6
+# A resolver of 190 characters is a name plus parenthetical qualification, and
+# the name is the part that identifies the source.
+RESOLVER_CHARS = 72
 # The failure reason is the informative half and it is one sentence of model
-# prose. Enough to say WHAT was missing, short enough that twelve of them do
-# not become the prompt.
-FAILURE_CHARS = 130
+# prose — but the sentences are near-identical ("the material does not contain
+# X"), so a tenth paraphrase of the same finding carries no tenth of anything.
+FAILURE_CHARS = 96
+# How many rows carry their failure text. Enough to make "not settled" concrete
+# rather than a word; past that the reader is being told the same thing again.
+FAILURES_SHOWN = 3
+
+
+def _clip(text: str, limit: int) -> str:
+    """Cut on a word boundary and say that it was cut."""
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    return text[:limit].rsplit(" ", 1)[0] + "…"
 
 
 def _resolver_history(conn: sqlite3.Connection) -> str:
@@ -454,13 +478,15 @@ def _resolver_history(conn: sqlite3.Connection) -> str:
              f"{totals['claims']} claims. {totals['tried']} have been tried, "
              f"over {totals['attempts']} attempts, and {totals['settled']} "
              "settled."]
-    for r in rows:
+    for n, r in enumerate(rows):
         verdict = (f"settled {r['outcome']}" if r["status"] == "resolved"
                    else "not settled")
-        lines.append(f'  "{(r["resolver"] or "").strip()}" — '
-                     f'{r["attempts"]} attempt(s), {verdict}')
-        if r["status"] != "resolved" and r["last_failure"]:
-            why = " ".join((r["last_failure"] or "").split())[:FAILURE_CHARS]
+        lines.append(f'  "{_clip((r["resolver"] or "").strip(), RESOLVER_CHARS)}"'
+                     f' — {r["attempts"]} attempt(s), {verdict}')
+        if (n < FAILURES_SHOWN and r["status"] != "resolved"
+                and r["last_failure"]):
+            why = _clip(" ".join((r["last_failure"] or "").split()),
+                        FAILURE_CHARS)
             lines.append(f'      what came back: "{why}"')
     body = "\n".join(lines)
     return f"<what_my_resolvers_did>\n{body}\n</what_my_resolvers_did>"
@@ -621,10 +647,16 @@ def propose_claim(conn: sqlite3.Connection, client: LLMClient, *,
         # claims, while a full pool is the state that was lying.
         return _pool_refusal() if pool_full else DoorVerdict(declined=True)
 
+    # The record sits BEFORE the concern, not after it (2026-08-31). What is
+    # last in the prompt is nearest the answer, and the last thing the door
+    # reads should be the thing it is being asked about rather than a list of
+    # what did not work.
+    history = _resolver_history(conn)
     body = (f"<today>{datetime.fromtimestamp(now):%Y-%m-%d}</today>\n"
-            f"<concern>{concern_statement}</concern>\n"
-            f"<established>{established}</established>\n"
-            f"{_resolver_history(conn)}")
+            f"{history}\n" if history else
+            f"<today>{datetime.fromtimestamp(now):%Y-%m-%d}</today>\n")
+    body += (f"<concern>{concern_statement}</concern>\n"
+             f"<established>{established}</established>")
     try:
         result = client.complete("DEEP", _SYSTEM, f"{_TASK}\n\n{body}",
                                  max_tokens=600, temperature=0.3,

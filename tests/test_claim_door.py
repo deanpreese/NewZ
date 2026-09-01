@@ -14,8 +14,8 @@ import inspect
 from datetime import datetime, timedelta
 
 from newz.resolutions.door import (
-    MAX_HORIZON_DAYS, MAX_OPENED_PER_DAY, MAX_OPEN_CLAIMS, _resolver_history,
-    open_claims_count, propose_claim,
+    FAILURES_SHOWN, HISTORY_ROWS, MAX_HORIZON_DAYS, MAX_OPENED_PER_DAY,
+    MAX_OPEN_CLAIMS, _resolver_history, open_claims_count, propose_claim,
 )
 from newz.resolutions.model import Claim
 from newz.resolutions.store import claims_by_status, get_claim, open_claim
@@ -524,3 +524,32 @@ def test_a_retrodiction_still_never_counts(store):
                horizon_days=0.0)
 
     assert open_claims_count(store) == 0
+
+
+def test_the_record_cannot_grow_back_into_the_prompt(store):
+    """Measured in life 2026-08-31: the first version was 3,215 characters,
+    36% of the prompt, and the door's yes-rate fell 24% to 4% with zero claims
+    opened in 12.3 hours. The bound is the fix; without a test it regrows."""
+    for i in range(40):
+        _claim_row(store, resolver="A Very Long Source Name " * 12,
+                   attempts=3, failure="the material does not contain it " * 12)
+
+    body = _resolver_history(store)
+
+    assert len(body) < 1600, f"the record is {len(body)} chars of the prompt"
+    assert body.count("attempt(s)") == HISTORY_ROWS
+    assert body.count("what came back") == FAILURES_SHOWN
+
+
+def test_the_record_comes_before_the_concern(store):
+    """What is last in the prompt is nearest the answer, and the last thing
+    the door reads should be what it is being asked about."""
+    _claim_row(store, resolver="a tried source", attempts=2, failure="no data")
+
+    llm = FakeLLM([("DEEP", _proposal())])
+    propose_claim(store, llm, concern_statement="a concern",
+                  established=ESTABLISHED, provenance="concern:1")
+
+    asked = llm.calls[-1]["user"]
+    assert asked.index("what_my_resolvers_did") < asked.index("<concern>")
+    assert asked.index("<established>") > asked.index("what_my_resolvers_did")
