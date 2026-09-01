@@ -92,11 +92,13 @@ ENDPOINT = "http://10.0.0.50:1234/v1"
 # files agree today, and a run that silently followed the bench's box would
 # report a comparison against a machine nobody chose.
 
+MODEL    = "qwen3.6-35b-a3b-ud-q5_k_m_gguf"
+
 #MODEL    = "qwen/qwen3.6-35b-a3b"
 #MODEL    = "qwen/qwen3.8-27b"
 
 #MODEL    = "google/gemma-4-31b-qat"
-MODEL    = "google/gemma-4-26b-a4b-qat"
+#MODEL    = "google/gemma-4-26b-a4b-qat"
 
 # The bench whose cases and prompts are patched. A copy is never taken: this
 # file edits that one in memory, so there is one copy of these prompts in

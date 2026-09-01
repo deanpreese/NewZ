@@ -140,12 +140,15 @@ ENDPOINT = "http://10.0.0.50:1234/v1"
 # ask for. A field comes from the command line instead: `--all` benches
 # everything the endpoint serves, `--models a,b,c` names one.
 
-
+#MODEL    = "qwen3.6-35b-a3b-ud-q5_k_m_gguf"
 #MODEL    = "qwen/qwen3.6-35b-a3b"
 #MODEL    = "qwen/qwen3.8-27b"
 
 #MODEL    = "google/gemma-4-31b-qat"
-MODEL    = "google/gemma-4-26b-a4b-qat"
+#MODEL    = "google/gemma-4-26b-a4b-qat"
+MODEL    = "gemma-4-26b-a4b-it"
+
+
 
 # What the composite is made of. These encode a judgement: the gate is the
 # safety boundary and runs on every emission, so it carries the most; voice is

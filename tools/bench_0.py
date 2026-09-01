@@ -133,10 +133,10 @@ ENDPOINT = "http://10.0.0.50:1234/v1"
 
 
 #MODEL    = "qwen/qwen3.6-35b-a3b"
-#MODEL    = "qwen/qwen3.8-27b"
+MODEL    = "qwen/qwen3.8-27b"
 
 #MODEL    = "google/gemma-4-31b-qat"
-MODEL    = "google/gemma-4-26b-a4b-qat"
+#MODEL    = "google/gemma-4-26b-a4b-qat"
 
 
 # What the composite is made of. These encode a judgement: the gate is the
