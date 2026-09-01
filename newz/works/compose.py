@@ -200,11 +200,24 @@ def choose_subject(client, conn: sqlite3.Connection, subjects: list[Subject]) ->
         "<because>why this one, in your own words</because></choice>"
     )
     by_ref = {f"{s.kind}:{s.ref}": s for s in subjects}
-    # One retry on a reference it does not hold. Observed live on 2026-08-18:
-    # the first real run named a subject outside the list and killed the run.
-    # Retrying costs one cheap call and does not soften the guard — a second
-    # invented reference still refuses, because composing about something the
-    # being does not carry is not E0.2.
+    # A bare id, when it names exactly one candidate (2026-09-01). The writing
+    # rhythm had been dying every cadence since 2026-08-31 on `chose '644'` and
+    # then `chose '701'`, and `position:701` was on the list both times it was
+    # asked. It chose something it holds and wrote the reference shorter.
+    #
+    # **This does not soften E0.2.** The epic's guard is that the being writes
+    # about what it CARRIES, not that it formats a reference exactly; an id
+    # that resolves to one subject is a choice from the list by any reading. An
+    # id matching none still refuses, and one matching several still refuses —
+    # ambiguity is the case where a bare number really is not a choice.
+    #
+    # Why it drops the prefix is visible in the prompt it gets: all 24
+    # candidates today are `position:`, so the kind discriminates nothing and
+    # the number is the only part carrying information.
+    bare: dict[str, list[Subject]] = {}
+    for s in subjects:
+        bare.setdefault(str(s.ref), []).append(s)
+
     ref = ""
     for attempt in (1, 2):
         result = client.complete(
@@ -212,10 +225,15 @@ def choose_subject(client, conn: sqlite3.Connection, subjects: list[Subject]) ->
             max_tokens=CHOICE_TOKEN_BUDGET, temperature=0.7, function="works",
         )
         element = extract_xml(result.text, "choice")
-        ref = require_text(element, "ref").strip().strip("[]")
+        ref = require_text(element, "ref").strip().strip("[]").strip("#")
         because = optional_text(element, "because").strip()
         if ref in by_ref:
             return by_ref[ref], because
+        if len(bare.get(ref, ())) == 1:
+            chosen = bare[ref][0]
+            logger.info("chose %r without its kind; it is %s:%s and unambiguous",
+                        ref, chosen.kind, chosen.ref)
+            return chosen, because
         logger.warning("chose %r, which it does not hold%s", ref,
                        "; retrying once" if attempt == 1 else "")
     raise ValueError(f"chose {ref!r}, which is not among the subjects it holds")

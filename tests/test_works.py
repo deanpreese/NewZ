@@ -341,3 +341,42 @@ def test_a_turn_that_found_nothing_does_not_spend_the_day(store):
             (now - 3600.0, outcome))
     store.commit()
     assert starts_today(store, now=now) == 3, "a failed start is still a start"
+
+
+def test_a_bare_id_that_names_one_subject_is_a_choice(store):
+    """The writing rhythm died every cadence from 2026-08-31 on `chose '644'`
+    and then `chose '701'` — and `position:701` was on the list both times.
+
+    E0.2's guard is that the being writes about what it CARRIES, not that it
+    formats a reference exactly. All 24 live candidates were `position:`, so
+    the kind discriminated nothing and the number carried the whole choice.
+    """
+    _open_concern(store)
+    subjects = candidate_subjects(store)
+    llm = FakeLLM([("VOICE", _choice("1"))])
+
+    subject, because = choose_subject(llm, store, subjects)
+
+    assert (subject.kind, subject.ref) == ("concern", 1)
+    assert len(llm.calls) == 1          # accepted first time, no retry spent
+
+
+def test_a_bare_id_that_names_two_subjects_is_still_refused(store):
+    """Ambiguity is the case where a bare number really is not a choice."""
+    from newz.works.compose import Subject
+
+    subjects = [Subject("concern", 1, "a question", ""),
+                Subject("position", 1, "a position", "held in: what_i_hold")]
+    llm = FakeLLM([("VOICE", _choice("1")), ("VOICE", _choice("1"))])
+
+    with pytest.raises(ValueError, match="not among the subjects it holds"):
+        choose_subject(llm, store, subjects)
+
+
+def test_a_bare_id_naming_nothing_is_still_refused(store):
+    _open_concern(store)
+    subjects = candidate_subjects(store)
+    llm = FakeLLM([("VOICE", _choice("999")), ("VOICE", _choice("998"))])
+
+    with pytest.raises(ValueError, match="not among the subjects it holds"):
+        choose_subject(llm, store, subjects)
