@@ -201,7 +201,7 @@ footer{
   <h1>NewZ Architecture</h1>
   <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence — with a faculty that decides what is worth investigating, and cannot decide what is true.</p>
   <div class="meta">
-    <span><b>Version</b> 1.7.1</span>
+    <span><b>Version</b> 1.8.0</span>
     <span><b>Effective</b> 2026-09-04</span>
     <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
     <span><b>Model</b> small, local, replaceable</span>
@@ -399,7 +399,7 @@ footer{
         <tr><td class="k">Interest register</td><td class="own">Durable inspectable dispositions, recorded influences, provenance mix, downstream trace, retirement, investigation origination, essay subject selection</td><td class="not">Scheduling, evidence weight, thresholds, risk, any assessment, or attention drawn from the system's own output</td></tr>
         <tr><td class="k">Research manager</td><td class="own">Investigations, missing lanes, task lifecycle and terminal classification, resolution attempts</td><td class="not">Rewriting evidence history</td></tr>
         <tr><td class="k">Projector</td><td class="own">Claim cards, entity cards, and dependency maps</td><td class="not">New factual assertions, or any per-person aggregation held at rest</td></tr>
-        <tr><td class="k">Appraisal / clearance</td><td class="own">Exact-revision output permission</td><td class="not">Altering internal evidence state</td></tr>
+        <tr><td class="k">Appraisal / clearance</td><td class="own">Machine appraisal dimensions, exact-revision permission, sampling selection, review debt accounting</td><td class="not">Altering internal evidence state, or deciding fair representation and material omission</td></tr>
       </tbody>
     </table>
   </div>
@@ -597,7 +597,7 @@ footer{
     <li><span class="n">01</span><div><h4>External content</h4><p>URLs, headers, files, markup, metadata, and document text are hostile. Fetch and parse workers run with their own network and resource isolation.</p></div></li>
     <li><span class="n">02</span><div><h4>Model</h4><p>Prompts carry only the minimum artifact segments. Output is schema-validated proposal data, never executable policy. Prompt injection is contained here, not at fetch: every proposed quotation verifies byte-exact against retained text, so a model cannot introduce a quotation that does not already exist.</p></div></li>
     <li><span class="n">03</span><div><h4>Evidence</h4><p>Only verified spans and admitted edge events can affect an assessment. Anything missing or corrupt fails closed and remains contextual material.</p></div></li>
-    <li><span class="n">04</span><div><h4>Publication</h4><p>An internal assessment does not imply clearance. The exact rendered revision and its dependency set are appraised independently, and output that passes publishes without waiting. The boundary is held by enumerated refusal conditions that fail closed with no operator present, and by revocation proven to work before the default was turned on.</p></div></li>
+    <li><span class="n">04</span><div><h4>Publication</h4><p>An internal assessment does not imply clearance. The exact rendered revision and its dependency set are appraised independently, and output that passes publishes without waiting. The boundary is held by enumerated refusal conditions that fail closed with no operator present, and by revocation proven to work inside a bounded window before the default was turned on. The two dimensions no machine decides — fair representation and material omission — are reviewed behind publication on a mandatory sample, and unreviewed output halts its class rather than accumulating.</p></div></li>
     <li><span class="n">05</span><div><h4>Operator</h4><p>The operator corrects metadata and authorizes reach, and cannot silently edit the evidence ledger. Every action records actor, time, reason, target preimage, and result. Authority is established by the pinned channel an instruction arrives on, never by what a message claims about its sender — and the halt path does not run through the conversational surface.</p></div></li>
     <li><span class="n">06</span><div><h4>Interest</h4><p>Interest may open an investigation and choose an essay subject. It may not reach the scheduler, the diet, a source role, an evidence weight, a threshold, a risk classification, or any assessment. Unlike the five above, this one guards against the system's own preferences rather than an outside party — which is why it is enforced by the absence of a code path rather than by a check.</p></div></li>
   </ol>
@@ -670,6 +670,24 @@ footer{
     <figcaption><b>Assessment is not permission, but it no longer waits for one.</b> Clearance is never inferred — not from perceived material, not from a case the system made for publishing, not from an approval of a different revision. Every output says what produced it, and publication records an attempted effect and a separately confirmed outcome, because absence of an error is not confirmation. Corrections stay visibly attached to prior outputs; a retraction leaves a tombstone.</figcaption>
   </figure>
 
+  <h3>What appraisal can and cannot decide</h3>
+  <p>Approve-by-default removes the person standing in front of publication, so appraisal has to say what it means without one. Four of its five dimensions are machine-decided and gate publication. Two are not — and the system is forbidden from judging them about itself.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Dimension</th><th>Decided by</th><th>Basis</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Accuracy</td><td class="mut">Machine</td><td class="mut">Every factual sentence resolves to a live edge and an exact span</td></tr>
+        <tr><td class="k">Privacy</td><td class="mut">Machine</td><td class="mut">Risk tier, personal-data minimisation, entity-card rules</td></tr>
+        <tr><td class="k">Risk</td><td class="mut">Machine</td><td class="mut">Effective risk, failing closed when unreadable</td></tr>
+        <tr><td class="k">Rendering</td><td class="mut">Machine</td><td class="mut">Dependencies resolve; nothing stale, withdrawn, or uncleared</td></tr>
+        <tr><td class="k">Fair representation</td><td class="own">Person</td><td class="mut">Whether a claimant's strongest actual position survived the rendering</td></tr>
+        <tr><td class="k">Material omission</td><td class="own">Person</td><td class="mut">Whether what was left out changes what the reader concludes</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The judgment pair is reviewed <em>after</em> publication on a mandatory sample — a review queue, not a publication queue — covering every essay, every R2 output, every rewritten claimant formulation, and every case where counterevidence runs thin. A finding on one sampled item re-appraises its whole class. And when unreviewed output for a class passes its <b>review debt ceiling</b>, publication of that class halts until the backlog clears: the operator cannot be a bottleneck in front of publication, and equally cannot become a formality behind it.</p>
+  <p><b>Revocation is bounded in time</b> — fifteen minutes to propagate and confirm on local surfaces during Pilot, measured rather than assumed, with an overdue revocation halting its class. A control with unbounded latency is not a control, and revocation is the whole of what replaced the gate.</p>
+
   <h3>Risk tiers</h3>
   <div class="scroll">
     <table>
@@ -699,7 +717,9 @@ footer{
     <li>Risk is monotonic within an automated operation; lowering it requires a reasoned operator action.</li>
     <li>Clearance and reach are separate axes: what publishes is approve-by-default, where it lands is local-first.</li>
     <li>Public reach defaults to off, widens only by an explicit scoped operator act, and can be locked down at any moment without changing evidence.</li>
-    <li>Approve-by-default is earned by demonstrated revocation, never assumed.</li>
+    <li>Approve-by-default is earned by demonstrated revocation inside a bounded window, never assumed.</li>
+    <li>The system never judges its own fair representation.</li>
+    <li>Every failure carries a change that cites it; an explanation alone is the defect.</li>
     <li>Core records and artifacts are portable and recoverable without a model provider.</li>
     <li>Claim merge and split re-point edges by new events and never rewrite existing ones.</li>
     <li>Erasure destroys a per-subject key; the ledger event survives, unreadable, with a tombstone.</li>
@@ -753,7 +773,7 @@ footer{
 </div>
 
 <footer>
-  <span>NewZ · architecture 1.7.1</span>
+  <span>NewZ · architecture 1.8.0</span>
   <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
   <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
 </footer>
