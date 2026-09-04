@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.4.0
+**Document version:** 1.5.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -18,6 +18,11 @@ contracts and tests.
 - Keep discovery, verification, and correction as separately budgeted lanes.
 - Prefer one complete vertical slice to a broad collection of partial adapters.
 - Keep public reach off until correction and invalidation work end to end.
+- Gates govern contact with the outside world, never the building of a faculty.
+  No capability waits on an assessment being written or a maturity score being
+  awarded; what waits is live acquisition and publication. Gate 4A is the shape
+  of this — it does not withhold permission to build the investigator, it
+  demonstrates that interest cannot reach an assessment.
 
 ## Milestones
 
@@ -224,6 +229,10 @@ the ledger.
 Deliver:
 
 1. Claim-card projection containing every field required by `SPEC.md`.
+1a. Entity-card projection under `SPEC.md` section 10.1: computed from the graph
+   at build time, never stored as an accumulated profile, showing basis
+   independence across the whole set and every claim's current state and
+   counterevidence.
 2. Search and browse over claims, topics, entities, status, and assessment
    history.
 3. Report composer that accepts claim and edge references, never unsupported
@@ -239,6 +248,15 @@ Deliver:
 Tests:
 
 - every displayed factual sentence has a live edge and span;
+- an entity card showing ten claims that rest on one basis displays one basis,
+  not a pattern;
+- an entity card with no `supported`, `refuted`, or `contested` claim says so
+  prominently rather than listing bare reports;
+- no per-person aggregation exists at rest: deleting every card leaves entity
+  records holding only disambiguation data;
+- an R3 entity card cannot publish, and access to an R2-or-above card naming a
+  living person is logged;
+- interest cannot select a person as a subject;
 - stale dependency and withdrawn-edge refusal;
 - material counterevidence cannot be omitted;
 - R2 solicitation/operator-review behavior;
@@ -487,6 +505,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.5.0 | 2026-09-04 | Recorded that gates govern contact with the outside world rather than the building of a faculty, and added entity-card delivery and tests for Phase 4. |
 | 1.4.0 | 2026-09-04 | Added Phase 4 and Phase 4A tests for the adopted operator-surface and publishing requirements: channel-established authority, exact-effect requests, out-of-band halt, raising as additive, clearance never inferred, output authorship, and confirmed publication outcomes. |
 | 1.3.0 | 2026-09-04 | Added Phase 4A and Gate 4A for the investigator — noticing, interest, originated investigations, essays, and the conversational surface — placed before the pilot because a pilot without it is a feed reader on a timer. Added ADR-0002 for the model tier and backlog items P14a through P14c. |
 | 1.2.1 | 2026-09-04 | Took task states out of the capability matrix, now fixed by `SPEC.md` 9.1, and added the terminal-incomplete regression test. |

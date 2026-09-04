@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.5.0
+**Document version:** 1.6.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -171,6 +171,7 @@ NewZ is not:
 | Notice | An attention record: something in retained material the system found worth marking. Not evidence, never an edge. |
 | Interest | A durable, inspectable, revisable disposition toward a subject. It may open investigations and select essay subjects, and reaches nothing else. |
 | Essay | A report synthesizing several claims. A projection of the evidence graph, never a source. |
+| Entity card | The projection answering what the record holds about one named entity. Computed at build time, never stored as a profile. |
 | Basis identity | The resolved upstream origin one edge rests on. See section 7.2. |
 | Basis independence | A pairwise property between two resolved bases, used only in threshold counting. See section 7.2. |
 | Sighting | One recorded observation of a body at a source, revision, and time. Duplicate bodies may share storage but never share sightings. |
@@ -685,6 +686,46 @@ Corrections MUST remain visibly attached to prior outputs. Retraction removes
 the current presentation from navigation but MUST leave a tombstone explaining
 what changed.
 
+### 10.1 Entity cards
+
+A reader MUST be able to ask what the record holds about a named entity. That
+view is an **entity card**: a projection governed exactly as a claim card is —
+not a raw query result, and not a stored profile.
+
+The entity record itself holds only what disambiguation requires: a stable
+opaque identifier, the surface forms used to refer to it, a type, and the facts
+needed to tell two similarly named parties apart. It MUST NOT accumulate claims,
+allegations, assessments, or spans. The card is computed from the graph at build
+time, so no dossier exists at rest to leak, to compel, or to outlive the sources
+it was drawn from.
+
+Every entity card MUST:
+
+- carry the current assessment state of every claim shown, and never list a bare
+  allegation;
+- carry material counterevidence for every claim shown;
+- show basis independence across the whole set, so that ten claims resting on
+  one basis display as one basis rather than as a pattern;
+- state prominently when no claim shown has reached `supported`, `refuted`, or
+  `contested`, since a list of unestablished reports is the form in which this
+  view most easily misleads; and
+- carry an effective risk equal to the maximum over the claims it shows.
+
+**Aggregation is itself appraised.** Appraisal of an entity card MUST ask
+whether the set misleads where no individual item does. That is the failure
+specific to this projection — accurate attribution, item by item, adding up to
+an implication nothing supports — and it is the reason the view is reviewed
+rather than assembled silently.
+
+An entity card naming a living person at R2 or above MUST log every access with
+actor, time, and reason. An R3 entity card requires approval of its exact
+revision and MUST NOT be published. Public reach for entity cards is controlled
+separately from claim cards and defaults to disabled.
+
+Interest under section 9.1 MUST NOT select a person. It attaches to subjects,
+questions, and claims. A system that develops an interest in an individual is
+building the thing this section exists to prevent.
+
 ## 11. Data model
 
 The durable model MUST provide these append-oriented records:
@@ -695,12 +736,12 @@ The durable model MUST provide these append-oriented records:
 | Diet | immutable epochs, enabled revisions, targets, budgets, grants |
 | Acquisition | operations, reservations, attempts, redirects, responses, sightings |
 | Preservation | artifacts, bodies, parse executions, segments, spans |
-| Semantics | assertions, claims, claim aliases, entities |
+| Semantics | assertions, claims, claim aliases, entities (disambiguation data only, never per-person aggregation) |
 | Evidence | bases, derivation links, edge events, policy decisions, predicate attestations |
 | Assessment | assessment events, explanations, threshold inputs, supersessions |
 | Attention | notices, interest register entries, interest events, origination records |
 | Investigation | investigations, claim membership, tasks, task attempts, exit conditions |
-| Output | claim-card revisions, reports, appraisals, clearances, dependency links, invalidations |
+| Output | claim-card revisions, entity-card revisions, reports, appraisals, clearances, dependency links, invalidations |
 | Operations | policy versions, operator actions, audit events, metrics, alerts |
 
 All identifiers MUST be stable and opaque. All timestamps MUST be UTC with the
@@ -719,7 +760,7 @@ The implementation MUST expose equivalent CLI and service operations for:
 - evidence packet inspection;
 - notice and interest-register inspection;
 - investigation and task management, including originated investigations;
-- claim-card rendering;
+- claim-card and entity-card rendering;
 - risk appraisal and clearance;
 - pause, resume, backup, restore, and export; and
 - health, concentration, provenance, and correction reports.
@@ -782,6 +823,9 @@ The first production release is acceptable only when:
     from a case the system made for publishing.
 9d. Publication, correction, and retraction each record a confirmed outcome from
     outside the renderer, or are marked `unconfirmed` and not counted.
+9e. An entity card shows one basis where ten claims share one, says so when
+    nothing about the person is established, and leaves no per-person
+    aggregation at rest.
 10. A clean restore reproduces claim cards, histories, and artifact hashes.
 11. A 30-day pilot completes with at least 100 distinct full reads, at least
     one live claim reaching each of `supported`, `contested`, and
@@ -796,6 +840,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.6.0 | 2026-09-04 | Added entity cards in section 10.1: per-person browsing kept, but as a governed projection rather than a stored dossier. Entity records hold disambiguation data only; cards are computed at build time, show basis independence across the set, carry state and counterevidence per claim, say so when nothing is established, appraise the aggregation itself, log access for living people at R2 and above, and never publish at R3. Interest may not select a person. |
 | 1.5.0 | 2026-09-04 | Adopted six operator-surface and publishing requirements from the pre-rewrite functional spec: authority established by pinned channel rather than message content, authorisation requests presenting the exact effect, an out-of-band halt with automatic non-self-clearable entry on breach, raising as additive to a record the system cannot curate, clearance never inferred from persuasion or unrelated approval, and publication as an action with an attempted effect and a separately confirmed outcome plus mandatory authorship on every output. |
 | 1.4.0 | 2026-09-04 | Specified the investigator the rewrite had left out: noticing, an inspectable interest register, interest-originated investigations, and essays as synthesis whose subject interest may choose and whose verdict it may not. Interest reaches attention only; the diet keeps sole control of throughput under a ceiling on open originated investigations. Made a small, locally served model normative rather than incidental, split the operator into a conversational and a command surface, and replaced the model-spend ceiling with local inference ceilings. |
 | 1.3.0 | 2026-09-04 | Enumerated task states in section 9.1 and split terminal states into terminal-competent and terminal-incomplete. Only terminal-competent lanes may produce `indeterminate` or satisfy the absence rule; a claim with a refused, cancelled, expired, or superseded required lane holds its state and surfaces the blocked lane on the card. |

@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.4.0
+**Document version:** 1.5.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -155,7 +155,7 @@ assessment.
 | Noticing | Attention records against retained spans, in the system's own words | Assertions, edges, or bases |
 | Interest register | Durable inspectable dispositions, append-only with reasons, investigation origination, essay subject selection | Scheduling, evidence weight, thresholds, risk, or any assessment |
 | Research manager | Investigations, missing lanes, task lifecycle and its competent/incomplete terminal classification, resolution attempts | Rewriting evidence history |
-| Projector | Claim cards and dependency maps | New factual assertions |
+| Projector | Claim cards, entity cards, and dependency maps | New factual assertions, or any per-person aggregation held at rest |
 | Appraisal/clearance | Exact-revision output permission | Altering internal evidence state |
 
 ## Storage architecture
@@ -310,6 +310,9 @@ storage-adapter change and does not alter the domain contract.
   on publication.
 - The system may choose what to raise and never what the operator can see.
 - Everything published says what produced it.
+- A person is an address in the graph, never a dossier in it: per-person views
+  are projected at build time and never accumulated.
+- Interest attaches to subjects and claims, never to an individual.
 - Search, embeddings, prose, and prior NewZ output are never external evidence.
 - Risk is monotonic within an automated operation; lowering it requires a
   reasoned operator action.
@@ -338,6 +341,7 @@ sequencing is in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.5.0 | 2026-09-04 | Gave the projector entity cards and forbade it any per-person aggregation at rest, with invariants that a person is an address rather than a dossier and that interest never attaches to an individual. |
 | 1.4.0 | 2026-09-04 | Channel-established operator authority and an out-of-band halt on the operator boundary, automatic entry into Lockdown on breach, and invariants for attempted-versus-confirmed publication, raising as additive, and authorship on output. |
 | 1.3.0 | 2026-09-04 | Added the attention plane — noticing, the interest register, essay selection — feeding investigations and never the budget, plus the interest trust boundary and its invariants. Made the small local model explicit in the context diagram and recorded it as ADR-0002. |
 | 1.2.1 | 2026-09-04 | Moved task-state ownership to the research manager, since `SPEC.md` 9.1 now fixes the set, and added the invariant separating a lane that did not search from one that searched and found nothing. |

@@ -201,7 +201,7 @@ footer{
   <h1>NewZ Architecture</h1>
   <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence — with a faculty that decides what is worth investigating, and cannot decide what is true.</p>
   <div class="meta">
-    <span><b>Version</b> 1.4.0</span>
+    <span><b>Version</b> 1.5.0</span>
     <span><b>Effective</b> 2026-09-04</span>
     <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
     <span><b>Model</b> small, local, replaceable</span>
@@ -394,7 +394,7 @@ footer{
         <tr><td class="k">Noticing</td><td class="own">Attention records against retained spans, in the system's own words</td><td class="not">Assertions, edges, or bases</td></tr>
         <tr><td class="k">Interest register</td><td class="own">Durable inspectable dispositions, investigation origination, essay subject selection</td><td class="not">Scheduling, evidence weight, thresholds, risk, or any assessment</td></tr>
         <tr><td class="k">Research manager</td><td class="own">Investigations, missing lanes, task lifecycle and terminal classification, resolution attempts</td><td class="not">Rewriting evidence history</td></tr>
-        <tr><td class="k">Projector</td><td class="own">Claim cards and dependency maps</td><td class="not">New factual assertions</td></tr>
+        <tr><td class="k">Projector</td><td class="own">Claim cards, entity cards, and dependency maps</td><td class="not">New factual assertions, or any per-person aggregation held at rest</td></tr>
         <tr><td class="k">Appraisal / clearance</td><td class="own">Exact-revision output permission</td><td class="not">Altering internal evidence state</td></tr>
       </tbody>
     </table>
@@ -701,6 +701,8 @@ footer{
     <li>Attempted effect and confirmed outcome are never conflated, on acquisition or on publication.</li>
     <li>The system may choose what to raise and never what the operator can see.</li>
     <li>Everything published says what produced it.</li>
+    <li>A person is an address in the graph, never a dossier in it — per-person views are projected at build time, never accumulated.</li>
+    <li>Interest attaches to subjects and claims, never to an individual.</li>
     <li>The model is small and local by design, so no rule may depend on model strength to hold.</li>
   </ul>
 </section>
@@ -740,7 +742,7 @@ footer{
 </div>
 
 <footer>
-  <span>NewZ · architecture 1.4.0</span>
+  <span>NewZ · architecture 1.5.0</span>
   <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
   <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
 </footer>
