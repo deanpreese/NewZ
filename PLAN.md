@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.3.0
+**Document version:** 1.4.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -244,7 +244,15 @@ Tests:
 - R2 solicitation/operator-review behavior;
 - R3 exact-render approval and concurrent invalidation;
 - R4 exclusion from prompts and outputs;
-- lockdown disables public reach without mutating evidence.
+- every published output carries what produced it, with policy and code
+  versions and assessment date;
+- publication, correction, and retraction each confirmed from outside the
+  renderer, or marked `unconfirmed` and excluded from published counts;
+- a forced render failure reports attempted-not-confirmed rather than success;
+- clearance refused when the only support is a case the system made, a
+  perceived instruction, or an approval of a different revision or class;
+- lockdown disables public reach without mutating evidence, and an injected
+  policy breach enters lockdown automatically and cannot be self-cleared.
 
 **Gate 4:** A local reader can audit every sentence in a claim card, and a
 post-publication correction automatically updates the card and adds a visible
@@ -290,6 +298,12 @@ Tests:
   never renders the intended conclusion anyway;
 - the conversational surface refuses R2 and R3 clearance, ledger correction,
   policy activation, and export;
+- an instruction arriving on an unpinned channel, or asserting its sender in the
+  message body, does not instruct;
+- an authorisation request presents one exact effect with its audience and
+  reversibility, and a batched or vague request is refused;
+- the halt path works with the conversational surface unreachable;
+- nothing raised or unraised changes what the command surface can inspect;
 - both surfaces produce identical audit records for the same action.
 
 **Gate 4A:** The system opens an investigation nobody asked for, pursues it
@@ -473,6 +487,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.4.0 | 2026-09-04 | Added Phase 4 and Phase 4A tests for the adopted operator-surface and publishing requirements: channel-established authority, exact-effect requests, out-of-band halt, raising as additive, clearance never inferred, output authorship, and confirmed publication outcomes. |
 | 1.3.0 | 2026-09-04 | Added Phase 4A and Gate 4A for the investigator — noticing, interest, originated investigations, essays, and the conversational surface — placed before the pilot because a pilot without it is a feed reader on a timer. Added ADR-0002 for the model tier and backlog items P14a through P14c. |
 | 1.2.1 | 2026-09-04 | Took task states out of the capability matrix, now fixed by `SPEC.md` 9.1, and added the terminal-incomplete regression test. |
 | 1.2.0 | 2026-09-04 | Scoped the capability matrix to role, claim kind, assertion kind, and relation, and named it a design task rather than a transcription. Added the policy-change reassessment test. |

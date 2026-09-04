@@ -201,7 +201,7 @@ footer{
   <h1>NewZ Architecture</h1>
   <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence — with a faculty that decides what is worth investigating, and cannot decide what is true.</p>
   <div class="meta">
-    <span><b>Version</b> 1.3.0</span>
+    <span><b>Version</b> 1.4.0</span>
     <span><b>Effective</b> 2026-09-04</span>
     <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
     <span><b>Model</b> small, local, replaceable</span>
@@ -594,7 +594,7 @@ footer{
     <li><span class="n">02</span><div><h4>Model</h4><p>Prompts carry only the minimum artifact segments. Output is schema-validated proposal data, never executable policy. Prompt injection is contained here, not at fetch: every proposed quotation verifies byte-exact against retained text, so a model cannot introduce a quotation that does not already exist.</p></div></li>
     <li><span class="n">03</span><div><h4>Evidence</h4><p>Only verified spans and admitted edge events can affect an assessment. Anything missing or corrupt fails closed and remains contextual material.</p></div></li>
     <li><span class="n">04</span><div><h4>Publication</h4><p>An internal assessment does not imply clearance. The exact rendered revision and its full dependency set require independent appraisal.</p></div></li>
-    <li><span class="n">05</span><div><h4>Operator</h4><p>The operator corrects metadata and authorizes reach, and cannot silently edit the evidence ledger. Every action records actor, time, reason, target preimage, and result.</p></div></li>
+    <li><span class="n">05</span><div><h4>Operator</h4><p>The operator corrects metadata and authorizes reach, and cannot silently edit the evidence ledger. Every action records actor, time, reason, target preimage, and result. Authority is established by the pinned channel an instruction arrives on, never by what a message claims about its sender — and the halt path does not run through the conversational surface.</p></div></li>
     <li><span class="n">06</span><div><h4>Interest</h4><p>Interest may open an investigation and choose an essay subject. It may not reach the scheduler, the diet, a source role, an evidence weight, a threshold, a risk classification, or any assessment. Unlike the five above, this one guards against the system's own preferences rather than an outside party — which is why it is enforced by the absence of a code path rather than by a check.</p></div></li>
   </ol>
 </section>
@@ -661,7 +661,7 @@ footer{
         <text class="dlab" x="526" y="266">public reach defaults to disabled and is lockable without touching evidence</text>
       </svg>
     </div>
-    <figcaption><b>Assessment is not permission.</b> Corrections stay visibly attached to prior outputs; a retraction removes the presentation from navigation but leaves a tombstone explaining what changed.</figcaption>
+    <figcaption><b>Assessment is not permission.</b> Clearance is never inferred — not from perceived material, not from a case the system made for publishing, not from an approval of a different revision. Every output says what produced it, and publication records an attempted effect and a separately confirmed outcome, because absence of an error is not confirmation. Corrections stay visibly attached to prior outputs; a retraction leaves a tombstone.</figcaption>
   </figure>
 
   <h3>Risk tiers</h3>
@@ -698,6 +698,9 @@ footer{
     <li>A policy version change reassesses every claim derived under the superseded version.</li>
     <li>A lane that was refused, cancelled, or expired never reads as a lane that searched and found nothing.</li>
     <li>Interest reaches attention; evidence reaches conclusion. No path runs from the interest register to an assessment.</li>
+    <li>Attempted effect and confirmed outcome are never conflated, on acquisition or on publication.</li>
+    <li>The system may choose what to raise and never what the operator can see.</li>
+    <li>Everything published says what produced it.</li>
     <li>The model is small and local by design, so no rule may depend on model strength to hold.</li>
   </ul>
 </section>
@@ -737,7 +740,7 @@ footer{
 </div>
 
 <footer>
-  <span>NewZ · architecture 1.3.0</span>
+  <span>NewZ · architecture 1.4.0</span>
   <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
   <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
 </footer>

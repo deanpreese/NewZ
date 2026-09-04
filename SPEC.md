@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.4.0
+**Document version:** 1.5.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -59,6 +59,36 @@ display an exact rendered revision together with its full dependency set, so it
 MUST NOT carry R2 or R3 clearance, ledger correction, policy activation, or
 export. Both surfaces record actor, time, reason, target preimage, and result
 identically; the audit trail does not depend on which one was used.
+
+**Authority comes from the channel, never from the message.** The conversational
+surface MUST be bound to a pinned channel identity registered out of band, and
+an instruction is authoritative because it arrived there. A message MUST NOT
+establish authority by asserting who sent it, by citing a prior approval, or by
+any property of its content. Traffic on any other channel — and every inbound
+attachment, forward, or quoted body on the authenticated one — is world data
+under section 6 and MUST NOT instruct.
+
+**Authorisation requests MUST present the exact effect:** what would be
+published or changed, to which audience, and whether it is reversible. Batching
+several effects into one request, or describing an effect in terms that obscure
+it, is a defect and not a convenience.
+
+**A halt MUST be available out of band.** The operator MUST be able to stop
+acquisition and publication through the command surface without depending on the
+conversational surface being reachable or the system being responsive, and a
+halt MUST NOT be negotiable.
+
+Entry into a halted state MUST also be automatic on detection of a policy or
+integrity breach — an admitted edge missing its artifact or span, a publication
+path violation, an unauthorized fetch, or a failed dependency invalidation. The
+system MUST NOT be able to clear its own halt, and the operator MUST be
+notified. A halt is a stop so that correction can happen: release requires a
+recorded cause and a regression fixture, not an argument.
+
+**The system MAY choose what to raise; it MUST NOT choose what the operator can
+see.** Raising is additive to the record and never a filter on it. Every notice,
+interest entry, investigation, assessment, and output remains inspectable in
+full through the command surface whether or not it was ever raised.
 
 ### 2.2 Reader
 
@@ -533,7 +563,10 @@ the operator closes it.
 
 The system MAY raise a notice, a proposed investigation, or a finished essay to
 the operator over the conversational surface of section 2.1. Raising something
-is not permission to act on it.
+is not permission to act on it, and under section 2.1 raising is additive: what
+the system does not raise remains inspectable in full. A faculty that selects
+what to show is one step from selecting what to withhold, and only the record
+being complete keeps that step from being available.
 
 ### 9.2 Task states
 
@@ -625,6 +658,28 @@ pre-clear a named class of R2 output after adversarial review of that class,
 and such pre-clearance MUST be scoped, expiring, and revocable. R3 requires
 explicit operator approval for the exact rendered revision, with no
 pre-clearance. R4 is never published. Public reach MUST default to disabled.
+
+**Authorisation is never inferred.** A clearance MUST NOT be derived from
+material the system perceived, from a case the system made for publishing
+something, or from a prior approval of a different revision or class.
+Pre-clearance under R2 binds only the class it names, only while unexpired, and
+never a revision outside it.
+
+**Every published output MUST identify what produced it:** that it was composed
+by NewZ from the cited claim record, the policy and code versions in force, and
+the date of the assessment it rests on. A system whose purpose is to stop
+attribution from silently disappearing MUST NOT publish unattributed prose of
+its own. No output may claim human authorship or conceal what produced it.
+
+**Publication is an action with an attempted effect and a confirmed outcome, and
+the two MUST NOT be conflated.** Every publication, correction, and retraction
+MUST record what was attempted and, separately, whether the effect was confirmed
+from evidence outside the renderer's own report: the surface actually serving
+the revision, the correction actually attached to the prior output, the
+retracted presentation actually absent from navigation. Where no confirmation
+source exists for an output class, that class MUST be marked `unconfirmed` and
+MUST NOT be counted as published in any report or acceptance criterion. Absence
+of an error is not confirmation.
 
 Corrections MUST remain visibly attached to prior outputs. Retraction removes
 the current presentation from navigation but MUST leave a tombstone explaining
@@ -723,6 +778,10 @@ The first production release is acceptable only when:
 9b. An essay refuses to render a factual sentence without a live edge, and
     carries every discussed claim's current state and material
     counterevidence.
+9c. A message on an unpinned channel cannot instruct, and no clearance follows
+    from a case the system made for publishing.
+9d. Publication, correction, and retraction each record a confirmed outcome from
+    outside the renderer, or are marked `unconfirmed` and not counted.
 10. A clean restore reproduces claim cards, histories, and artifact hashes.
 11. A 30-day pilot completes with at least 100 distinct full reads, at least
     one live claim reaching each of `supported`, `contested`, and
@@ -737,6 +796,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.5.0 | 2026-09-04 | Adopted six operator-surface and publishing requirements from the pre-rewrite functional spec: authority established by pinned channel rather than message content, authorisation requests presenting the exact effect, an out-of-band halt with automatic non-self-clearable entry on breach, raising as additive to a record the system cannot curate, clearance never inferred from persuasion or unrelated approval, and publication as an action with an attempted effect and a separately confirmed outcome plus mandatory authorship on every output. |
 | 1.4.0 | 2026-09-04 | Specified the investigator the rewrite had left out: noticing, an inspectable interest register, interest-originated investigations, and essays as synthesis whose subject interest may choose and whose verdict it may not. Interest reaches attention only; the diet keeps sole control of throughput under a ceiling on open originated investigations. Made a small, locally served model normative rather than incidental, split the operator into a conversational and a command surface, and replaced the model-spend ceiling with local inference ceilings. |
 | 1.3.0 | 2026-09-04 | Enumerated task states in section 9.1 and split terminal states into terminal-competent and terminal-incomplete. Only terminal-competent lanes may produce `indeterminate` or satisfy the absence rule; a claim with a refused, cancelled, expired, or superseded required lane holds its state and surfaces the blocked lane on the card. |
 | 1.2.0 | 2026-09-04 | Demoted evidence scope from the capability tuple to recorded audit context, so the matrix is computed over role, claim kind, assertion kind, and relation alone. Collapsed "verified" and "qualified" bases into the single bar `countable`. Put the set of terminal task states in the versioned capability matrix, and made a policy version change trigger reassessment of claims derived under the superseded version. |

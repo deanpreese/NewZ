@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.3.0
+**Document version:** 1.4.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -278,7 +278,10 @@ storage-adapter change and does not alter the domain contract.
 4. **Publication boundary:** internal assessment does not imply clearance. The
    exact rendered revision and dependency set require independent appraisal.
 5. **Operator boundary:** operator actions can correct metadata and authorize
-   reach, but cannot silently edit the evidence ledger.
+   reach, but cannot silently edit the evidence ledger. Operator authority is
+   established by the pinned channel an instruction arrives on, never by what a
+   message claims about its sender, and the halt path does not run through the
+   conversational surface.
 6. **Interest boundary:** interest may open an investigation and choose an
    essay subject. It may not reach the scheduler, the diet, a source role, an
    evidence weight, a threshold, a risk classification, or any assessment.
@@ -303,6 +306,10 @@ storage-adapter change and does not alter the domain contract.
   the interest register to an assessment.
 - The model is small and local by design, so no rule may depend on model
   strength to hold.
+- Attempted effect and confirmed outcome are never conflated, on acquisition or
+  on publication.
+- The system may choose what to raise and never what the operator can see.
+- Everything published says what produced it.
 - Search, embeddings, prose, and prior NewZ output are never external evidence.
 - Risk is monotonic within an automated operation; lowering it requires a
   reasoned operator action.
@@ -318,10 +325,12 @@ storage-adapter change and does not alter the domain contract.
 | Shadow | Live acquisition from the reviewed catalog | Computed and compared against fixture expectations, not authoritative | Withheld |
 | Pilot | Reviewed 20-source catalog and hard budgets | Authoritative internally | Local/operator only |
 | Production | Approved catalog and budget expansion | Authoritative | Cleared R0–R2 output; R3 exact-review only |
-| Lockdown | Paused | Historical inspection only | Public output disabled |
+| Lockdown | Paused; entered by the operator out of band, or automatically on a policy or integrity breach | Historical inspection only | Public output disabled |
 
-Transitions are explicit, audited, and reversible. Every mode except Fixture
-has an exit gate in `PLAN.md`; Shadow's is stated in Phase 5. Release
+Transitions are explicit, audited, and reversible. Entry into Lockdown is the
+one transition that may happen without an operator, and the system cannot clear
+it. Every mode except Fixture has an exit gate in `PLAN.md`; Shadow's is stated
+in Phase 5. Release
 sequencing is in `PLAN.md`.
 
 ## Document history
@@ -329,6 +338,7 @@ sequencing is in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.4.0 | 2026-09-04 | Channel-established operator authority and an out-of-band halt on the operator boundary, automatic entry into Lockdown on breach, and invariants for attempted-versus-confirmed publication, raising as additive, and authorship on output. |
 | 1.3.0 | 2026-09-04 | Added the attention plane — noticing, the interest register, essay selection — feeding investigations and never the budget, plus the interest trust boundary and its invariants. Made the small local model explicit in the context diagram and recorded it as ADR-0002. |
 | 1.2.1 | 2026-09-04 | Moved task-state ownership to the research manager, since `SPEC.md` 9.1 now fixes the set, and added the invariant separating a lane that did not search from one that searched and found nothing. |
 | 1.2.0 | 2026-09-04 | Added the invariant that a policy version change reassesses claims derived under the superseded version. |
