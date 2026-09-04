@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.1.0
+**Document version:** 1.2.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -44,13 +44,17 @@ Deliver:
    mode plus a local content-addressed artifact store as the decision, and
    record the rejected PostgreSQL alternative and the conditions that would
    reverse the choice.
-3. Enumerations and schemas for source roles, evidence scopes, claim kinds,
-   assertion kinds, edge relations, assessment states, risk tiers, and task
-   states.
+3. Enumerations and schemas for source roles, claim kinds, assertion kinds,
+   edge relations, assessment states, risk tiers, and task states. Declared
+   scope is recorded free text, not an enumeration.
 4. A machine-readable capability matrix implementing the rules in `SPEC.md`,
-   including the required evidence lanes per claim kind that make
-   `indeterminate` deterministic, and the closed list of basis-independence
-   justifications.
+   computed over role, claim kind, assertion kind, and relation. It declares
+   the required evidence lanes per claim kind that make `indeterminate`
+   deterministic, the set of terminal task states, and the closed list of
+   basis-independence justifications. Deriving roughly two thousand cells from
+   about ten stated principles is a design task: every judgment call the
+   principles do not settle is recorded as a decision in the matrix, not
+   resolved silently in code.
 5. Deterministic promotion logic over independent bases, with basis identity
    and basis independence as separate inputs.
 6. A risk classifier with fail-closed handling and operator-review hooks.
@@ -80,6 +84,8 @@ Tests:
   edge;
 - `indeterminate` derived from terminal task state alone, with no
   competence judgment outside recorded state;
+- a policy version change reassessing every claim derived under the superseded
+  version, and invalidating its dependent presentations;
 - normative claims refusing `supports` and `contradicts` edges, and forecasts
   refusing promotion before their horizon;
 - claim merge and split preserving both preimage histories and re-pointing
@@ -100,7 +106,8 @@ Deliver:
    acquisition attempts, audit events, and transactional outbox, with foreign
    keys enforced and `synchronous = FULL`.
 2. Source catalog validation: stable identity, publisher, independence group,
-   delivery endpoint, topic, role, scope, risk floor, and retention policy.
+   delivery endpoint, topic, role, declared scope, risk floor, and retention
+   policy.
 3. Immutable diet epochs and a dry-run command that shows exact source and
    budget effects before activation.
 4. Scheduler with local-day accounting and protected discovery,
@@ -243,7 +250,8 @@ Deliver:
 
 1. Resolve the 20 pilot slots specified in `SPEC.md` to stable sources. For
    each, record retention rights, observed MIME, full-text capability,
-   publisher, independence group, role, scope, risk, and counterpart behavior.
+   publisher, independence group, role, declared scope, risk, and counterpart
+   behavior.
 2. Create offline fixtures from every source and pass them through the complete
    pipeline before live enablement.
 3. Run a Shadow stage before Pilot: live acquisition from the reviewed catalog
@@ -405,4 +413,5 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.2.0 | 2026-09-04 | Scoped the capability matrix to role, claim kind, assertion kind, and relation, and named it a design task rather than a transcription. Added the policy-change reassessment test. |
 | 1.1.0 | 2026-09-04 | Moved storage to SQLite with ADR-0001 as a Phase 0 deliverable. Rebalanced the daily lane budget to 3/5/2 and specified borrow direction. Gave the Shadow stage a place and exit criteria in Phase 5. Defined pause and route-exercise reset semantics for Gate 5 and required live cases rather than fixtures. Added the unknown-independence indicator to pilot reporting, scheduled the reader surface into Phase 6, and added Phase 0 cases and tests for the new SPEC rules. |

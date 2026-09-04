@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.1.0
+**Document version:** 1.2.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -141,7 +141,7 @@ assessment.
 | Extractor | Candidate spans, assertions, entities, claims | Capability grants or risk reduction |
 | Basis resolver | Publication lineage and upstream-origin identity | Counting unknown origins as independent |
 | Evidence engine | Deny-by-default role/scope/risk/relation policy, basis-identity resolution, predicate attestations | Narrative generation |
-| Promotion policy | Versioned promotion thresholds, required evidence lanes per claim kind, independence justification list | Evaluating a specific claim |
+| Promotion policy | Versioned promotion thresholds, required evidence lanes per claim kind, terminal task states, independence justification list | Evaluating a specific claim |
 | Assessor | Deterministic assessment transitions against the current promotion policy | Searching, fetching, or defining thresholds |
 | Research manager | Investigations, missing lanes, tasks, resolution attempts | Rewriting evidence history |
 | Projector | Claim cards and dependency maps | New factual assertions |
@@ -278,6 +278,8 @@ storage-adapter change and does not alter the domain contract.
 - Every consequential row records policy and implementation versions.
 - Duplicate publication is distinct from independent basis.
 - A failed or retracted edge invalidates all dependent projections.
+- A policy version change reassesses every claim derived under the superseded
+  version; a stored assessment never outlives the policy that produced it.
 - Search, embeddings, prose, and prior NewZ output are never external evidence.
 - Risk is monotonic within an automated operation; lowering it requires a
   reasoned operator action.
@@ -304,4 +306,5 @@ sequencing is in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.2.0 | 2026-09-04 | Gave the promotion policy ownership of terminal task states, and added the invariant that a policy version change reassesses claims derived under the superseded version. |
 | 1.1.0 | 2026-09-04 | Replaced PostgreSQL and the S3-compatible object store with SQLite in WAL mode and a local content-addressed store, with the concurrency requirement stated and recorded as ADR-0001. Collapsed the runtime topology to one host with local worker processes. Named span verification as the prompt-injection mechanism at the model boundary. Gave promotion thresholds an owning component, gave Shadow mode exit criteria, and added an operator entry point to investigations. |

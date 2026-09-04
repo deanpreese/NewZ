@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.1.0
+**Document version:** 1.2.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -119,9 +119,19 @@ NewZ is not:
 
 ### 5.1 Source roles
 
-Every enabled source revision MUST declare exactly one role and a maximum
-evidence scope. A role grants capability for a specific use; it is not a claim
-that the source is generally reliable.
+Every enabled source revision MUST declare exactly one role. A role grants
+capability for a specific use; it is not a claim that the source is generally
+reliable.
+
+A source revision SHOULD also record a **declared scope**: a short description
+of the subject matter or authority the source speaks to, such as an agency's
+jurisdiction or a repository's collection. Scope is recorded context, not a
+policy dimension, and it is not enumerated. It travels with every edge for
+audit and appraisal, and it carries decision weight in exactly one place — the
+single-record exception in section 7.3, where a final adjudicative record
+settles a claim only within that adjudicator's declared scope. The capability
+matrix is computed over role, claim kind, assertion kind, and relation
+alone.
 
 | Role | Maximum ordinary use |
 |---|---|
@@ -256,12 +266,14 @@ A countable evidence edge requires:
 
 - a live, quote-verified assertion;
 - a retained artifact and exact span;
-- a legal role, scope, claim-kind, assertion-kind, and relation tuple;
+- a legal role, claim-kind, assertion-kind, and relation tuple;
 - a resolved basis identity;
 - a risk classification; and
 - the policy version that admitted it.
 
-Anything missing or corrupt fails closed and remains contextual material.
+Anything missing or corrupt fails closed and remains contextual material. The
+edge also records the source revision's declared scope and topic for audit;
+neither gates admission.
 
 Basis identity and basis independence are separate properties and MUST NOT be
 conflated.
@@ -313,10 +325,10 @@ The current assessment state is one of:
   history remains.
 
 `indeterminate` MUST be a function of recorded task state alone. The evidence
-lanes required for each claim kind are declared in the capability matrix and
-versioned with it, so an assessment reproduces exactly under section 13. No
-assessment state may depend on a judgment of search competence that is not
-recorded as terminal task state.
+lanes required for each claim kind, and the set of terminal task states, are
+declared in the capability matrix and versioned with it, so an assessment
+reproduces exactly under section 13. No assessment state may depend on a
+judgment of search competence that is not recorded as terminal task state.
 
 Rules:
 
@@ -340,8 +352,12 @@ Rules:
     the same label.
 
 For ordinary R0–R1 factual claims, `supported` or `refuted` requires at least
-two independent verified bases in that direction, including at least one
-primary record, empirical study, or adjudicative record.
+two independent countable bases in that direction, including at least one
+primary record, empirical study, or adjudicative record. A basis is countable
+when it carries at least one countable edge under section 7.2. There is no
+separate verification or qualification state for a basis; countable is the only
+bar, and operator verification appears only where section 7.2 requires it to
+justify independence.
 
 A narrow attribution claim or a document-existence claim may be settled by the
 single record that literally establishes it. So may any claim settled by a
@@ -355,9 +371,9 @@ against the accused. The exception applies only where the record literally
 establishes or literally settles the claim, never by inference drawn from the
 record.
 
-Every other R2 claim requires two independent verified bases with strong
+Every other R2 claim requires two independent countable bases with strong
 provenance. Every other R3 claim requires a direct primary or adjudicative
-basis plus an independent qualified basis, under section 8.
+basis plus an independent countable basis, under section 8.
 
 ### 7.4 Claim merge and split
 
@@ -386,7 +402,7 @@ risk, domain risk, and intended output risk.
 | R0 | Historical folklore and obsolete claims | Ordinary attributed research. |
 | R1 | UAP, psi, cryptids, alternative physics/history | Ordinary investigation; evidence rules apply. |
 | R2 | Active institutions, current secrecy, named organizations | Strong provenance, two independent bases, explicit allegation labels. |
-| R3 | Medicine, elections, finance, alleged crimes by living people | Isolated workflow; direct primary/adjudicative basis plus an independent qualified basis; operator approval before any publication. |
+| R3 | Medicine, elections, finance, alleged crimes by living people | Isolated workflow; direct primary/adjudicative basis plus an independent countable basis; operator approval before any publication. |
 | R4 | Doxxing, incitement, harassment, operational wrongdoing | Metadata quarantine only; never reproduced or operationalized. |
 
 Missing or unreadable risk state MUST behave as R3 internally and MUST block
@@ -420,8 +436,17 @@ Every access to R3 quarantined material MUST be logged.
    assessment.
 7. New evidence, retraction, or source correction triggers reassessment and
    invalidates dependent presentations.
+8. A change to the capability matrix, promotion thresholds, independence
+   justifications, required evidence lanes, or the set of terminal task states
+   is a policy version change. It MUST trigger reassessment of every claim
+   whose current assessment was derived under the superseded version, and MUST
+   invalidate the dependent presentations. Without this, a stored assessment
+   silently reflects a policy that no longer exists, and section 13
+   reproducibility holds only against a version nothing is running.
 
-Tasks MUST have an owner, reason, due time, retry policy, and terminal state.
+Every assessment MUST record the policy version it was derived under. Tasks
+MUST have an owner, reason, due time, retry policy, and terminal state drawn
+from the versioned set.
 Verification and correction work MUST have priority over new discovery when
 their reserved capacity is available.
 
@@ -554,4 +579,5 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.2.0 | 2026-09-04 | Demoted evidence scope from the capability tuple to recorded audit context, so the matrix is computed over role, claim kind, assertion kind, and relation alone. Collapsed "verified" and "qualified" bases into the single bar `countable`. Put the set of terminal task states in the versioned capability matrix, and made a policy version change trigger reassessment of claims derived under the superseded version. |
 | 1.1.0 | 2026-09-04 | Separated basis identity from basis independence and added the closed list of independence justifications. Rebalanced the daily lane budget to 3/5/2 with a counterpart backlog brake. Moved publisher concentration to retained reads with tiered caps. Made `indeterminate` a function of terminal task state. Constrained `normative proposition` and `forecast` kinds. Added claim merge and split semantics, crypto-shredding for erasure, R3/R4 retention expiry, cost and storage ceilings. Clarified the single-record exception at R2–R3, R2 clearance, and the prompt-injection boundary. Defined sighting, independence group, lane, predicate attestation, appraisal, and clearance. |

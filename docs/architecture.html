@@ -201,7 +201,7 @@ footer{
   <h1>NewZ Architecture</h1>
   <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence.</p>
   <div class="meta">
-    <span><b>Version</b> 1.1.0</span>
+    <span><b>Version</b> 1.2.0</span>
     <span><b>Effective</b> 2026-09-04</span>
     <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
     <span><b>Publication</b> deny-by-default</span>
@@ -306,7 +306,7 @@ footer{
         <tr><td class="k">Extractor</td><td class="own">Candidate spans, assertions, entities, claims</td><td class="not">Capability grants or risk reduction</td></tr>
         <tr><td class="k">Basis resolver</td><td class="own">Publication lineage and upstream-origin identity</td><td class="not">Counting unknown origins as independent</td></tr>
         <tr><td class="k">Evidence engine</td><td class="own">Deny-by-default policy, basis identity, predicate attestations</td><td class="not">Narrative generation</td></tr>
-        <tr><td class="k">Promotion policy</td><td class="own">Thresholds, required lanes per claim kind, independence justifications</td><td class="not">Evaluating a specific claim</td></tr>
+        <tr><td class="k">Promotion policy</td><td class="own">Thresholds, required lanes per claim kind, terminal task states, independence justifications</td><td class="not">Evaluating a specific claim</td></tr>
         <tr><td class="k">Assessor</td><td class="own">Deterministic state transitions against current policy</td><td class="not">Searching, fetching, defining thresholds</td></tr>
         <tr><td class="k">Research manager</td><td class="own">Investigations, missing lanes, tasks, resolution attempts</td><td class="not">Rewriting evidence history</td></tr>
         <tr><td class="k">Projector</td><td class="own">Claim cards and dependency maps</td><td class="not">New factual assertions</td></tr>
@@ -609,6 +609,7 @@ footer{
     <li>Core records and artifacts are portable and recoverable without a model provider.</li>
     <li>Claim merge and split re-point edges by new events and never rewrite existing ones.</li>
     <li>Erasure destroys a per-subject key; the ledger event survives, unreadable, with a tombstone.</li>
+    <li>A policy version change reassesses every claim derived under the superseded version.</li>
   </ul>
 </section>
 
@@ -646,7 +647,7 @@ footer{
 </div>
 
 <footer>
-  <span>NewZ · architecture 1.1.0</span>
+  <span>NewZ · architecture 1.2.0</span>
   <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
   <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
 </footer>
