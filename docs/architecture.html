@@ -201,11 +201,11 @@ footer{
   <h1>NewZ Architecture</h1>
   <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence — with a faculty that decides what is worth investigating, and cannot decide what is true.</p>
   <div class="meta">
-    <span><b>Version</b> 1.7.0</span>
+    <span><b>Version</b> 1.7.1</span>
     <span><b>Effective</b> 2026-09-04</span>
     <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
     <span><b>Model</b> small, local, replaceable</span>
-    <span><b>Publication</b> approve-by-default, revocable</span>
+    <span><b>Publication</b> approve-by-default · reach local-first</span>
   </div>
 </header>
 
@@ -606,12 +606,13 @@ footer{
 <!-- ================= 07 ================= -->
 <section id="publish">
   <h2><em>08 — Approve by default</em>The publication gate</h2>
-  <p>Publication is approve-by-default and revocable: output that satisfies its checks goes out rather than waiting on a decision to release it. The control is not the gate in front of publication but the ability to withdraw what has gone out — which is why the default is switched on by Gate 4, where revocation is proven, and not before.</p>
+  <p>Publication has two independent axes. <b>Clearance</b> decides whether a revision publishes at all, and is approve-by-default: output that satisfies its checks goes out rather than waiting on a decision to release it, because the control is the ability to withdraw rather than the gate in front. That default switches on at Gate 4, where revocation is proven, and not before.</p>
+  <p><b>Reach</b> decides who can then see it, and is local-first. Cleared output lands on the local surface; widening to a public audience is a separate, explicit, revocable operator act — never a consequence of clearance, and never inferred from a class of output having published locally without incident.</p>
   <p>Effective risk is the maximum of source, claim, named-entity, domain, and intended-output risk. A model may raise it and may never lower it; missing or unreadable risk state behaves as R3 and blocks publication outright. Because nothing holds output back by waiting, what holds it back is enumerated and fails closed with no operator present: unreadable risk, a stale or withdrawn dependency, an edge that is not live, R4 content, a failed appraisal check, or an unconfirmed prior retraction.</p>
 
   <figure>
     <div class="canvas">
-      <svg viewBox="0 0 900 286" role="img" aria-label="Assessment becomes a card revision, then appraisal, then routes by risk tier: R0 to R1 and R2 publish on passing their checks, R3 requires exact-revision approval, R4 is never published. Public reach defaults on from Gate 4.">
+      <svg viewBox="0 0 900 286" role="img" aria-label="Assessment becomes a card revision, then appraisal, then routes by risk tier: R0 to R1 and R2 publish on passing their checks, R3 requires exact-revision approval, R4 is never published. Reach is local-first and public audiences require a separate operator act.">
         <defs>
           <marker id="a5" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
@@ -663,7 +664,7 @@ footer{
         <text class="dsub" x="14" y="216">missing or unreadable</text>
         <text class="dsub" x="14" y="232">risk state behaves as R3</text>
         <text class="dsub" x="14" y="248">and blocks publication</text>
-        <text class="dlab" x="526" y="266">reach defaults on from Gate 4, lockable at any moment without touching evidence</text>
+        <text class="dlab" x="526" y="266">reach is local-first: public audiences need a separate operator act, lockable at any moment</text>
       </svg>
     </div>
     <figcaption><b>Assessment is not permission, but it no longer waits for one.</b> Clearance is never inferred — not from perceived material, not from a case the system made for publishing, not from an approval of a different revision. Every output says what produced it, and publication records an attempted effect and a separately confirmed outcome, because absence of an error is not confirmation. Corrections stay visibly attached to prior outputs; a retraction leaves a tombstone.</figcaption>
@@ -696,7 +697,8 @@ footer{
     <li>A failed or retracted edge invalidates all dependent projections.</li>
     <li>Search, embeddings, prose, and prior NewZ output are never external evidence.</li>
     <li>Risk is monotonic within an automated operation; lowering it requires a reasoned operator action.</li>
-    <li>Public reach defaults to on from Gate 4 and can be locked down at any moment without changing evidence.</li>
+    <li>Clearance and reach are separate axes: what publishes is approve-by-default, where it lands is local-first.</li>
+    <li>Public reach defaults to off, widens only by an explicit scoped operator act, and can be locked down at any moment without changing evidence.</li>
     <li>Approve-by-default is earned by demonstrated revocation, never assumed.</li>
     <li>Core records and artifacts are portable and recoverable without a model provider.</li>
     <li>Claim merge and split re-point edges by new events and never rewrite existing ones.</li>
@@ -740,7 +742,7 @@ footer{
     <li><span class="g">M1 · GATE 1</span><h4>Provenance spine</h4><p>Four offline canary sources produce reconstructible acquisition traces and artifact hashes through one scheduler.</p></li>
     <li><span class="g">M2 · GATE 2</span><h4>Evidence graph</h4><p>The controlled corpus produces every assessment state, explainable without reading model reasoning or trusting generated prose.</p></li>
     <li><span class="g">M3 · GATE 3</span><h4>Investigation loop</h4><p>Three fixture investigations reach different defensible outcomes, one stays unresolved, one reverses after correction. No manual database edit.</p></li>
-    <li><span class="g">M4 · GATE 4</span><h4>Safe presentation</h4><p>A local reader can audit every sentence in a claim card, a correction updates it automatically, and a retraction removes the presentation and confirms it from outside the renderer. Passing this gate is what turns publication on; failing it leaves it off.</p></li>
+    <li><span class="g">M4 · GATE 4</span><h4>Safe presentation</h4><p>A local reader can audit every sentence in a claim card, a correction updates it automatically, and a retraction removes the presentation and confirms it from outside the renderer. Passing this gate turns local publication on; failing it leaves it off. Public reach is a separate decision and stays disabled here.</p></li>
     <li><span class="g">M4A · GATE 4A</span><h4>The investigator</h4><p>The system opens an investigation nobody asked for, pursues it through the existing lanes, and writes an essay about what it found — while a static audit of the interest register shows no write path to any scheduling or evidence decision. One originated investigation reaches a conclusion its originating interest did not want, and the register reports its provenance mix, its origination share, and at least one interest retired for producing nothing.</p></li>
     <li><span class="g">M5 · GATE 5</span><h4>Contested pilot</h4><p>30 eligible dates, 100 retained full reads, all 20 routes exercised under the current code version, and live claims demonstrating supported, contested, indeterminate, and corrected outcomes.</p></li>
     <li><span class="g">M6 · GATE 6</span><h4>Production</h4><p>Service objectives, security review, disaster-recovery drill, policy replay, and a public correction drill pass. R4 remains permanently quarantined.</p></li>
@@ -751,7 +753,7 @@ footer{
 </div>
 
 <footer>
-  <span>NewZ · architecture 1.7.0</span>
+  <span>NewZ · architecture 1.7.1</span>
   <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
   <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
 </footer>

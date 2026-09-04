@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.7.0
+**Document version:** 1.7.1
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -20,6 +20,9 @@ contracts and tests.
 - Turn publication on when correction and invalidation work end to end, and not
   before. Approve-by-default is earned by demonstrated revocation: the ability
   to withdraw is the control that replaces the gate.
+- Keep reach local first. What clears and where it lands are separate
+  decisions; widening to a public audience is its own act, taken later and on
+  its own evidence.
 - Gates govern contact with the outside world, never the building of a faculty.
   No capability waits on an assessment being written or a maturity score being
   awarded; what waits is live acquisition and publication. Gate 4A is the shape
@@ -282,9 +285,9 @@ Tests:
 post-publication correction automatically updates the card and adds a visible
 history entry. A retraction removes the presentation, leaves its tombstone, and
 confirms both from outside the renderer. This gate is what earns
-approve-by-default: passing it turns publication and public reach on for R0–R2,
-and failing it leaves them off. R3 stays approval-gated and R4 unpublishable
-either way.
+approve-by-default: passing it turns local publication on for R0–R2, and failing
+it leaves it off. Public reach is a separate decision and stays disabled here.
+R3 stays approval-gated and R4 unpublishable either way.
 
 ## Phase 4A — The investigator
 
@@ -433,9 +436,10 @@ Deliver in order:
 
 1. Expand the low-risk R0–R1 catalog while maintaining topic/role coverage and
    concentration alerts.
-2. Widen the audience for output already publishing by default since Gate 4,
-   with public reach still independently lockable at any moment. The reader
-   surface itself was delivered in Phase 4.
+2. Widen reach: enable public audiences for output that has been publishing
+   locally by default since Gate 4, as an explicit scoped operator act, with
+   reach still independently lockable at any moment. The reader surface itself
+   was delivered in Phase 4 and has been serving locally since.
 3. Add R2 source classes after direct adversarial review.
 4. Add R3 intake only after the isolated workflow and exact-revision approval
    are exercised in production-like tests.
@@ -535,6 +539,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.7.1 | 2026-09-04 | Gate 4 turns on local publication only; public reach stays disabled and is widened as its own act in Phase 6. Added the local-first delivery principle. |
 | 1.7.0 | 2026-09-04 | Made Gate 4 the point that earns approve-by-default, moved the reader surface into Phase 4 so publication has somewhere to land, and added the enumerated fail-closed refusal conditions to Phase 4 delivery. |
 | 1.6.0 | 2026-09-04 | Added interest-register influences, provenance, trace, and retirement to Phase 4A with the diet self-report, extended Gate 4A to require a register that demonstrably caused something, and added the origination share and provenance mix to pilot reporting. |
 | 1.5.0 | 2026-09-04 | Recorded that gates govern contact with the outside world rather than the building of a faculty, and added entity-card delivery and tests for Phase 4. |
