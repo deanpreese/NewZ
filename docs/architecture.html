@@ -1,0 +1,654 @@
+<title>NewZ Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --ground:#F0F2EE; --surface:#FAFBF9; --sunk:#E4E7E1;
+  --ink:#15191A; --ink-soft:#4C5556; --ink-faint:#7C8583;
+  --rule:#D1D6CE; --rule-strong:#B2B9AF;
+  --accent:#0D655C; --accent-tint:#DCEAE6;
+  --warn:#8E5C0E; --warn-tint:#EFE3CD;
+  --danger:#9A3A2B; --danger-tint:#F1DDD8;
+  --quarantine:#2A2E30; --quarantine-tint:#D9DED8;
+  --shadow:0 1px 2px rgba(20,28,26,.07);
+  --serif:"Spectral","Iowan Old Style",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#101313; --surface:#171B1B; --sunk:#0B0E0E;
+    --ink:#E4E8E3; --ink-soft:#A0A9A6; --ink-faint:#78817E;
+    --rule:#282E2D; --rule-strong:#3A4241;
+    --accent:#4FBFAE; --accent-tint:#0F2E2A;
+    --warn:#D3A257; --warn-tint:#2E2411;
+    --danger:#DE8371; --danger-tint:#331B16;
+    --quarantine:#C6CDC9; --quarantine-tint:#232726;
+    --shadow:0 1px 2px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101313; --surface:#171B1B; --sunk:#0B0E0E;
+  --ink:#E4E8E3; --ink-soft:#A0A9A6; --ink-faint:#78817E;
+  --rule:#282E2D; --rule-strong:#3A4241;
+  --accent:#4FBFAE; --accent-tint:#0F2E2A;
+  --warn:#D3A257; --warn-tint:#2E2411;
+  --danger:#DE8371; --danger-tint:#331B16;
+  --quarantine:#C6CDC9; --quarantine-tint:#232726;
+  --shadow:0 1px 2px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:var(--serif); font-size:17px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1160px;margin:0 auto;padding:56px 28px 96px}
+
+/* ---------- masthead ---------- */
+.mast{border-bottom:1px solid var(--rule-strong);padding-bottom:28px;margin-bottom:12px}
+.eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-faint);margin:0 0 14px
+}
+.mast h1{
+  font-size:clamp(34px,5.2vw,52px);line-height:1.03;font-weight:600;letter-spacing:-.018em;
+  margin:0 0 14px;text-wrap:balance
+}
+.mast .lede{font-size:19px;color:var(--ink-soft);margin:0;max-width:62ch}
+.meta{
+  display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:22px;
+  font-family:var(--mono);font-size:11.5px;color:var(--ink-faint)
+}
+.meta b{color:var(--ink-soft);font-weight:500}
+
+.projection{
+  display:flex;gap:14px;align-items:flex-start;
+  margin:26px 0 44px;padding:14px 18px;
+  background:var(--surface);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  font-size:14.5px;color:var(--ink-soft);max-width:78ch
+}
+.projection .tag{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);padding-top:4px;white-space:nowrap;flex:none
+}
+.projection p{margin:0;max-width:none}
+
+/* ---------- layout ---------- */
+.layout{display:block}
+@media(min-width:1000px){
+  .layout{display:grid;grid-template-columns:206px 1fr;gap:64px;align-items:start}
+  nav.toc{position:sticky;top:28px}
+}
+nav.toc{margin-bottom:48px}
+nav.toc p{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-faint);margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid var(--rule)
+}
+nav.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+nav.toc a{
+  display:flex;gap:10px;text-decoration:none;color:var(--ink-soft);
+  font-size:14px;padding:3px 0;line-height:1.35
+}
+nav.toc a em{font-family:var(--mono);font-size:10.5px;font-style:normal;color:var(--ink-faint);padding-top:3px}
+nav.toc a:hover{color:var(--accent)}
+nav.toc a:focus-visible,main a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+main{min-width:0}
+section{padding-top:8px;margin-bottom:64px;scroll-margin-top:24px}
+main h2{
+  font-size:27px;font-weight:600;letter-spacing:-.012em;line-height:1.2;
+  margin:0 0 6px;text-wrap:balance
+}
+main h2 em{
+  display:block;font-family:var(--mono);font-style:normal;font-size:10.5px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:9px
+}
+main h3{
+  font-size:15px;font-weight:600;margin:34px 0 8px;letter-spacing:.005em
+}
+main p{margin:0 0 16px;max-width:68ch}
+main ul,main ol{margin:0 0 16px;padding-left:22px;max-width:68ch}
+main li{margin-bottom:7px}
+main li::marker{color:var(--ink-faint)}
+code{font-family:var(--mono);font-size:.845em;background:var(--sunk);padding:1px 5px;border-radius:2px}
+.mut{color:var(--ink-soft)}
+
+/* ---------- figures ---------- */
+figure{margin:28px 0 30px}
+.canvas{
+  background:var(--surface);border:1px solid var(--rule);
+  padding:20px 18px;overflow-x:auto
+}
+.canvas svg{display:block;width:100%;min-width:760px;height:auto;color:var(--ink-soft)}
+figcaption{
+  margin-top:11px;font-size:14px;color:var(--ink-soft);max-width:72ch;line-height:1.5
+}
+figcaption b{color:var(--ink);font-weight:600}
+.dlab{font-family:var(--mono);font-size:10px;letter-spacing:.06em;fill:var(--ink-faint)}
+.dttl{font-family:var(--serif);font-size:14.5px;font-weight:500;fill:var(--ink)}
+.dsub{font-family:var(--mono);font-size:9.5px;fill:var(--ink-faint)}
+.dhed{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;fill:var(--ink-faint)}
+.dbox{fill:var(--surface);stroke:var(--rule-strong);stroke-width:1}
+.dbox-a{fill:var(--accent-tint);stroke:var(--accent);stroke-width:1}
+.dline{stroke:var(--ink-faint);stroke-width:1;fill:none}
+.dno{stroke:var(--danger);stroke-width:1.2;fill:none;stroke-dasharray:5 4}
+.dfaint{stroke:var(--rule-strong);stroke-width:1;fill:none;stroke-dasharray:3 4}
+
+/* ---------- tables ---------- */
+.scroll{overflow-x:auto;margin:22px 0 26px;border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;min-width:600px;background:var(--surface)}
+th,td{
+  text-align:left;padding:10px 16px;border-bottom:1px solid var(--rule);
+  font-size:14.5px;vertical-align:top;line-height:1.45
+}
+th{
+  font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:500;background:var(--sunk);white-space:nowrap
+}
+tr:last-child td{border-bottom:none}
+td.own{color:var(--ink)}
+td.not{color:var(--ink-faint)}
+td.k{font-family:var(--mono);font-size:12.5px;color:var(--ink);white-space:nowrap}
+.tier{
+  font-family:var(--mono);font-size:11px;font-weight:500;padding:2px 7px;
+  border:1px solid currentColor;border-radius:2px;white-space:nowrap
+}
+.t01{color:var(--accent)}.t2{color:var(--warn)}.t3{color:var(--danger)}.t4{color:var(--quarantine)}
+
+/* ---------- boundary list ---------- */
+.bounds{list-style:none;padding:0;margin:22px 0;max-width:none;display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.bounds li{margin:0;background:var(--surface);padding:16px 18px;display:grid;grid-template-columns:30px 1fr;gap:14px}
+.bounds .n{font-family:var(--mono);font-size:11px;color:var(--accent);padding-top:4px}
+.bounds h4{margin:0 0 4px;font-size:15px;font-weight:600}
+.bounds p{margin:0;font-size:14.5px;color:var(--ink-soft);max-width:none}
+
+/* ---------- invariants ---------- */
+.inv{list-style:none;padding:0;margin:22px 0;max-width:none;columns:2;column-gap:40px}
+@media(max-width:760px){.inv{columns:1}}
+.inv li{
+  break-inside:avoid;margin:0 0 12px;padding-left:16px;position:relative;
+  font-size:14.5px;color:var(--ink-soft);line-height:1.5
+}
+.inv li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:1px;background:var(--accent)}
+
+/* ---------- gates ---------- */
+.gates{list-style:none;padding:0;margin:22px 0;max-width:none;border-left:1px solid var(--rule)}
+.gates li{margin:0;padding:0 0 20px 24px;position:relative}
+.gates li::before{
+  content:"";position:absolute;left:-4px;top:7px;width:7px;height:7px;
+  background:var(--ground);border:1px solid var(--rule-strong);border-radius:50%
+}
+.gates li.done::before{background:var(--accent);border-color:var(--accent)}
+.gates .g{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint)}
+.gates h4{margin:2px 0 3px;font-size:15px;font-weight:600}
+.gates p{margin:0;font-size:14px;color:var(--ink-soft);max-width:64ch}
+
+footer{
+  margin-top:80px;padding-top:22px;border-top:1px solid var(--rule);
+  font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);
+  display:flex;flex-wrap:wrap;gap:8px 28px
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Authoritative target architecture</p>
+  <h1>NewZ Architecture</h1>
+  <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence.</p>
+  <div class="meta">
+    <span><b>Version</b> 1.1.0</span>
+    <span><b>Effective</b> 2026-09-04</span>
+    <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
+    <span><b>Publication</b> deny-by-default</span>
+  </div>
+</header>
+
+<div class="projection"><span class="tag">Projection</span><p>This page is a rendering of <code>ARCHITECTURE.md</code> and <code>SPEC.md</code>, not a source. The system holds that narrative outputs are projections of the evidence graph and never independent evidence; the same rule applies to this page. Where it disagrees with the governing documents, they win.</p></div>
+
+<div class="layout">
+
+<nav class="toc" aria-label="Sections">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#custody"><em>01</em><span>The custody chain</span></a></li>
+    <li><a href="#planes"><em>02</em><span>Planes and ownership</span></a></li>
+    <li><a href="#basis"><em>03</em><span>Identity vs independence</span></a></li>
+    <li><a href="#lanes"><em>04</em><span>Lanes and budget</span></a></li>
+    <li><a href="#store"><em>05</em><span>Storage and runtime</span></a></li>
+    <li><a href="#trust"><em>06</em><span>Trust boundaries</span></a></li>
+    <li><a href="#publish"><em>07</em><span>The publication gate</span></a></li>
+    <li><a href="#invariants"><em>08</em><span>Invariants</span></a></li>
+    <li><a href="#rollout"><em>09</em><span>Modes and gates</span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ================= 01 ================= -->
+<section id="custody">
+  <h2><em>01 — The mechanism</em>The custody chain</h2>
+  <p>Everything else in this architecture exists to protect one sequence. A claim's conclusion is reachable only by walking it backwards to a retained artifact and an exact quotation at recorded offsets. Nothing enters partway.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 900 232" role="img" aria-label="Six-stage chain from lead to assessment: lead, artifact, span, assertion, evidence edge, assessment. A dashed arc from lead directly to assessment is marked as never permitted.">
+        <defs>
+          <marker id="a1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <text class="dlab" x="375" y="34" text-anchor="middle" style="fill:var(--danger)">a lead never becomes an assessment</text>
+        <path class="dno" d="M 75 136 C 75 44, 675 44, 675 136"/>
+        <path d="M368 60 L382 74 M382 60 L368 74" style="stroke:var(--danger);stroke-width:1.6"/>
+
+        <g>
+          <rect class="dbox" x="13" y="136" width="124" height="64" rx="2"/>
+          <text class="dttl" x="75" y="163" text-anchor="middle">Lead</text>
+          <text class="dsub" x="75" y="182" text-anchor="middle">discovered</text>
+
+          <rect class="dbox" x="163" y="136" width="124" height="64" rx="2"/>
+          <text class="dttl" x="225" y="163" text-anchor="middle">Artifact</text>
+          <text class="dsub" x="225" y="182" text-anchor="middle">fetched, hashed</text>
+
+          <rect class="dbox" x="313" y="136" width="124" height="64" rx="2"/>
+          <text class="dttl" x="375" y="163" text-anchor="middle">Span</text>
+          <text class="dsub" x="375" y="182" text-anchor="middle">offset-verified</text>
+
+          <rect class="dbox" x="463" y="136" width="124" height="64" rx="2"/>
+          <text class="dttl" x="525" y="163" text-anchor="middle">Assertion</text>
+          <text class="dsub" x="525" y="182" text-anchor="middle">typed, quoted</text>
+
+          <rect class="dbox-a" x="613" y="136" width="124" height="64" rx="2"/>
+          <text class="dttl" x="675" y="163" text-anchor="middle">Evidence edge</text>
+          <text class="dsub" x="675" y="182" text-anchor="middle">qualified</text>
+
+          <rect class="dbox" x="763" y="136" width="124" height="64" rx="2"/>
+          <text class="dttl" x="825" y="163" text-anchor="middle">Assessment</text>
+          <text class="dsub" x="825" y="182" text-anchor="middle">derived</text>
+        </g>
+
+        <g class="dline" marker-end="url(#a1)">
+          <line x1="139" y1="168" x2="157" y2="168"/>
+          <line x1="289" y1="168" x2="307" y2="168"/>
+          <line x1="439" y1="168" x2="457" y2="168"/>
+          <line x1="589" y1="168" x2="607" y2="168"/>
+          <line x1="739" y1="168" x2="757" y2="168"/>
+        </g>
+
+        <text class="dlab" x="13" y="222">immutable, append-only — a correction adds a successor, never a rewrite</text>
+      </svg>
+    </div>
+    <figcaption><b>One path, no shortcuts.</b> Feed entries and search results are leads only. Model proposals enter at <em>Assertion</em> and are refused unless every quotation verifies byte-exact against the retained span at the recorded offsets — which is also why an instruction injected into fetched content cannot become evidence.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 02 ================= -->
+<section id="planes">
+  <h2><em>02 — Decomposition</em>Planes and ownership</h2>
+  <p>Five planes, each with a narrow mandate. The second column is load-bearing: most failure modes in a system like this are a component quietly acquiring a power it was never meant to hold.</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Component</th><th>Owns</th><th>Must not own</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Source catalog</td><td class="own">Source identity, publisher, independence group, role, risk floor</td><td class="not">Global truth or reliability score</td></tr>
+        <tr><td class="k">Diet manager</td><td class="own">Immutable enabled-source and policy epochs</td><td class="not">Conclusions or evidence weight</td></tr>
+        <tr><td class="k">Scheduler</td><td class="own">Lanes, reservations, retry, quarantine</td><td class="not">Evidence admission</td></tr>
+        <tr><td class="k">Safe fetcher</td><td class="own">Network policy, redirects, limits, response identity</td><td class="not">Parsing or claim extraction</td></tr>
+        <tr><td class="k">Parser registry</td><td class="own">MIME dispatch, normalized bodies and segments</td><td class="not">Semantic conclusions</td></tr>
+        <tr><td class="k">Artifact store</td><td class="own">Immutable bytes and content hashes</td><td class="not">Mutable assessment state</td></tr>
+        <tr><td class="k">Extractor</td><td class="own">Candidate spans, assertions, entities, claims</td><td class="not">Capability grants or risk reduction</td></tr>
+        <tr><td class="k">Basis resolver</td><td class="own">Publication lineage and upstream-origin identity</td><td class="not">Counting unknown origins as independent</td></tr>
+        <tr><td class="k">Evidence engine</td><td class="own">Deny-by-default policy, basis identity, predicate attestations</td><td class="not">Narrative generation</td></tr>
+        <tr><td class="k">Promotion policy</td><td class="own">Thresholds, required lanes per claim kind, independence justifications</td><td class="not">Evaluating a specific claim</td></tr>
+        <tr><td class="k">Assessor</td><td class="own">Deterministic state transitions against current policy</td><td class="not">Searching, fetching, defining thresholds</td></tr>
+        <tr><td class="k">Research manager</td><td class="own">Investigations, missing lanes, tasks, resolution attempts</td><td class="not">Rewriting evidence history</td></tr>
+        <tr><td class="k">Projector</td><td class="own">Claim cards and dependency maps</td><td class="not">New factual assertions</td></tr>
+        <tr><td class="k">Appraisal / clearance</td><td class="own">Exact-revision output permission</td><td class="not">Altering internal evidence state</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 03 ================= -->
+<section id="basis">
+  <h2><em>03 — The subtlest rule</em>Basis identity vs independence</h2>
+  <p>These are two properties, not one, and conflating them breaks the system in opposite directions. Treat them as one strict property and almost nothing is ever countable; treat them as one loose property and ten copies of one witness read as corroboration.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 900 296" role="img" aria-label="Left panel: three syndicated publications resolve to one basis and count once. Right panel: two publications resolve to two distinct bases and count twice under a recorded justification.">
+        <defs>
+          <marker id="a2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <line class="dfaint" x1="450" y1="16" x2="450" y2="282"/>
+        <text class="dhed" x="14" y="24">UNKNOWN OR SHARED ORIGIN</text>
+        <text class="dhed" x="466" y="24">JUSTIFIED DISTINCTNESS</text>
+
+        <g>
+          <rect class="dbox" x="14" y="46" width="128" height="34" rx="2"/>
+          <text class="dsub" x="78" y="67" text-anchor="middle">Publication A</text>
+          <rect class="dbox" x="14" y="96" width="128" height="34" rx="2"/>
+          <text class="dsub" x="78" y="117" text-anchor="middle">Publication B</text>
+          <rect class="dbox" x="14" y="146" width="128" height="34" rx="2"/>
+          <text class="dsub" x="78" y="167" text-anchor="middle">Publication C</text>
+        </g>
+        <g class="dline" marker-end="url(#a2)">
+          <line x1="146" y1="63" x2="238" y2="106"/>
+          <line x1="146" y1="113" x2="238" y2="113"/>
+          <line x1="146" y1="163" x2="238" y2="120"/>
+        </g>
+        <rect class="dbox-a" x="244" y="88" width="176" height="50" rx="2"/>
+        <text class="dttl" x="332" y="110" text-anchor="middle">One basis</text>
+        <text class="dsub" x="332" y="127" text-anchor="middle">Witness A, 1971 sighting</text>
+        <text class="dlab" x="14" y="212">counts once toward any threshold</text>
+        <text class="dlab" x="14" y="232">all three edges stay live and citable</text>
+        <text class="dlab" x="14" y="252" style="fill:var(--ink-soft)">repetition is not corroboration</text>
+
+        <g>
+          <rect class="dbox" x="466" y="60" width="128" height="34" rx="2"/>
+          <text class="dsub" x="530" y="81" text-anchor="middle">Publication D</text>
+          <rect class="dbox" x="466" y="132" width="128" height="34" rx="2"/>
+          <text class="dsub" x="530" y="153" text-anchor="middle">Publication E</text>
+        </g>
+        <g class="dline" marker-end="url(#a2)">
+          <line x1="598" y1="77" x2="690" y2="77"/>
+          <line x1="598" y1="149" x2="690" y2="149"/>
+        </g>
+        <rect class="dbox-a" x="696" y="56" width="190" height="42" rx="2"/>
+        <text class="dsub" x="791" y="73" text-anchor="middle">Witness A, 1971 sighting</text>
+        <text class="dlab" x="791" y="89" text-anchor="middle">distinct witness</text>
+        <rect class="dbox-a" x="696" y="128" width="190" height="42" rx="2"/>
+        <text class="dsub" x="791" y="145" text-anchor="middle">NARA docket 5512-B</text>
+        <text class="dlab" x="791" y="161" text-anchor="middle">distinct official record</text>
+        <text class="dlab" x="466" y="212">counts twice — threshold reachable</text>
+        <text class="dlab" x="466" y="232">justification recorded on the pair, versioned</text>
+        <text class="dlab" x="466" y="252" style="fill:var(--ink-soft)">publisher and byline never justify it</text>
+      </svg>
+    </div>
+    <figcaption><b>Identity gates countability; independence gates counting.</b> An edge is countable once its upstream origin is nameable — even a single unnamed witness reached through one publication. Unknown independence then collapses two bases into one <em>for counting only</em>: it never invalidates an edge and never blocks <code>provisional_support</code>. Anything outside the five mechanical justifications requires a logged operator action.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 04 ================= -->
+<section id="lanes">
+  <h2><em>04 — Scheduling</em>Lanes and budget</h2>
+  <p>Discovery opens claims faster than verification closes them, so capacity is weighted against the natural gradient. Every claimant-led discovery mandates a counterpart task, and an ordinary promotion needs two independent bases including at least one primary, empirical, or adjudicative record.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 900 262" role="img" aria-label="Ten daily read slots grouped as three discovery, five verification, two correction. Correction capacity may lend to verification within the same day; discovery may never borrow from the reserve.">
+        <defs>
+          <marker id="a3" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
+          </marker>
+          <marker id="a3no" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" style="fill:var(--danger)"/>
+          </marker>
+        </defs>
+        <text class="dhed" x="14" y="24">10 RETAINED FULL READS PER LOCAL DAY</text>
+
+        <text class="dlab" x="598" y="40" text-anchor="middle" style="fill:var(--accent)">correction may lend to verification, same day</text>
+        <path class="dline" style="stroke:var(--accent)" marker-end="url(#a3)" d="M 700 78 C 664 50, 540 50, 500 76"/>
+
+        <g>
+          <rect class="dbox" x="136" y="86" width="52" height="52" rx="2"/>
+          <rect class="dbox" x="200" y="86" width="52" height="52" rx="2"/>
+          <rect class="dbox" x="264" y="86" width="52" height="52" rx="2"/>
+          <rect class="dbox-a" x="340" y="86" width="52" height="52" rx="2"/>
+          <rect class="dbox-a" x="404" y="86" width="52" height="52" rx="2"/>
+          <rect class="dbox-a" x="468" y="86" width="52" height="52" rx="2"/>
+          <rect class="dbox-a" x="532" y="86" width="52" height="52" rx="2"/>
+          <rect class="dbox-a" x="596" y="86" width="52" height="52" rx="2"/>
+          <rect class="dbox" x="672" y="86" width="52" height="52" rx="2" style="fill:var(--warn-tint);stroke:var(--warn)"/>
+          <rect class="dbox" x="736" y="86" width="52" height="52" rx="2" style="fill:var(--warn-tint);stroke:var(--warn)"/>
+        </g>
+
+        <g class="dfaint">
+          <line x1="136" y1="152" x2="316" y2="152"/>
+          <line x1="340" y1="152" x2="648" y2="152"/>
+          <line x1="672" y1="152" x2="788" y2="152"/>
+        </g>
+        <text class="dsub" x="226" y="170" text-anchor="middle">3 discovery</text>
+        <text class="dsub" x="494" y="170" text-anchor="middle" style="fill:var(--accent)">5 verification</text>
+        <text class="dsub" x="730" y="170" text-anchor="middle" style="fill:var(--warn)">2 correction</text>
+
+        <path class="dno" marker-end="url(#a3no)" d="M 470 196 C 418 232, 300 232, 250 202"/>
+        <path d="M353 216 L367 230 M367 216 L353 230" style="stroke:var(--danger);stroke-width:1.6"/>
+        <text class="dlab" x="360" y="252" text-anchor="middle" style="fill:var(--danger)">discovery never borrows from the protected reserve</text>
+
+        <text class="dlab" x="14" y="200">Brake</text>
+        <text class="dsub" x="14" y="220">discovery pauses for the day when</text>
+        <text class="dsub" x="14" y="236">open counterparts exceed 12, or</text>
+        <text class="dsub" x="14" y="252">any counterpart task is overdue</text>
+      </svg>
+    </div>
+    <figcaption><b>Capacity is a policy, not a preference.</b> A discovery-heavy split accumulates unresolved claims instead of settling them: at six discovery reads a day, the system opens claims roughly twelve times faster than the reserve can close them.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 05 ================= -->
+<section id="store">
+  <h2><em>05 — ADR-0001</em>Storage and runtime</h2>
+  <p>The storage choice follows from a stated concurrency requirement rather than from habit: one operator, one host, a ceiling of ten retained reads per local day, a handful of local workers, and no multi-writer or horizontal-scale requirement anywhere in the specification.</p>
+  <p>The implementation uses <b>SQLite in WAL mode</b> for structured state and a <b>local content-addressed filesystem</b> for retained artifacts. PostgreSQL with an S3-compatible object store was considered and rejected as unearned operational cost at this scale, and as the largest avoidable obstacle to Gate 1. The domain contract names no SQLite-specific behavior, so the decision reverses as a storage-adapter change if the concurrency requirement ever does.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 900 326" role="img" aria-label="One host containing API, scheduler, fetch and parse workers, and model and assessment workers, over one SQLite file and one content-addressed artifact tree. An evidence edge event and its downstream invalidation commit in a single transaction.">
+        <defs>
+          <marker id="a4" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <rect x="14" y="34" width="872" height="276" rx="3" style="fill:none;stroke:var(--rule-strong);stroke-dasharray:4 4"/>
+        <text class="dhed" x="30" y="56">ONE HOST</text>
+
+        <g>
+          <rect class="dbox" x="34" y="74" width="192" height="52" rx="2"/>
+          <text class="dttl" x="130" y="97" text-anchor="middle">API + operator UI</text>
+          <text class="dsub" x="130" y="114" text-anchor="middle">inspection, pause, export</text>
+
+          <rect class="dbox" x="242" y="74" width="192" height="52" rx="2"/>
+          <text class="dttl" x="338" y="97" text-anchor="middle">Scheduler</text>
+          <text class="dsub" x="338" y="114" text-anchor="middle">lanes, reservations</text>
+
+          <rect class="dbox" x="450" y="74" width="192" height="52" rx="2"/>
+          <text class="dttl" x="546" y="97" text-anchor="middle">Fetch + parse</text>
+          <text class="dsub" x="546" y="114" text-anchor="middle">isolated, least privilege</text>
+
+          <rect class="dbox" x="658" y="74" width="192" height="52" rx="2"/>
+          <text class="dttl" x="754" y="97" text-anchor="middle">Model + assess</text>
+          <text class="dsub" x="754" y="114" text-anchor="middle">proposals, transitions</text>
+        </g>
+
+        <g class="dline" marker-end="url(#a4)">
+          <line x1="130" y1="130" x2="230" y2="180"/>
+          <line x1="338" y1="130" x2="290" y2="180"/>
+          <line x1="546" y1="130" x2="560" y2="180"/>
+          <line x1="754" y1="130" x2="400" y2="180"/>
+        </g>
+        <text class="dlab" x="34" y="160">workers claim operations by lease; expiry reclaims a crashed worker's work</text>
+
+        <rect class="dbox-a" x="184" y="184" width="234" height="56" rx="2"/>
+        <text class="dttl" x="301" y="207" text-anchor="middle">SQLite — WAL</text>
+        <text class="dsub" x="301" y="225" text-anchor="middle">one file, foreign keys enforced</text>
+
+        <rect class="dbox" x="466" y="184" width="234" height="56" rx="2"/>
+        <text class="dttl" x="583" y="207" text-anchor="middle">Artifact tree</text>
+        <text class="dsub" x="583" y="225" text-anchor="middle">content-addressed, fsync then rename</text>
+
+        <rect x="184" y="258" width="516" height="38" rx="2" style="fill:var(--accent-tint);stroke:var(--accent);stroke-width:1"/>
+        <text class="dsub" x="442" y="282" text-anchor="middle" style="fill:var(--ink)">one transaction: admitted edge event + outbox invalidation commit together</text>
+
+        <text class="dlab" x="716" y="209">durable queue =</text>
+        <text class="dlab" x="716" y="225">operations +</text>
+        <text class="dlab" x="716" y="241">transactional outbox</text>
+      </svg>
+    </div>
+    <figcaption><b>The transaction is the point.</b> An evidence change and the invalidation of everything projected from it commit as one unit, so no rendered card can outlive the edge that justified it. Artifact bytes are fsynced and renamed into place before the row referencing them commits, leaving no dangling reference after a crash.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 06 ================= -->
+<section id="trust">
+  <h2><em>06 — Isolation</em>Trust boundaries</h2>
+  <p>Five boundaries, ordered from the most hostile inward. Each is enforced below the interface layer, so no surface can talk its way past one.</p>
+  <ol class="bounds">
+    <li><span class="n">01</span><div><h4>External content</h4><p>URLs, headers, files, markup, metadata, and document text are hostile. Fetch and parse workers run with their own network and resource isolation.</p></div></li>
+    <li><span class="n">02</span><div><h4>Model</h4><p>Prompts carry only the minimum artifact segments. Output is schema-validated proposal data, never executable policy. Prompt injection is contained here, not at fetch: every proposed quotation verifies byte-exact against retained text, so a model cannot introduce a quotation that does not already exist.</p></div></li>
+    <li><span class="n">03</span><div><h4>Evidence</h4><p>Only verified spans and admitted edge events can affect an assessment. Anything missing or corrupt fails closed and remains contextual material.</p></div></li>
+    <li><span class="n">04</span><div><h4>Publication</h4><p>An internal assessment does not imply clearance. The exact rendered revision and its full dependency set require independent appraisal.</p></div></li>
+    <li><span class="n">05</span><div><h4>Operator</h4><p>The operator corrects metadata and authorizes reach, and cannot silently edit the evidence ledger. Every action records actor, time, reason, target preimage, and result.</p></div></li>
+  </ol>
+</section>
+
+<!-- ================= 07 ================= -->
+<section id="publish">
+  <h2><em>07 — Deny by default</em>The publication gate</h2>
+  <p>Effective risk is the maximum of source, claim, named-entity, domain, and intended-output risk. A model may raise it and may never lower it; missing or unreadable risk state behaves as R3 and blocks publication outright.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 900 286" role="img" aria-label="Assessment becomes a card revision, then appraisal, then routes by risk tier: R0 to R1 automated, R2 operator review, R3 exact-revision approval, R4 never published. Public reach defaults to off.">
+        <defs>
+          <marker id="a5" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <rect class="dbox" x="14" y="112" width="128" height="52" rx="2"/>
+        <text class="dttl" x="78" y="135" text-anchor="middle">Assessment</text>
+        <text class="dsub" x="78" y="152" text-anchor="middle">internal, live</text>
+
+        <rect class="dbox" x="176" y="112" width="128" height="52" rx="2"/>
+        <text class="dttl" x="240" y="135" text-anchor="middle">Card revision</text>
+        <text class="dsub" x="240" y="152" text-anchor="middle">exact render</text>
+
+        <rect class="dbox" x="338" y="112" width="128" height="52" rx="2"/>
+        <text class="dttl" x="402" y="135" text-anchor="middle">Appraisal</text>
+        <text class="dsub" x="402" y="152" text-anchor="middle">omission, privacy</text>
+
+        <g class="dline" marker-end="url(#a5)">
+          <line x1="144" y1="138" x2="170" y2="138"/>
+          <line x1="306" y1="138" x2="332" y2="138"/>
+          <line x1="468" y1="138" x2="520" y2="52"/>
+          <line x1="468" y1="138" x2="520" y2="110"/>
+          <line x1="468" y1="138" x2="520" y2="168"/>
+          <line x1="468" y1="138" x2="520" y2="226"/>
+        </g>
+
+        <rect x="526" y="30" width="360" height="42" rx="2" style="fill:var(--accent-tint);stroke:var(--accent)"/>
+        <text class="dsub" x="546" y="48" style="fill:var(--accent)">R0 – R1</text>
+        <text class="dsub" x="640" y="48" style="fill:var(--ink)">automated checks, then appraisal</text>
+        <text class="dlab" x="640" y="63">folklore, UAP, psi, cryptids, alternative physics</text>
+
+        <rect x="526" y="88" width="360" height="42" rx="2" style="fill:var(--warn-tint);stroke:var(--warn)"/>
+        <text class="dsub" x="546" y="106" style="fill:var(--warn)">R2</text>
+        <text class="dsub" x="640" y="106" style="fill:var(--ink)">operator review before publication</text>
+        <text class="dlab" x="640" y="121">scoped pre-clearance may be granted, and revoked</text>
+
+        <rect x="526" y="146" width="360" height="42" rx="2" style="fill:var(--danger-tint);stroke:var(--danger)"/>
+        <text class="dsub" x="546" y="164" style="fill:var(--danger)">R3</text>
+        <text class="dsub" x="640" y="164" style="fill:var(--ink)">approval of the exact revision</text>
+        <text class="dlab" x="640" y="179">no pre-clearance; isolated workflow</text>
+
+        <rect x="526" y="204" width="360" height="42" rx="2" style="fill:var(--quarantine-tint);stroke:var(--quarantine)"/>
+        <text class="dsub" x="546" y="222" style="fill:var(--ink)">R4</text>
+        <text class="dsub" x="640" y="222" style="fill:var(--ink)">never published, never prompted</text>
+        <text class="dlab" x="640" y="237">metadata quarantine only</text>
+
+        <text class="dlab" x="14" y="196" style="fill:var(--danger)">fail closed</text>
+        <text class="dsub" x="14" y="216">missing or unreadable</text>
+        <text class="dsub" x="14" y="232">risk state behaves as R3</text>
+        <text class="dsub" x="14" y="248">and blocks publication</text>
+        <text class="dlab" x="526" y="266">public reach defaults to disabled and is lockable without touching evidence</text>
+      </svg>
+    </div>
+    <figcaption><b>Assessment is not permission.</b> Corrections stay visibly attached to prior outputs; a retraction removes the presentation from navigation but leaves a tombstone explaining what changed.</figcaption>
+  </figure>
+
+  <h3>Risk tiers</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Tier</th><th>Examples</th><th>Treatment</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tier t01">R0</span></td><td>Historical folklore, obsolete claims</td><td class="mut">Ordinary attributed research</td></tr>
+        <tr><td><span class="tier t01">R1</span></td><td>UAP, psi, cryptids, alternative physics and history</td><td class="mut">Ordinary investigation; evidence rules apply</td></tr>
+        <tr><td><span class="tier t2">R2</span></td><td>Active institutions, current secrecy, named organizations</td><td class="mut">Strong provenance, two independent bases, explicit allegation labels</td></tr>
+        <tr><td><span class="tier t3">R3</span></td><td>Medicine, elections, finance, alleged crimes by living people</td><td class="mut">Isolated workflow; primary or adjudicative basis plus an independent qualified basis; operator approval before any publication</td></tr>
+        <tr><td><span class="tier t4">R4</span></td><td>Doxxing, incitement, harassment, operational wrongdoing</td><td class="mut">Metadata quarantine only; never reproduced or operationalized</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 08 ================= -->
+<section id="invariants">
+  <h2><em>08 — Non-negotiable</em>Architectural invariants</h2>
+  <ul class="inv">
+    <li>One acquisition spine serves feeds, directed research, documents, and resolvers.</li>
+    <li>One claim and evidence graph serves every consumer.</li>
+    <li>Current state is derived from append-only events.</li>
+    <li>Every consequential row records policy and implementation versions.</li>
+    <li>Duplicate publication is distinct from independent basis.</li>
+    <li>A failed or retracted edge invalidates all dependent projections.</li>
+    <li>Search, embeddings, prose, and prior NewZ output are never external evidence.</li>
+    <li>Risk is monotonic within an automated operation; lowering it requires a reasoned operator action.</li>
+    <li>Public reach defaults to off and can be locked down without changing evidence.</li>
+    <li>Core records and artifacts are portable and recoverable without a model provider.</li>
+    <li>Claim merge and split re-point edges by new events and never rewrite existing ones.</li>
+    <li>Erasure destroys a per-subject key; the ledger event survives, unreadable, with a tombstone.</li>
+  </ul>
+</section>
+
+<!-- ================= 09 ================= -->
+<section id="rollout">
+  <h2><em>09 — Rollout</em>Modes and gates</h2>
+  <p>Mode transitions are explicit, audited, and reversible. Lockdown is reachable from any mode without mutating a single evidence record.</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Mode</th><th>Acquisition</th><th>Assessment</th><th>Presentation</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Fixture</td><td class="mut">Offline fixtures only</td><td class="mut">Enabled</td><td class="mut">Local test output</td></tr>
+        <tr><td class="k">Shadow</td><td class="mut">Live, reviewed catalog</td><td class="mut">Compared to fixture expectations, not authoritative</td><td class="mut">Withheld</td></tr>
+        <tr><td class="k">Pilot</td><td class="mut">20-source catalog, hard budgets</td><td class="mut">Authoritative internally</td><td class="mut">Local and operator only</td></tr>
+        <tr><td class="k">Production</td><td class="mut">Approved catalog and budget expansion</td><td class="mut">Authoritative</td><td class="mut">Cleared R0–R2; R3 exact-review only</td></tr>
+        <tr><td class="k">Lockdown</td><td class="mut">Paused</td><td class="mut">Historical inspection only</td><td class="mut">Public output disabled</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Delivery gates</h3>
+  <ol class="gates">
+    <li><span class="g">M0 · GATE 0</span><h4>Contract</h4><p>Domain language, policies, fixtures, and ADR-0001 are executable and versioned. No network access exists yet.</p></li>
+    <li><span class="g">M1 · GATE 1</span><h4>Provenance spine</h4><p>Four offline canary sources produce reconstructible acquisition traces and artifact hashes through one scheduler.</p></li>
+    <li><span class="g">M2 · GATE 2</span><h4>Evidence graph</h4><p>The controlled corpus produces every assessment state, explainable without reading model reasoning or trusting generated prose.</p></li>
+    <li><span class="g">M3 · GATE 3</span><h4>Investigation loop</h4><p>Three fixture investigations reach different defensible outcomes, one stays unresolved, one reverses after correction. No manual database edit.</p></li>
+    <li><span class="g">M4 · GATE 4</span><h4>Safe presentation</h4><p>A local reader can audit every sentence in a claim card, and a post-publication correction updates it automatically. Public reach stays disabled.</p></li>
+    <li><span class="g">M5 · GATE 5</span><h4>Contested pilot</h4><p>30 eligible dates, 100 retained full reads, all 20 routes exercised under the current code version, and live claims demonstrating supported, contested, indeterminate, and corrected outcomes.</p></li>
+    <li><span class="g">M6 · GATE 6</span><h4>Production</h4><p>Service objectives, security review, disaster-recovery drill, policy replay, and a public correction drill pass. R4 remains permanently quarantined.</p></li>
+  </ol>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <span>NewZ · architecture 1.1.0</span>
+  <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
+  <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
+</footer>
+
+</div>
