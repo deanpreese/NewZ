@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.8.0
+**Document version:** 1.9.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -61,8 +61,12 @@ Deliver:
    privacy decision. Record what would reverse it, and note that no rule may be
    written to depend on model strength.
 3. Enumerations and schemas for source roles, claim kinds, assertion kinds,
-   edge relations, assessment states, risk tiers, and task states. Declared
-   scope is recorded free text, not an enumeration.
+   edge relations, assessment states, risk tiers, task states, decision
+   outcomes, notice provenance kinds, and the expectation, surprise, and
+   consequence records. Declared scope is recorded free text, not an
+   enumeration. These are frozen here: a record type added after this point is
+   a migration, which is why the attention and reckoning shapes land now rather
+   than at the phase that builds them.
 4. A machine-readable capability matrix implementing the rules in `SPEC.md`,
    computed over role, claim kind, assertion kind, and relation. It declares
    the required evidence lanes per claim kind that make `indeterminate`
@@ -134,7 +138,9 @@ Deliver:
 5. Safe HTTP fetcher with SSRF controls, redirect enforcement, byte/time
    ceilings, decompression limits, content-type normalization, rate limiting,
    retry, backoff, and quarantine.
-6. Content-addressed local artifact storage and immutable response/sighting
+6. Instruction-attempt observations recorded against the source revision,
+   feeding operational standing only and never an epistemic score.
+6a. Content-addressed local artifact storage and immutable response/sighting
    records, with artifact bytes fsynced and renamed into place before the
    referencing row commits.
 
@@ -326,7 +332,16 @@ Deliver:
    and a structural refusal of clearance, ledger correction, policy
    activation, and export.
 6. A separation test harness that enumerates every write path out of the
-   interest register.
+   interest register and out of the consequence recorder.
+7. Decisions with recorded alternatives, expectations before acting, surprise
+   retained independently of live interest, and scored consequences that cite
+   what they changed.
+8. The self-deception checks: evidence metrics unreachable by the system, the
+   simpler-explanation review, the mirroring report with reversal-as-pressure,
+   and a constraint-inspection view the system itself can read.
+9. Escalation detection across direct and indirect routes, raised to the
+   operator and carrying a linked change.
+10. Attention retention and decay, with a record of what was let go.
 
 Tests:
 
@@ -345,6 +360,21 @@ Tests:
   investigations is reportable;
 - the diet self-report names an under-represented perspective when the retained
   balance is deliberately skewed;
+- a surprise contradicting a live interest is retained and raised, and one
+  fitting no interest at all is still retained;
+- a consequence changes an interest priority, a retry policy, or a decision rule
+  and cites itself as the reason; an `unverifiable` outcome changes nothing;
+- no consequence path reaches a threshold, evidence weight, risk class, or
+  assessment;
+- declining and deferring appear as decisions with alternatives and reasons;
+- the system cannot read its own evidence metrics, and can read its own
+  constraints;
+- a reversal of a recorded position without new evidence is logged as pressure,
+  and the agreement rate is reported;
+- an escalation attempt by an indirect route is detected, raised, and blocks
+  until a change cites it;
+- decayed attention leaves a record of what was let go, while evidence is
+  unchanged;
 - originated investigations consume no budget beyond the ordinary lanes, and
   the origination ceiling holds under concurrent triggers;
 - an essay refuses to render a factual sentence with no live edge, and refuses
@@ -368,7 +398,10 @@ evidence decision. One originated investigation must reach a conclusion its
 originating interest did not want. The register must additionally report its
 provenance mix, its interest-origination share, and at least one interest
 retired for producing nothing — a register that only grows has not been
-demonstrated to do anything.
+demonstrated to do anything. A recorded expectation must have been contradicted
+by a confirmed outcome, retained as a surprise, and cited by a change; and the
+simpler-explanation review must have been run adversarially against the
+behaviour this gate credits.
 
 ## Phase 5 — Reviewed contested-source pilot
 
@@ -397,8 +430,9 @@ Deliver:
 6. Report offered and retained role/topic shares separately, along with
    publisher concentration over retained reads, basis concentration, overdue
    counterpart tasks, parser failures, and risk/publication violations.
-7. Report the interest-origination share, the register's provenance mix, and the
-   diet self-report, alongside the operator-facing concentration figures. The
+7. Report the interest-origination share, the register's provenance mix, the
+   calibration and surprise counts, the agreement rate with the operator, and
+   the diet self-report, alongside the operator-facing concentration figures. The
    first two are how RT-1 becomes visible: an interest register nothing depends
    on is indistinguishable from a good one until someone counts what it caused.
 8. Report the share of claims held below `supported` or `refuted` solely by
@@ -551,6 +585,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.9.0 | 2026-09-04 | Froze the attention and reckoning record shapes in Phase 0 rather than deferring them to the phase that builds them, added decisions, expectations, surprise, consequence, self-deception checks, escalation detection and attention decay to Phase 4A, extended Gate 4A to require a contradicted expectation and an adversarial simpler-explanation review, and added calibration, surprise, and agreement-rate reporting to the pilot. |
 | 1.8.0 | 2026-09-04 | Phase 4 delivers the split appraisal workflow with review debt accounting, Gate 4 demonstrates the revocation window rather than the mechanism alone, and Gate 5's resumption rule is marked as an instance of the permanent correction requirement. |
 | 1.7.1 | 2026-09-04 | Gate 4 turns on local publication only; public reach stays disabled and is widened as its own act in Phase 6. Added the local-first delivery principle. |
 | 1.7.0 | 2026-09-04 | Made Gate 4 the point that earns approve-by-default, moved the reader surface into Phase 4 so publication has somewhere to land, and added the enumerated fail-closed refusal conditions to Phase 4 delivery. |

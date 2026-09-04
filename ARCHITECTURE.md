@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.8.0
+**Document version:** 1.9.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -65,6 +65,8 @@ flowchart TB
         NOTICE[Noticing]
         INTEREST[Interest register]
         PICK[Essay selection]
+        DECIDE[Decisions and expectations]
+        CONSEQ[Surprise and consequence]
     end
 
     subgraph RESEARCH[Research plane]
@@ -95,8 +97,10 @@ flowchart TB
     CLAIMS --> QUALIFY
     ASSESS --> INVEST --> TASKS --> BUDGET
     OPERATOR[Operator actions] --> INVEST
-    EXTRACT --> NOTICE --> INTEREST --> INVEST
+    EXTRACT --> NOTICE --> INTEREST --> DECIDE --> INVEST
     INTEREST --> PICK --> COMPOSE
+    ASSESS --> CONSEQ --> INTEREST
+    DECIDE --> CONSEQ
     ASSESS --> RESOLVE --> ASSESS
     ASSESS --> CARD --> COMPOSE --> APPRAISE --> PUBLISH
     RISK --> QUALIFY
@@ -155,6 +159,7 @@ assessment.
 | Assessor | Deterministic assessment transitions against the current promotion policy | Searching, fetching, or defining thresholds |
 | Noticing | Attention records against retained spans, in the system's own words | Assertions, edges, or bases |
 | Interest register | Durable inspectable dispositions, append-only with reasons, recorded influences, provenance mix, downstream trace, retirement, investigation origination, essay subject selection | Scheduling, evidence weight, thresholds, risk, any assessment, or attention drawn from the system's own output |
+| Reckoning | Decisions with alternatives, expectations, surprises, scored consequences, escalation events, mirroring and calibration reports | Reaching a threshold, an evidence weight, a risk class, or any assessment |
 | Research manager | Investigations, missing lanes, task lifecycle and its competent/incomplete terminal classification, resolution attempts | Rewriting evidence history |
 | Projector | Claim cards, entity cards, and dependency maps | New factual assertions, or any per-person aggregation held at rest |
 | Appraisal/clearance | Machine appraisal dimensions, exact-revision output permission, sampling selection, review debt accounting | Altering internal evidence state, or deciding fair representation and material omission |
@@ -337,6 +342,10 @@ storage-adapter change and does not alter the domain contract.
 - The system never judges its own fair representation.
 - Every failure carries a change that cites it; an explanation alone is the
   defect.
+- Surprise is retained whether or not it fits anything the system is pursuing.
+- Attention decays and leaves a record of decaying; evidence never decays.
+- Evidence metrics are not reachable by the system that produces them.
+- What the system may not do is legible to it.
 - Core records and artifacts are portable and recoverable without a model
   provider.
 
@@ -361,6 +370,7 @@ sequencing is in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.9.0 | 2026-09-04 | Added decisions, expectations, surprise, and consequence to the attention plane as a reckoning component that may change behaviour and never an assessment, with invariants for retained surprise, decaying attention, unreachable metrics, and legible constraints. |
 | 1.8.0 | 2026-09-04 | Gave appraisal its machine and person dimensions with a review debt ceiling, bounded revocation in time, and made failure-to-change linkage a permanent invariant. |
 | 1.7.1 | 2026-09-04 | Split clearance from reach: approve-by-default governs what publishes, local-first governs where it lands, and public reach returns to off by default. |
 | 1.7.0 | 2026-09-04 | Publication becomes approve-by-default and revocable, held by enumerated fail-closed refusals rather than by waiting, with reach defaulting on from Gate 4 and still lockable at any moment. |

@@ -201,7 +201,7 @@ footer{
   <h1>NewZ Architecture</h1>
   <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence — with a faculty that decides what is worth investigating, and cannot decide what is true.</p>
   <div class="meta">
-    <span><b>Version</b> 1.8.0</span>
+    <span><b>Version</b> 1.9.0</span>
     <span><b>Effective</b> 2026-09-04</span>
     <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
     <span><b>Model</b> small, local, replaceable</span>
@@ -361,6 +361,19 @@ footer{
     <figcaption><b>Interest reaches attention. Evidence reaches conclusion.</b> Interest may open an investigation and pick an essay's subject; the tasks that follow queue in the ordinary lanes and buy no extra reads, so the diet keeps sole control of throughput. Because this boundary guards the system against its own preferences rather than against an outside party, it is enforced by the absence of a code path — Gate 4A audits the register's write paths rather than sampling its behavior.</figcaption>
   </figure>
 
+  <h3>Expectation, surprise, consequence</h3>
+  <p>Interest that never meets resistance is a preference. Before the system originates an investigation, dispatches a resolution task, or publishes, it records what it expects — and the divergence between that and the confirmed outcome is kept as a <b>surprise</b>, retained even when it fits no live interest and belongs to no open investigation. A system that keeps only what it expected learns the shape of its own expectations.</p>
+  <p>Each delta is scored as a <b>consequence</b> that must change something and cite itself as the reason: an interest's priority, a retry policy, a source's operational standing, a future decision rule. Activity that grows while behaviour does not is precisely what this makes visible. And the boundary holds here exactly as it holds for interest — no consequence reaches a threshold, an evidence weight, a risk class, or any assessment. Learning from what happened changes what the system does next, never what the evidence establishes.</p>
+  <p>Outcomes are never self-graded. Confirmation comes from outside the system's own report — the publication confirmation rule, or the evidence graph itself for whether an investigation reached the state it set out to reach. Where none is available the outcome is <code>unverifiable</code> and feeds nothing.</p>
+
+  <h3>Checks against self-deception</h3>
+  <ul>
+    <li><b>Metrics are not objectives.</b> Origination share, provenance mix, calibration, coverage — none is visible to the system as a score to improve. A metric it can see and move stops measuring what it proxied. You see them; it does not.</li>
+    <li><b>The simpler explanation is checked first.</b> Any behaviour credited as interest, initiative, or perspective is tested against retrieval order, recency in the diet, the prompt's own content, and the model's defaults — periodically and adversarially, not once at a gate.</li>
+    <li><b>Mirroring is measured.</b> Agreement rate with your positions is reported. A reversal must cite new evidence; without it, the reversal is recorded as pressure rather than as a reason. Convergence without independent support is the failure that looks most like developed judgment to both parties.</li>
+    <li><b>Constraints are legible.</b> The system can read what it may not do and why. A constraint it cannot see still binds it but teaches it nothing, and a refusal it cannot explain is one it will retry by another route.</li>
+  </ul>
+
   <h3>What keeps it honest</h3>
   <ul>
     <li><b>A notice is not evidence.</b> It cannot become an assertion, an edge, or a basis, and never appears on a claim card as support for anything.</li>
@@ -368,6 +381,8 @@ footer{
     <li><b>Influences are recorded.</b> A catalog weighted 18% toward one subject produces a system interested in that subject. That is a property of the diet, labelled as one rather than reported as self-discovery.</li>
     <li><b>Attention never feeds on the system's own output.</b> A notice cannot arise from an essay, a card, or a prior notice, and the provenance mix entering the register stays dominated by external material — otherwise confidence rises while grounding falls.</li>
     <li><b>Every interest carries its downstream trace.</b> What it opened, what it selected, what those produced. An interest that caused nothing within its window is retired; a register that only grows is a topic list.</li>
+    <li><b>Notices say how they arose</b> — observed, inferred, or told. A system that cannot separate what it saw from what it concluded from what it was handed cannot answer how it knows anything.</li>
+    <li><b>Attention decays; evidence does not.</b> Notices and interest entries have a retention window and lose detail by decay rather than silent truncation, leaving a record of what was let go. Nothing in the evidence graph decays.</li>
     <li><b>The system states its own skew.</b> The retained balance of roles, topics, and publishers, which perspectives are under-represented, and where its interests merely track the diet's targets. It does not treat its catalog as the world.</li>
     <li><b>Origination is bounded.</b> Five concurrently open self-originated investigations during Pilot, each stating its question, exit conditions, and closing observation before a single task is created.</li>
     <li><b>The essay does not get its verdict.</b> Where the evidence turns against the essay the system wanted to write, the essay changes or goes unwritten.</li>
@@ -397,6 +412,7 @@ footer{
         <tr><td class="k">Assessor</td><td class="own">Deterministic state transitions against current policy</td><td class="not">Searching, fetching, defining thresholds</td></tr>
         <tr><td class="k">Noticing</td><td class="own">Attention records against retained spans, in the system's own words</td><td class="not">Assertions, edges, or bases</td></tr>
         <tr><td class="k">Interest register</td><td class="own">Durable inspectable dispositions, recorded influences, provenance mix, downstream trace, retirement, investigation origination, essay subject selection</td><td class="not">Scheduling, evidence weight, thresholds, risk, any assessment, or attention drawn from the system's own output</td></tr>
+        <tr><td class="k">Reckoning</td><td class="own">Decisions with alternatives, expectations, surprises, scored consequences, escalation events, mirroring and calibration reports</td><td class="not">Reaching a threshold, an evidence weight, a risk class, or any assessment</td></tr>
         <tr><td class="k">Research manager</td><td class="own">Investigations, missing lanes, task lifecycle and terminal classification, resolution attempts</td><td class="not">Rewriting evidence history</td></tr>
         <tr><td class="k">Projector</td><td class="own">Claim cards, entity cards, and dependency maps</td><td class="not">New factual assertions, or any per-person aggregation held at rest</td></tr>
         <tr><td class="k">Appraisal / clearance</td><td class="own">Machine appraisal dimensions, exact-revision permission, sampling selection, review debt accounting</td><td class="not">Altering internal evidence state, or deciding fair representation and material omission</td></tr>
@@ -720,6 +736,10 @@ footer{
     <li>Approve-by-default is earned by demonstrated revocation inside a bounded window, never assumed.</li>
     <li>The system never judges its own fair representation.</li>
     <li>Every failure carries a change that cites it; an explanation alone is the defect.</li>
+    <li>Surprise is retained whether or not it fits anything the system is pursuing.</li>
+    <li>Attention decays and leaves a record of decaying; evidence never decays.</li>
+    <li>Evidence metrics are not reachable by the system that produces them.</li>
+    <li>What the system may not do is legible to it.</li>
     <li>Core records and artifacts are portable and recoverable without a model provider.</li>
     <li>Claim merge and split re-point edges by new events and never rewrite existing ones.</li>
     <li>Erasure destroys a per-subject key; the ledger event survives, unreadable, with a tombstone.</li>
@@ -773,7 +793,7 @@ footer{
 </div>
 
 <footer>
-  <span>NewZ · architecture 1.8.0</span>
+  <span>NewZ · architecture 1.9.0</span>
   <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
   <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
 </footer>

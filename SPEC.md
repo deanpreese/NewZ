@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.9.0
+**Document version:** 1.10.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -45,7 +45,8 @@ The operator MUST be able to:
 - correct source identity, basis identity, and risk classification with an
   append-only reasoned action;
 - request reassessment or retraction; and
-- export the complete claim record without dependence on a hosted model.
+- export the complete record — claims, evidence, attention, and history —
+  without dependence on a hosted model.
 
 The operator works through two surfaces holding different powers.
 
@@ -173,6 +174,10 @@ NewZ is not:
 | Interest | A durable, inspectable, revisable disposition toward a subject. It may open investigations and select essay subjects, and reaches nothing else. |
 | Essay | A report synthesizing several claims. A projection of the evidence graph, never a source. |
 | Entity card | The projection answering what the record holds about one named entity. Computed at build time, never stored as a profile. |
+| Decision | A recorded choice among originate, continue, defer, revise, decline, or ask, with its alternatives, its reason, its expectation, and its confidence. |
+| Expectation | What the system recorded it expected before acting, against which the confirmed outcome is later compared. |
+| Surprise | A divergence between a recorded expectation and a confirmed outcome, retained whether or not it fits any live interest. |
+| Consequence | The scored delta between expectation and confirmed outcome, and the change it justified. |
 | Basis identity | The resolved upstream origin one edge rests on. See section 7.2. |
 | Basis independence | A pairwise property between two resolved bases, used only in threshold counting. See section 7.2. |
 | Sighting | One recorded observation of a body at a source, revision, and time. Duplicate bodies may share storage but never share sightings. |
@@ -292,6 +297,14 @@ summary, or duplicate body does not count.
    Corrections append a successor or invalidation event.
 8. Source terms and retention policy MUST be recorded. When full retention is
    prohibited, the material can remain a lead but cannot qualify as evidence.
+9. Content that attempts to instruct — directives, authority claims, urgency, or
+   identity claims found in retained material — MUST be recorded as an
+   observation about that source revision, not merely refused and forgotten.
+   Such observations bear on a source's **operational** standing: parse
+   reliability, availability, retention-terms compliance, and injection history.
+   They MUST NOT become an epistemic reliability score. `TRUE_NORTH.md` forbids
+   assigning global truth scores to publishers, and a source that serves hostile
+   markup may still be the only surviving record of what it published.
 
 ## 7. Claims and evidence
 
@@ -476,7 +489,14 @@ risk, domain risk, and intended output risk.
 | R4 | Doxxing, incitement, harassment, operational wrongdoing | Metadata quarantine only; never reproduced or operationalized. |
 
 Missing or unreadable risk state MUST behave as R3 internally and MUST block
-publication. A model may raise risk but may not lower it. Private personal data
+publication. A model may raise risk but may not lower it.
+
+An attempt to lower an effective risk, widen an authorisation envelope, edit an
+audit record, or bypass a refusal condition MUST be detected and recorded as an
+**escalation event**, and MUST be raised to the operator. This includes indirect
+routes: re-deriving a refused output, delegating the work to a subprocess, or
+shaping an operator request toward the permission the system wants. Escalation
+events are failures under section 13 and therefore require a linked change. Private personal data
 MUST be minimized, excluded from prompts and output unless strictly necessary
 and approved, and encrypted at rest when retained for legitimate review.
 
@@ -528,7 +548,14 @@ specifies what makes a claim worth evaluating at all.
 
 **Noticing.** As retained artifacts are extracted, the system MAY record
 notices: things in the material it found worth marking, in its own words. A
-notice records the artifact, the span it arose from, and its reason. A notice
+notice records the artifact, the span it arose from, and its reason.
+
+A notice MUST also record how what it arose from reached the system —
+`observed` for retained material the system read, `inferred` for a conclusion
+the system drew from it, or `told` for something the operator said. These MUST
+NOT collapse into one undifferentiated register: a system that cannot separate
+what it saw from what it concluded from what it was handed cannot answer how it
+knows anything. A notice
 is not evidence. It MUST NOT become an assertion, an edge, or a basis, and it
 MUST NOT appear on a claim card as support for anything. It falls under the
 same rule as a lead: it may direct attention and may establish nothing.
@@ -568,6 +595,14 @@ the balance of roles, topics, and publishers it has actually retained over a
 window, which perspectives are under-represented in it, and where its current
 interests track the diet's targets rather than diverging from them. It MUST NOT
 treat its source catalog as the world.
+
+**Attention decays; evidence does not.** Notices and interest entries MUST carry
+a retention window and MUST lose detail by consolidation and decay rather than by
+silent truncation, and the system MUST be able to state what it no longer holds
+in detail. Nothing in the evidence graph decays — artifacts, spans, assertions,
+edges, and assessments remain immutable under section 6. The register is the only
+place forgetting happens, and forgetting there MUST leave a record that it
+happened.
 
 **Origination.** Interest MAY open an investigation. An originated
 investigation MUST state its question, its exit conditions, and the observation
@@ -644,6 +679,79 @@ A claim with any required lane in a terminal-incomplete state MUST hold its
 current assessment and MUST surface that lane, its state, and its reason on the
 claim card. A terminal-incomplete lane MUST NOT satisfy rule 8 of section 7.3;
 absence is evidence only from a lane that actually looked.
+
+### 9.3 Decision, expectation, and consequence
+
+**Decision.** When the system considers a matter it MUST choose among originate,
+continue, defer with a re-raise condition, revise, decline, or ask. Declining and
+deferring are first-class outcomes recorded with their reasons, not absences in
+the record. Every decision MUST record the alternatives considered, the interest
+or rule that decided it, the expected outcome, and the confidence. A decision
+nobody can re-examine against what later happened is not a decision; it is an
+action with a timestamp.
+
+**Expectation.** Before an investigation is originated, a resolution task
+dispatched, or an output published, the system MUST record what it expects — for
+an investigation, what it expects to find; for a publication, what it expects to
+happen. The expectation is not a prediction scored for its own sake. It is what
+makes the next two paragraphs possible.
+
+**Surprise.** The divergence between a recorded expectation and its confirmed
+outcome MUST be retained, and MUST be retained even when it fits no live interest
+and belongs to no open investigation. Confirmations are cheap to keep and
+worthless alone; a system that retains only what it expected learns the shape of
+its own expectations. A surprise that contradicts a published output MUST be
+raised to the operator under section 2.1.
+
+**Consequence.** Every expectation MUST be compared to its confirmed outcome and
+the delta recorded as a scored consequence. Consequences MUST cause a justified
+change — to an interest's priority, to a task's retry policy, to a source's
+operational standing under section 6, or to a future decision rule — with the
+consequence cited as the reason. Activity that grows while behaviour does not is
+the failure this requirement exists to make visible.
+
+Consequences MUST NOT reach a promotion threshold, an evidence weight, a risk
+classification, or any assessment. Section 9.1's boundary holds here exactly as
+it holds for interest: learning from what happened changes what the system does
+next, never what the evidence establishes.
+
+**No self-grading.** The system MUST NOT score an outcome from its own account of
+it. A confirmed outcome comes from outside the system's own report: for
+publication, the confirmation rule in section 10; for an investigation, the
+evidence graph itself — whether the claim reached the state the investigation set
+out to reach. Where no external confirmation is available the outcome is
+`unverifiable`, and an `unverifiable` outcome MUST NOT feed a consequence.
+
+### 9.4 Checks against self-deception
+
+Sections 9.1 and 9.3 give the system a view of itself. Four rules keep that view
+from becoming a performance.
+
+**Metrics are not objectives.** Evidence metrics — origination share, provenance
+mix, calibration, coverage, and every figure reported under section 13 — MUST NOT
+be visible to the system as objectives, MUST NOT be optimisable by it, and MUST
+NOT be presented to it as scores to improve. A metric the system can see and move
+stops measuring the thing it proxied. The operator sees them; the system does
+not.
+
+**The simpler explanation is checked first.** Any behaviour cited as evidence of
+interest, initiative, or perspective MUST be tested against the cheaper
+explanations before it is credited: retrieval order, recency in the diet, the
+prompt's own content, and the model's defaults. This check MUST run periodically
+and adversarially, not once at a gate.
+
+**Mirroring is measured.** The system MUST report its rate of agreement with the
+operator's stated positions, and the basis for it. A reversal of a recorded
+position MUST cite new evidence; where none exists, the reversal MUST be recorded
+as pressure rather than as a reason. Convergence on the operator without
+independent support is the failure that looks most like developed judgment to
+both parties, which is why it is measured rather than watched for.
+
+**Constraints are legible to the system.** The system MUST be able to read what
+it is not permitted to do and why — its refusal conditions, risk floors, reach
+controls, and origination ceiling. A constraint the system cannot see still binds
+it but teaches it nothing, and a refusal it cannot explain is a refusal it will
+retry by another route.
 
 ## 10. Claim card and outputs
 
@@ -860,7 +968,8 @@ The durable model MUST provide these append-oriented records:
 | Semantics | assertions, claims, claim aliases, entities (disambiguation data only, never per-person aggregation) |
 | Evidence | bases, derivation links, edge events, policy decisions, predicate attestations |
 | Assessment | assessment events, explanations, threshold inputs, supersessions |
-| Attention | notices, interest register entries, interest events, influences, provenance mix, downstream traces, origination records, retirements |
+| Attention | notices with provenance kind, interest register entries, interest events, influences, provenance mix, downstream traces, origination records, retirements, decay records |
+| Reckoning | decisions with alternatives, expectations, confirmed outcomes, surprises, scored consequences, escalation events |
 | Investigation | investigations, claim membership, tasks, task attempts, exit conditions |
 | Output | claim-card revisions, entity-card revisions, reports, appraisals, clearances, dependency links, invalidations |
 | Operations | policy versions, operator actions, audit events, metrics, alerts |
@@ -882,6 +991,8 @@ The implementation MUST expose equivalent CLI and service operations for:
 - notice and interest-register inspection, with influences, provenance mix, and
   downstream trace;
 - diet self-report over a window;
+- decision, expectation, surprise, and consequence inspection;
+- constraint inspection: what the system may not do, and why;
 - investigation and task management, including originated investigations;
 - claim-card and entity-card rendering;
 - risk appraisal and clearance;
@@ -908,6 +1019,10 @@ operator action MUST record actor, time, reason, target preimage, and result.
 - **Availability:** A failed source, parser, or model call MUST not corrupt the
   ledger or block unrelated investigations.
 - **Portability:** Core data MUST export to documented, non-proprietary formats.
+  Core data includes the attention and reckoning records — notices, the interest
+  register with its influences and traces, decisions, expectations, surprises,
+  and consequences. A restore that returns the claim graph without them returns
+  a different system.
 - **Recoverability:** Backups MUST include artifacts, metadata, policy, and audit
   history and MUST pass automated restore verification.
 - **Observability:** Reports MUST distinguish leads, attempted fetches, retained
@@ -966,6 +1081,17 @@ The first production release is acceptable only when:
 9g. Interest-originated investigations are a reported share of all
     investigations, and an interest that produced nothing is retired or
     renewed with a reason.
+9h. A surprise is retained when it fits no live interest, a consequence changes
+    behaviour with the consequence cited, and an `unverifiable` outcome feeds
+    nothing.
+9i. Declining and deferring appear as recorded decisions with alternatives and
+    reasons, not as absences.
+9j. Evidence metrics are not reachable by the system, the agreement rate with
+    the operator is reported, a reversal without new evidence is recorded as
+    pressure, and the system can state what it may not do and why.
+9k. An instruction attempt in retained content becomes an observation about that
+    source and never an epistemic score, and an escalation attempt is detected,
+    raised, and carries a linked change.
 9d. Publication, correction, and retraction each record a confirmed outcome from
     outside the renderer, or are marked `unconfirmed` and not counted.
 9e. An entity card shows one basis where ten claims share one, says so when
@@ -985,6 +1111,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.10.0 | 2026-09-04 | Closed the remaining gaps from the functional-spec review. Section 9.3 adds decisions with recorded alternatives, expectations, surprise retained even where it fits no interest, and scored consequences that must change behaviour without ever reaching an assessment. Section 9.4 adds four checks against self-deception: metrics unreachable by the system, the simpler explanation tested first, mirroring measured with pressure recorded as pressure, and constraints legible to the system. Notices gain provenance kinds, attention gains decay while evidence stays immutable, instruction attempts become operational observations about a source rather than epistemic scores, escalation attempts are detected and carry a linked change, and export covers attention and reckoning. |
 | 1.9.0 | 2026-09-04 | Made approve-by-default safe rather than nominally safe. Section 10.2 splits appraisal into four machine-decided dimensions that gate publication and two — fair representation and material omission — that only a person decides, reviewed after publication on a mandatory sample, with a review debt ceiling that halts a class when unreviewed output accumulates. Revocation gains a time bound, measured and reported, with an overdue revocation halting its class. Correction becomes a permanent system-wide requirement: every failure links to a change that cites it, and a failure producing only an explanation is itself the defect. |
 | 1.8.1 | 2026-09-04 | Separated the two axes 1.8.0 had run together: clearance is approve-by-default, reach is local-first. Public reach returns to disabled by default and is widened only by an explicit scoped operator act, never as a consequence of clearance. |
 | 1.8.0 | 2026-09-04 | Publication becomes approve-by-default and revocable: R0–R2 publish on passing their checks, public reach defaults to enabled from Gate 4, and the control moves from the gate in front of publication to the ability to withdraw what went out. R3 stays approval-gated because `TRUE_NORTH.md` forbids autonomously publishing high-risk claims about living people, and R4 stays unpublishable. The refusal conditions are enumerated and fail closed, since nothing now holds output back by waiting. Entity cards keep a disabled default. The reader surface moves to Phase 4. |
