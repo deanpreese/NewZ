@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.10.0
+**Document version:** 1.10.1
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -178,6 +178,11 @@ NewZ is not:
 | Expectation | What the system recorded it expected before acting, against which the confirmed outcome is later compared. |
 | Surprise | A divergence between a recorded expectation and a confirmed outcome, retained whether or not it fits any live interest. |
 | Consequence | The scored delta between expectation and confirmed outcome, and the change it justified. |
+| Reckoning | The records of deciding and learning: decisions, expectations, surprises, consequences, and escalation events. |
+| Escalation event | A recorded attempt to lower an effective risk, widen an authorisation envelope, edit the audit record, or bypass a refusal, by any route direct or indirect. |
+| Review debt | Published output awaiting the judgment dimensions of appraisal. Its ceiling halts publication of that class. See section 10.2. |
+| Operational standing | A source's parse reliability, availability, retention-terms compliance, and injection history. Never an epistemic reliability score. |
+| Decay | Reduction of an attention record to a summary by a superseding event that cites what it covers. The payload is discarded; the event remains. |
 | Basis identity | The resolved upstream origin one edge rests on. See section 7.2. |
 | Basis independence | A pairwise property between two resolved bases, used only in threshold counting. See section 7.2. |
 | Sighting | One recorded observation of a body at a source, revision, and time. Duplicate bodies may share storage but never share sightings. |
@@ -586,8 +591,9 @@ dominate it.
 MUST carry its downstream trace: the investigations it opened, the essays it
 selected, and what those produced. The share of investigations originated by
 interest, rather than derived from an assessment or opened by the operator, MUST
-be reported. An interest that has produced nothing within a configured window
-MUST be retired or explicitly renewed with a recorded reason. A register that
+be reported. An interest that has produced nothing within a configured window —
+30 days during Pilot — MUST be retired or explicitly renewed with a recorded
+reason. A register that
 only accumulates is a topic list.
 
 **Self-report.** The system MUST be able to state the shape of its own reading:
@@ -596,13 +602,22 @@ window, which perspectives are under-represented in it, and where its current
 interests track the diet's targets rather than diverging from them. It MUST NOT
 treat its source catalog as the world.
 
-**Attention decays; evidence does not.** Notices and interest entries MUST carry
-a retention window and MUST lose detail by consolidation and decay rather than by
-silent truncation, and the system MUST be able to state what it no longer holds
-in detail. Nothing in the evidence graph decays — artifacts, spans, assertions,
-edges, and assessments remain immutable under section 6. The register is the only
-place forgetting happens, and forgetting there MUST leave a record that it
-happened.
+**Attention decays; evidence does not.** Notices are retained in full for 90
+days and reduced to a summary thereafter. Interest entries are retained in full
+while live, and reduced 90 days after retirement. The system MUST be able to
+state what it no longer holds in detail.
+
+Decay is append-only like everything else, and does not contradict section 8's
+rule that no ledger event is removed. Decay emits a **superseding event** that
+carries the reduced summary and cites what it covers; the superseded event
+remains in the ledger and its **payload** is discarded. The event survives, its
+detail does not — the same shape as erasure in section 8, where the event
+survives and the key is destroyed. Silent truncation, where a record simply
+stops being there, is forbidden.
+
+Nothing in the evidence graph decays. Artifacts, spans, assertions, edges, and
+assessments remain immutable under section 6, and the register is the only place
+forgetting happens.
 
 **Origination.** Interest MAY open an investigation. An originated
 investigation MUST state its question, its exit conditions, and the observation
@@ -897,8 +912,8 @@ omission, and MUST NOT publish a claim that it has.
 
 The two judgment dimensions are reviewed **after** publication, on a sample.
 This is a review queue, not a publication queue: output does not wait on it.
-Sampling MUST cover a configured share of published output and MUST cover in
-full: every essay, every R2 output, every output where a claimant's formulation
+Sampling MUST cover a configured share of published output — 25% during Pilot —
+and MUST cover in full: every essay, every R2 output, every output where a claimant's formulation
 was rewritten rather than quoted, and every output whose counterevidence section
 is materially shorter than its support.
 
@@ -907,8 +922,8 @@ sampled item MUST trigger re-appraisal of its whole class, not merely a
 correction to that item.
 
 **The review debt ceiling.** When unreviewed sampled output for a class exceeds
-its configured ceiling, publication of that class MUST halt automatically until
-the backlog clears. This is what keeps approve-by-default honest: the operator
+its configured ceiling — ten items during Pilot — publication of that class MUST
+halt automatically until the backlog clears. This is what keeps approve-by-default honest: the operator
 cannot be a bottleneck in front of publication, and equally cannot become a
 formality behind it. Unreviewed output is a debt that the system stops
 borrowing against.
@@ -1026,7 +1041,12 @@ operator action MUST record actor, time, reason, target preimage, and result.
 - **Recoverability:** Backups MUST include artifacts, metadata, policy, and audit
   history and MUST pass automated restore verification.
 - **Observability:** Reports MUST distinguish leads, attempted fetches, retained
-  bodies, admitted edges, bases, assessments, and publications.
+  bodies, admitted edges, bases, assessments, and publications. They MUST also
+  carry the figures section 9.4 makes unreachable by the system: interest
+  origination share, register provenance mix, calibration and surprise counts,
+  agreement rate with the operator, revocation latency, review debt by class,
+  publisher and basis concentration, and the share of claims held below
+  promotion by unknown independence alone.
 - **Correction:** Every recorded failure MUST be linked to a change — to policy,
   to the design, to a guardrail's shape, or to a regression fixture — and the
   change MUST cite the failure that prompted it. A failure that produces an
@@ -1036,8 +1056,11 @@ operator action MUST record actor, time, reason, target preimage, and result.
   replaced the gate, and a control nobody exercises is a claim.
 - **Cost control:** Budget reservations MUST happen before fetch or model work;
   retries MUST not silently exceed the same operation's limit. The system MUST
-  enforce a configured monthly ceiling on external requests, and configured
-  ceilings on local inference time and on retained artifact-store growth.
+  enforce a configured monthly ceiling on external requests — 1,500 during Pilot,
+  which leaves headroom above the 300 retained reads a 30-day month allows for
+  redirects, retries, and resolver checks — and configured ceilings on local
+  inference time (four hours per local day) and on retained artifact-store
+  growth (20 GB per month).
   Inference is local under section 2.3, so the binding cost is compute and
   wall-clock rather than vendor spend. Reaching a ceiling pauses acquisition;
   it MUST NOT relax evidence rules or publication checks.
@@ -1111,6 +1134,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.10.1 | 2026-09-04 | Hygiene. Defined reckoning, escalation event, review debt, operational standing, and decay in section 4. Set the five configured values that had none: interest productivity window, appraisal sampling share, review debt ceiling, request and inference and storage ceilings, and attention retention. Reconciled decay with append-only — a superseding event carries the summary and the superseded payload is discarded, the event never removed. Gave section 13 the metric list section 9.4 refers to. |
 | 1.10.0 | 2026-09-04 | Closed the remaining gaps from the functional-spec review. Section 9.3 adds decisions with recorded alternatives, expectations, surprise retained even where it fits no interest, and scored consequences that must change behaviour without ever reaching an assessment. Section 9.4 adds four checks against self-deception: metrics unreachable by the system, the simpler explanation tested first, mirroring measured with pressure recorded as pressure, and constraints legible to the system. Notices gain provenance kinds, attention gains decay while evidence stays immutable, instruction attempts become operational observations about a source rather than epistemic scores, escalation attempts are detected and carry a linked change, and export covers attention and reckoning. |
 | 1.9.0 | 2026-09-04 | Made approve-by-default safe rather than nominally safe. Section 10.2 splits appraisal into four machine-decided dimensions that gate publication and two — fair representation and material omission — that only a person decides, reviewed after publication on a mandatory sample, with a review debt ceiling that halts a class when unreviewed output accumulates. Revocation gains a time bound, measured and reported, with an overdue revocation halting its class. Correction becomes a permanent system-wide requirement: every failure links to a change that cites it, and a failure producing only an explanation is itself the defect. |
 | 1.8.1 | 2026-09-04 | Separated the two axes 1.8.0 had run together: clearance is approve-by-default, reach is local-first. Public reach returns to disabled by default and is widened only by an explicit scoped operator act, never as a consequence of clearance. |

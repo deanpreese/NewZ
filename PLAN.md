@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.9.0
+**Document version:** 1.9.1
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -55,19 +55,19 @@ Deliver:
    mode plus a local content-addressed artifact store as the decision, and
    record the rejected PostgreSQL alternative and the conditions that would
    reverse the choice.
-2a. ADR-0002, model tier: record the model, its size, and its local serving
+3. ADR-0002, model tier: record the model, its size, and its local serving
    path, with the reason stated as the `TRUE_NORTH.md` boundary against an
    external model becoming the authority for judgment — not as a cost or
    privacy decision. Record what would reverse it, and note that no rule may be
    written to depend on model strength.
-3. Enumerations and schemas for source roles, claim kinds, assertion kinds,
+4. Enumerations and schemas for source roles, claim kinds, assertion kinds,
    edge relations, assessment states, risk tiers, task states, decision
    outcomes, notice provenance kinds, and the expectation, surprise, and
    consequence records. Declared scope is recorded free text, not an
    enumeration. These are frozen here: a record type added after this point is
    a migration, which is why the attention and reckoning shapes land now rather
    than at the phase that builds them.
-4. A machine-readable capability matrix implementing the rules in `SPEC.md`,
+5. A machine-readable capability matrix implementing the rules in `SPEC.md`,
    computed over role, claim kind, assertion kind, and relation. It declares
    the required evidence lanes per claim kind that make `indeterminate`
    deterministic, and the closed list of basis-independence justifications. The
@@ -75,12 +75,12 @@ Deliver:
    about ten stated principles is a design task: every judgment call the
    principles do not settle is recorded as a decision in the matrix, not
    resolved silently in code.
-5. Deterministic promotion logic over independent bases, with basis identity
+6. Deterministic promotion logic over independent bases, with basis identity
    and basis independence as separate inputs.
-6. A risk classifier with fail-closed handling and operator-review hooks.
-7. A fixture corpus covering HTML, PDF, structured data, malformed documents,
+7. A risk classifier with fail-closed handling and operator-review hooks.
+8. A fixture corpus covering HTML, PDF, structured data, malformed documents,
    prompt injection, copied articles, retractions, and conflicting evidence.
-8. Controlled case files for:
+9. Controlled case files for:
    - a narrow attributed claim;
    - two independent supporting bases;
    - support plus contradiction;
@@ -140,7 +140,7 @@ Deliver:
    retry, backoff, and quarantine.
 6. Instruction-attempt observations recorded against the source revision,
    feeding operational standing only and never an epistemic score.
-6a. Content-addressed local artifact storage and immutable response/sighting
+7. Content-addressed local artifact storage and immutable response/sighting
    records, with artifact bytes fsynced and renamed into place before the
    referencing row commits.
 
@@ -318,30 +318,30 @@ Deliver:
 2. An append-only interest register with rationales, recorded influences,
    provenance mix, downstream trace, and retirement; its full operator
    inspection view; and its conversational-surface summary.
-2a. The diet self-report: retained role, topic, and publisher balance over a
+3. The diet self-report: retained role, topic, and publisher balance over a
    window, the perspectives under-represented in it, and where current interests
    track the diet's targets rather than diverging from them.
-3. Investigation origination from interest, requiring question, exit
+4. Investigation origination from interest, requiring question, exit
    conditions, and closing observation before any task is created, under the
    configured ceiling of concurrently open originated investigations.
-4. Essay selection and composition: synthesis over several claims, every
+5. Essay selection and composition: synthesis over several claims, every
    factual sentence bound to a live edge, every discussed claim carrying its
    current state and material counterevidence.
-5. The conversational operator surface: notices raised, investigations
+6. The conversational operator surface: notices raised, investigations
    proposed, essays offered, alerts, daily acknowledgment, pause and resume —
    and a structural refusal of clearance, ledger correction, policy
    activation, and export.
-6. A separation test harness that enumerates every write path out of the
+7. A separation test harness that enumerates every write path out of the
    interest register and out of the consequence recorder.
-7. Decisions with recorded alternatives, expectations before acting, surprise
+8. Decisions with recorded alternatives, expectations before acting, surprise
    retained independently of live interest, and scored consequences that cite
    what they changed.
-8. The self-deception checks: evidence metrics unreachable by the system, the
+9. The self-deception checks: evidence metrics unreachable by the system, the
    simpler-explanation review, the mirroring report with reversal-as-pressure,
    and a constraint-inspection view the system itself can read.
-9. Escalation detection across direct and indirect routes, raised to the
+10. Escalation detection across direct and indirect routes, raised to the
    operator and carrying a linked change.
-10. Attention retention and decay, with a record of what was let go.
+11. Attention retention and decay, with a record of what was let go.
 
 Tests:
 
@@ -585,6 +585,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.9.1 | 2026-09-04 | Renumbered the Phase 0, 1, and 4A deliverable lists, which had accumulated lettered suffixes. |
 | 1.9.0 | 2026-09-04 | Froze the attention and reckoning record shapes in Phase 0 rather than deferring them to the phase that builds them, added decisions, expectations, surprise, consequence, self-deception checks, escalation detection and attention decay to Phase 4A, extended Gate 4A to require a contradicted expectation and an adversarial simpler-explanation review, and added calibration, surprise, and agreement-rate reporting to the pilot. |
 | 1.8.0 | 2026-09-04 | Phase 4 delivers the split appraisal workflow with review debt accounting, Gate 4 demonstrates the revocation window rather than the mechanism alone, and Gate 5's resumption rule is marked as an instance of the permanent correction requirement. |
 | 1.7.1 | 2026-09-04 | Gate 4 turns on local publication only; public reach stays disabled and is widened as its own act in Phase 6. Added the local-first delivery principle. |
