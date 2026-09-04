@@ -1,7 +1,8 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Effective:** 2026-09-03
+**Document version:** 1.1.0
+**Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
 This plan delivers the system in `SPEC.md` using the shape in
@@ -39,15 +40,23 @@ Deliver:
 
 1. Repository skeleton, automated checks, local development environment, and
    architectural decision record template.
-2. Enumerations and schemas for source roles, evidence scopes, claim kinds,
+2. ADR-0001, storage: state the concurrency requirement, record SQLite in WAL
+   mode plus a local content-addressed artifact store as the decision, and
+   record the rejected PostgreSQL alternative and the conditions that would
+   reverse the choice.
+3. Enumerations and schemas for source roles, evidence scopes, claim kinds,
    assertion kinds, edge relations, assessment states, risk tiers, and task
    states.
-3. A machine-readable capability matrix implementing the rules in `SPEC.md`.
-4. Deterministic promotion logic over independent bases.
-5. A risk classifier with fail-closed handling and operator-review hooks.
-6. A fixture corpus covering HTML, PDF, structured data, malformed documents,
+4. A machine-readable capability matrix implementing the rules in `SPEC.md`,
+   including the required evidence lanes per claim kind that make
+   `indeterminate` deterministic, and the closed list of basis-independence
+   justifications.
+5. Deterministic promotion logic over independent bases, with basis identity
+   and basis independence as separate inputs.
+6. A risk classifier with fail-closed handling and operator-review hooks.
+7. A fixture corpus covering HTML, PDF, structured data, malformed documents,
    prompt injection, copied articles, retractions, and conflicting evidence.
-7. Controlled case files for:
+8. Controlled case files for:
    - a narrow attributed claim;
    - two independent supporting bases;
    - support plus contradiction;
@@ -55,14 +64,26 @@ Deliver:
    - a copied story falsely appearing independent;
    - a patent misused as proof of performance;
    - a complaint misused as proof of guilt;
+   - an allegation refuted by a final adjudicative record;
+   - a claim whose bases are resolved but of unknown independence;
+   - a normative proposition and an unresolved forecast;
    - an R3 allegation; and
    - an R4 operational payload.
 
 Tests:
 
 - exhaustive allow/deny tests for the capability matrix;
-- symmetry tests for support and refutation;
-- property tests showing duplicate bases never increase strength;
+- symmetry tests for support and refutation, including the single-record
+  exception at R2 and R3;
+- property tests showing duplicate bases never increase strength, and that
+  unknown independence collapses bases for counting without invalidating any
+  edge;
+- `indeterminate` derived from terminal task state alone, with no
+  competence judgment outside recorded state;
+- normative claims refusing `supports` and `contradicts` edges, and forecasts
+  refusing promotion before their horizon;
+- claim merge and split preserving both preimage histories and re-pointing
+  edges without rewriting them;
 - risk monotonicity and missing-state refusal;
 - snapshot tests for canonical claim and policy serialization.
 
@@ -75,8 +96,9 @@ fixture suite. No network access exists yet.
 
 Deliver:
 
-1. PostgreSQL migrations for catalog, diet epochs, operations, reservations,
-   acquisition attempts, audit events, and transactional outbox.
+1. SQLite (WAL) migrations for catalog, diet epochs, operations, reservations,
+   acquisition attempts, audit events, and transactional outbox, with foreign
+   keys enforced and `synchronous = FULL`.
 2. Source catalog validation: stable identity, publisher, independence group,
    delivery endpoint, topic, role, scope, risk floor, and retention policy.
 3. Immutable diet epochs and a dry-run command that shows exact source and
@@ -86,15 +108,22 @@ Deliver:
 5. Safe HTTP fetcher with SSRF controls, redirect enforcement, byte/time
    ceilings, decompression limits, content-type normalization, rate limiting,
    retry, backoff, and quarantine.
-6. Content-addressed object storage and immutable response/sighting records.
+6. Content-addressed local artifact storage and immutable response/sighting
+   records, with artifact bytes fsynced and renamed into place before the
+   referencing row commits.
 
 Tests:
 
-- concurrent reservation and idempotency tests;
+- concurrent reservation and idempotency tests, including writer contention and
+  busy-timeout behavior under WAL;
+- lease expiry reclaiming an operation from a killed worker;
 - URL and redirect attack fixtures;
 - oversized, slow, compressed, and mislabeled response fixtures;
 - source revision and epoch immutability tests;
-- backup and clean-restore tests for database plus objects.
+- backup and clean-restore tests for database plus artifacts, including
+  integrity and foreign-key checks in the verification path;
+- crash-injection between artifact write and row commit leaving no dangling
+  reference.
 
 **Gate 1:** Four offline canary sources—two HTML, one PDF, and one
 attribution-only—produce reconstructible acquisition traces and artifact hashes
@@ -146,8 +175,9 @@ Deliver:
    basis independence, missing lanes, and risk.
 3. Task generation for claimant origin, primary record, empirical evidence,
    independent counterpart, skeptical analysis, and resolver checks.
-4. Lane-aware scheduling: 6 discovery, 2 verification, and 2 correction reads
-   in the initial daily budget.
+4. Lane-aware scheduling: 3 discovery, 5 verification, and 2 correction reads
+   in the initial daily budget, with discovery pausing for the local day when
+   open counterpart tasks exceed twelve or any counterpart task is overdue.
 5. Configured directed-search adapters that create leads only.
 6. Resolution adapters for competent registries, dockets, publication status,
    retractions, replications, and time-bound forecasts.
@@ -156,7 +186,10 @@ Deliver:
 
 Tests:
 
-- no-borrow protected-capacity tests;
+- protected-capacity tests: discovery never borrows from the verification or
+  correction reserve, unused correction capacity may serve verification within
+  the same local day, and verification never returns capacity to discovery;
+- discovery brake tests at the counterpart-backlog and overdue thresholds;
 - counterpart due within 72 hours for claimant-led discovery;
 - task deduplication and reachable-resolver tests;
 - retraction and failed-replication scenarios;
@@ -213,14 +246,26 @@ Deliver:
    publisher, independence group, role, scope, risk, and counterpart behavior.
 2. Create offline fixtures from every source and pass them through the complete
    pipeline before live enablement.
-3. Activate the contested diet at two new live sources per day, local-only.
-4. Produce daily funnel reports:
+3. Run a Shadow stage before Pilot: live acquisition from the reviewed catalog
+   with assessments computed and compared against fixture expectations but not
+   authoritative, and all presentation withheld. Shadow exits when every one of
+   the 20 source and parser routes has been fetched live at least once, shadow
+   assessments match fixture expectations or every divergence has a recorded
+   cause, and no pause condition below has fired. Shadow does not consume Gate 5
+   pilot dates.
+4. Activate the contested diet at two new live sources per day, local-only.
+5. Produce daily funnel reports:
    lead → reserved → fetched → retained → parsed → asserted → edge admitted or
    refused → assessment changed → presentation invalidated.
-5. Report offered and retained role/topic shares separately, along with
-   publisher concentration, basis concentration, overdue counterpart tasks,
-   parser failures, and risk/publication violations.
-6. Require operator acknowledgment of daily reports during the first seven
+6. Report offered and retained role/topic shares separately, along with
+   publisher concentration over retained reads, basis concentration, overdue
+   counterpart tasks, parser failures, and risk/publication violations.
+7. Report the share of claims held below `supported` or `refuted` solely by
+   unknown basis independence. This is the leading indicator that the evidence
+   rules are unsatisfiable in practice rather than merely strict; a sustained
+   reading above 90% is a design finding and MUST be escalated to the operator
+   rather than absorbed.
+8. Require operator acknowledgment of daily reports during the first seven
    clean days.
 
 Pause conditions:
@@ -233,10 +278,24 @@ Pause conditions:
 - any failure to invalidate a dependent claim card; or
 - critical backup/restore failure.
 
+Pause and resumption semantics, so the gate is countable:
+
+- A pause suspends acquisition. Dates during a pause are not eligible dates.
+- Resumption requires a recorded cause, a fix, and a permanent regression
+  fixture for the violation.
+- A fix that changes evidence, promotion, risk, or publication behavior resets
+  the route-exercise requirement: all 20 routes must be exercised again under
+  the new code version. Eligible dates and retained reads accumulated before
+  the fix are retained.
+- A fix that touches none of those paths preserves route exercise; the code
+  version is recorded against each route so the distinction is auditable.
+
 **Gate 5:** At least 30 eligible local dates, 100 distinct retained full reads,
-all 20 source/parser routes exercised under the current code version, zero open
-critical violations, and demonstrated supported, contested, indeterminate, and
-corrected cases. The operator explicitly approves progression.
+all 20 source/parser routes exercised under the current code version, and zero
+open critical violations. At least one **live** pilot claim must reach each of
+`supported`, `contested`, and `indeterminate`, and at least one live claim must
+be corrected after presentation; fixture cases do not satisfy this. The
+operator explicitly approves progression.
 
 ## Phase 6 — Production and expansion
 
@@ -246,8 +305,10 @@ Deliver in order:
 
 1. Expand the low-risk R0–R1 catalog while maintaining topic/role coverage and
    concentration alerts.
-2. Enable cleared public claim cards with public reach still independently
-   lockable.
+2. Build the reader surface specified in `SPEC.md` section 2.2, including
+   authentication, rate limiting, and abuse controls, and enable cleared public
+   claim cards with public reach still independently lockable. No part of the
+   reader surface is built before this phase.
 3. Add R2 source classes after direct adversarial review.
 4. Add R3 intake only after the isolated workflow and exact-revision approval
    are exercised in production-like tests.
@@ -288,9 +349,13 @@ adds a permanent regression fixture.
 
 ### Operations
 
-Automate schema migration, artifact integrity checks, point-in-time database
-recovery, object-store versioning, export verification, and full clean restore.
-No production migration may be irreversible without a tested paired restore.
+Automate schema migration, artifact integrity checks, scheduled online backups
+of the database file with integrity and foreign-key verification, artifact-store
+integrity sweeps against recorded hashes, export verification, and full clean
+restore. No migration may be irreversible without a tested paired restore.
+Because state is one database file plus a content-addressed tree, a restore
+drill MUST verify byte-exact reproduction of claim cards, histories, and
+artifact hashes, not merely that the service starts.
 
 ## Initial backlog
 
@@ -317,6 +382,9 @@ P01 repository and CI
   → P18 production readiness
 ```
 
+P16 is the Shadow stage defined in Phase 5 and carries Phase 5's shadow exit
+criteria; it is not a separate gate.
+
 Each pull request MUST include migrations if needed, first writer and reader,
 policy/version effects, inspection output, fixtures, rollback behavior, and the
 acceptance tests that prove completion.
@@ -327,3 +395,14 @@ The rewrite is complete when all `SPEC.md` acceptance criteria and Gate 6 pass,
 the four governing documents match implemented behavior, and a new operator can
 restore the system, inspect a claim from conclusion to original artifact, run a
 correction, and lock down publication using documented interfaces alone.
+
+Document drift is tracked, not assumed: each governing document carries a
+version and a history table, and any pull request that changes behavior a
+document describes MUST bump that document in the same change.
+
+## Document history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.1.0 | 2026-09-04 | Moved storage to SQLite with ADR-0001 as a Phase 0 deliverable. Rebalanced the daily lane budget to 3/5/2 and specified borrow direction. Gave the Shadow stage a place and exit criteria in Phase 5. Defined pause and route-exercise reset semantics for Gate 5 and required live cases rather than fixtures. Added the unknown-independence indicator to pilot reporting, scheduled the reader surface into Phase 6, and added Phase 0 cases and tests for the new SPEC rules. |

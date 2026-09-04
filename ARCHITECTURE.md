@@ -1,7 +1,8 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Effective:** 2026-09-03
+**Document version:** 1.1.0
+**Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
 research store. One evidence model serves every interface. Acquisition is
@@ -20,7 +21,7 @@ flowchart LR
     FETCH --> CORE
     WORKERS <--> CORE
     CORE --> STORE[(Research store)]
-    CORE --> OBJECTS[(Artifact object store)]
+    CORE --> OBJECTS[(Content-addressed artifact store)]
     CORE --> SURFACE
 
     POLICY[Versioned policy bundles] --> CORE
@@ -85,6 +86,7 @@ flowchart TB
     EXTRACT --> BASIS --> QUALIFY --> ASSESS
     CLAIMS --> QUALIFY
     ASSESS --> INVEST --> TASKS --> BUDGET
+    OPERATOR[Operator actions] --> INVEST
     ASSESS --> RESOLVE --> ASSESS
     ASSESS --> CARD --> COMPOSE --> APPRAISE --> PUBLISH
     RISK --> QUALIFY
@@ -138,21 +140,44 @@ assessment.
 | Artifact store | Immutable body bytes/text and content hashes | Mutable assessment state |
 | Extractor | Candidate spans, assertions, entities, claims | Capability grants or risk reduction |
 | Basis resolver | Publication lineage and upstream-origin identity | Counting unknown origins as independent |
-| Evidence engine | Deny-by-default role/scope/risk/relation policy | Narrative generation |
-| Assessor | Deterministic assessment transitions | Searching or fetching |
+| Evidence engine | Deny-by-default role/scope/risk/relation policy, basis-identity resolution, predicate attestations | Narrative generation |
+| Promotion policy | Versioned promotion thresholds, required evidence lanes per claim kind, independence justification list | Evaluating a specific claim |
+| Assessor | Deterministic assessment transitions against the current promotion policy | Searching, fetching, or defining thresholds |
 | Research manager | Investigations, missing lanes, tasks, resolution attempts | Rewriting evidence history |
 | Projector | Claim cards and dependency maps | New factual assertions |
 | Appraisal/clearance | Exact-revision output permission | Altering internal evidence state |
 
 ## Storage architecture
 
-The first implementation SHOULD use PostgreSQL for structured state and an
-S3-compatible, content-addressed object store for retained artifacts. SQLite
-MAY be used for isolated development fixtures but is not the production
-coordination mechanism.
+### Concurrency requirement
+
+The storage choice follows from the stated concurrency requirement, which is
+deliberately small:
+
+- one operator, one host;
+- a ceiling of 10 retained full reads per local day;
+- a handful of local worker processes, none latency-critical;
+- no multi-writer, multi-machine, or horizontal-scale requirement anywhere in
+  `SPEC.md`.
+
+### Decision
+
+The implementation uses **SQLite in WAL mode** for structured state and a
+**local content-addressed filesystem** for retained artifacts. Every invariant
+this document requires — append-only events, content hashes, worker leases, a
+transactional outbox, clean restore — is satisfiable in SQLite, and a single
+file makes backup, export, and byte-exact restore verification trivial. The
+alternative considered was PostgreSQL with an S3-compatible object store; it
+was rejected as unearned operational cost for a single-operator system with a
+ten-read daily ceiling, and as the largest avoidable obstacle to Gate 1.
+
+This decision is recorded as ADR-0001 (`PLAN.md`, Phase 0). It is reversible:
+the domain contract below names no SQLite-specific behavior, so a move to a
+networked database is a storage-adapter change if the concurrency requirement
+ever changes.
 
 ```text
-PostgreSQL
+SQLite (WAL, one file, foreign keys enforced)
 ├── catalog         sources, revisions, publishers, independence
 ├── control         diet epochs, policy bundles, budgets, operations
 ├── acquisition     attempts, responses, sightings, parse executions
@@ -161,37 +186,44 @@ PostgreSQL
 ├── presentation    card revisions, appraisals, clearances, dependencies
 └── operations      audit events, outbox, metrics, alerts
 
-Object store
+Artifact store (content-addressed local filesystem)
 ├── raw/sha256/...          original retained response when permitted
 ├── normalized/sha256/...   canonical parsed representation
 └── exports/...             signed portable snapshots
 
 Derived and disposable
-├── full-text/vector search indexes
+├── full-text search indexes
 ├── rendered local/public surfaces
 └── metrics aggregates and caches
 ```
 
 The database stores hashes, locators, retention rules, and object references.
-The object store never grants evidence capability. Search indexes and rendered
+The artifact store never grants evidence capability. Search indexes and rendered
 surfaces are rebuilt from authoritative records.
+
+SQLite obligations the implementation MUST meet: WAL mode with `synchronous =
+FULL`, enforced foreign keys, one writer connection with a bounded busy timeout,
+`IMMEDIATE` transactions for any read-modify-write, integrity and
+foreign-key checks in the backup verification path, and artifact writes that
+land as fsynced temporary files renamed into place before the referencing row
+commits.
 
 ## Runtime topology
 
-The greenfield release uses one deployable application plus independently
-scalable workers:
+The greenfield release is one deployable application on one host, with workers
+as local processes over the same database file:
 
 ```mermaid
 flowchart LR
     API[API + operator UI]
     SCH[Scheduler]
-    FW[Fetch workers]
-    PW[Parse/OCR workers]
-    MW[Model workers]
-    AW[Assessment/projector workers]
-    DB[(PostgreSQL)]
-    OS[(Object store)]
-    Q[Transactional outbox consumers]
+    FW[Fetch worker]
+    PW[Parse/OCR worker]
+    MW[Model worker]
+    AW[Assessment/projector worker]
+    DB[(SQLite, WAL)]
+    OS[(Content-addressed artifact store)]
+    Q[Transactional outbox consumer]
 
     API <--> DB
     SCH <--> DB
@@ -205,10 +237,17 @@ flowchart LR
     Q <--> DB
 ```
 
-Workers claim operations through database leases. Durable queues are modeled
-as operations plus a transactional outbox so an evidence change and its
-downstream invalidation commit together. Additional infrastructure MAY replace
-outbox polling later without changing the domain contract.
+Workers claim operations through database leases with an expiry, so a crashed
+worker's operation is reclaimed rather than lost. Durable queues are modeled as
+operations plus a transactional outbox so an evidence change and its downstream
+invalidation commit in one transaction. Fetch and parse workers remain separate
+processes even on one host, because they are the components that handle hostile
+input and need their own privilege and egress limits.
+
+Concurrency is bounded deliberately: readers are concurrent under WAL, and a
+single writer is sufficient at ten reads per day. Replacing outbox polling, or
+moving to a networked database if the concurrency requirement changes, is a
+storage-adapter change and does not alter the domain contract.
 
 ## Trust boundaries
 
@@ -217,6 +256,12 @@ outbox polling later without changing the domain contract.
    isolation.
 2. **Model boundary:** prompts include only the minimum artifact segments. Model
    output is schema-validated proposal data and is never executable policy.
+   This boundary, not the fetcher, is where prompt injection is contained. Its
+   primary mechanism is span verification: every quotation a model proposes is
+   checked byte-exact against retained text at the recorded offsets, so a model
+   cannot introduce a quotation that does not already exist in a retained
+   artifact. Injected instructions inside parsed content can at most produce a
+   proposal that fails validation.
 3. **Evidence boundary:** only verified spans and admitted edge events can affect
    an assessment.
 4. **Publication boundary:** internal assessment does not imply clearance. The
@@ -245,10 +290,18 @@ outbox polling later without changing the domain contract.
 | Mode | Acquisition | Assessment | Presentation |
 |---|---|---|---|
 | Fixture | Offline fixtures only | Enabled | Local test output |
-| Shadow | Live acquisition | Compared but not authoritative | Withheld |
+| Shadow | Live acquisition from the reviewed catalog | Computed and compared against fixture expectations, not authoritative | Withheld |
 | Pilot | Reviewed 20-source catalog and hard budgets | Authoritative internally | Local/operator only |
 | Production | Approved catalog and budget expansion | Authoritative | Cleared R0–R2 output; R3 exact-review only |
 | Lockdown | Paused | Historical inspection only | Public output disabled |
 
-Transitions are explicit, audited, and reversible. Release sequencing is in
-`PLAN.md`.
+Transitions are explicit, audited, and reversible. Every mode except Fixture
+has an exit gate in `PLAN.md`; Shadow's is stated in Phase 5. Release
+sequencing is in `PLAN.md`.
+
+## Document history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.1.0 | 2026-09-04 | Replaced PostgreSQL and the S3-compatible object store with SQLite in WAL mode and a local content-addressed store, with the concurrency requirement stated and recorded as ADR-0001. Collapsed the runtime topology to one host with local worker processes. Named span verification as the prompt-injection mechanism at the model boundary. Gave promotion thresholds an owning component, gave Shadow mode exit criteria, and added an operator entry point to investigations. |

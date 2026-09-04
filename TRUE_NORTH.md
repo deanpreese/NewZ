@@ -1,7 +1,8 @@
 # TRUE NORTH
 
 **Status:** Authoritative
-**Effective:** 2026-09-03
+**Document version:** 1.1.0
+**Effective:** 2026-09-04
 
 NewZ is a rigorous investigator of contested claims: fringe science,
 anomalous phenomena, conspiracy allegations, suppressed-history narratives,
@@ -118,3 +119,14 @@ When documents disagree, authority is:
 
 These four documents supersede every prior NewZ specification, proposal,
 implementation, and plan.
+
+Each carries a document version and a history table. A change to behavior a
+document describes MUST bump that document in the same change, so drift between
+the documents and the system is visible rather than assumed.
+
+## Document history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-09-03 | Initial authoritative statement of purpose and boundaries. |
+| 1.1.0 | 2026-09-04 | Added document versioning across the four governing documents. Purpose, posture, scope, and permanent boundaries unchanged. |

@@ -2,7 +2,8 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Effective:** 2026-09-03
+**Document version:** 1.1.0
+**Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
 This document specifies a research system for contested claims. It supersedes
@@ -51,6 +52,10 @@ The operator MUST be able to:
 A reader may browse claim cards and cleared reports. Each presentation MUST
 show current status, material support, material contradiction, source
 independence, uncertainty, and last assessment date.
+
+The reader surface is specified here but MUST NOT be delivered before Phase 6
+of `PLAN.md`. Its authentication, rate limiting, and abuse controls are
+designed together with public reach, not ahead of it.
 
 ### 2.3 Model
 
@@ -101,6 +106,14 @@ NewZ is not:
 | Investigation | A bounded program of claims, questions, tasks, and exit conditions. |
 | Claim card | The reader-facing projection of the current claim and its evidence graph. |
 | Diet epoch | An immutable version of enabled sources, roles, limits, and policy. |
+| Basis identity | The resolved upstream origin one edge rests on. See section 7.2. |
+| Basis independence | A pairwise property between two resolved bases, used only in threshold counting. See section 7.2. |
+| Sighting | One recorded observation of a body at a source, revision, and time. Duplicate bodies may share storage but never share sightings. |
+| Independence group | A catalog grouping of sources known to share ownership, syndication, or editorial control. Membership blocks independence; it never establishes it. |
+| Lane | A separately budgeted class of scheduled reads: discovery, verification, or correction. |
+| Predicate attestation | A versioned record that one named admission predicate held or failed for one edge, with its inputs, so the decision can be replayed. |
+| Appraisal | Review of one exact rendered revision for accuracy, fair representation, material omission, privacy, and risk. |
+| Clearance | The permission record that lets one exact appraised revision reach a stated audience. |
 
 ## 5. Ingestion diet
 
@@ -132,10 +145,18 @@ The offered discovery menu SHOULD target:
 | Historical, metascientific, and general context | 10% |
 
 Targets MUST be computed over offered candidates. They MUST NOT suppress the
-only relevant item, alter evidence weight, or force a conclusion. No publisher
-may occupy more than 10% of the rolling 30-day offered menu unless the operator
-records a scoped exception. Unknown independence MUST never count as
-corroboration.
+only relevant item, alter evidence weight, or force a conclusion. Unknown
+independence MUST never count as corroboration; section 7.2 governs how it is
+counted.
+
+Publisher concentration is capped over **retained full reads**, not offered
+candidates, because only reads can become evidence. Over a rolling 30 days no
+publisher may exceed 20% of retained full reads during Pilot or 10% during
+Production, unless the operator records a scoped exception. Offered-menu
+concentration MUST be reported and MUST alert above 20%, but does not by itself
+block scheduling: with 20 pilot sources and at most two per publisher, ordinary
+feed-volume variance would otherwise trip a 10% offered-menu cap immediately
+and train the operator to dismiss the alert.
 
 ### 5.2 Initial pilot
 
@@ -153,13 +174,25 @@ counterpart task for every claimant-led discovery.
 
 The initial ceiling is 10 distinct full artifact reads per local day:
 
-- 6 discovery reads;
-- 2 verification or counterpart reads; and
+- 3 discovery reads;
+- 5 verification, counterpart, or corroboration reads; and
 - 2 correction or resolution reads.
 
+The budget is weighted toward verification because discovery opens claims
+faster than verification can close them: every claimant-led discovery mandates
+a counterpart task, and an ordinary R0–R1 promotion needs at least two
+independent bases with at least one primary, empirical, or adjudicative record.
+A discovery-heavy budget accumulates unresolved claims instead of settling
+them.
+
+Discovery MUST additionally pause for the local day when open counterpart tasks
+exceed twelve, or when any counterpart task is overdue.
+
 Unused discovery capacity MUST NOT consume the protected verification and
-correction reserve. A full read requires a retained, successfully parsed body;
-a headline, snippet, feed summary, or duplicate body does not count.
+correction reserve. Unused correction capacity MAY be reallocated to
+verification within the same local day; the reverse MUST NOT happen. A full
+read requires a retained, successfully parsed body; a headline, snippet, feed
+summary, or duplicate body does not count.
 
 ## 6. Acquisition and preservation
 
@@ -202,6 +235,17 @@ Every claim MUST use one of:
 Every source assertion MUST be typed as observation, testimony, allegation,
 measurement, documented event, inference, or prediction.
 
+Two claim kinds are constrained at the state machine because the promotion
+rules in section 7.3 cannot evaluate them:
+
+- A `normative proposition` claim MUST NOT carry `supports` or `contradicts`
+  edges. It admits `claimant_says` and `contextualizes` edges only, and its
+  assessment state may only be `reported` or `withdrawn`.
+- A `forecast` claim MUST record a resolution horizon and the resolver expected
+  to settle it. Before that horizon its state MUST remain `reported` whatever
+  edges accumulate. At the horizon it is settled by the resolver or becomes
+  `indeterminate`.
+
 ### 7.2 Edge relations
 
 An assertion may `claimant_says`, `supports`, `contradicts`, or
@@ -213,11 +257,42 @@ A countable evidence edge requires:
 - a live, quote-verified assertion;
 - a retained artifact and exact span;
 - a legal role, scope, claim-kind, assertion-kind, and relation tuple;
-- a recorded basis with verified or mechanically justified identity;
+- a resolved basis identity;
 - a risk classification; and
 - the policy version that admitted it.
 
 Anything missing or corrupt fails closed and remains contextual material.
+
+Basis identity and basis independence are separate properties and MUST NOT be
+conflated.
+
+**Basis identity** is a property of one edge: the edge names the specific
+upstream observation, witness, dataset, filing, experiment, or record it rests
+on. Identity is resolved when that origin is nameable and stable, even when it
+is a single unnamed witness reached through one publication. An edge whose
+basis resolves to no distinct upstream origin fails closed and remains
+contextual material.
+
+**Basis independence** is a pairwise property between two already-resolved
+bases, and is consulted only when counting toward a promotion threshold. Two
+bases count separately only under a recorded justification from the closed list
+below. Unknown or unjustified independence MUST collapse the two bases into one
+for counting; it MUST NOT invalidate either edge and MUST NOT prevent
+`provisional_support` or `provisional_contradiction`.
+
+| Independence justification | Distinctness established by |
+|---|---|
+| Distinct witness | A different named or stably pseudonymized person of record. |
+| Distinct instrument or dataset | A different DOI, accession, sensor, or archive identifier. |
+| Distinct official record | A different docket, filing, case, or registry number. |
+| Distinct experiment | A different laboratory together with a different registration or protocol identifier. |
+| Distinct primary observation | A different recorded time, place, and observing party. |
+
+Any independence outside this list requires an operator verification action
+recording actor, time, reason, and the evidence for distinctness. Publisher
+identity, byline, wording differences, and independence-group membership MUST
+NOT by themselves justify independence, and a model MUST NOT originate an
+independence justification.
 
 ### 7.3 Promotion rules
 
@@ -231,10 +306,17 @@ The current assessment state is one of:
 - `refuted` — the symmetrical contradiction threshold is met without countable
   support;
 - `contested` — countable evidence exists in both directions;
-- `indeterminate` — a competent search or resolution attempt did not settle the
-  claim; or
+- `indeterminate` — every evidence lane required for the claim's kind reached a
+  terminal task state without producing a countable edge in either direction;
+  or
 - `withdrawn` — the investigated proposition is no longer maintained, while
   history remains.
+
+`indeterminate` MUST be a function of recorded task state alone. The evidence
+lanes required for each claim kind are declared in the capability matrix and
+versioned with it, so an assessment reproduces exactly under section 13. No
+assessment state may depend on a judgment of search competence that is not
+recorded as terminal task state.
 
 Rules:
 
@@ -248,16 +330,51 @@ Rules:
 7. Support and refutation use symmetrical thresholds.
 8. Absence counts only when an expected record, competent repository, query,
    time window, and searched scope are recorded.
-9. Material opposing evidence always produces `contested`; it is never
+9. Countable opposing evidence always produces `contested`; it is never
    subtracted into a net score.
 10. Model extraction confidence MUST NOT flow numerically into assessment
     confidence.
+11. Every assessment event MUST record the countable independent basis count in
+    each direction, so `contested` preserves the shape of a disagreement
+    instead of flattening a ten-to-one balance and a one-to-one balance into
+    the same label.
 
 For ordinary R0–R1 factual claims, `supported` or `refuted` requires at least
 two independent verified bases in that direction, including at least one
-primary record, empirical study, or adjudicative record. Narrow attribution
-and final-record claims may be settled by the single record that literally
-establishes them. R2–R3 requirements are stricter under section 8.
+primary record, empirical study, or adjudicative record.
+
+A narrow attribution claim or a document-existence claim may be settled by the
+single record that literally establishes it. So may any claim settled by a
+final adjudicative record within that adjudicator's declared scope, including a
+record that refutes an allegation.
+
+This single-record exception survives at R2 and R3. It is the only route by
+which a false allegation about a living person can reach `refuted` under the
+symmetrical thresholds of rule 7; withholding it would make symmetry operate
+against the accused. The exception applies only where the record literally
+establishes or literally settles the claim, never by inference drawn from the
+record.
+
+Every other R2 claim requires two independent verified bases with strong
+provenance. Every other R3 claim requires a direct primary or adjudicative
+basis plus an independent qualified basis, under section 8.
+
+### 7.4 Claim merge and split
+
+Claim identity changes are append-only. Edges address claim identifiers, so a
+merge or split MUST NOT rewrite them.
+
+1. A merge MUST emit a supersession event naming both preimages and the
+   successor. Neither preimage is deleted or rewritten.
+2. Edges move by emitting new edge events against the successor claim. Existing
+   edge events remain valid against their original claim.
+3. The successor's assessment is derived from its live re-pointed edges. It is
+   never copied from either preimage.
+4. Both preimage histories remain reachable and MUST resolve to the successor.
+5. A split follows the same rules with one preimage and several successors.
+   Each edge MUST be re-pointed explicitly, and MUST NOT be duplicated across
+   successors without a distinct basis.
+6. No merge or split may change an edge's basis, span, role, relation, or risk.
 
 ## 8. Risk policy
 
@@ -274,8 +391,20 @@ risk, domain risk, and intended output risk.
 
 Missing or unreadable risk state MUST behave as R3 internally and MUST block
 publication. A model may raise risk but may not lower it. Private personal data
-MUST be minimized, encrypted at rest if retained for legitimate review, and
-excluded from prompts and output unless strictly necessary and approved.
+MUST be minimized, excluded from prompts and output unless strictly necessary
+and approved, and encrypted at rest when retained for legitimate review.
+
+Erasure and immutability are reconciled by encryption, not by deletion. Private
+personal data MUST be stored encrypted under a per-subject key held outside the
+ledger. An erasure obligation is satisfied by destroying that key: the ledger
+event survives with an unreadable payload plus a tombstone recording that
+erasure occurred, its reason, and its date. No ledger event is ever removed or
+rewritten.
+
+R4 material and R3 quarantined personal data MUST carry an expiry. The default
+retention is 24 months from last legitimate review, after which the subject key
+is destroyed automatically unless the operator records a reasoned extension.
+Every access to R3 quarantined material MUST be logged.
 
 ## 9. Investigation workflow
 
@@ -316,10 +445,12 @@ those IDs at build time and refuse stale, withdrawn, or uncleared dependencies.
 Material changes MUST invalidate all dependent cards, reports, search indexes,
 and caches.
 
-R0–R1 material may be published after automated checks and appraisal. R2 is
-solicited or operator-reviewed by default. R3 requires explicit operator
-approval for the exact rendered revision. R4 is never published. Public reach
-MUST default to disabled.
+R0–R1 material may be published after automated checks and appraisal. R2
+requires operator review before publication by default; the operator MAY
+pre-clear a named class of R2 output after adversarial review of that class,
+and such pre-clearance MUST be scoped, expiring, and revocable. R3 requires
+explicit operator approval for the exact rendered revision, with no
+pre-clearance. R4 is never published. Public reach MUST default to disabled.
 
 Corrections MUST remain visibly attached to prior outputs. Retraction removes
 the current presentation from navigation but MUST leave a tombstone explaining
@@ -372,7 +503,13 @@ operator action MUST record actor, time, reason, target preimage, and result.
 - **Auditability:** Every displayed factual sentence MUST trace to live evidence
   edges and exact spans.
 - **Security:** Fetching MUST resist SSRF, redirect escape, decompression bombs,
-  malicious documents, and prompt injection. Parsed content is untrusted data.
+  and malicious documents. Parsed content is untrusted data and MUST NOT be
+  read as instructions. Prompt injection is contained at the model boundary
+  rather than at fetch: model output is schema-validated proposal data, and
+  every quotation a model proposes MUST verify byte-exact against the retained
+  span at the recorded offsets. Span verification is the primary defense,
+  because a model cannot introduce a quotation that is not already present in
+  retained text.
 - **Availability:** A failed source, parser, or model call MUST not corrupt the
   ledger or block unrelated investigations.
 - **Portability:** Core data MUST export to documented, non-proprietary formats.
@@ -381,7 +518,10 @@ operator action MUST record actor, time, reason, target preimage, and result.
 - **Observability:** Reports MUST distinguish leads, attempted fetches, retained
   bodies, admitted edges, bases, assessments, and publications.
 - **Cost control:** Budget reservations MUST happen before fetch or model work;
-  retries MUST not silently exceed the same operation's limit.
+  retries MUST not silently exceed the same operation's limit. The system MUST
+  enforce a configured monthly ceiling on model spend and on external requests,
+  and a configured ceiling on retained artifact-store growth. Reaching a ceiling
+  pauses acquisition; it MUST NOT relax evidence rules or publication checks.
 
 ## 14. Acceptance criteria
 
@@ -392,13 +532,26 @@ The first production release is acceptable only when:
 3. Syndication and copied stories cannot satisfy independence thresholds.
 4. Support and contradiction produce symmetrical state transitions.
 5. Retraction or edge invalidation updates every dependent surface.
-6. R3 output cannot bypass exact-revision operator approval.
+6. The R3 pathway cannot bypass exact-revision operator approval, proven
+   against fixtures. Live R3 intake is not part of the first release; it is
+   gated to Phase 6 of `PLAN.md`.
 7. R4 content cannot enter model prompts or reader-facing output.
-8. The 20-source pilot meets role/topic coverage and publisher caps.
+8. The 20-source pilot meets role/topic coverage and the retained-read
+   publisher cap.
 9. At least three controlled cases demonstrate `supported`, `contested`, and
    `indeterminate` outcomes, and one demonstrates correction after publication.
 10. A clean restore reproduces claim cards, histories, and artifact hashes.
-11. A 30-day pilot completes with at least 100 distinct full reads and zero
-    unresolved critical provenance or publication violations.
+11. A 30-day pilot completes with at least 100 distinct full reads, at least
+    one live claim reaching each of `supported`, `contested`, and
+    `indeterminate`, at least one live correction after presentation, and zero
+    unresolved critical provenance or publication violations. Fixture cases do
+    not satisfy this criterion.
 
 Implementation sequencing and release gates are defined in `PLAN.md`.
+
+## 15. Document history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.1.0 | 2026-09-04 | Separated basis identity from basis independence and added the closed list of independence justifications. Rebalanced the daily lane budget to 3/5/2 with a counterpart backlog brake. Moved publisher concentration to retained reads with tiered caps. Made `indeterminate` a function of terminal task state. Constrained `normative proposition` and `forecast` kinds. Added claim merge and split semantics, crypto-shredding for erasure, R3/R4 retention expiry, cost and storage ceilings. Clarified the single-record exception at R2–R3, R2 clearance, and the prompt-injection boundary. Defined sighting, independence group, lane, predicate attestation, appraisal, and clearance. |
