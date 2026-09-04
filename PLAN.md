@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.5.0
+**Document version:** 1.6.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -286,8 +286,12 @@ Deliver:
 
 1. Noticing over retained spans, recording artifact, span, and reason, with a
    hard structural bar on a notice becoming an assertion, edge, or basis.
-2. An append-only interest register with rationales, its full operator
-   inspection view, and its Telegram-side summary.
+2. An append-only interest register with rationales, recorded influences,
+   provenance mix, downstream trace, and retirement; its full operator
+   inspection view; and its conversational-surface summary.
+2a. The diet self-report: retained role, topic, and publisher balance over a
+   window, the perspectives under-represented in it, and where current interests
+   track the diet's targets rather than diverging from them.
 3. Investigation origination from interest, requiring question, exit
    conditions, and closing observation before any task is created, under the
    configured ceiling of concurrently open originated investigations.
@@ -308,6 +312,16 @@ Tests:
   enumerating the register's write paths rather than by sampling behavior;
 - a notice cannot become an assertion, edge, or basis, and never appears on a
   claim card as support;
+- a notice cannot arise from an essay, claim card, entity card, report, or prior
+  notice, and the register's provenance mix stays dominated by external
+  material;
+- an interest whose origin chain reaches only a configured topic target is
+  labelled diet-derived, not formed;
+- an interest producing no investigation and no essay within its window is
+  retired or renewed with a reason, and the interest-origination share of all
+  investigations is reportable;
+- the diet self-report names an under-represented perspective when the retained
+  balance is deliberately skewed;
 - originated investigations consume no budget beyond the ordinary lanes, and
   the origination ceiling holds under concurrent triggers;
 - an essay refuses to render a factual sentence with no live edge, and refuses
@@ -328,7 +342,10 @@ Tests:
 through the existing lanes, and writes an essay about what it found — and a
 static audit of the interest register shows no write path to any scheduling or
 evidence decision. One originated investigation must reach a conclusion its
-originating interest did not want.
+originating interest did not want. The register must additionally report its
+provenance mix, its interest-origination share, and at least one interest
+retired for producing nothing — a register that only grows has not been
+demonstrated to do anything.
 
 ## Phase 5 — Reviewed contested-source pilot
 
@@ -357,12 +374,16 @@ Deliver:
 6. Report offered and retained role/topic shares separately, along with
    publisher concentration over retained reads, basis concentration, overdue
    counterpart tasks, parser failures, and risk/publication violations.
-7. Report the share of claims held below `supported` or `refuted` solely by
+7. Report the interest-origination share, the register's provenance mix, and the
+   diet self-report, alongside the operator-facing concentration figures. The
+   first two are how RT-1 becomes visible: an interest register nothing depends
+   on is indistinguishable from a good one until someone counts what it caused.
+8. Report the share of claims held below `supported` or `refuted` solely by
    unknown basis independence. This is the leading indicator that the evidence
    rules are unsatisfiable in practice rather than merely strict; a sustained
    reading above 90% is a design finding and MUST be escalated to the operator
    rather than absorbed.
-8. Require operator acknowledgment of daily reports during the first seven
+9. Require operator acknowledgment of daily reports during the first seven
    clean days.
 
 Pause conditions:
@@ -505,6 +526,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.6.0 | 2026-09-04 | Added interest-register influences, provenance, trace, and retirement to Phase 4A with the diet self-report, extended Gate 4A to require a register that demonstrably caused something, and added the origination share and provenance mix to pilot reporting. |
 | 1.5.0 | 2026-09-04 | Recorded that gates govern contact with the outside world rather than the building of a faculty, and added entity-card delivery and tests for Phase 4. |
 | 1.4.0 | 2026-09-04 | Added Phase 4 and Phase 4A tests for the adopted operator-surface and publishing requirements: channel-established authority, exact-effect requests, out-of-band halt, raising as additive, clearance never inferred, output authorship, and confirmed publication outcomes. |
 | 1.3.0 | 2026-09-04 | Added Phase 4A and Gate 4A for the investigator — noticing, interest, originated investigations, essays, and the conversational surface — placed before the pilot because a pilot without it is a feed reader on a timer. Added ADR-0002 for the model tier and backlog items P14a through P14c. |

@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.6.0
+**Document version:** 1.7.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -538,6 +538,36 @@ produced it. The register MUST be inspectable by the operator in full, and
 every change to it MUST be an append-only event carrying its reason. Interest
 that cannot be inspected is indistinguishable from bias.
 
+**Influences.** Every interest entry MUST record its influences alongside its
+rationale: the diet epoch and topic targets in force when the material that
+produced it was read, and any operator input that touched it. The system MUST be
+able to separate what it concluded from what it was handed, and MUST NOT present
+an interest as its own where the origin chain traces only to a configured topic
+target. A catalog weighted 18% toward one subject will produce a system
+interested in that subject; that is a property of the diet, and it MUST be
+legible as one rather than reported as self-discovery.
+
+**Provenance.** A notice MUST NOT arise from NewZ's own output. Essays, claim
+cards, entity cards, reports, and prior notices are projections, and attention
+drawn from a projection is attention feeding on itself — confidence rising while
+grounding falls. The provenance mix of everything entering the register MUST be
+measurable and reported, and material originating outside the system MUST
+dominate it.
+
+**Trace.** An interest that changes nothing is decorative. Every interest entry
+MUST carry its downstream trace: the investigations it opened, the essays it
+selected, and what those produced. The share of investigations originated by
+interest, rather than derived from an assessment or opened by the operator, MUST
+be reported. An interest that has produced nothing within a configured window
+MUST be retired or explicitly renewed with a recorded reason. A register that
+only accumulates is a topic list.
+
+**Self-report.** The system MUST be able to state the shape of its own reading:
+the balance of roles, topics, and publishers it has actually retained over a
+window, which perspectives are under-represented in it, and where its current
+interests track the diet's targets rather than diverging from them. It MUST NOT
+treat its source catalog as the world.
+
 **Origination.** Interest MAY open an investigation. An originated
 investigation MUST state its question, its exit conditions, and the observation
 that would close it before any task is created. The operator MAY close any
@@ -739,7 +769,7 @@ The durable model MUST provide these append-oriented records:
 | Semantics | assertions, claims, claim aliases, entities (disambiguation data only, never per-person aggregation) |
 | Evidence | bases, derivation links, edge events, policy decisions, predicate attestations |
 | Assessment | assessment events, explanations, threshold inputs, supersessions |
-| Attention | notices, interest register entries, interest events, origination records |
+| Attention | notices, interest register entries, interest events, influences, provenance mix, downstream traces, origination records, retirements |
 | Investigation | investigations, claim membership, tasks, task attempts, exit conditions |
 | Output | claim-card revisions, entity-card revisions, reports, appraisals, clearances, dependency links, invalidations |
 | Operations | policy versions, operator actions, audit events, metrics, alerts |
@@ -758,7 +788,9 @@ The implementation MUST expose equivalent CLI and service operations for:
 - artifact and span inspection;
 - claim creation, merge proposal, and reassessment;
 - evidence packet inspection;
-- notice and interest-register inspection;
+- notice and interest-register inspection, with influences, provenance mix, and
+  downstream trace;
+- diet self-report over a window;
 - investigation and task management, including originated investigations;
 - claim-card and entity-card rendering;
 - risk appraisal and clearance;
@@ -821,6 +853,12 @@ The first production release is acceptable only when:
     counterevidence.
 9c. A message on an unpinned channel cannot instruct, and no clearance follows
     from a case the system made for publishing.
+9f. No notice arises from NewZ's own output, the register's provenance mix is
+    dominated by external material, and an interest traceable only to a
+    configured topic target is labelled as diet-derived rather than formed.
+9g. Interest-originated investigations are a reported share of all
+    investigations, and an interest that produced nothing is retired or
+    renewed with a reason.
 9d. Publication, correction, and retraction each record a confirmed outcome from
     outside the renderer, or are marked `unconfirmed` and not counted.
 9e. An entity card shows one basis where ten claims share one, says so when
@@ -840,6 +878,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.7.0 | 2026-09-04 | Closed four ways the interest register could become ornament or an echo: influences recorded so a disposition handed over by the topic quotas is not reported as self-discovery, notices barred from arising from the system's own projections with the provenance mix measured, a downstream trace required on every entry with unproductive interests retired, and a diet self-report so the system can state its own skew instead of treating its catalog as the world. |
 | 1.6.0 | 2026-09-04 | Added entity cards in section 10.1: per-person browsing kept, but as a governed projection rather than a stored dossier. Entity records hold disambiguation data only; cards are computed at build time, show basis independence across the set, carry state and counterevidence per claim, say so when nothing is established, appraise the aggregation itself, log access for living people at R2 and above, and never publish at R3. Interest may not select a person. |
 | 1.5.0 | 2026-09-04 | Adopted six operator-surface and publishing requirements from the pre-rewrite functional spec: authority established by pinned channel rather than message content, authorisation requests presenting the exact effect, an out-of-band halt with automatic non-self-clearable entry on breach, raising as additive to a record the system cannot curate, clearance never inferred from persuasion or unrelated approval, and publication as an action with an attempted effect and a separately confirmed outcome plus mandatory authorship on every output. |
 | 1.4.0 | 2026-09-04 | Specified the investigator the rewrite had left out: noticing, an inspectable interest register, interest-originated investigations, and essays as synthesis whose subject interest may choose and whose verdict it may not. Interest reaches attention only; the diet keeps sole control of throughput under a ceiling on open originated investigations. Made a small, locally served model normative rather than incidental, split the operator into a conversational and a command surface, and replaced the model-spend ceiling with local inference ceilings. |

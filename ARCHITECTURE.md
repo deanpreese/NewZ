@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.5.0
+**Document version:** 1.6.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -153,7 +153,7 @@ assessment.
 | Promotion policy | Versioned promotion thresholds, required evidence lanes per claim kind, independence justification list | Evaluating a specific claim, or reclassifying a task |
 | Assessor | Deterministic assessment transitions against the current promotion policy | Searching, fetching, or defining thresholds |
 | Noticing | Attention records against retained spans, in the system's own words | Assertions, edges, or bases |
-| Interest register | Durable inspectable dispositions, append-only with reasons, investigation origination, essay subject selection | Scheduling, evidence weight, thresholds, risk, or any assessment |
+| Interest register | Durable inspectable dispositions, append-only with reasons, recorded influences, provenance mix, downstream trace, retirement, investigation origination, essay subject selection | Scheduling, evidence weight, thresholds, risk, any assessment, or attention drawn from the system's own output |
 | Research manager | Investigations, missing lanes, task lifecycle and its competent/incomplete terminal classification, resolution attempts | Rewriting evidence history |
 | Projector | Claim cards, entity cards, and dependency maps | New factual assertions, or any per-person aggregation held at rest |
 | Appraisal/clearance | Exact-revision output permission | Altering internal evidence state |
@@ -313,6 +313,10 @@ storage-adapter change and does not alter the domain contract.
 - A person is an address in the graph, never a dossier in it: per-person views
   are projected at build time and never accumulated.
 - Interest attaches to subjects and claims, never to an individual.
+- Attention never feeds on the system's own projections.
+- A disposition traceable only to a configured topic target is a property of the
+  diet, and is labelled as one.
+- An interest that changes nothing is retired, not accumulated.
 - Search, embeddings, prose, and prior NewZ output are never external evidence.
 - Risk is monotonic within an automated operation; lowering it requires a
   reasoned operator action.
@@ -341,6 +345,7 @@ sequencing is in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.6.0 | 2026-09-04 | Gave the interest register influences, provenance mix, downstream trace, and retirement, with invariants that attention never feeds on the system's own projections and that a diet-derived disposition is labelled as one. |
 | 1.5.0 | 2026-09-04 | Gave the projector entity cards and forbade it any per-person aggregation at rest, with invariants that a person is an address rather than a dossier and that interest never attaches to an individual. |
 | 1.4.0 | 2026-09-04 | Channel-established operator authority and an out-of-band halt on the operator boundary, automatic entry into Lockdown on breach, and invariants for attempted-versus-confirmed publication, raising as additive, and authorship on output. |
 | 1.3.0 | 2026-09-04 | Added the attention plane — noticing, the interest register, essay selection — feeding investigations and never the budget, plus the interest trust boundary and its invariants. Made the small local model explicit in the context diagram and recorded it as ADR-0002. |
