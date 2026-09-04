@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.7.1
+**Document version:** 1.8.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -157,7 +157,7 @@ assessment.
 | Interest register | Durable inspectable dispositions, append-only with reasons, recorded influences, provenance mix, downstream trace, retirement, investigation origination, essay subject selection | Scheduling, evidence weight, thresholds, risk, any assessment, or attention drawn from the system's own output |
 | Research manager | Investigations, missing lanes, task lifecycle and its competent/incomplete terminal classification, resolution attempts | Rewriting evidence history |
 | Projector | Claim cards, entity cards, and dependency maps | New factual assertions, or any per-person aggregation held at rest |
-| Appraisal/clearance | Exact-revision output permission | Altering internal evidence state |
+| Appraisal/clearance | Machine appraisal dimensions, exact-revision output permission, sampling selection, review debt accounting | Altering internal evidence state, or deciding fair representation and material omission |
 
 ## Storage architecture
 
@@ -280,8 +280,11 @@ storage-adapter change and does not alter the domain contract.
    exact rendered revision and its dependency set are appraised independently,
    and output that passes publishes to the local surface without waiting. The
    boundary is held by enumerated refusal conditions that fail closed with no
-   operator present, by revocation proven to work before the default is turned
-   on, and by reach staying local until an operator widens it.
+   operator present, by revocation proven to work within a bounded window before
+   the default is turned on, and by reach staying local until an operator
+   widens it. The two dimensions no machine decides — fair representation and
+   material omission — are reviewed behind publication on a mandatory sample,
+   and unreviewed output halts its class rather than accumulating.
 5. **Operator boundary:** operator actions can correct metadata and authorize
    reach, but cannot silently edit the evidence ledger. Operator authority is
    established by the pinned channel an instruction arrives on, never by what a
@@ -329,7 +332,11 @@ storage-adapter change and does not alter the domain contract.
   where it lands is local-first.
 - Public reach defaults to off, is widened only by an explicit scoped operator
   act, and can be locked down at any moment without changing evidence.
-- Approve-by-default is earned by demonstrated revocation, never assumed.
+- Approve-by-default is earned by demonstrated revocation inside a bounded
+  window, never assumed.
+- The system never judges its own fair representation.
+- Every failure carries a change that cites it; an explanation alone is the
+  defect.
 - Core records and artifacts are portable and recoverable without a model
   provider.
 
@@ -354,6 +361,7 @@ sequencing is in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.8.0 | 2026-09-04 | Gave appraisal its machine and person dimensions with a review debt ceiling, bounded revocation in time, and made failure-to-change linkage a permanent invariant. |
 | 1.7.1 | 2026-09-04 | Split clearance from reach: approve-by-default governs what publishes, local-first governs where it lands, and public reach returns to off by default. |
 | 1.7.0 | 2026-09-04 | Publication becomes approve-by-default and revocable, held by enumerated fail-closed refusals rather than by waiting, with reach defaulting on from Gate 4 and still lockable at any moment. |
 | 1.6.0 | 2026-09-04 | Gave the interest register influences, provenance mix, downstream trace, and retirement, with invariants that attention never feeds on the system's own projections and that a diet-derived disposition is labelled as one. |

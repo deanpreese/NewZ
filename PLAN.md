@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.7.1
+**Document version:** 1.8.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -246,8 +246,11 @@ Deliver:
 3. Report composer that accepts claim and edge references, never unsupported
    factual prose as authority.
 4. Dependency validator and invalidation/rebuild pipeline.
-5. Appraisal workflow for accuracy, fair representation, material omission,
-   privacy, risk, and rendering.
+5. Appraisal workflow split as `SPEC.md` section 10.2 requires: the four
+   machine dimensions gating publication, the two judgment dimensions sampled
+   behind it with full coverage of essays, R2 output, rewritten claimant
+   formulations, and thin counterevidence, plus review debt accounting that
+   halts a class when the ceiling is passed.
 6. Exact-revision clearance records, local and public reach controls, and the
    enumerated automatic refusal conditions that hold with no operator present.
 7. Correction notices, superseded revisions, and retraction tombstones.
@@ -276,6 +279,12 @@ Tests:
 - publication, correction, and retraction each confirmed from outside the
   renderer, or marked `unconfirmed` and excluded from published counts;
 - a forced render failure reports attempted-not-confirmed rather than success;
+- the system refuses to assess its own fair representation or material omission;
+- a judgment finding on one sampled item re-appraises its whole class;
+- passing the review debt ceiling halts that class, and clearing it resumes;
+- a correction and a retraction each complete and confirm inside the window, and
+  an overdue one halts its class;
+- a recorded failure with no linked change is reported as open;
 - clearance refused when the only support is a case the system made, a
   perceived instruction, or an approval of a different revision or class;
 - lockdown disables public reach without mutating evidence, and an injected
@@ -284,7 +293,8 @@ Tests:
 **Gate 4:** A local reader can audit every sentence in a claim card, and a
 post-publication correction automatically updates the card and adds a visible
 history entry. A retraction removes the presentation, leaves its tombstone, and
-confirms both from outside the renderer. This gate is what earns
+confirms both from outside the renderer, inside the configured window rather
+than merely eventually. This gate is what earns
 approve-by-default: passing it turns local publication on for R0–R2, and failing
 it leaves it off. Public reach is a separate decision and stays disabled here.
 R3 stays approval-gated and R4 unpublishable either way.
@@ -413,7 +423,9 @@ Pause and resumption semantics, so the gate is countable:
 
 - A pause suspends acquisition. Dates during a pause are not eligible dates.
 - Resumption requires a recorded cause, a fix, and a permanent regression
-  fixture for the violation.
+  fixture for the violation. This is the pilot instance of the permanent
+  correction requirement in `SPEC.md` section 13, not a rule that expires with
+  the pilot.
 - A fix that changes evidence, promotion, risk, or publication behavior resets
   the route-exercise requirement: all 20 routes must be exercised again under
   the new code version. Eligible dates and retained reads accumulated before
@@ -539,6 +551,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.8.0 | 2026-09-04 | Phase 4 delivers the split appraisal workflow with review debt accounting, Gate 4 demonstrates the revocation window rather than the mechanism alone, and Gate 5's resumption rule is marked as an instance of the permanent correction requirement. |
 | 1.7.1 | 2026-09-04 | Gate 4 turns on local publication only; public reach stays disabled and is widened as its own act in Phase 6. Added the local-first delivery principle. |
 | 1.7.0 | 2026-09-04 | Made Gate 4 the point that earns approve-by-default, moved the reader surface into Phase 4 so publication has somewhere to land, and added the enumerated fail-closed refusal conditions to Phase 4 delivery. |
 | 1.6.0 | 2026-09-04 | Added interest-register influences, provenance, trace, and retirement to Phase 4A with the diet self-report, extended Gate 4A to require a register that demonstrably caused something, and added the origination share and provenance mix to pilot reporting. |

@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.8.1
+**Document version:** 1.9.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -179,7 +179,7 @@ NewZ is not:
 | Independence group | A catalog grouping of sources known to share ownership, syndication, or editorial control. Membership blocks independence; it never establishes it. |
 | Lane | A separately budgeted class of scheduled reads: discovery, verification, or correction. |
 | Predicate attestation | A versioned record that one named admission predicate held or failed for one edge, with its inputs, so the decision can be replayed. |
-| Appraisal | Review of one exact rendered revision for accuracy, fair representation, material omission, privacy, and risk. |
+| Appraisal | Review of one exact rendered revision across five dimensions, of which some are decided by machine and some only by a person. See section 10.2. |
 | Clearance | The permission record that lets one exact appraised revision reach a stated audience. |
 
 ## 5. Ingestion diet
@@ -723,8 +723,10 @@ Because nothing now holds output back by waiting, what holds it back MUST be
 enumerated and MUST fail closed. Publication MUST be refused, automatically and
 without an operator present, when: risk state is missing or unreadable, which
 behaves as R3; any dependency is stale, withdrawn, or uncleared; any cited edge
-is not live; the content is R4; an appraisal check fails; or a prior retraction
-of the same claim has not been confirmed. A refusal is recorded with its reason
+is not live; the content is R4; a machine appraisal dimension under section 10.2
+fails; the review debt ceiling for its class is exceeded; a revocation in its
+class is overdue and unconfirmed; or a prior retraction of the same claim has
+not been confirmed. A refusal is recorded with its reason
 and is visible to the operator, who may then decide; the system MUST NOT retry a
 refused publication by re-deriving the same output.
 
@@ -750,9 +752,58 @@ source exists for an output class, that class MUST be marked `unconfirmed` and
 MUST NOT be counted as published in any report or acceptance criterion. Absence
 of an error is not confirmation.
 
+**Revocation MUST be bounded in time.** A control with unbounded latency is not
+a control, and revocation is the whole of what replaced the publication gate.
+Every correction and retraction MUST propagate to every dependent surface and
+report a confirmed outcome within a configured window — fifteen minutes for
+local surfaces during Pilot. Revocation latency MUST be measured and reported
+rather than assumed.
+
+When any revocation in a class exceeds its window unconfirmed, publication of
+that class MUST halt automatically until it resolves. Gate 4 MUST demonstrate
+the window, not merely the mechanism: revocable and revocable-eventually are
+different guarantees, and only the first justifies publishing without a gate.
+
 Corrections MUST remain visibly attached to prior outputs. Retraction removes
 the current presentation from navigation but MUST leave a tombstone explaining
 what changed.
+
+### 10.2 Appraisal and the review debt ceiling
+
+Approve-by-default removes the person standing in front of publication, so it
+must say what appraisal now means without one. Appraisal has five dimensions and
+they do not divide evenly.
+
+| Dimension | Decided by | Basis |
+|---|---|---|
+| Accuracy | Machine | Every factual sentence resolves to a live edge and an exact span. |
+| Privacy | Machine | Risk tier, personal-data minimisation, and the entity-card rules of section 10.1. |
+| Risk | Machine | Effective risk computed under section 8, failing closed when unreadable. |
+| Rendering | Machine | Dependencies resolve, nothing stale, withdrawn, or uncleared. |
+| **Fair representation** | **Person** | Whether a claimant's strongest actual position survived the rendering. |
+| **Material omission** | **Person** | Whether what was left out changes what the reader concludes. |
+
+The four machine dimensions MUST pass before publication; a failure is a refusal
+condition. The system MUST NOT assess its own fair representation or material
+omission, and MUST NOT publish a claim that it has.
+
+The two judgment dimensions are reviewed **after** publication, on a sample.
+This is a review queue, not a publication queue: output does not wait on it.
+Sampling MUST cover a configured share of published output and MUST cover in
+full: every essay, every R2 output, every output where a claimant's formulation
+was rewritten rather than quoted, and every output whose counterevidence section
+is materially shorter than its support.
+
+Sampling is meaningful only if a finding travels. A judgment failure on one
+sampled item MUST trigger re-appraisal of its whole class, not merely a
+correction to that item.
+
+**The review debt ceiling.** When unreviewed sampled output for a class exceeds
+its configured ceiling, publication of that class MUST halt automatically until
+the backlog clears. This is what keeps approve-by-default honest: the operator
+cannot be a bottleneck in front of publication, and equally cannot become a
+formality behind it. Unreviewed output is a debt that the system stops
+borrowing against.
 
 ### 10.1 Entity cards
 
@@ -861,6 +912,13 @@ operator action MUST record actor, time, reason, target preimage, and result.
   history and MUST pass automated restore verification.
 - **Observability:** Reports MUST distinguish leads, attempted fetches, retained
   bodies, admitted edges, bases, assessments, and publications.
+- **Correction:** Every recorded failure MUST be linked to a change — to policy,
+  to the design, to a guardrail's shape, or to a regression fixture — and the
+  change MUST cite the failure that prompted it. A failure that produces an
+  explanation and no change is itself the defect. Failures without a linked
+  change MUST be reported as open. This holds permanently and system-wide, not
+  only during a pilot: under approve-by-default, correction is the control that
+  replaced the gate, and a control nobody exercises is a claim.
 - **Cost control:** Budget reservations MUST happen before fetch or model work;
   retries MUST not silently exceed the same operation's limit. The system MUST
   enforce a configured monthly ceiling on external requests, and configured
@@ -884,6 +942,12 @@ The first production release is acceptable only when:
    `PLAN.md`.
 6a. Every automatic refusal condition holds with no operator present, and a
     refused publication is not retried by re-deriving the same output.
+6b. The system never assesses its own fair representation or material omission;
+    a judgment finding on a sampled item re-appraises its whole class; and
+    exceeding the review debt ceiling halts publication of that class.
+6c. Revocation completes and confirms within its window, an overdue revocation
+    halts its class, and every recorded failure carries a change that cites
+    it.
 7. R4 content cannot enter model prompts or reader-facing output.
 8. The 20-source pilot meets role/topic coverage and the retained-read
    publisher cap.
@@ -921,6 +985,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.9.0 | 2026-09-04 | Made approve-by-default safe rather than nominally safe. Section 10.2 splits appraisal into four machine-decided dimensions that gate publication and two — fair representation and material omission — that only a person decides, reviewed after publication on a mandatory sample, with a review debt ceiling that halts a class when unreviewed output accumulates. Revocation gains a time bound, measured and reported, with an overdue revocation halting its class. Correction becomes a permanent system-wide requirement: every failure links to a change that cites it, and a failure producing only an explanation is itself the defect. |
 | 1.8.1 | 2026-09-04 | Separated the two axes 1.8.0 had run together: clearance is approve-by-default, reach is local-first. Public reach returns to disabled by default and is widened only by an explicit scoped operator act, never as a consequence of clearance. |
 | 1.8.0 | 2026-09-04 | Publication becomes approve-by-default and revocable: R0–R2 publish on passing their checks, public reach defaults to enabled from Gate 4, and the control moves from the gate in front of publication to the ability to withdraw what went out. R3 stays approval-gated because `TRUE_NORTH.md` forbids autonomously publishing high-risk claims about living people, and R4 stays unpublishable. The refusal conditions are enumerated and fail closed, since nothing now holds output back by waiting. Entity cards keep a disabled default. The reader surface moves to Phase 4. |
 | 1.7.0 | 2026-09-04 | Closed four ways the interest register could become ornament or an echo: influences recorded so a disposition handed over by the topic quotas is not reported as self-discovery, notices barred from arising from the system's own projections with the provenance mix measured, a downstream trace required on every entry with unproductive interests retired, and a diet self-report so the system can state its own skew instead of treating its catalog as the world. |
