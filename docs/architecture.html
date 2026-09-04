@@ -201,7 +201,7 @@ footer{
   <h1>NewZ Architecture</h1>
   <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence — with a faculty that decides what is worth investigating, and cannot decide what is true.</p>
   <div class="meta">
-    <span><b>Version</b> 1.5.0</span>
+    <span><b>Version</b> 1.6.0</span>
     <span><b>Effective</b> 2026-09-04</span>
     <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
     <span><b>Model</b> small, local, replaceable</span>
@@ -365,6 +365,10 @@ footer{
   <ul>
     <li><b>A notice is not evidence.</b> It cannot become an assertion, an edge, or a basis, and never appears on a claim card as support for anything.</li>
     <li><b>The register is inspectable in full.</b> Every change is append-only and carries its reason — interest that cannot be inspected is indistinguishable from bias.</li>
+    <li><b>Influences are recorded.</b> A catalog weighted 18% toward one subject produces a system interested in that subject. That is a property of the diet, labelled as one rather than reported as self-discovery.</li>
+    <li><b>Attention never feeds on the system's own output.</b> A notice cannot arise from an essay, a card, or a prior notice, and the provenance mix entering the register stays dominated by external material — otherwise confidence rises while grounding falls.</li>
+    <li><b>Every interest carries its downstream trace.</b> What it opened, what it selected, what those produced. An interest that caused nothing within its window is retired; a register that only grows is a topic list.</li>
+    <li><b>The system states its own skew.</b> The retained balance of roles, topics, and publishers, which perspectives are under-represented, and where its interests merely track the diet's targets. It does not treat its catalog as the world.</li>
     <li><b>Origination is bounded.</b> Five concurrently open self-originated investigations during Pilot, each stating its question, exit conditions, and closing observation before a single task is created.</li>
     <li><b>The essay does not get its verdict.</b> Where the evidence turns against the essay the system wanted to write, the essay changes or goes unwritten.</li>
     <li><b>The model is small and local by design.</b> A model strong enough to carry the system's judgment would eventually be trusted with it, so no rule may be written that depends on model strength to hold.</li>
@@ -392,7 +396,7 @@ footer{
         <tr><td class="k">Promotion policy</td><td class="own">Thresholds, required lanes per claim kind, independence justifications</td><td class="not">Evaluating a specific claim, or reclassifying a task</td></tr>
         <tr><td class="k">Assessor</td><td class="own">Deterministic state transitions against current policy</td><td class="not">Searching, fetching, defining thresholds</td></tr>
         <tr><td class="k">Noticing</td><td class="own">Attention records against retained spans, in the system's own words</td><td class="not">Assertions, edges, or bases</td></tr>
-        <tr><td class="k">Interest register</td><td class="own">Durable inspectable dispositions, investigation origination, essay subject selection</td><td class="not">Scheduling, evidence weight, thresholds, risk, or any assessment</td></tr>
+        <tr><td class="k">Interest register</td><td class="own">Durable inspectable dispositions, recorded influences, provenance mix, downstream trace, retirement, investigation origination, essay subject selection</td><td class="not">Scheduling, evidence weight, thresholds, risk, any assessment, or attention drawn from the system's own output</td></tr>
         <tr><td class="k">Research manager</td><td class="own">Investigations, missing lanes, task lifecycle and terminal classification, resolution attempts</td><td class="not">Rewriting evidence history</td></tr>
         <tr><td class="k">Projector</td><td class="own">Claim cards, entity cards, and dependency maps</td><td class="not">New factual assertions, or any per-person aggregation held at rest</td></tr>
         <tr><td class="k">Appraisal / clearance</td><td class="own">Exact-revision output permission</td><td class="not">Altering internal evidence state</td></tr>
@@ -703,6 +707,9 @@ footer{
     <li>Everything published says what produced it.</li>
     <li>A person is an address in the graph, never a dossier in it — per-person views are projected at build time, never accumulated.</li>
     <li>Interest attaches to subjects and claims, never to an individual.</li>
+    <li>Attention never feeds on the system's own projections.</li>
+    <li>A disposition traceable only to a configured topic target is a property of the diet, and is labelled as one.</li>
+    <li>An interest that changes nothing is retired, not accumulated.</li>
     <li>The model is small and local by design, so no rule may depend on model strength to hold.</li>
   </ul>
 </section>
@@ -732,7 +739,7 @@ footer{
     <li><span class="g">M2 · GATE 2</span><h4>Evidence graph</h4><p>The controlled corpus produces every assessment state, explainable without reading model reasoning or trusting generated prose.</p></li>
     <li><span class="g">M3 · GATE 3</span><h4>Investigation loop</h4><p>Three fixture investigations reach different defensible outcomes, one stays unresolved, one reverses after correction. No manual database edit.</p></li>
     <li><span class="g">M4 · GATE 4</span><h4>Safe presentation</h4><p>A local reader can audit every sentence in a claim card, and a post-publication correction updates it automatically. Public reach stays disabled.</p></li>
-    <li><span class="g">M4A · GATE 4A</span><h4>The investigator</h4><p>The system opens an investigation nobody asked for, pursues it through the existing lanes, and writes an essay about what it found — while a static audit of the interest register shows no write path to any scheduling or evidence decision. One originated investigation reaches a conclusion its originating interest did not want.</p></li>
+    <li><span class="g">M4A · GATE 4A</span><h4>The investigator</h4><p>The system opens an investigation nobody asked for, pursues it through the existing lanes, and writes an essay about what it found — while a static audit of the interest register shows no write path to any scheduling or evidence decision. One originated investigation reaches a conclusion its originating interest did not want, and the register reports its provenance mix, its origination share, and at least one interest retired for producing nothing.</p></li>
     <li><span class="g">M5 · GATE 5</span><h4>Contested pilot</h4><p>30 eligible dates, 100 retained full reads, all 20 routes exercised under the current code version, and live claims demonstrating supported, contested, indeterminate, and corrected outcomes.</p></li>
     <li><span class="g">M6 · GATE 6</span><h4>Production</h4><p>Service objectives, security review, disaster-recovery drill, policy replay, and a public correction drill pass. R4 remains permanently quarantined.</p></li>
   </ol>
@@ -742,7 +749,7 @@ footer{
 </div>
 
 <footer>
-  <span>NewZ · architecture 1.5.0</span>
+  <span>NewZ · architecture 1.6.0</span>
   <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
   <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
 </footer>
