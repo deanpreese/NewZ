@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.2.0
+**Document version:** 1.3.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -319,16 +319,18 @@ The current assessment state is one of:
   support;
 - `contested` — countable evidence exists in both directions;
 - `indeterminate` — every evidence lane required for the claim's kind reached a
-  terminal task state without producing a countable edge in either direction;
+  terminal-competent task state without producing a countable edge in either
+  direction;
   or
 - `withdrawn` — the investigated proposition is no longer maintained, while
   history remains.
 
-`indeterminate` MUST be a function of recorded task state alone. The evidence
-lanes required for each claim kind, and the set of terminal task states, are
-declared in the capability matrix and versioned with it, so an assessment
-reproduces exactly under section 13. No assessment state may depend on a
-judgment of search competence that is not recorded as terminal task state.
+`indeterminate` MUST be a function of recorded task state alone. The task
+states themselves are enumerated in section 9.1; the evidence lanes required
+for each claim kind are declared in the capability matrix and versioned with
+it. Together they make an assessment reproduce exactly under section 13. No
+assessment state may depend on a judgment of search competence that is not
+recorded as a terminal-competent task state.
 
 Rules:
 
@@ -341,7 +343,8 @@ Rules:
 6. Repetition from one basis MUST NOT increase evidentiary strength.
 7. Support and refutation use symmetrical thresholds.
 8. Absence counts only when an expected record, competent repository, query,
-   time window, and searched scope are recorded.
+   time window, and searched scope are recorded, and only from a lane that
+   reached a terminal-competent state under section 9.1.
 9. Countable opposing evidence always produces `contested`; it is never
    subtracted into a net score.
 10. Model extraction confidence MUST NOT flow numerically into assessment
@@ -437,18 +440,62 @@ Every access to R3 quarantined material MUST be logged.
 7. New evidence, retraction, or source correction triggers reassessment and
    invalidates dependent presentations.
 8. A change to the capability matrix, promotion thresholds, independence
-   justifications, required evidence lanes, or the set of terminal task states
-   is a policy version change. It MUST trigger reassessment of every claim
-   whose current assessment was derived under the superseded version, and MUST
-   invalidate the dependent presentations. Without this, a stored assessment
-   silently reflects a policy that no longer exists, and section 13
-   reproducibility holds only against a version nothing is running.
+   justifications, required evidence lanes, or the task-state classification in
+   section 9.1 is a policy version change. It MUST trigger reassessment of
+   every claim whose current assessment was derived under the superseded
+   version, and MUST invalidate the dependent presentations. Without this, a
+   stored assessment silently reflects a policy that no longer exists, and
+   section 13 reproducibility holds only against a version nothing is running.
 
 Every assessment MUST record the policy version it was derived under. Tasks
-MUST have an owner, reason, due time, retry policy, and terminal state drawn
-from the versioned set.
-Verification and correction work MUST have priority over new discovery when
-their reserved capacity is available.
+MUST have an owner, reason, due time, retry policy, and a state drawn from
+section 9.1. Verification and correction work MUST have priority over new
+discovery when their reserved capacity is available.
+
+### 9.1 Task states
+
+Task states are enumerated here, not left to the implementation, because
+`indeterminate` is derived from them. An assessment state may not rest on a set
+that no document fixes.
+
+Live states:
+
+- `open` — created, not yet reserved;
+- `scheduled` — holds a lane and budget reservation;
+- `in_progress` — an attempt is running; and
+- `blocked` — waiting on an external precondition such as a source outage, rate
+  limit, or quarantine. A blocked task MUST return to `scheduled` when the
+  precondition clears; it is not terminal.
+
+Terminal states divide into two classes, and the division is the substance of
+this section.
+
+**Terminal-competent** — the search happened and concluded:
+
+- `satisfied` — the task produced what it sought;
+- `exhausted` — competent attempts were made against a reachable repository and
+  the retry policy is spent; and
+- `unreachable` — no competent repository, registry, or resolver exists for the
+  question, recorded with what was sought and where it was sought.
+
+**Terminal-incomplete** — the search did not happen:
+
+- `refused` — policy declined the work on risk, retention, or terms grounds;
+- `cancelled` — an operator stopped it, with a recorded reason;
+- `expired` — the due time passed and the task is no longer useful; and
+- `superseded` — a successor task carries the work, typically after a claim
+  merge or split.
+
+Only terminal-competent states may contribute to `indeterminate`. Investigating
+and finding nothing is a different fact from never investigating, and
+collapsing them would let a claim NewZ was refused permission to examine
+present exactly like one examined exhaustively — the most misleading result
+this system could produce, because it would wear the language of inquiry.
+
+A claim with any required lane in a terminal-incomplete state MUST hold its
+current assessment and MUST surface that lane, its state, and its reason on the
+claim card. A terminal-incomplete lane MUST NOT satisfy rule 8 of section 7.3;
+absence is evidence only from a lane that actually looked.
 
 ## 10. Claim card and outputs
 
@@ -461,7 +508,8 @@ Every claim card MUST include:
 - basis count and independence notes;
 - direct quotations with artifact locators;
 - important context and limitations;
-- missing evidence and active tasks;
+- missing evidence, active tasks, and any required lane that ended
+  terminal-incomplete, with its reason;
 - assessment history; and
 - a “what would change this” condition.
 
@@ -579,5 +627,6 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.3.0 | 2026-09-04 | Enumerated task states in section 9.1 and split terminal states into terminal-competent and terminal-incomplete. Only terminal-competent lanes may produce `indeterminate` or satisfy the absence rule; a claim with a refused, cancelled, expired, or superseded required lane holds its state and surfaces the blocked lane on the card. |
 | 1.2.0 | 2026-09-04 | Demoted evidence scope from the capability tuple to recorded audit context, so the matrix is computed over role, claim kind, assertion kind, and relation alone. Collapsed "verified" and "qualified" bases into the single bar `countable`. Put the set of terminal task states in the versioned capability matrix, and made a policy version change trigger reassessment of claims derived under the superseded version. |
 | 1.1.0 | 2026-09-04 | Separated basis identity from basis independence and added the closed list of independence justifications. Rebalanced the daily lane budget to 3/5/2 with a counterpart backlog brake. Moved publisher concentration to retained reads with tiered caps. Made `indeterminate` a function of terminal task state. Constrained `normative proposition` and `forecast` kinds. Added claim merge and split semantics, crypto-shredding for erasure, R3/R4 retention expiry, cost and storage ceilings. Clarified the single-record exception at R2–R3, R2 clearance, and the prompt-injection boundary. Defined sighting, independence group, lane, predicate attestation, appraisal, and clearance. |

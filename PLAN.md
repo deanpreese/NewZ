@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.2.0
+**Document version:** 1.2.1
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -50,8 +50,8 @@ Deliver:
 4. A machine-readable capability matrix implementing the rules in `SPEC.md`,
    computed over role, claim kind, assertion kind, and relation. It declares
    the required evidence lanes per claim kind that make `indeterminate`
-   deterministic, the set of terminal task states, and the closed list of
-   basis-independence justifications. Deriving roughly two thousand cells from
+   deterministic, and the closed list of basis-independence justifications. The
+   task states themselves come from `SPEC.md` section 9.1. Deriving roughly two thousand cells from
    about ten stated principles is a design task: every judgment call the
    principles do not settle is recorded as a decision in the matrix, not
    resolved silently in code.
@@ -82,8 +82,11 @@ Tests:
 - property tests showing duplicate bases never increase strength, and that
   unknown independence collapses bases for counting without invalidating any
   edge;
-- `indeterminate` derived from terminal task state alone, with no
+- `indeterminate` derived from terminal-competent task state alone, with no
   competence judgment outside recorded state;
+- a required lane ending `refused`, `cancelled`, `expired`, or `superseded`
+  never producing `indeterminate` and never satisfying the absence rule; the
+  claim holds its state and the blocked lane surfaces with its reason;
 - a policy version change reassessing every claim derived under the superseded
   version, and invalidating its dependent presentations;
 - normative claims refusing `supports` and `contradicts` edges, and forecasts
@@ -413,5 +416,6 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.2.1 | 2026-09-04 | Took task states out of the capability matrix, now fixed by `SPEC.md` 9.1, and added the terminal-incomplete regression test. |
 | 1.2.0 | 2026-09-04 | Scoped the capability matrix to role, claim kind, assertion kind, and relation, and named it a design task rather than a transcription. Added the policy-change reassessment test. |
 | 1.1.0 | 2026-09-04 | Moved storage to SQLite with ADR-0001 as a Phase 0 deliverable. Rebalanced the daily lane budget to 3/5/2 and specified borrow direction. Gave the Shadow stage a place and exit criteria in Phase 5. Defined pause and route-exercise reset semantics for Gate 5 and required live cases rather than fixtures. Added the unknown-independence indicator to pilot reporting, scheduled the reader surface into Phase 6, and added Phase 0 cases and tests for the new SPEC rules. |
