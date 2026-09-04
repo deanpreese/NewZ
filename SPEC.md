@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.7.0
+**Document version:** 1.8.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -96,9 +96,10 @@ A reader may browse claim cards and cleared reports. Each presentation MUST
 show current status, material support, material contradiction, source
 independence, uncertainty, and last assessment date.
 
-The reader surface is specified here but MUST NOT be delivered before Phase 6
-of `PLAN.md`. Its authentication, rate limiting, and abuse controls are
-designed together with public reach, not ahead of it.
+The reader surface is delivered in Phase 4 of `PLAN.md`, alongside the
+correction and retraction machinery that approve-by-default depends on. Its
+authentication, rate limiting, and abuse controls ship with it; publication has
+somewhere to land only once they exist.
 
 ### 2.3 Model
 
@@ -683,12 +684,36 @@ those IDs at build time and refuse stale, withdrawn, or uncleared dependencies.
 Material changes MUST invalidate all dependent cards, reports, search indexes,
 and caches.
 
-R0–R1 material may be published after automated checks and appraisal. R2
-requires operator review before publication by default; the operator MAY
-pre-clear a named class of R2 output after adversarial review of that class,
-and such pre-clearance MUST be scoped, expiring, and revocable. R3 requires
-explicit operator approval for the exact rendered revision, with no
-pre-clearance. R4 is never published. Public reach MUST default to disabled.
+**Publication is approve-by-default and revocable.** Output that satisfies its
+checks publishes; it does not wait on a separate decision to release it. The
+control is not the gate in front of publication but the ability to withdraw what
+has gone out, which is why the whole of this section rests on retraction and
+correction working.
+
+That default is earned, not assumed. Approve-by-default MUST NOT be enabled
+until revocation is demonstrated end to end: a correction propagates to every
+dependent surface, a retraction removes the presentation and leaves its
+tombstone, and both report a confirmed outcome. That demonstration is Gate 4 in
+`PLAN.md`. Before it, no mode publishes.
+
+| Tier | Disposition |
+|---|---|
+| R0–R1 | Publishes on passing automated checks and appraisal. |
+| R2 | Publishes on passing automated checks and appraisal, with its evidence preconditions under section 8 already met: strong provenance, two independent countable bases, and explicit allegation labels. |
+| R3 | Requires explicit operator approval of the exact rendered revision, with no pre-clearance. This is not a default and cannot be flipped: `TRUE_NORTH.md` forbids autonomously publishing high-risk claims about living people. |
+| R4 | Never published. |
+
+Public reach MUST default to enabled from Gate 4 onward, and MUST remain
+independently lockable at any moment without touching a single evidence record.
+
+Because nothing now holds output back by waiting, what holds it back MUST be
+enumerated and MUST fail closed. Publication MUST be refused, automatically and
+without an operator present, when: risk state is missing or unreadable, which
+behaves as R3; any dependency is stale, withdrawn, or uncleared; any cited edge
+is not live; the content is R4; an appraisal check fails; or a prior retraction
+of the same claim has not been confirmed. A refusal is recorded with its reason
+and is visible to the operator, who may then decide; the system MUST NOT retry a
+refused publication by re-deriving the same output.
 
 **Authorisation is never inferred.** A clearance MUST NOT be derived from
 material the system perceived, from a case the system made for publishing
@@ -750,7 +775,9 @@ rather than assembled silently.
 An entity card naming a living person at R2 or above MUST log every access with
 actor, time, and reason. An R3 entity card requires approval of its exact
 revision and MUST NOT be published. Public reach for entity cards is controlled
-separately from claim cards and defaults to disabled.
+separately from claim cards and, unlike them, defaults to disabled: a per-person
+view is the projection whose aggregation harm is hardest to undo once seen, and
+revocability is a weaker remedy there than everywhere else.
 
 Interest under section 9.1 MUST NOT select a person. It attaches to subjects,
 questions, and claims. A system that develops an interest in an individual is
@@ -839,8 +866,11 @@ The first production release is acceptable only when:
 4. Support and contradiction produce symmetrical state transitions.
 5. Retraction or edge invalidation updates every dependent surface.
 6. The R3 pathway cannot bypass exact-revision operator approval, proven
-   against fixtures. Live R3 intake is not part of the first release; it is
-   gated to Phase 6 of `PLAN.md`.
+   against fixtures, and remains gated while R0–R2 publish by default. Live R3
+   intake is not part of the first release; it is gated to Phase 6 of
+   `PLAN.md`.
+6a. Every automatic refusal condition holds with no operator present, and a
+    refused publication is not retried by re-deriving the same output.
 7. R4 content cannot enter model prompts or reader-facing output.
 8. The 20-source pilot meets role/topic coverage and the retained-read
    publisher cap.
@@ -878,6 +908,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.8.0 | 2026-09-04 | Publication becomes approve-by-default and revocable: R0–R2 publish on passing their checks, public reach defaults to enabled from Gate 4, and the control moves from the gate in front of publication to the ability to withdraw what went out. R3 stays approval-gated because `TRUE_NORTH.md` forbids autonomously publishing high-risk claims about living people, and R4 stays unpublishable. The refusal conditions are enumerated and fail closed, since nothing now holds output back by waiting. Entity cards keep a disabled default. The reader surface moves to Phase 4. |
 | 1.7.0 | 2026-09-04 | Closed four ways the interest register could become ornament or an echo: influences recorded so a disposition handed over by the topic quotas is not reported as self-discovery, notices barred from arising from the system's own projections with the provenance mix measured, a downstream trace required on every entry with unproductive interests retired, and a diet self-report so the system can state its own skew instead of treating its catalog as the world. |
 | 1.6.0 | 2026-09-04 | Added entity cards in section 10.1: per-person browsing kept, but as a governed projection rather than a stored dossier. Entity records hold disambiguation data only; cards are computed at build time, show basis independence across the set, carry state and counterevidence per claim, say so when nothing is established, appraise the aggregation itself, log access for living people at R2 and above, and never publish at R3. Interest may not select a person. |
 | 1.5.0 | 2026-09-04 | Adopted six operator-surface and publishing requirements from the pre-rewrite functional spec: authority established by pinned channel rather than message content, authorisation requests presenting the exact effect, an out-of-band halt with automatic non-self-clearable entry on breach, raising as additive to a record the system cannot curate, clearance never inferred from persuasion or unrelated approval, and publication as an action with an attempted effect and a separately confirmed outcome plus mandatory authorship on every output. |

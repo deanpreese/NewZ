@@ -201,11 +201,11 @@ footer{
   <h1>NewZ Architecture</h1>
   <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence — with a faculty that decides what is worth investigating, and cannot decide what is true.</p>
   <div class="meta">
-    <span><b>Version</b> 1.6.0</span>
+    <span><b>Version</b> 1.7.0</span>
     <span><b>Effective</b> 2026-09-04</span>
     <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
     <span><b>Model</b> small, local, replaceable</span>
-    <span><b>Publication</b> deny-by-default</span>
+    <span><b>Publication</b> approve-by-default, revocable</span>
   </div>
 </header>
 
@@ -597,7 +597,7 @@ footer{
     <li><span class="n">01</span><div><h4>External content</h4><p>URLs, headers, files, markup, metadata, and document text are hostile. Fetch and parse workers run with their own network and resource isolation.</p></div></li>
     <li><span class="n">02</span><div><h4>Model</h4><p>Prompts carry only the minimum artifact segments. Output is schema-validated proposal data, never executable policy. Prompt injection is contained here, not at fetch: every proposed quotation verifies byte-exact against retained text, so a model cannot introduce a quotation that does not already exist.</p></div></li>
     <li><span class="n">03</span><div><h4>Evidence</h4><p>Only verified spans and admitted edge events can affect an assessment. Anything missing or corrupt fails closed and remains contextual material.</p></div></li>
-    <li><span class="n">04</span><div><h4>Publication</h4><p>An internal assessment does not imply clearance. The exact rendered revision and its full dependency set require independent appraisal.</p></div></li>
+    <li><span class="n">04</span><div><h4>Publication</h4><p>An internal assessment does not imply clearance. The exact rendered revision and its dependency set are appraised independently, and output that passes publishes without waiting. The boundary is held by enumerated refusal conditions that fail closed with no operator present, and by revocation proven to work before the default was turned on.</p></div></li>
     <li><span class="n">05</span><div><h4>Operator</h4><p>The operator corrects metadata and authorizes reach, and cannot silently edit the evidence ledger. Every action records actor, time, reason, target preimage, and result. Authority is established by the pinned channel an instruction arrives on, never by what a message claims about its sender — and the halt path does not run through the conversational surface.</p></div></li>
     <li><span class="n">06</span><div><h4>Interest</h4><p>Interest may open an investigation and choose an essay subject. It may not reach the scheduler, the diet, a source role, an evidence weight, a threshold, a risk classification, or any assessment. Unlike the five above, this one guards against the system's own preferences rather than an outside party — which is why it is enforced by the absence of a code path rather than by a check.</p></div></li>
   </ol>
@@ -605,12 +605,13 @@ footer{
 
 <!-- ================= 07 ================= -->
 <section id="publish">
-  <h2><em>08 — Deny by default</em>The publication gate</h2>
-  <p>Effective risk is the maximum of source, claim, named-entity, domain, and intended-output risk. A model may raise it and may never lower it; missing or unreadable risk state behaves as R3 and blocks publication outright.</p>
+  <h2><em>08 — Approve by default</em>The publication gate</h2>
+  <p>Publication is approve-by-default and revocable: output that satisfies its checks goes out rather than waiting on a decision to release it. The control is not the gate in front of publication but the ability to withdraw what has gone out — which is why the default is switched on by Gate 4, where revocation is proven, and not before.</p>
+  <p>Effective risk is the maximum of source, claim, named-entity, domain, and intended-output risk. A model may raise it and may never lower it; missing or unreadable risk state behaves as R3 and blocks publication outright. Because nothing holds output back by waiting, what holds it back is enumerated and fails closed with no operator present: unreadable risk, a stale or withdrawn dependency, an edge that is not live, R4 content, a failed appraisal check, or an unconfirmed prior retraction.</p>
 
   <figure>
     <div class="canvas">
-      <svg viewBox="0 0 900 286" role="img" aria-label="Assessment becomes a card revision, then appraisal, then routes by risk tier: R0 to R1 automated, R2 operator review, R3 exact-revision approval, R4 never published. Public reach defaults to off.">
+      <svg viewBox="0 0 900 286" role="img" aria-label="Assessment becomes a card revision, then appraisal, then routes by risk tier: R0 to R1 and R2 publish on passing their checks, R3 requires exact-revision approval, R4 is never published. Public reach defaults on from Gate 4.">
         <defs>
           <marker id="a5" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
@@ -640,13 +641,13 @@ footer{
 
         <rect x="526" y="30" width="360" height="42" rx="2" style="fill:var(--accent-tint);stroke:var(--accent)"/>
         <text class="dsub" x="546" y="48" style="fill:var(--accent)">R0 – R1</text>
-        <text class="dsub" x="640" y="48" style="fill:var(--ink)">automated checks, then appraisal</text>
+        <text class="dsub" x="640" y="48" style="fill:var(--ink)">publishes on checks and appraisal</text>
         <text class="dlab" x="640" y="63">folklore, UAP, psi, cryptids, alternative physics</text>
 
         <rect x="526" y="88" width="360" height="42" rx="2" style="fill:var(--warn-tint);stroke:var(--warn)"/>
         <text class="dsub" x="546" y="106" style="fill:var(--warn)">R2</text>
-        <text class="dsub" x="640" y="106" style="fill:var(--ink)">operator review before publication</text>
-        <text class="dlab" x="640" y="121">scoped pre-clearance may be granted, and revoked</text>
+        <text class="dsub" x="640" y="106" style="fill:var(--ink)">publishes once its evidence bar is met</text>
+        <text class="dlab" x="640" y="121">two independent bases, explicit allegation labels</text>
 
         <rect x="526" y="146" width="360" height="42" rx="2" style="fill:var(--danger-tint);stroke:var(--danger)"/>
         <text class="dsub" x="546" y="164" style="fill:var(--danger)">R3</text>
@@ -662,10 +663,10 @@ footer{
         <text class="dsub" x="14" y="216">missing or unreadable</text>
         <text class="dsub" x="14" y="232">risk state behaves as R3</text>
         <text class="dsub" x="14" y="248">and blocks publication</text>
-        <text class="dlab" x="526" y="266">public reach defaults to disabled and is lockable without touching evidence</text>
+        <text class="dlab" x="526" y="266">reach defaults on from Gate 4, lockable at any moment without touching evidence</text>
       </svg>
     </div>
-    <figcaption><b>Assessment is not permission.</b> Clearance is never inferred — not from perceived material, not from a case the system made for publishing, not from an approval of a different revision. Every output says what produced it, and publication records an attempted effect and a separately confirmed outcome, because absence of an error is not confirmation. Corrections stay visibly attached to prior outputs; a retraction leaves a tombstone.</figcaption>
+    <figcaption><b>Assessment is not permission, but it no longer waits for one.</b> Clearance is never inferred — not from perceived material, not from a case the system made for publishing, not from an approval of a different revision. Every output says what produced it, and publication records an attempted effect and a separately confirmed outcome, because absence of an error is not confirmation. Corrections stay visibly attached to prior outputs; a retraction leaves a tombstone.</figcaption>
   </figure>
 
   <h3>Risk tiers</h3>
@@ -675,7 +676,7 @@ footer{
       <tbody>
         <tr><td><span class="tier t01">R0</span></td><td>Historical folklore, obsolete claims</td><td class="mut">Ordinary attributed research</td></tr>
         <tr><td><span class="tier t01">R1</span></td><td>UAP, psi, cryptids, alternative physics and history</td><td class="mut">Ordinary investigation; evidence rules apply</td></tr>
-        <tr><td><span class="tier t2">R2</span></td><td>Active institutions, current secrecy, named organizations</td><td class="mut">Strong provenance, two independent bases, explicit allegation labels</td></tr>
+        <tr><td><span class="tier t2">R2</span></td><td>Active institutions, current secrecy, named organizations</td><td class="mut">Strong provenance, two independent bases, explicit allegation labels; publishes once those are met</td></tr>
         <tr><td><span class="tier t3">R3</span></td><td>Medicine, elections, finance, alleged crimes by living people</td><td class="mut">Isolated workflow; primary or adjudicative basis plus an independent qualified basis; operator approval before any publication</td></tr>
         <tr><td><span class="tier t4">R4</span></td><td>Doxxing, incitement, harassment, operational wrongdoing</td><td class="mut">Metadata quarantine only; never reproduced or operationalized</td></tr>
       </tbody>
@@ -695,7 +696,8 @@ footer{
     <li>A failed or retracted edge invalidates all dependent projections.</li>
     <li>Search, embeddings, prose, and prior NewZ output are never external evidence.</li>
     <li>Risk is monotonic within an automated operation; lowering it requires a reasoned operator action.</li>
-    <li>Public reach defaults to off and can be locked down without changing evidence.</li>
+    <li>Public reach defaults to on from Gate 4 and can be locked down at any moment without changing evidence.</li>
+    <li>Approve-by-default is earned by demonstrated revocation, never assumed.</li>
     <li>Core records and artifacts are portable and recoverable without a model provider.</li>
     <li>Claim merge and split re-point edges by new events and never rewrite existing ones.</li>
     <li>Erasure destroys a per-subject key; the ledger event survives, unreadable, with a tombstone.</li>
@@ -738,7 +740,7 @@ footer{
     <li><span class="g">M1 · GATE 1</span><h4>Provenance spine</h4><p>Four offline canary sources produce reconstructible acquisition traces and artifact hashes through one scheduler.</p></li>
     <li><span class="g">M2 · GATE 2</span><h4>Evidence graph</h4><p>The controlled corpus produces every assessment state, explainable without reading model reasoning or trusting generated prose.</p></li>
     <li><span class="g">M3 · GATE 3</span><h4>Investigation loop</h4><p>Three fixture investigations reach different defensible outcomes, one stays unresolved, one reverses after correction. No manual database edit.</p></li>
-    <li><span class="g">M4 · GATE 4</span><h4>Safe presentation</h4><p>A local reader can audit every sentence in a claim card, and a post-publication correction updates it automatically. Public reach stays disabled.</p></li>
+    <li><span class="g">M4 · GATE 4</span><h4>Safe presentation</h4><p>A local reader can audit every sentence in a claim card, a correction updates it automatically, and a retraction removes the presentation and confirms it from outside the renderer. Passing this gate is what turns publication on; failing it leaves it off.</p></li>
     <li><span class="g">M4A · GATE 4A</span><h4>The investigator</h4><p>The system opens an investigation nobody asked for, pursues it through the existing lanes, and writes an essay about what it found — while a static audit of the interest register shows no write path to any scheduling or evidence decision. One originated investigation reaches a conclusion its originating interest did not want, and the register reports its provenance mix, its origination share, and at least one interest retired for producing nothing.</p></li>
     <li><span class="g">M5 · GATE 5</span><h4>Contested pilot</h4><p>30 eligible dates, 100 retained full reads, all 20 routes exercised under the current code version, and live claims demonstrating supported, contested, indeterminate, and corrected outcomes.</p></li>
     <li><span class="g">M6 · GATE 6</span><h4>Production</h4><p>Service objectives, security review, disaster-recovery drill, policy replay, and a public correction drill pass. R4 remains permanently quarantined.</p></li>
@@ -749,7 +751,7 @@ footer{
 </div>
 
 <footer>
-  <span>NewZ · architecture 1.6.0</span>
+  <span>NewZ · architecture 1.7.0</span>
   <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
   <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
 </footer>

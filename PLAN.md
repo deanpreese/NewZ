@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.6.0
+**Document version:** 1.7.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -17,7 +17,9 @@ contracts and tests.
 - Prove every boundary with hostile fixtures before live acquisition.
 - Keep discovery, verification, and correction as separately budgeted lanes.
 - Prefer one complete vertical slice to a broad collection of partial adapters.
-- Keep public reach off until correction and invalidation work end to end.
+- Turn publication on when correction and invalidation work end to end, and not
+  before. Approve-by-default is earned by demonstrated revocation: the ability
+  to withdraw is the control that replaces the gate.
 - Gates govern contact with the outside world, never the building of a faculty.
   No capability waits on an assessment being written or a maturity score being
   awarded; what waits is live acquisition and publication. Gate 4A is the shape
@@ -228,7 +230,10 @@ the ledger.
 
 Deliver:
 
-1. Claim-card projection containing every field required by `SPEC.md`.
+1. Claim-card projection containing every field required by `SPEC.md`, and the
+   reader surface of `SPEC.md` section 2.2 with its authentication, rate
+   limiting, and abuse controls — publication has somewhere to land only once
+   these exist.
 1a. Entity-card projection under `SPEC.md` section 10.1: computed from the graph
    at build time, never stored as an accumulated profile, showing basis
    independence across the whole set and every claim's current state and
@@ -240,7 +245,8 @@ Deliver:
 4. Dependency validator and invalidation/rebuild pipeline.
 5. Appraisal workflow for accuracy, fair representation, material omission,
    privacy, risk, and rendering.
-6. Exact-revision clearance records and local/public reach controls.
+6. Exact-revision clearance records, local and public reach controls, and the
+   enumerated automatic refusal conditions that hold with no operator present.
 7. Correction notices, superseded revisions, and retraction tombstones.
 8. Export of one claim or the full corpus with artifacts, policy versions, and
    checksums.
@@ -274,7 +280,11 @@ Tests:
 
 **Gate 4:** A local reader can audit every sentence in a claim card, and a
 post-publication correction automatically updates the card and adds a visible
-history entry. Public reach remains disabled.
+history entry. A retraction removes the presentation, leaves its tombstone, and
+confirms both from outside the renderer. This gate is what earns
+approve-by-default: passing it turns publication and public reach on for R0–R2,
+and failing it leaves them off. R3 stays approval-gated and R4 unpublishable
+either way.
 
 ## Phase 4A — The investigator
 
@@ -423,10 +433,9 @@ Deliver in order:
 
 1. Expand the low-risk R0–R1 catalog while maintaining topic/role coverage and
    concentration alerts.
-2. Build the reader surface specified in `SPEC.md` section 2.2, including
-   authentication, rate limiting, and abuse controls, and enable cleared public
-   claim cards with public reach still independently lockable. No part of the
-   reader surface is built before this phase.
+2. Widen the audience for output already publishing by default since Gate 4,
+   with public reach still independently lockable at any moment. The reader
+   surface itself was delivered in Phase 4.
 3. Add R2 source classes after direct adversarial review.
 4. Add R3 intake only after the isolated workflow and exact-revision approval
    are exercised in production-like tests.
@@ -526,6 +535,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.7.0 | 2026-09-04 | Made Gate 4 the point that earns approve-by-default, moved the reader surface into Phase 4 so publication has somewhere to land, and added the enumerated fail-closed refusal conditions to Phase 4 delivery. |
 | 1.6.0 | 2026-09-04 | Added interest-register influences, provenance, trace, and retirement to Phase 4A with the diet self-report, extended Gate 4A to require a register that demonstrably caused something, and added the origination share and provenance mix to pilot reporting. |
 | 1.5.0 | 2026-09-04 | Recorded that gates govern contact with the outside world rather than the building of a faculty, and added entity-card delivery and tests for Phase 4. |
 | 1.4.0 | 2026-09-04 | Added Phase 4 and Phase 4A tests for the adopted operator-surface and publishing requirements: channel-established authority, exact-effect requests, out-of-band halt, raising as additive, clearance never inferred, output authorship, and confirmed publication outcomes. |

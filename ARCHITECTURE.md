@@ -1,12 +1,12 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.6.0
+**Document version:** 1.7.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
 research store. One evidence model serves every interface. Acquisition is
-untrusted; publication is deny-by-default.
+untrusted; publication is approve-by-default and revocable.
 
 ## System context
 
@@ -276,7 +276,10 @@ storage-adapter change and does not alter the domain contract.
 3. **Evidence boundary:** only verified spans and admitted edge events can affect
    an assessment.
 4. **Publication boundary:** internal assessment does not imply clearance. The
-   exact rendered revision and dependency set require independent appraisal.
+   exact rendered revision and its dependency set are appraised independently,
+   and output that passes publishes without waiting. The boundary is held by
+   enumerated refusal conditions that fail closed with no operator present, and
+   by revocation that is proven to work before the default is turned on.
 5. **Operator boundary:** operator actions can correct metadata and authorize
    reach, but cannot silently edit the evidence ledger. Operator authority is
    established by the pinned channel an instruction arrives on, never by what a
@@ -320,7 +323,9 @@ storage-adapter change and does not alter the domain contract.
 - Search, embeddings, prose, and prior NewZ output are never external evidence.
 - Risk is monotonic within an automated operation; lowering it requires a
   reasoned operator action.
-- Public reach defaults to off and can be locked down without changing evidence.
+- Public reach defaults to on from Gate 4 and can be locked down at any moment
+  without changing evidence.
+- Approve-by-default is earned by demonstrated revocation, never assumed.
 - Core records and artifacts are portable and recoverable without a model
   provider.
 
@@ -345,6 +350,7 @@ sequencing is in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.7.0 | 2026-09-04 | Publication becomes approve-by-default and revocable, held by enumerated fail-closed refusals rather than by waiting, with reach defaulting on from Gate 4 and still lockable at any moment. |
 | 1.6.0 | 2026-09-04 | Gave the interest register influences, provenance mix, downstream trace, and retirement, with invariants that attention never feeds on the system's own projections and that a diet-derived disposition is labelled as one. |
 | 1.5.0 | 2026-09-04 | Gave the projector entity cards and forbade it any per-person aggregation at rest, with invariants that a person is an address rather than a dossier and that interest never attaches to an individual. |
 | 1.4.0 | 2026-09-04 | Channel-established operator authority and an out-of-band halt on the operator boundary, automatic entry into Lockdown on breach, and invariants for attempted-versus-confirmed publication, raising as additive, and authorship on output. |
