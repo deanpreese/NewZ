@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.3.0
+**Document version:** 1.4.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -47,6 +47,19 @@ The operator MUST be able to:
 - request reassessment or retraction; and
 - export the complete claim record without dependence on a hosted model.
 
+The operator works through two surfaces holding different powers.
+
+| Surface | Carries |
+|---|---|
+| Conversational | Notices the system raises, proposed investigations, offered essays, alerts, daily report acknowledgment, and pause or resume. |
+| Command (CLI and service API) | Catalog and diet changes, policy epoch activation, evidence and basis correction, risk reclassification, appraisal and exact-revision clearance, backup, restore, and export. |
+
+The split is structural, not a convenience. A conversational surface cannot
+display an exact rendered revision together with its full dependency set, so it
+MUST NOT carry R2 or R3 clearance, ledger correction, policy activation, or
+export. Both surfaces record actor, time, reason, target preimage, and result
+identically; the audit trail does not depend on which one was used.
+
 ### 2.2 Reader
 
 A reader may browse claim cards and cleared reports. Each presentation MUST
@@ -59,9 +72,28 @@ designed together with public reach, not ahead of it.
 
 ### 2.3 Model
 
-Models MAY propose extraction, classification, summaries, search queries, and
-research tasks. A model MUST NOT grant evidence capability, establish source
-independence, lower risk, delete history, or publish high-risk material.
+Models MAY propose extraction, classification, summaries, search queries,
+notices, and research tasks. A model MUST NOT grant evidence capability,
+establish source independence, lower risk, delete history, or publish
+high-risk material.
+
+The model MUST be small and locally served. This is a boundary, not a
+deployment preference. `TRUE_NORTH.md` forbids letting an external model,
+vendor, or source become the authority for the system's identity or judgment,
+and a model strong enough to carry that judgment will eventually be trusted
+with it whatever the documents say. A model that cannot carry the system's
+rigor forces the rigor to live where it belongs: in deterministic policy and
+the persisted evidence graph.
+
+Two consequences bind implementation:
+
+1. No capability, rule, or threshold may be specified in a way that depends on
+   model strength. If a rule holds only with a frontier model, the rule is
+   wrong and MUST be rewritten to hold with a weak proposer and a strict
+   verifier.
+2. Model quality MUST NOT be a release gate, a measure of system health, or an
+   explanation for an assessment. A better model yields better proposals and
+   changes no conclusion by itself.
 
 ## 3. Domain and non-goals
 
@@ -106,6 +138,9 @@ NewZ is not:
 | Investigation | A bounded program of claims, questions, tasks, and exit conditions. |
 | Claim card | The reader-facing projection of the current claim and its evidence graph. |
 | Diet epoch | An immutable version of enabled sources, roles, limits, and policy. |
+| Notice | An attention record: something in retained material the system found worth marking. Not evidence, never an edge. |
+| Interest | A durable, inspectable, revisable disposition toward a subject. It may open investigations and select essay subjects, and reaches nothing else. |
+| Essay | A report synthesizing several claims. A projection of the evidence graph, never a source. |
 | Basis identity | The resolved upstream origin one edge rests on. See section 7.2. |
 | Basis independence | A pairwise property between two resolved bases, used only in threshold counting. See section 7.2. |
 | Sighting | One recorded observation of a body at a source, revision, and time. Duplicate bodies may share storage but never share sightings. |
@@ -326,7 +361,7 @@ The current assessment state is one of:
   history remains.
 
 `indeterminate` MUST be a function of recorded task state alone. The task
-states themselves are enumerated in section 9.1; the evidence lanes required
+states themselves are enumerated in section 9.2; the evidence lanes required
 for each claim kind are declared in the capability matrix and versioned with
 it. Together they make an assessment reproduce exactly under section 13. No
 assessment state may depend on a judgment of search competence that is not
@@ -344,7 +379,7 @@ Rules:
 7. Support and refutation use symmetrical thresholds.
 8. Absence counts only when an expected record, competent repository, query,
    time window, and searched scope are recorded, and only from a lane that
-   reached a terminal-competent state under section 9.1.
+   reached a terminal-competent state under section 9.2.
 9. Countable opposing evidence always produces `contested`; it is never
    subtracted into a net score.
 10. Model extraction confidence MUST NOT flow numerically into assessment
@@ -441,7 +476,7 @@ Every access to R3 quarantined material MUST be logged.
    invalidates dependent presentations.
 8. A change to the capability matrix, promotion thresholds, independence
    justifications, required evidence lanes, or the task-state classification in
-   section 9.1 is a policy version change. It MUST trigger reassessment of
+   section 9.2 is a policy version change. It MUST trigger reassessment of
    every claim whose current assessment was derived under the superseded
    version, and MUST invalidate the dependent presentations. Without this, a
    stored assessment silently reflects a policy that no longer exists, and
@@ -449,10 +484,58 @@ Every access to R3 quarantined material MUST be logged.
 
 Every assessment MUST record the policy version it was derived under. Tasks
 MUST have an owner, reason, due time, retry policy, and a state drawn from
-section 9.1. Verification and correction work MUST have priority over new
+section 9.2. Verification and correction work MUST have priority over new
 discovery when their reserved capacity is available.
 
-### 9.1 Task states
+### 9.1 Noticing and interest
+
+`TRUE_NORTH.md` requires a system that is curious at intake and that
+encounters, rather than one that samples a feed against a quota. Sections 5
+through 8 specify how a claim is evaluated once it exists. This section
+specifies what makes a claim worth evaluating at all.
+
+**Noticing.** As retained artifacts are extracted, the system MAY record
+notices: things in the material it found worth marking, in its own words. A
+notice records the artifact, the span it arose from, and its reason. A notice
+is not evidence. It MUST NOT become an assertion, an edge, or a basis, and it
+MUST NOT appear on a claim card as support for anything. It falls under the
+same rule as a lead: it may direct attention and may establish nothing.
+
+**Interest.** The system maintains an interest register: a durable, revisable
+set of subjects it is pursuing, each with a rationale and the notices that
+produced it. The register MUST be inspectable by the operator in full, and
+every change to it MUST be an append-only event carrying its reason. Interest
+that cannot be inspected is indistinguishable from bias.
+
+**Origination.** Interest MAY open an investigation. An originated
+investigation MUST state its question, its exit conditions, and the observation
+that would close it before any task is created. The operator MAY close any
+investigation at any time with a recorded reason.
+
+**Essay selection.** Interest MAY select the subject of an essay under section
+10.
+
+That is the whole of what interest may do.
+
+Interest MUST NOT influence the scheduler, a diet epoch, an offered-menu
+target, a source role, a risk classification, an evidence weight, a promotion
+threshold, an independence justification, or any assessment. No path exists
+from the interest register to an assessment, and none may be added.
+**Interest reaches attention. Evidence reaches conclusion.**
+
+The diet retains sole control of throughput. An originated investigation
+receives no additional read budget: its tasks queue in the lanes of section 5.2
+under the ordinary priority rules, and the counterpart brake applies unchanged.
+So that origination cannot flood the queue, the system MUST hold no more than a
+configured ceiling of concurrently open self-originated investigations — five
+during Pilot — and MUST NOT open another until one reaches a terminal state or
+the operator closes it.
+
+The system MAY raise a notice, a proposed investigation, or a finished essay to
+the operator over the conversational surface of section 2.1. Raising something
+is not permission to act on it.
+
+### 9.2 Task states
 
 Task states are enumerated here, not left to the implementation, because
 `indeterminate` is derived from them. An assessment state may not rest on a set
@@ -513,6 +596,24 @@ Every claim card MUST include:
 - assessment history; and
 - a “what would change this” condition.
 
+An **essay** is a report that synthesizes several claims. Its subject MAY be
+chosen by interest under section 9.1; its content may not be. An essay MUST:
+
+- cite claim and edge IDs for every factual sentence, as any report must;
+- carry the current assessment state of every claim it discusses, including
+  `contested` and `indeterminate` ones;
+- carry material counterevidence for every claim it discusses; and
+- introduce no factual assertion that does not trace to a live edge.
+
+An essay is a projection and never a source. Nothing in it may be cited as
+evidence, by this system or by any later revision of it. It passes the same
+appraisal, clearance, reach controls, and dependency invalidation as any other
+output.
+
+Where the evidence does not support the essay the system wanted to write, the
+essay changes or goes unwritten. Interest chose the subject; it does not get
+the verdict.
+
 Generated prose MUST cite claim and edge IDs internally. A renderer MUST resolve
 those IDs at build time and refuse stale, withdrawn, or uncleared dependencies.
 Material changes MUST invalidate all dependent cards, reports, search indexes,
@@ -542,6 +643,7 @@ The durable model MUST provide these append-oriented records:
 | Semantics | assertions, claims, claim aliases, entities |
 | Evidence | bases, derivation links, edge events, policy decisions, predicate attestations |
 | Assessment | assessment events, explanations, threshold inputs, supersessions |
+| Attention | notices, interest register entries, interest events, origination records |
 | Investigation | investigations, claim membership, tasks, task attempts, exit conditions |
 | Output | claim-card revisions, reports, appraisals, clearances, dependency links, invalidations |
 | Operations | policy versions, operator actions, audit events, metrics, alerts |
@@ -560,7 +662,8 @@ The implementation MUST expose equivalent CLI and service operations for:
 - artifact and span inspection;
 - claim creation, merge proposal, and reassessment;
 - evidence packet inspection;
-- investigation and task management;
+- notice and interest-register inspection;
+- investigation and task management, including originated investigations;
 - claim-card rendering;
 - risk appraisal and clearance;
 - pause, resume, backup, restore, and export; and
@@ -592,9 +695,11 @@ operator action MUST record actor, time, reason, target preimage, and result.
   bodies, admitted edges, bases, assessments, and publications.
 - **Cost control:** Budget reservations MUST happen before fetch or model work;
   retries MUST not silently exceed the same operation's limit. The system MUST
-  enforce a configured monthly ceiling on model spend and on external requests,
-  and a configured ceiling on retained artifact-store growth. Reaching a ceiling
-  pauses acquisition; it MUST NOT relax evidence rules or publication checks.
+  enforce a configured monthly ceiling on external requests, and configured
+  ceilings on local inference time and on retained artifact-store growth.
+  Inference is local under section 2.3, so the binding cost is compute and
+  wall-clock rather than vendor spend. Reaching a ceiling pauses acquisition;
+  it MUST NOT relax evidence rules or publication checks.
 
 ## 14. Acceptance criteria
 
@@ -613,6 +718,11 @@ The first production release is acceptable only when:
    publisher cap.
 9. At least three controlled cases demonstrate `supported`, `contested`, and
    `indeterminate` outcomes, and one demonstrates correction after publication.
+9a. Interest can open an investigation and select an essay subject, and can
+    reach no scheduler decision, evidence weight, threshold, or assessment.
+9b. An essay refuses to render a factual sentence without a live edge, and
+    carries every discussed claim's current state and material
+    counterevidence.
 10. A clean restore reproduces claim cards, histories, and artifact hashes.
 11. A 30-day pilot completes with at least 100 distinct full reads, at least
     one live claim reaching each of `supported`, `contested`, and
@@ -627,6 +737,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.4.0 | 2026-09-04 | Specified the investigator the rewrite had left out: noticing, an inspectable interest register, interest-originated investigations, and essays as synthesis whose subject interest may choose and whose verdict it may not. Interest reaches attention only; the diet keeps sole control of throughput under a ceiling on open originated investigations. Made a small, locally served model normative rather than incidental, split the operator into a conversational and a command surface, and replaced the model-spend ceiling with local inference ceilings. |
 | 1.3.0 | 2026-09-04 | Enumerated task states in section 9.1 and split terminal states into terminal-competent and terminal-incomplete. Only terminal-competent lanes may produce `indeterminate` or satisfy the absence rule; a claim with a refused, cancelled, expired, or superseded required lane holds its state and surfaces the blocked lane on the card. |
 | 1.2.0 | 2026-09-04 | Demoted evidence scope from the capability tuple to recorded audit context, so the matrix is computed over role, claim kind, assertion kind, and relation alone. Collapsed "verified" and "qualified" bases into the single bar `countable`. Put the set of terminal task states in the versioned capability matrix, and made a policy version change trigger reassessment of claims derived under the superseded version. |
 | 1.1.0 | 2026-09-04 | Separated basis identity from basis independence and added the closed list of independence justifications. Rebalanced the daily lane budget to 3/5/2 with a counterpart backlog brake. Moved publisher concentration to retained reads with tiered caps. Made `indeterminate` a function of terminal task state. Constrained `normative proposition` and `forecast` kinds. Added claim merge and split semantics, crypto-shredding for erasure, R3/R4 retention expiry, cost and storage ceilings. Clarified the single-record exception at R2–R3, R2 clearance, and the prompt-injection boundary. Defined sighting, independence group, lane, predicate attestation, appraisal, and clearance. |

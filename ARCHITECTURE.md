@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.2.1
+**Document version:** 1.3.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -15,7 +15,7 @@ flowchart LR
     OP[Operator] --> UI[Operator UI / CLI]
     READER[Reader] --> SURFACE[Claim cards and cleared reports]
     WEB[Feeds, sites, documents, datasets] --> FETCH[Controlled acquisition]
-    MODEL[Replaceable language models] <--> WORKERS[Extraction and research workers]
+    MODEL[Small local model] <--> WORKERS[Extraction, noticing, research workers]
 
     UI --> CORE[NewZ application]
     FETCH --> CORE
@@ -28,9 +28,10 @@ flowchart LR
     CORE --> AUDIT[Audit, metrics, alerts]
 ```
 
-The model is a replaceable tool outside the trust boundary. It proposes
-structure; deterministic policy and persisted evidence decide capability and
-state.
+The model is a small, locally served, replaceable tool outside the trust
+boundary. It proposes structure and notices what may be worth pursuing;
+deterministic policy and persisted evidence decide capability and state. Its
+smallness is load-bearing — see `SPEC.md` section 2.3 and ADR-0002.
 
 ## Component architecture
 
@@ -57,6 +58,12 @@ flowchart TB
         BASIS[Basis and independence resolver]
         QUALIFY[Evidence policy engine]
         ASSESS[Deterministic assessor]
+    end
+
+    subgraph ATTENTION[Attention plane]
+        NOTICE[Noticing]
+        INTEREST[Interest register]
+        PICK[Essay selection]
     end
 
     subgraph RESEARCH[Research plane]
@@ -87,6 +94,8 @@ flowchart TB
     CLAIMS --> QUALIFY
     ASSESS --> INVEST --> TASKS --> BUDGET
     OPERATOR[Operator actions] --> INVEST
+    EXTRACT --> NOTICE --> INTEREST --> INVEST
+    INTEREST --> PICK --> COMPOSE
     ASSESS --> RESOLVE --> ASSESS
     ASSESS --> CARD --> COMPOSE --> APPRAISE --> PUBLISH
     RISK --> QUALIFY
@@ -143,6 +152,8 @@ assessment.
 | Evidence engine | Deny-by-default role/scope/risk/relation policy, basis-identity resolution, predicate attestations | Narrative generation |
 | Promotion policy | Versioned promotion thresholds, required evidence lanes per claim kind, independence justification list | Evaluating a specific claim, or reclassifying a task |
 | Assessor | Deterministic assessment transitions against the current promotion policy | Searching, fetching, or defining thresholds |
+| Noticing | Attention records against retained spans, in the system's own words | Assertions, edges, or bases |
+| Interest register | Durable inspectable dispositions, append-only with reasons, investigation origination, essay subject selection | Scheduling, evidence weight, thresholds, risk, or any assessment |
 | Research manager | Investigations, missing lanes, task lifecycle and its competent/incomplete terminal classification, resolution attempts | Rewriting evidence history |
 | Projector | Claim cards and dependency maps | New factual assertions |
 | Appraisal/clearance | Exact-revision output permission | Altering internal evidence state |
@@ -219,7 +230,7 @@ flowchart LR
     SCH[Scheduler]
     FW[Fetch worker]
     PW[Parse/OCR worker]
-    MW[Model worker]
+    MW[Model worker — local endpoint]
     AW[Assessment/projector worker]
     DB[(SQLite, WAL)]
     OS[(Content-addressed artifact store)]
@@ -268,6 +279,12 @@ storage-adapter change and does not alter the domain contract.
    exact rendered revision and dependency set require independent appraisal.
 5. **Operator boundary:** operator actions can correct metadata and authorize
    reach, but cannot silently edit the evidence ledger.
+6. **Interest boundary:** interest may open an investigation and choose an
+   essay subject. It may not reach the scheduler, the diet, a source role, an
+   evidence weight, a threshold, a risk classification, or any assessment.
+   Unlike the boundaries above it guards against the system's own preferences
+   rather than an outside party, which is why it is enforced by the absence of
+   a code path rather than by a check.
 
 ## Architectural invariants
 
@@ -282,6 +299,10 @@ storage-adapter change and does not alter the domain contract.
   version; a stored assessment never outlives the policy that produced it.
 - A lane that was refused, cancelled, or expired never reads as a lane that
   searched and found nothing.
+- Interest reaches attention; evidence reaches conclusion. No path runs from
+  the interest register to an assessment.
+- The model is small and local by design, so no rule may depend on model
+  strength to hold.
 - Search, embeddings, prose, and prior NewZ output are never external evidence.
 - Risk is monotonic within an automated operation; lowering it requires a
   reasoned operator action.
@@ -308,6 +329,7 @@ sequencing is in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.3.0 | 2026-09-04 | Added the attention plane — noticing, the interest register, essay selection — feeding investigations and never the budget, plus the interest trust boundary and its invariants. Made the small local model explicit in the context diagram and recorded it as ADR-0002. |
 | 1.2.1 | 2026-09-04 | Moved task-state ownership to the research manager, since `SPEC.md` 9.1 now fixes the set, and added the invariant separating a lane that did not search from one that searched and found nothing. |
 | 1.2.0 | 2026-09-04 | Added the invariant that a policy version change reassesses claims derived under the superseded version. |
 | 1.1.0 | 2026-09-04 | Replaced PostgreSQL and the S3-compatible object store with SQLite in WAL mode and a local content-addressed store, with the concurrency requirement stated and recorded as ADR-0001. Collapsed the runtime topology to one host with local worker processes. Named span verification as the prompt-injection mechanism at the model boundary. Gave promotion thresholds an owning component, gave Shadow mode exit criteria, and added an operator entry point to investigations. |

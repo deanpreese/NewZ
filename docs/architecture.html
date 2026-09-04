@@ -199,11 +199,12 @@ footer{
 <header class="mast">
   <p class="eyebrow">Authoritative target architecture</p>
   <h1>NewZ Architecture</h1>
-  <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence.</p>
+  <p class="lede">A rigorous investigator of contested claims. One acquisition spine, one evidence graph, and exactly one path from a fetched byte to a published sentence — with a faculty that decides what is worth investigating, and cannot decide what is true.</p>
   <div class="meta">
-    <span><b>Version</b> 1.2.1</span>
+    <span><b>Version</b> 1.3.0</span>
     <span><b>Effective</b> 2026-09-04</span>
     <span><b>Store</b> SQLite (WAL) + content-addressed artifacts</span>
+    <span><b>Model</b> small, local, replaceable</span>
     <span><b>Publication</b> deny-by-default</span>
   </div>
 </header>
@@ -216,14 +217,15 @@ footer{
   <p>Contents</p>
   <ol>
     <li><a href="#custody"><em>01</em><span>The custody chain</span></a></li>
-    <li><a href="#planes"><em>02</em><span>Planes and ownership</span></a></li>
-    <li><a href="#basis"><em>03</em><span>Identity vs independence</span></a></li>
-    <li><a href="#lanes"><em>04</em><span>Lanes and budget</span></a></li>
-    <li><a href="#store"><em>05</em><span>Storage and runtime</span></a></li>
-    <li><a href="#trust"><em>06</em><span>Trust boundaries</span></a></li>
-    <li><a href="#publish"><em>07</em><span>The publication gate</span></a></li>
-    <li><a href="#invariants"><em>08</em><span>Invariants</span></a></li>
-    <li><a href="#rollout"><em>09</em><span>Modes and gates</span></a></li>
+    <li><a href="#interest"><em>02</em><span>Interest and evidence</span></a></li>
+    <li><a href="#planes"><em>03</em><span>Planes and ownership</span></a></li>
+    <li><a href="#basis"><em>04</em><span>Identity vs independence</span></a></li>
+    <li><a href="#lanes"><em>05</em><span>Lanes and budget</span></a></li>
+    <li><a href="#store"><em>06</em><span>Storage and runtime</span></a></li>
+    <li><a href="#trust"><em>07</em><span>Trust boundaries</span></a></li>
+    <li><a href="#publish"><em>08</em><span>The publication gate</span></a></li>
+    <li><a href="#invariants"><em>09</em><span>Invariants</span></a></li>
+    <li><a href="#rollout"><em>10</em><span>Modes and gates</span></a></li>
   </ol>
 </nav>
 
@@ -288,9 +290,90 @@ footer{
   </figure>
 </section>
 
+
 <!-- ================= 02 ================= -->
+<section id="interest">
+  <h2><em>02 — The investigator</em>Interest and evidence</h2>
+  <p>A system that samples a feed against a quota does not encounter anything. TRUE NORTH asks for curiosity at intake, so something has to decide what is worth investigating — and that same faculty must be structurally unable to decide what is true.</p>
+  <p>The system notices things in retained material, keeps an inspectable register of what it is pursuing, and uses that interest for exactly two purposes: opening an investigation, and choosing an essay's subject. It reaches nothing else.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 900 320" role="img" aria-label="Interest runs from noticing to an interest register to investigations and essay subjects, and its tasks queue in the existing lanes. Evidence runs separately from span to assertion to edge to assessment. A dashed arc from the interest register to the assessment is marked as a path that does not exist.">
+        <defs>
+          <marker id="a6" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
+          </marker>
+          <marker id="a6no" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" style="fill:var(--danger)"/>
+          </marker>
+        </defs>
+
+        <text class="dlab" x="544" y="26" text-anchor="middle" style="fill:var(--danger)">no path exists from interest to an assessment, and none may be added</text>
+        <path class="dno" marker-end="url(#a6no)" d="M 268 80 C 300 16, 790 16, 810 236"/>
+        <path d="M537 45 L551 59 M551 45 L537 59" style="stroke:var(--danger);stroke-width:1.6"/>
+
+        <text class="dhed" x="14" y="66">ATTENTION</text>
+        <rect class="dbox" x="20" y="80" width="130" height="46" rx="2"/>
+        <text class="dttl" x="85" y="103" text-anchor="middle">Notice</text>
+        <text class="dsub" x="85" y="119" text-anchor="middle">not evidence</text>
+
+        <rect class="dbox" x="186" y="80" width="164" height="46" rx="2"/>
+        <text class="dttl" x="268" y="103" text-anchor="middle">Interest register</text>
+        <text class="dsub" x="268" y="119" text-anchor="middle">append-only, inspectable</text>
+
+        <rect class="dbox" x="386" y="68" width="150" height="36" rx="2"/>
+        <text class="dsub" x="461" y="90" text-anchor="middle" style="fill:var(--ink)">Investigation</text>
+
+        <rect class="dbox" x="386" y="116" width="150" height="36" rx="2"/>
+        <text class="dsub" x="461" y="138" text-anchor="middle" style="fill:var(--ink)">Essay subject</text>
+
+        <g class="dline" marker-end="url(#a6)">
+          <line x1="154" y1="103" x2="180" y2="103"/>
+          <line x1="354" y1="97" x2="380" y2="86"/>
+          <line x1="354" y1="112" x2="380" y2="132"/>
+        </g>
+
+        <rect class="dbox" x="196" y="176" width="216" height="42" rx="2"/>
+        <text class="dsub" x="304" y="194" text-anchor="middle" style="fill:var(--ink)">Evidence tasks</text>
+        <text class="dlab" x="304" y="210" text-anchor="middle">existing lanes, no extra budget</text>
+        <path class="dline" marker-end="url(#a6)" d="M 461 106 C 461 150, 400 148, 340 174"/>
+
+        <text class="dhed" x="14" y="252">EVIDENCE</text>
+        <path class="dline" marker-end="url(#a6)" d="M 280 220 L 272 262"/>
+
+        <rect class="dbox" x="196" y="266" width="150" height="44" rx="2"/>
+        <text class="dsub" x="271" y="293" text-anchor="middle" style="fill:var(--ink)">Span</text>
+        <rect class="dbox" x="376" y="266" width="150" height="44" rx="2"/>
+        <text class="dsub" x="451" y="293" text-anchor="middle" style="fill:var(--ink)">Assertion</text>
+        <rect class="dbox-a" x="556" y="266" width="150" height="44" rx="2"/>
+        <text class="dsub" x="631" y="293" text-anchor="middle" style="fill:var(--ink)">Evidence edge</text>
+        <rect class="dbox" x="736" y="266" width="148" height="44" rx="2"/>
+        <text class="dsub" x="810" y="293" text-anchor="middle" style="fill:var(--ink)">Assessment</text>
+
+        <g class="dline" marker-end="url(#a6)">
+          <line x1="350" y1="288" x2="372" y2="288"/>
+          <line x1="530" y1="288" x2="552" y2="288"/>
+          <line x1="710" y1="288" x2="732" y2="288"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Interest reaches attention. Evidence reaches conclusion.</b> Interest may open an investigation and pick an essay's subject; the tasks that follow queue in the ordinary lanes and buy no extra reads, so the diet keeps sole control of throughput. Because this boundary guards the system against its own preferences rather than against an outside party, it is enforced by the absence of a code path — Gate 4A audits the register's write paths rather than sampling its behavior.</figcaption>
+  </figure>
+
+  <h3>What keeps it honest</h3>
+  <ul>
+    <li><b>A notice is not evidence.</b> It cannot become an assertion, an edge, or a basis, and never appears on a claim card as support for anything.</li>
+    <li><b>The register is inspectable in full.</b> Every change is append-only and carries its reason — interest that cannot be inspected is indistinguishable from bias.</li>
+    <li><b>Origination is bounded.</b> Five concurrently open self-originated investigations during Pilot, each stating its question, exit conditions, and closing observation before a single task is created.</li>
+    <li><b>The essay does not get its verdict.</b> Where the evidence turns against the essay the system wanted to write, the essay changes or goes unwritten.</li>
+    <li><b>The model is small and local by design.</b> A model strong enough to carry the system's judgment would eventually be trusted with it, so no rule may be written that depends on model strength to hold.</li>
+  </ul>
+</section>
+
+<!-- ================= 03 ================= -->
 <section id="planes">
-  <h2><em>02 — Decomposition</em>Planes and ownership</h2>
+  <h2><em>03 — Decomposition</em>Planes and ownership</h2>
   <p>Five planes, each with a narrow mandate. The second column is load-bearing: most failure modes in a system like this are a component quietly acquiring a power it was never meant to hold.</p>
 
   <div class="scroll">
@@ -308,6 +391,8 @@ footer{
         <tr><td class="k">Evidence engine</td><td class="own">Deny-by-default policy, basis identity, predicate attestations</td><td class="not">Narrative generation</td></tr>
         <tr><td class="k">Promotion policy</td><td class="own">Thresholds, required lanes per claim kind, independence justifications</td><td class="not">Evaluating a specific claim, or reclassifying a task</td></tr>
         <tr><td class="k">Assessor</td><td class="own">Deterministic state transitions against current policy</td><td class="not">Searching, fetching, defining thresholds</td></tr>
+        <tr><td class="k">Noticing</td><td class="own">Attention records against retained spans, in the system's own words</td><td class="not">Assertions, edges, or bases</td></tr>
+        <tr><td class="k">Interest register</td><td class="own">Durable inspectable dispositions, investigation origination, essay subject selection</td><td class="not">Scheduling, evidence weight, thresholds, risk, or any assessment</td></tr>
         <tr><td class="k">Research manager</td><td class="own">Investigations, missing lanes, task lifecycle and terminal classification, resolution attempts</td><td class="not">Rewriting evidence history</td></tr>
         <tr><td class="k">Projector</td><td class="own">Claim cards and dependency maps</td><td class="not">New factual assertions</td></tr>
         <tr><td class="k">Appraisal / clearance</td><td class="own">Exact-revision output permission</td><td class="not">Altering internal evidence state</td></tr>
@@ -318,7 +403,7 @@ footer{
 
 <!-- ================= 03 ================= -->
 <section id="basis">
-  <h2><em>03 — The subtlest rule</em>Basis identity vs independence</h2>
+  <h2><em>04 — The subtlest rule</em>Basis identity vs independence</h2>
   <p>These are two properties, not one, and conflating them breaks the system in opposite directions. Treat them as one strict property and almost nothing is ever countable; treat them as one loose property and ten copies of one witness read as corroboration.</p>
 
   <figure>
@@ -381,7 +466,7 @@ footer{
 
 <!-- ================= 04 ================= -->
 <section id="lanes">
-  <h2><em>04 — Scheduling</em>Lanes and budget</h2>
+  <h2><em>05 — Scheduling</em>Lanes and budget</h2>
   <p>Discovery opens claims faster than verification closes them, so capacity is weighted against the natural gradient. Every claimant-led discovery mandates a counterpart task, and an ordinary promotion needs two independent bases including at least one primary, empirical, or adjudicative record.</p>
 
   <figure>
@@ -438,7 +523,7 @@ footer{
 
 <!-- ================= 05 ================= -->
 <section id="store">
-  <h2><em>05 — ADR-0001</em>Storage and runtime</h2>
+  <h2><em>06 — ADR-0001</em>Storage and runtime</h2>
   <p>The storage choice follows from a stated concurrency requirement rather than from habit: one operator, one host, a ceiling of ten retained reads per local day, a handful of local workers, and no multi-writer or horizontal-scale requirement anywhere in the specification.</p>
   <p>The implementation uses <b>SQLite in WAL mode</b> for structured state and a <b>local content-addressed filesystem</b> for retained artifacts. PostgreSQL with an S3-compatible object store was considered and rejected as unearned operational cost at this scale, and as the largest avoidable obstacle to Gate 1. The domain contract names no SQLite-specific behavior, so the decision reverses as a storage-adapter change if the concurrency requirement ever does.</p>
 
@@ -502,7 +587,7 @@ footer{
 
 <!-- ================= 06 ================= -->
 <section id="trust">
-  <h2><em>06 — Isolation</em>Trust boundaries</h2>
+  <h2><em>07 — Isolation</em>Trust boundaries</h2>
   <p>Five boundaries, ordered from the most hostile inward. Each is enforced below the interface layer, so no surface can talk its way past one.</p>
   <ol class="bounds">
     <li><span class="n">01</span><div><h4>External content</h4><p>URLs, headers, files, markup, metadata, and document text are hostile. Fetch and parse workers run with their own network and resource isolation.</p></div></li>
@@ -510,12 +595,13 @@ footer{
     <li><span class="n">03</span><div><h4>Evidence</h4><p>Only verified spans and admitted edge events can affect an assessment. Anything missing or corrupt fails closed and remains contextual material.</p></div></li>
     <li><span class="n">04</span><div><h4>Publication</h4><p>An internal assessment does not imply clearance. The exact rendered revision and its full dependency set require independent appraisal.</p></div></li>
     <li><span class="n">05</span><div><h4>Operator</h4><p>The operator corrects metadata and authorizes reach, and cannot silently edit the evidence ledger. Every action records actor, time, reason, target preimage, and result.</p></div></li>
+    <li><span class="n">06</span><div><h4>Interest</h4><p>Interest may open an investigation and choose an essay subject. It may not reach the scheduler, the diet, a source role, an evidence weight, a threshold, a risk classification, or any assessment. Unlike the five above, this one guards against the system's own preferences rather than an outside party — which is why it is enforced by the absence of a code path rather than by a check.</p></div></li>
   </ol>
 </section>
 
 <!-- ================= 07 ================= -->
 <section id="publish">
-  <h2><em>07 — Deny by default</em>The publication gate</h2>
+  <h2><em>08 — Deny by default</em>The publication gate</h2>
   <p>Effective risk is the maximum of source, claim, named-entity, domain, and intended-output risk. A model may raise it and may never lower it; missing or unreadable risk state behaves as R3 and blocks publication outright.</p>
 
   <figure>
@@ -595,7 +681,7 @@ footer{
 
 <!-- ================= 08 ================= -->
 <section id="invariants">
-  <h2><em>08 — Non-negotiable</em>Architectural invariants</h2>
+  <h2><em>09 — Non-negotiable</em>Architectural invariants</h2>
   <ul class="inv">
     <li>One acquisition spine serves feeds, directed research, documents, and resolvers.</li>
     <li>One claim and evidence graph serves every consumer.</li>
@@ -611,12 +697,14 @@ footer{
     <li>Erasure destroys a per-subject key; the ledger event survives, unreadable, with a tombstone.</li>
     <li>A policy version change reassesses every claim derived under the superseded version.</li>
     <li>A lane that was refused, cancelled, or expired never reads as a lane that searched and found nothing.</li>
+    <li>Interest reaches attention; evidence reaches conclusion. No path runs from the interest register to an assessment.</li>
+    <li>The model is small and local by design, so no rule may depend on model strength to hold.</li>
   </ul>
 </section>
 
 <!-- ================= 09 ================= -->
 <section id="rollout">
-  <h2><em>09 — Rollout</em>Modes and gates</h2>
+  <h2><em>10 — Rollout</em>Modes and gates</h2>
   <p>Mode transitions are explicit, audited, and reversible. Lockdown is reachable from any mode without mutating a single evidence record.</p>
 
   <div class="scroll">
@@ -639,6 +727,7 @@ footer{
     <li><span class="g">M2 · GATE 2</span><h4>Evidence graph</h4><p>The controlled corpus produces every assessment state, explainable without reading model reasoning or trusting generated prose.</p></li>
     <li><span class="g">M3 · GATE 3</span><h4>Investigation loop</h4><p>Three fixture investigations reach different defensible outcomes, one stays unresolved, one reverses after correction. No manual database edit.</p></li>
     <li><span class="g">M4 · GATE 4</span><h4>Safe presentation</h4><p>A local reader can audit every sentence in a claim card, and a post-publication correction updates it automatically. Public reach stays disabled.</p></li>
+    <li><span class="g">M4A · GATE 4A</span><h4>The investigator</h4><p>The system opens an investigation nobody asked for, pursues it through the existing lanes, and writes an essay about what it found — while a static audit of the interest register shows no write path to any scheduling or evidence decision. One originated investigation reaches a conclusion its originating interest did not want.</p></li>
     <li><span class="g">M5 · GATE 5</span><h4>Contested pilot</h4><p>30 eligible dates, 100 retained full reads, all 20 routes exercised under the current code version, and live claims demonstrating supported, contested, indeterminate, and corrected outcomes.</p></li>
     <li><span class="g">M6 · GATE 6</span><h4>Production</h4><p>Service objectives, security review, disaster-recovery drill, policy replay, and a public correction drill pass. R4 remains permanently quarantined.</p></li>
   </ol>
@@ -648,7 +737,7 @@ footer{
 </div>
 
 <footer>
-  <span>NewZ · architecture 1.2.1</span>
+  <span>NewZ · architecture 1.3.0</span>
   <span>Authority: TRUE_NORTH → SPEC → ARCHITECTURE → PLAN</span>
   <span>Encounter anything. Investigate almost anything. Believe only what has earned promotion.</span>
 </footer>

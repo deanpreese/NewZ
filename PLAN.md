@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.2.1
+**Document version:** 1.3.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -28,6 +28,7 @@ contracts and tests.
 | M2 — Evidence graph | Artifacts become typed assertions, claims, bases, and qualified edges | Gate 2 |
 | M3 — Investigation loop | Missing evidence schedules work and new evidence changes assessment | Gate 3 |
 | M4 — Safe presentation | Claim cards, correction, appraisal, and clearance work end to end | Gate 4 |
+| M4A — The investigator | Noticing, interest, originated investigations, and essays work without reaching a conclusion | Gate 4A |
 | M5 — Contested pilot | Reviewed 20-source, local-only live pilot proves the system | Gate 5 |
 | M6 — Production | Controlled catalog expansion and cleared publishing | Gate 6 |
 
@@ -44,6 +45,11 @@ Deliver:
    mode plus a local content-addressed artifact store as the decision, and
    record the rejected PostgreSQL alternative and the conditions that would
    reverse the choice.
+2a. ADR-0002, model tier: record the model, its size, and its local serving
+   path, with the reason stated as the `TRUE_NORTH.md` boundary against an
+   external model becoming the authority for judgment — not as a cost or
+   privacy decision. Record what would reverse it, and note that no rule may be
+   written to depend on model strength.
 3. Enumerations and schemas for source roles, claim kinds, assertion kinds,
    edge relations, assessment states, risk tiers, and task states. Declared
    scope is recorded free text, not an enumeration.
@@ -244,6 +250,54 @@ Tests:
 post-publication correction automatically updates the card and adds a visible
 history entry. Public reach remains disabled.
 
+## Phase 4A — The investigator
+
+**Purpose:** Give the system the faculty that decides what is worth
+investigating. Until this exists the pipeline samples a feed against a quota;
+`TRUE_NORTH.md` asks for something that encounters.
+
+Deliver:
+
+1. Noticing over retained spans, recording artifact, span, and reason, with a
+   hard structural bar on a notice becoming an assertion, edge, or basis.
+2. An append-only interest register with rationales, its full operator
+   inspection view, and its Telegram-side summary.
+3. Investigation origination from interest, requiring question, exit
+   conditions, and closing observation before any task is created, under the
+   configured ceiling of concurrently open originated investigations.
+4. Essay selection and composition: synthesis over several claims, every
+   factual sentence bound to a live edge, every discussed claim carrying its
+   current state and material counterevidence.
+5. The conversational operator surface: notices raised, investigations
+   proposed, essays offered, alerts, daily acknowledgment, pause and resume —
+   and a structural refusal of clearance, ledger correction, policy
+   activation, and export.
+6. A separation test harness that enumerates every write path out of the
+   interest register.
+
+Tests:
+
+- interest cannot reach the scheduler, a diet epoch, an offered-menu target, a
+  source role, an evidence weight, a threshold, or an assessment, proven by
+  enumerating the register's write paths rather than by sampling behavior;
+- a notice cannot become an assertion, edge, or basis, and never appears on a
+  claim card as support;
+- originated investigations consume no budget beyond the ordinary lanes, and
+  the origination ceiling holds under concurrent triggers;
+- an essay refuses to render a factual sentence with no live edge, and refuses
+  to omit material counterevidence;
+- an essay whose evidence turns against it changes or fails to render, and
+  never renders the intended conclusion anyway;
+- the conversational surface refuses R2 and R3 clearance, ledger correction,
+  policy activation, and export;
+- both surfaces produce identical audit records for the same action.
+
+**Gate 4A:** The system opens an investigation nobody asked for, pursues it
+through the existing lanes, and writes an essay about what it found — and a
+static audit of the interest register shows no write path to any scheduling or
+evidence decision. One originated investigation must reach a conclusion its
+originating interest did not want.
+
 ## Phase 5 — Reviewed contested-source pilot
 
 **Purpose:** Validate the system against live, low-risk material without opening
@@ -387,6 +441,9 @@ P01 repository and CI
   → P12 resolution and correction
   → P13 claim cards and dependency invalidation
   → P14 appraisal, clearance, and lockdown
+  → P14a noticing and the interest register
+  → P14b investigation origination and the conversational surface
+  → P14c essay selection and composition
   → P15 pilot catalog and offline adapter fixtures
   → P16 shadow run
   → P17 local contested pilot
@@ -416,6 +473,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.3.0 | 2026-09-04 | Added Phase 4A and Gate 4A for the investigator — noticing, interest, originated investigations, essays, and the conversational surface — placed before the pilot because a pilot without it is a feed reader on a timer. Added ADR-0002 for the model tier and backlog items P14a through P14c. |
 | 1.2.1 | 2026-09-04 | Took task states out of the capability matrix, now fixed by `SPEC.md` 9.1, and added the terminal-incomplete regression test. |
 | 1.2.0 | 2026-09-04 | Scoped the capability matrix to role, claim kind, assertion kind, and relation, and named it a design task rather than a transcription. Added the policy-change reassessment test. |
 | 1.1.0 | 2026-09-04 | Moved storage to SQLite with ADR-0001 as a Phase 0 deliverable. Rebalanced the daily lane budget to 3/5/2 and specified borrow direction. Gave the Shadow stage a place and exit criteria in Phase 5. Defined pause and route-exercise reset semantics for Gate 5 and required live cases rather than fixtures. Added the unknown-independence indicator to pilot reporting, scheduled the reader surface into Phase 6, and added Phase 0 cases and tests for the new SPEC rules. |
