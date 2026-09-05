@@ -62,18 +62,21 @@ accounting, and the daily funnel. Gate 5 wants thirty elapsed days, a hundred
 live retained reads and the operator's approval, so this counts and does not
 judge.
 
-Assembling the twenty slots is automated: add candidate URLs, survey them
-through the ordinary fetcher, and let the solver satisfy the buckets, the eight
-topics and the publisher cap. Two things stay a person's:
+Assembling the twenty slots is derived rather than decided. The diet is already
+prescribed — `SPEC.md` section 3's menu targets and section 5.2's role
+distribution — so the slots follow from it, candidate adapters are asked for
+each one, and the solver fills the prescription:
 
 ```sh
+python -m newz.pilot.propose --prescribe  # what the diet asks for, with the arithmetic
 python -m newz.pilot.propose --survey     # fetch each candidate, record what it serves
-python -m newz.pilot.propose              # solve and print the slate for reading
+python -m newz.pilot.propose              # solve the prescribed slate for reading
 ```
 
-Enabling a source is a diet decision, so the slate proposes and cannot activate.
-And retention is a claim about somebody else's rights, so the survey gathers
-what each source publishes about its own terms and stops there.
+Two things stay a person's. Enabling a source is a diet decision, so the slate
+proposes and cannot activate. And retention is a claim about somebody else's
+rights, so the survey gathers what each source publishes about its own terms
+and stops there.
 
 ```text
 newz/domain       the frozen enumerations and record shapes

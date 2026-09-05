@@ -1,12 +1,15 @@
-"""`python -m newz.pilot.propose` — survey candidates and print a slate.
+"""`python -m newz.pilot.propose` — the pilot slate, derived from the diet.
 
-Two commands, both read-only as far as the diet is concerned. `--survey` fetches
-each unsurveyed candidate through the ordinary fetcher and records what it
-serves. With no flag, it solves a slate from what has been surveyed and prints
-it for a person to read.
+Three commands, all read-only as far as the diet is concerned.
 
-Neither enables anything. Activating a diet epoch is a separate operator act
-with its own dry run, and that is where a source starts being read.
+    --prescribe   what the diet asks for: twenty bucket-and-topic slots,
+                  derived from the menu targets, with the arithmetic shown
+    --survey      fetch each unsurveyed candidate through the ordinary fetcher
+                  and record what it actually serves
+    (no flag)     solve the prescribed slate from what has been surveyed
+
+None of them enables anything. Activating a diet epoch is a separate operator
+act with its own dry run, and that is where a source starts being read.
 """
 
 from __future__ import annotations
@@ -23,6 +26,12 @@ def main(argv: list[str]) -> int:
     args = argv[1:]
     store_path = Path(args[-1]) if args and args[-1].endswith(".db") else Path("data/newz.db")
     store = open_store(store_path)
+
+    if "--prescribe" in args:
+        from newz.pilot.prescription import render as render_prescription
+
+        print(render_prescription())
+        return 0
 
     if "--survey" in args:
         probes = survey(store, SocketTransport())

@@ -30,6 +30,7 @@ lead rather than by exempting it from the scheduler.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -40,12 +41,12 @@ from newz.domain.enums import DeliveryKind, RetentionPolicy, RiskTier, SourceRol
 from newz.parse.registry import ParserFailure, parse
 from newz.pilot.catalog_review import (
     REQUIRED_SLOTS,
-    REQUIRED_TOPICS,
     SLOT_ROLES,
     CatalogReview,
     ProposedSlot,
     review,
 )
+from newz.pilot.prescription import SlotSpec, prescribe
 from newz.store.db import Store
 
 #: Markers a source publishes about its own terms. Signals, never conclusions:
@@ -137,6 +138,72 @@ class Probe:
         }
 
 
+#: A candidate adapter proposes places to look for one prescribed slot. It is
+#: handed a bucket and a topic and returns URLs — leads, under `SPEC.md` section
+#: 6 item 2, which cannot become evidence without a retained artifact. It gets no
+#: store, and there is nothing it could return that would enable anything.
+CandidateAdapter = Callable[[str, str], tuple[tuple[str, str, str], ...]]
+
+_ADAPTERS: dict[str, CandidateAdapter] = {}
+
+
+def register_candidate_adapter(name: str, adapter: CandidateAdapter) -> None:
+    _ADAPTERS[name] = adapter
+
+
+def registered_adapters() -> tuple[str, ...]:
+    return tuple(sorted(_ADAPTERS))
+
+
+def clear_candidate_adapters() -> None:
+    """Forget every registered adapter.
+
+    Exists because a registry that outlives its registrant is a registry whose
+    contents depend on import order — which is a nuisance in a test and a
+    genuine surprise in a process that ran two surveys.
+    """
+    _ADAPTERS.clear()
+
+
+def propose_candidates(
+    store: Store, specs: tuple[SlotSpec, ...] | None = None, added_by: str = "system"
+) -> tuple[int, tuple[SlotSpec, ...]]:
+    """Ask every adapter for candidates against the slots the diet prescribes.
+
+    Returns how many were added and which prescribed slots no adapter could
+    offer anything for — which is the useful half. A slot nothing can fill is a
+    gap in what the system can reach, and saying so beats a slate that is
+    quietly nineteen.
+    """
+    specs = specs if specs is not None else prescribe()
+    existing = {candidate.url for candidate in candidates(store)}
+    proposals: list[Candidate] = []
+    unserved: list[SlotSpec] = []
+
+    for spec in specs:
+        found = False
+        for name in sorted(_ADAPTERS):
+            for index, (url, publisher, note) in enumerate(_ADAPTERS[name](spec.bucket, spec.topic)):
+                if url in existing:
+                    found = True
+                    continue
+                existing.add(url)
+                found = True
+                proposals.append(
+                    Candidate(
+                        id=f"candidate:{name}-{spec.index}-{index}",
+                        url=url,
+                        publisher=publisher,
+                        topic=spec.topic,
+                        note=note,
+                    )
+                )
+        if not found:
+            unserved.append(spec)
+
+    return add_candidates(store, proposals, added_by), tuple(unserved)
+
+
 def add_candidates(store: Store, candidates: list[Candidate], added_by: str) -> int:
     """Record candidates. Cheap by design: a URL, a publisher, a topic guess.
 
@@ -190,22 +257,37 @@ def _retention_signals(body: bytes) -> tuple[str, ...]:
 def _role_evidence(url: str, body: bytes) -> tuple[tuple[str, ...], SourceRole | None]:
     """Deterministic role evidence. No model, and no decision.
 
-    Returns everything it saw and the role the most observations point at. A tie
-    proposes nothing: an even split is exactly the case a person should look at.
+    The body decides; the URL only speaks when the body says nothing. A path
+    like `/metascience/replication/` on a first-person witness blog would
+    otherwise outvote the account itself, and a word in a path is a much weaker
+    claim about what a source *is* than the sentences it publishes.
+
+    A tie proposes nothing: an even split is exactly the case a person should
+    look at, and guessing between two roles is guessing at a capability grant.
     """
-    haystack = (url + "\n" + body.decode("utf-8", errors="replace")[:20_000]).lower()
+    text = body.decode("utf-8", errors="replace")[:20_000].lower()
+    path = url.lower()
+
     seen: list[str] = []
-    votes: dict[SourceRole, int] = {}
+    body_votes: dict[SourceRole, int] = {}
+    url_votes: dict[SourceRole, int] = {}
     for marker, role, description in ROLE_RULES:
-        if marker in haystack:
+        if marker in text:
             seen.append(f"{description} ({marker!r})")
-            votes[role] = votes.get(role, 0) + 1
+            body_votes[role] = body_votes.get(role, 0) + 1
+        elif marker in path:
+            seen.append(f"the endpoint path contains {marker!r}, which suggests {role.value}")
+            url_votes[role] = url_votes.get(role, 0) + 1
+
+    votes = body_votes or url_votes
     if not votes:
         return tuple(seen), None
     ranked = sorted(votes.items(), key=lambda item: (-item[1], item[0].value))
     if len(ranked) > 1 and ranked[0][1] == ranked[1][1]:
         seen.append("the evidence is evenly split; no role proposed")
         return tuple(seen), None
+    if not body_votes:
+        seen.append("proposed from the endpoint path alone; the body said nothing")
     return tuple(seen), ranked[0][0]
 
 
@@ -333,7 +415,8 @@ class Slate:
     slots: tuple[ProposedSlot, ...]
     review: CatalogReview
     unplaced: tuple[str, ...] = field(default_factory=tuple)
-    shortfall: dict[str, int] = field(default_factory=dict)
+    #: Prescribed slots nothing surveyed can fill. The useful half of a failure.
+    unfilled: tuple[SlotSpec, ...] = field(default_factory=tuple)
 
     @property
     def acceptable(self) -> bool:
@@ -345,7 +428,7 @@ class Slate:
             "slots": [slot.source_id for slot in self.slots],
             "review": self.review.as_record(),
             "unplaced": list(self.unplaced),
-            "shortfall": dict(sorted(self.shortfall.items())),
+            "unfilled": [spec.as_record() for spec in self.unfilled],
         }
 
 
@@ -377,89 +460,85 @@ def _to_slot(candidate: Candidate, probe: Probe) -> ProposedSlot | None:
     )
 
 
-def solve(store: Store, slate_id: str = "slate:proposed") -> Slate:
-    """Choose twenty from the surveyed candidates, satisfying every constraint.
+def solve(
+    store: Store, slate_id: str = "slate:proposed", specs: tuple[SlotSpec, ...] | None = None
+) -> Slate:
+    """Fill the slots the diet prescribes, from what has been surveyed.
 
-    Backtracking over the five buckets. The search is exact rather than greedy
-    because the constraints interact — a publisher cap spent early can make a
-    topic uncoverable later — and twenty slots from a few dozen candidates is
-    small enough that guessing is not worth the ambiguity.
+    The prescription names a bucket *and* a topic for each of the twenty, so
+    this is an assignment rather than a count: a slate with six primary records
+    that are all UAP satisfies section 5.2 and defeats section 3. Backtracking,
+    because the publisher cap couples the choices — one spent early can make a
+    later slot unfillable.
     """
+    specs = specs if specs is not None else prescribe()
     surveyed = probes(store)
+
     pool: list[ProposedSlot] = []
     unplaced: list[str] = []
     for candidate in candidates(store):
         probe = surveyed.get(candidate.id)
         slot = _to_slot(candidate, probe) if probe else None
-        if slot is None:
+        if slot is None or slot.slot_kind() not in REQUIRED_SLOTS:
             unplaced.append(candidate.id)
         else:
             pool.append(slot)
 
-    by_kind: dict[str, list[ProposedSlot]] = {kind: [] for kind in REQUIRED_SLOTS}
+    by_pair: dict[tuple[str, str], list[ProposedSlot]] = {}
     for slot in pool:
-        kind = slot.slot_kind()
-        if kind in by_kind:
-            by_kind[kind].append(slot)
-        else:
-            unplaced.append(slot.source_id)
+        by_pair.setdefault((slot.slot_kind(), slot.topic), []).append(slot)
 
     chosen: list[ProposedSlot] = []
     publisher_counts: dict[str, int] = {}
-    # Hardest bucket first: a bucket with barely enough candidates constrains
-    # everything after it, and choosing it last is how a solver paints itself
-    # into a corner.
-    order = sorted(REQUIRED_SLOTS, key=lambda kind: len(by_kind[kind]) - REQUIRED_SLOTS[kind])
+    unfilled: list[SlotSpec] = []
 
-    def topics_reachable(remaining_kinds: list[str], covered: set[str]) -> bool:
-        available = {
-            slot.topic for kind in remaining_kinds for slot in by_kind[kind]
-        }
-        return set(REQUIRED_TOPICS) <= covered | available
+    # Scarcest slots first: a pair with one candidate must take it, and leaving
+    # that until last is how a solver discovers the choice was already made.
+    ordered = sorted(specs, key=lambda spec: (len(by_pair.get((spec.bucket, spec.topic), [])), spec.index))
 
-    def place(index: int, kind_index: int) -> bool:
-        if kind_index == len(order):
-            return set(REQUIRED_TOPICS) <= {slot.topic for slot in chosen}
-        kind = order[kind_index]
-        needed = REQUIRED_SLOTS[kind]
-        picked_here = sum(1 for slot in chosen if slot.slot_kind() == kind)
-        if picked_here == needed:
-            covered = {slot.topic for slot in chosen}
-            if not topics_reachable(order[kind_index + 1 :], covered):
-                return False
-            return place(0, kind_index + 1)
-
-        # Prefer candidates covering a topic not yet held, then full-text ones.
-        covered = {slot.topic for slot in chosen}
-        ranked = sorted(
-            (slot for slot in by_kind[kind] if slot not in chosen),
-            key=lambda slot: (slot.topic in covered, not slot.full_text_capable, slot.source_id),
-        )
-        for slot in ranked:
-            if publisher_counts.get(slot.publisher, 0) >= 2:
+    def place(position: int) -> bool:
+        if position == len(ordered):
+            return True
+        spec = ordered[position]
+        for slot in sorted(
+            by_pair.get((spec.bucket, spec.topic), []),
+            key=lambda slot: (not slot.full_text_capable, slot.source_id),
+        ):
+            if slot in chosen or publisher_counts.get(slot.publisher, 0) >= 2:
                 continue
             chosen.append(slot)
             publisher_counts[slot.publisher] = publisher_counts.get(slot.publisher, 0) + 1
-            if place(index + 1, kind_index):
+            if place(position + 1):
                 return True
             chosen.pop()
             publisher_counts[slot.publisher] -= 1
         return False
 
-    # A failed search unwinds `chosen` to empty, and the review then reports
-    # every bucket that came up short. That is more use than a boolean.
-    place(0, 0)
-    shortfall = {
-        kind: max(REQUIRED_SLOTS[kind] - len(by_kind[kind]), 0) for kind in REQUIRED_SLOTS
-    }
-    result = review(list(chosen))
+    if not place(0):
+        # No complete assignment. Fill greedily so the report shows how far it
+        # got and which prescribed slots have nothing behind them.
+        chosen.clear()
+        publisher_counts.clear()
+        for spec in ordered:
+            candidates_here = [
+                slot
+                for slot in by_pair.get((spec.bucket, spec.topic), [])
+                if slot not in chosen and publisher_counts.get(slot.publisher, 0) < 2
+            ]
+            if not candidates_here:
+                unfilled.append(spec)
+                continue
+            slot = sorted(candidates_here, key=lambda s: (not s.full_text_capable, s.source_id))[0]
+            chosen.append(slot)
+            publisher_counts[slot.publisher] = publisher_counts.get(slot.publisher, 0) + 1
 
+    result = review(list(chosen))
     slate = Slate(
         id=slate_id,
-        slots=tuple(chosen),
+        slots=tuple(sorted(chosen, key=lambda slot: (slot.slot_kind(), slot.topic, slot.source_id))),
         review=result,
         unplaced=tuple(sorted(unplaced)),
-        shortfall={kind: count for kind, count in shortfall.items() if count},
+        unfilled=tuple(unfilled),
     )
     with store.write() as connection:
         connection.execute(
@@ -467,7 +546,7 @@ def solve(store: Store, slate_id: str = "slate:proposed") -> Slate:
             "solved_at) VALUES (?, ?, ?, ?, datetime('now'))",
             (
                 slate_id,
-                json.dumps([slot.source_id for slot in chosen]),
+                json.dumps([slot.source_id for slot in slate.slots]),
                 json.dumps(list(result.problems)),
                 int(result.acceptable),
             ),
@@ -497,10 +576,10 @@ def render(slate: Slate, store: Store) -> str:
         )
         lines.append("")
 
-    if slate.shortfall:
-        lines.append("Not enough surveyed candidates for:")
-        for kind, count in sorted(slate.shortfall.items()):
-            lines.append(f"  {kind}: {count} more needed")
+    if slate.unfilled:
+        lines.append("Prescribed slots nothing surveyed can fill:")
+        for spec in slate.unfilled:
+            lines.append(f"  {spec.bucket} for {spec.topic}")
         lines.append("")
     if slate.unplaced:
         lines.append(f"Unplaced candidates: {', '.join(slate.unplaced)}")
