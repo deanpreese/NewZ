@@ -22,19 +22,47 @@ consequences of the decision, not its grounds — stating them as the grounds
 would make the decision reversible by a cheaper or more private frontier model,
 which is exactly the reversal this ADR exists to prevent.
 
-## What is pinned, and what is not
+## The pin
 
-The boundary is decided here. The **serving path** is a local
-OpenAI-compatible endpoint on the operator's own network, reached over HTTP by
-the model worker and by nothing else in the system.
+**Model:** `qwen/qwen3.6-35b-a3b`, served by LM Studio over its
+OpenAI-compatible HTTP API on the operator's local network.
 
-The **specific model and its parameter count are not pinned by this ADR.**
-Phase 0 has no model path at all — the policy engine imports no networking
-module, and the Gate 0 suite proves it — so pinning a model here would record a
-choice nothing yet exercises. It is pinned before P08, the first work that sends
-a prompt, by amending this ADR with the model, its size, its quantization, and
-its endpoint. Until then, "small" means small enough that rule 1 below is
-uncomfortable to violate, which is the property that matters.
+**Size:** a mixture-of-experts model of roughly 35B total parameters with about
+3B active per token. Both numbers matter and they say different things. The
+active count is what the boundary is about: the model that proposes is doing
+about three billion parameters' worth of work per token, which is not a model
+anyone will be tempted to hand the system's judgment to. The total is what the
+host must hold in memory, and it is the number that constrains the local
+inference ceiling in `SPEC.md` section 13.
+
+**Serving path:** an OpenAI-compatible endpoint at `/v1` on port 1234, reached
+over plain HTTP on the LAN by the model worker and by nothing else in the
+system. As of 2026-09-05 the host is `10.0.0.214`; it was `10.0.0.50` before
+that. **`.env` is authoritative, not this document** — the address has already
+moved once, and an ADR that pins an IP becomes wrong quietly. What this ADR
+pins is the model, the tier, and the fact that the endpoint is local.
+
+**Embeddings** run against the same endpoint using
+`text-embedding-nomic-embed-text-v1.5@q8_0`. They serve retrieval only.
+`ARCHITECTURE.md` already forbids search, embeddings, prose, and prior NewZ
+output from being external evidence, and nothing about having a vector index
+softens that: an embedding can decide what the system looks at next and can
+never contribute to an assessment.
+
+### What the implementation reads
+
+The variables in `.env` are role-keyed from the superseded system —
+`LLM_ENDPOINT_AMBIENT`, `LLM_ENDPOINT_DEEP`, `LLM_ENDPOINT_VOICE`, and their
+`LLM_MODEL_*` counterparts — because that architecture had three cognitive
+roles at different tiers. This system has one model role: `SPEC.md` section 2.3
+gives the model a single job, to propose. All three endpoints and all three
+model names in `.env` currently hold the same value, which is the shape of that
+collapse already having happened in practice.
+
+The model worker therefore reads one endpoint and one model name. It is wired
+in P08, the first work that sends a prompt, and until then nothing in the
+repository reads `.env` at all: the Phase 0 policy engine imports no networking
+module, and the Gate 0 suite proves it.
 
 ## Alternatives considered
 
