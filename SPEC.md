@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.10.2
+**Document version:** 1.11.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -187,7 +187,8 @@ NewZ is not:
 | Basis independence | A pairwise property between two resolved bases, used only in threshold counting. See section 7.2. |
 | Sighting | One recorded observation of a body at a source, revision, and time. Duplicate bodies may share storage but never share sightings. |
 | Independence group | A catalog grouping of sources known to share ownership, syndication, or editorial control. Membership blocks independence; it never establishes it. |
-| Lane | A separately budgeted class of scheduled reads: discovery, verification, or correction. |
+| Read lane | A separately budgeted class of scheduled reads: discovery, verification, or correction. See section 5.2. |
+| Evidence lane | A class of evidence a claim kind may require before absence means anything, drawn from the closed set in section 7.3. A read lane is a budget; an evidence lane is a question. |
 | Predicate attestation | A versioned record that one named admission predicate held or failed for one edge, with its inputs, so the decision can be replayed. |
 | Appraisal | Review of one exact rendered revision across five dimensions, of which some are decided by machine and some only by a person. See section 10.2. |
 | Clearance | The permission record that lets one exact appraised revision reach a stated audience. |
@@ -239,9 +240,19 @@ counted.
 Publisher concentration is capped over **retained full reads**, not offered
 candidates, because only reads can become evidence. Over a rolling 30 days no
 publisher may exceed 20% of retained full reads during Pilot or 10% during
-Production, unless the operator records a scoped exception. Offered-menu
-concentration MUST be reported and MUST alert above 20%, but does not by itself
-block scheduling: with 20 pilot sources and at most two per publisher, ordinary
+Production, unless the operator records a scoped exception.
+
+The cap is enforced at reservation, not after the fact: a read whose retention
+would carry its publisher past the cap MUST be refused a budget reservation, and
+the refusal MUST be recorded with the publisher, the window, and the figure so
+it is visible rather than merely absent. The cap governs acquisition only. It
+MUST NOT invalidate an already-retained artifact, alter an admitted edge, or
+change an assessment — a system that reconsidered evidence because its reading
+became unbalanced would be letting a diet property reach a conclusion.
+
+Offered-menu concentration MUST be reported and MUST alert above 20%, but does
+not by itself block scheduling: with 20 pilot sources and at most two per
+publisher, ordinary
 feed-volume variance would otherwise trip a 10% offered-menu cap immediately
 and train the operator to dismiss the alert.
 
@@ -271,6 +282,11 @@ a counterpart task, and an ordinary R0–R1 promotion needs at least two
 independent bases with at least one primary, empirical, or adjudicative record.
 A discovery-heavy budget accumulates unresolved claims instead of settling
 them.
+
+A counterpart task is due within 72 hours of the claimant-led discovery read
+that mandated it. It is overdue when that due time has passed while the task is
+still in a live state under section 9.2; a task that reached any terminal state,
+competent or incomplete, is not overdue.
 
 Discovery MUST additionally pause for the local day when open counterpart tasks
 exceed twelve, or when any counterpart task is overdue.
@@ -416,6 +432,28 @@ for each claim kind are declared in the capability matrix and versioned with
 it. Together they make an assessment reproduce exactly under section 13. No
 assessment state may depend on a judgment of search competence that is not
 recorded as a terminal-competent task state.
+
+The evidence lanes are enumerated here for the reason section 9.2 gives for
+enumerating the task states: `indeterminate` is a function of both, and neither
+may rest on a set that no document fixes. The closed set is:
+
+- `claimant_origin` — the original artifact in which the claim was made, in its
+  strongest fair formulation;
+- `primary_record` — the filing, dataset, measurement, official record, or
+  adjudicative finding the claim asserts or depends on;
+- `empirical` — study, experiment, or replication bearing on the claim;
+- `independent_counterpart` — an account resting on a basis independent of the
+  originating one under section 7.2;
+- `skeptical_analysis` — method-visible analysis, forensic review, or attempted
+  refutation; and
+- `resolver` — the competent registry, docket, adjudicator, publication-status
+  service, retraction or replication record, or forecast resolver that settles
+  the question.
+
+Which of these a given claim kind requires is a policy decision recorded in the
+capability matrix and versioned with it; the set itself is fixed by this
+document. A task MAY be created outside these lanes — this list bounds what
+`indeterminate` may rest on, not what may be investigated.
 
 Rules:
 
@@ -659,7 +697,7 @@ that no document fixes.
 Live states:
 
 - `open` — created, not yet reserved;
-- `scheduled` — holds a lane and budget reservation;
+- `scheduled` — holds a read lane and budget reservation;
 - `in_progress` — an attempt is running; and
 - `blocked` — waiting on an external precondition such as a source outage, rate
   limit, or quarantine. A blocked task MUST return to `scheduled` when the
@@ -742,12 +780,26 @@ out to reach. Where no external confirmation is available the outcome is
 Sections 9.1 and 9.3 give the system a view of itself. Four rules keep that view
 from becoming a performance.
 
-**Metrics are not objectives.** Evidence metrics — origination share, provenance
-mix, calibration, coverage, and every figure reported under section 13 — MUST NOT
-be visible to the system as objectives, MUST NOT be optimisable by it, and MUST
-NOT be presented to it as scores to improve. A metric the system can see and move
-stops measuring the thing it proxied. The operator sees them; the system does
-not.
+**Metrics are not objectives.** The figures that score the system's own
+performance — interest origination share, register provenance mix, calibration
+and surprise counts, agreement rate with the operator, revocation latency, review
+debt by class, and the share of claims held below promotion by unknown
+independence alone — MUST NOT be visible to the system, MUST NOT be optimisable
+by it, and MUST NOT be presented to it as scores to improve. A metric the system
+can see and move stops measuring the thing it proxied. The operator sees them;
+the system does not.
+
+Two things the system MUST be able to read are not scores of it, and this rule
+does not withhold them. The first is the diet self-report of section 9.1: the
+role, topic, and publisher balance of what it has actually retained, and which
+perspectives are under-represented in it. That describes the diet, which the
+operator configures and the system cannot change — a system that could move it
+would be scheduling, which section 9.1 forbids. Reading one's own skew is the
+opposite failure mode from optimising a score, and a system that cannot read it
+treats its catalog as the world. The second is the constraint view below. The
+distinction is the test: a figure the system could move by behaving differently
+is a score and is withheld; a figure describing conditions set for it is
+description and is shown.
 
 **The simpler explanation is checked first.** Any behaviour cited as evidence of
 interest, initiative, or perspective MUST be tested against the cheaper
@@ -1042,11 +1094,12 @@ operator action MUST record actor, time, reason, target preimage, and result.
   history and MUST pass automated restore verification.
 - **Observability:** Reports MUST distinguish leads, attempted fetches, retained
   bodies, admitted edges, bases, assessments, and publications. They MUST also
-  carry the figures section 9.4 makes unreachable by the system: interest
+  carry the figures section 9.4 withholds from the system — interest
   origination share, register provenance mix, calibration and surprise counts,
   agreement rate with the operator, revocation latency, review debt by class,
-  publisher and basis concentration, and the share of claims held below
-  promotion by unknown independence alone.
+  and the share of claims held below promotion by unknown independence alone —
+  together with publisher and basis concentration, which section 9.1 also
+  reports back to the system as the shape of its own reading.
 - **Correction:** Every recorded failure MUST be linked to a change — to policy,
   to the design, to a guardrail's shape, or to a regression fixture — and the
   change MUST cite the failure that prompted it. A failure that produces an
@@ -1134,6 +1187,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.11.0 | 2026-09-04 | Closed four gaps a readiness review found before Phase 0. Enumerated the six evidence lanes in section 7.3, which `indeterminate` rests on and which no document had fixed, and split the glossary's one word for two things into read lane and evidence lane. Set the counterpart due time at 72 hours, so the overdue brake is computable from this document. Made the retained-read publisher cap enforce at reservation and stated that it never reaches evidence. Reconciled section 9.4 with the section 9.1 self-report: performance figures are withheld from the system, descriptions of conditions set for it are not. |
 | 1.10.2 | 2026-09-04 | Put section 10.1 before 10.2, which insertion order had reversed, and renumbered the acceptance criteria, which had run 6a-6c and 9a-9k with 9d and 9e landing after 9k. |
 | 1.10.1 | 2026-09-04 | Hygiene. Defined reckoning, escalation event, review debt, operational standing, and decay in section 4. Set the five configured values that had none: interest productivity window, appraisal sampling share, review debt ceiling, request and inference and storage ceilings, and attention retention. Reconciled decay with append-only — a superseding event carries the summary and the superseded payload is discarded, the event never removed. Gave section 13 the metric list section 9.4 refers to. |
 | 1.10.0 | 2026-09-04 | Closed the remaining gaps from the functional-spec review. Section 9.3 adds decisions with recorded alternatives, expectations, surprise retained even where it fits no interest, and scored consequences that must change behaviour without ever reaching an assessment. Section 9.4 adds four checks against self-deception: metrics unreachable by the system, the simpler explanation tested first, mirroring measured with pressure recorded as pressure, and constraints legible to the system. Notices gain provenance kinds, attention gains decay while evidence stays immutable, instruction attempts become operational observations about a source rather than epistemic scores, escalation attempts are detected and carry a linked change, and export covers attention and reckoning. |

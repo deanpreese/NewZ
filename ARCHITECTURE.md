@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.9.0
+**Document version:** 1.10.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -225,6 +225,27 @@ foreign-key checks in the backup verification path, and artifact writes that
 land as fsynced temporary files renamed into place before the referencing row
 commits.
 
+## Implementation platform
+
+The implementation is **Python 3.13** in the conda environment `agent13`,
+against **SQLite 3.51** through the standard library's `sqlite3`. It is recorded
+as ADR-0003 (`PLAN.md`, Phase 0).
+
+The choice follows the same reasoning as ADR-0001 rather than preference: one
+operator on one host, ten reads a day, no latency-critical path, and a store
+that ships with the runtime. What the choice must not touch is determinism.
+Policy evaluation, the capability matrix, promotion, and claim-card
+serialization are pure functions of retained artifacts and pinned versions, so
+they MUST NOT depend on dictionary iteration order, set ordering, hash
+randomization, locale, or the host clock. A runtime upgrade is a code version
+change under `SPEC.md` section 13: assessments either reproduce under it or the
+divergence is a defect with a regression fixture.
+
+The two planes that handle hostile input keep their own boundary regardless of
+language. Fetch and parse run as separate processes with their own privilege and
+egress limits, because a parser in the same interpreter as the ledger is one
+deserialization bug away from writing to it.
+
 ## Runtime topology
 
 The greenfield release is one deployable application on one host, with workers
@@ -361,15 +382,18 @@ storage-adapter change and does not alter the domain contract.
 
 Transitions are explicit, audited, and reversible. Entry into Lockdown is the
 one transition that may happen without an operator, and the system cannot clear
-it. Every mode except Fixture has an exit gate in `PLAN.md`; Shadow's is stated
-in Phase 5. Release
-sequencing is in `PLAN.md`.
+it. Shadow, Pilot, and Production each have an exit gate in `PLAN.md` — Shadow's
+is stated in Phase 5. Fixture and Lockdown have none, for opposite reasons:
+Fixture is where the system is built, and Lockdown is a state rather than a
+stage, left by a recorded cause and a regression fixture under `SPEC.md` section
+2.1 and not by meeting a gate. Release sequencing is in `PLAN.md`.
 
 ## Document history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.10.0 | 2026-09-04 | Recorded the implementation platform — Python 3.13 on conda `agent13` against SQLite 3.51 — as ADR-0003, with the determinism the choice must not touch, and corrected the claim that every mode but Fixture has an exit gate: Lockdown is a state left by cause and fixture, not a stage that passes a gate. |
 | 1.9.0 | 2026-09-04 | Added decisions, expectations, surprise, and consequence to the attention plane as a reckoning component that may change behaviour and never an assessment, with invariants for retained surprise, decaying attention, unreachable metrics, and legible constraints. |
 | 1.8.0 | 2026-09-04 | Gave appraisal its machine and person dimensions with a review debt ceiling, bounded revocation in time, and made failure-to-change linkage a permanent invariant. |
 | 1.7.1 | 2026-09-04 | Split clearance from reach: approve-by-default governs what publishes, local-first governs where it lands, and public reach returns to off by default. |

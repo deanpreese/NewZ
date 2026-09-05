@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.9.1
+**Document version:** 1.10.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -60,39 +60,51 @@ Deliver:
    external model becoming the authority for judgment — not as a cost or
    privacy decision. Record what would reverse it, and note that no rule may be
    written to depend on model strength.
-4. Enumerations and schemas for source roles, claim kinds, assertion kinds,
+4. ADR-0003, runtime and toolchain: record Python 3.13 in the conda environment
+   `agent13` as the implementation platform, with the standard library's
+   `sqlite3` against SQLite 3.51 as the store driver — a version that already
+   carries WAL, `STRICT` tables, and `RETURNING`. Record the deterministic
+   consequences the choice must respect: policy, promotion, and the capability
+   matrix are pure functions with pinned versions, so a runtime upgrade is a
+   code version change under `SPEC.md` section 13 and reproduces or is a
+   defect. Record what would reverse it, and pin the property-testing,
+   type-checking, and migration tools, none of which are present in the
+   environment yet.
+5. Enumerations and schemas for source roles, claim kinds, assertion kinds,
    edge relations, assessment states, risk tiers, task states, decision
    outcomes, notice provenance kinds, and the expectation, surprise, and
    consequence records. Declared scope is recorded free text, not an
    enumeration. These are frozen here: a record type added after this point is
    a migration, which is why the attention and reckoning shapes land now rather
    than at the phase that builds them.
-5. A machine-readable capability matrix implementing the rules in `SPEC.md`,
+6. A machine-readable capability matrix implementing the rules in `SPEC.md`,
    computed over role, claim kind, assertion kind, and relation. It declares
    the required evidence lanes per claim kind that make `indeterminate`
    deterministic, and the closed list of basis-independence justifications. The
-   task states themselves come from `SPEC.md` section 9.1. Deriving roughly two thousand cells from
+   task states come from `SPEC.md` section 9.2 and the closed set of evidence
+   lanes from section 7.3; the matrix decides which lanes each claim kind
+   requires, never which lanes exist. Deriving roughly two thousand cells from
    about ten stated principles is a design task: every judgment call the
    principles do not settle is recorded as a decision in the matrix, not
    resolved silently in code.
-6. Deterministic promotion logic over independent bases, with basis identity
+7. Deterministic promotion logic over independent bases, with basis identity
    and basis independence as separate inputs.
-7. A risk classifier with fail-closed handling and operator-review hooks.
-8. A fixture corpus covering HTML, PDF, structured data, malformed documents,
+8. A risk classifier with fail-closed handling and operator-review hooks.
+9. A fixture corpus covering HTML, PDF, structured data, malformed documents,
    prompt injection, copied articles, retractions, and conflicting evidence.
-9. Controlled case files for:
-   - a narrow attributed claim;
-   - two independent supporting bases;
-   - support plus contradiction;
-   - absence from a competent expected repository;
-   - a copied story falsely appearing independent;
-   - a patent misused as proof of performance;
-   - a complaint misused as proof of guilt;
-   - an allegation refuted by a final adjudicative record;
-   - a claim whose bases are resolved but of unknown independence;
-   - a normative proposition and an unresolved forecast;
-   - an R3 allegation; and
-   - an R4 operational payload.
+10. Controlled case files for:
+    - a narrow attributed claim;
+    - two independent supporting bases;
+    - support plus contradiction;
+    - absence from a competent expected repository;
+    - a copied story falsely appearing independent;
+    - a patent misused as proof of performance;
+    - a complaint misused as proof of guilt;
+    - an allegation refuted by a final adjudicative record;
+    - a claim whose bases are resolved but of unknown independence;
+    - a normative proposition and an unresolved forecast;
+    - an R3 allegation; and
+    - an R4 operational payload.
 
 Tests:
 
@@ -243,24 +255,24 @@ Deliver:
    reader surface of `SPEC.md` section 2.2 with its authentication, rate
    limiting, and abuse controls — publication has somewhere to land only once
    these exist.
-1a. Entity-card projection under `SPEC.md` section 10.1: computed from the graph
+2. Entity-card projection under `SPEC.md` section 10.1: computed from the graph
    at build time, never stored as an accumulated profile, showing basis
    independence across the whole set and every claim's current state and
    counterevidence.
-2. Search and browse over claims, topics, entities, status, and assessment
+3. Search and browse over claims, topics, entities, status, and assessment
    history.
-3. Report composer that accepts claim and edge references, never unsupported
+4. Report composer that accepts claim and edge references, never unsupported
    factual prose as authority.
-4. Dependency validator and invalidation/rebuild pipeline.
-5. Appraisal workflow split as `SPEC.md` section 10.2 requires: the four
+5. Dependency validator and invalidation/rebuild pipeline.
+6. Appraisal workflow split as `SPEC.md` section 10.2 requires: the four
    machine dimensions gating publication, the two judgment dimensions sampled
    behind it with full coverage of essays, R2 output, rewritten claimant
    formulations, and thin counterevidence, plus review debt accounting that
    halts a class when the ceiling is passed.
-6. Exact-revision clearance records, local and public reach controls, and the
+7. Exact-revision clearance records, local and public reach controls, and the
    enumerated automatic refusal conditions that hold with no operator present.
-7. Correction notices, superseded revisions, and retraction tombstones.
-8. Export of one claim or the full corpus with artifacts, policy versions, and
+8. Correction notices, superseded revisions, and retraction tombstones.
+9. Export of one claim or the full corpus with artifacts, policy versions, and
    checksums.
 
 Tests:
@@ -274,7 +286,6 @@ Tests:
   records holding only disambiguation data;
 - an R3 entity card cannot publish, and access to an R2-or-above card naming a
   living person is logged;
-- interest cannot select a person as a subject;
 - stale dependency and withdrawn-edge refusal;
 - material counterevidence cannot be omitted;
 - R2 solicitation/operator-review behavior;
@@ -348,6 +359,8 @@ Tests:
 - interest cannot reach the scheduler, a diet epoch, an offered-menu target, a
   source role, an evidence weight, a threshold, or an assessment, proven by
   enumerating the register's write paths rather than by sampling behavior;
+- interest cannot select a person as a subject, and an entity card built in
+  Phase 4 is never an origin for one;
 - a notice cannot become an assertion, edge, or basis, and never appears on a
   claim card as support;
 - a notice cannot arise from an essay, claim card, entity card, report, or prior
@@ -585,6 +598,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.10.0 | 2026-09-04 | Added ADR-0003 for the runtime and toolchain, so the first backlog item is not the first undecided one. Fixed the capability matrix's stale reference to the task states and named `SPEC.md` 7.3 as the source of the evidence-lane set, which the matrix maps and does not define. Moved the interest-cannot-select-a-person test from Phase 4 to Phase 4A, where the interest register exists, and renumbered the Phase 4 deliverables, which 1.9.1 had missed. |
 | 1.9.1 | 2026-09-04 | Renumbered the Phase 0, 1, and 4A deliverable lists, which had accumulated lettered suffixes. |
 | 1.9.0 | 2026-09-04 | Froze the attention and reckoning record shapes in Phase 0 rather than deferring them to the phase that builds them, added decisions, expectations, surprise, consequence, self-deception checks, escalation detection and attention decay to Phase 4A, extended Gate 4A to require a contradicted expectation and an adversarial simpler-explanation review, and added calibration, surprise, and agreement-rate reporting to the pilot. |
 | 1.8.0 | 2026-09-04 | Phase 4 delivers the split appraisal workflow with review debt accounting, Gate 4 demonstrates the revocation window rather than the mechanism alone, and Gate 5's resumption rule is marked as an instance of the permanent correction requirement. |

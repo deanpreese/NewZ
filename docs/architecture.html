@@ -534,18 +534,23 @@ footer{
         <text class="dlab" x="14" y="200">Brake</text>
         <text class="dsub" x="14" y="220">discovery pauses for the day when</text>
         <text class="dsub" x="14" y="236">open counterparts exceed 12, or</text>
-        <text class="dsub" x="14" y="252">any counterpart task is overdue</text>
+        <text class="dsub" x="14" y="252">a counterpart passes 72h</text>
       </svg>
     </div>
     <figcaption><b>Capacity is a policy, not a preference.</b> A discovery-heavy split accumulates unresolved claims instead of settling them: at six discovery reads a day, the system opens claims roughly twelve times faster than the reserve can close them.</figcaption>
   </figure>
+
+  <p>The word <em>lane</em> carries two jobs and they are not the same object. The three above are <b>read lanes</b> — a budget. The set below are <b>evidence lanes</b> — a question a claim kind requires an answer to before its silence means anything: <code>claimant_origin</code>, <code>primary_record</code>, <code>empirical</code>, <code>independent_counterpart</code>, <code>skeptical_analysis</code>, <code>resolver</code>.</p>
+
+  <p>The set is closed in the specification for the same reason the task states are. <code>indeterminate</code> is a function of both, and an assessment state may not rest on a set no document fixes. Which lanes a given claim kind requires is a versioned policy decision in the capability matrix; which lanes exist is not the matrix's to decide.</p>
 </section>
 
 <!-- ================= 05 ================= -->
 <section id="store">
-  <h2><em>06 — ADR-0001</em>Storage and runtime</h2>
+  <h2><em>06 — ADR-0001 and ADR-0003</em>Storage and runtime</h2>
   <p>The storage choice follows from a stated concurrency requirement rather than from habit: one operator, one host, a ceiling of ten retained reads per local day, a handful of local workers, and no multi-writer or horizontal-scale requirement anywhere in the specification.</p>
   <p>The implementation uses <b>SQLite in WAL mode</b> for structured state and a <b>local content-addressed filesystem</b> for retained artifacts. PostgreSQL with an S3-compatible object store was considered and rejected as unearned operational cost at this scale, and as the largest avoidable obstacle to Gate 1. The domain contract names no SQLite-specific behavior, so the decision reverses as a storage-adapter change if the concurrency requirement ever does.</p>
+  <p>The runtime follows the same reasoning rather than a preference: <b>Python 3.13</b> in the conda environment <code>agent13</code>, against <b>SQLite 3.51</b> through the standard library's <code>sqlite3</code> — a version that already carries WAL, strict tables, and <code>RETURNING</code>. What the choice may not touch is determinism. Policy evaluation, the capability matrix, promotion, and card serialization are pure functions of retained artifacts and pinned versions, so none of them may depend on iteration order, hash randomization, locale, or the host clock. A runtime upgrade is a code version change: assessments reproduce under it, or the divergence is a defect with a fixture.</p>
 
   <figure>
     <div class="canvas">
@@ -744,7 +749,7 @@ footer{
     <li>Claim merge and split re-point edges by new events and never rewrite existing ones.</li>
     <li>Erasure destroys a per-subject key; the ledger event survives, unreadable, with a tombstone.</li>
     <li>A policy version change reassesses every claim derived under the superseded version.</li>
-    <li>A lane that was refused, cancelled, or expired never reads as a lane that searched and found nothing.</li>
+    <li>An evidence lane that was refused, cancelled, or expired never reads as a lane that searched and found nothing.</li>
     <li>Interest reaches attention; evidence reaches conclusion. No path runs from the interest register to an assessment.</li>
     <li>Attempted effect and confirmed outcome are never conflated, on acquisition or on publication.</li>
     <li>The system may choose what to raise and never what the operator can see.</li>
