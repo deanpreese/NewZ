@@ -52,7 +52,17 @@ class SocketTransport:
     the one that matters for a system that fetches URLs it did not choose.
     """
 
-    user_agent = "newz/0.1 (research agent for a single operator)"
+    #: Overridden by `NEWZ_USER_AGENT`. Several sources refuse an agent with no
+    #: way to reach its operator — Wikipedia answers 403 — and being reachable
+    #: is the minimum a system owes a site it reads without asking.
+    default_user_agent = "newz/0.1 (research agent for a single operator)"
+
+    def __init__(self, user_agent: str = "") -> None:
+        import os
+
+        self.user_agent = (
+            user_agent or os.environ.get("NEWZ_USER_AGENT", "") or self.default_user_agent
+        )
 
     def resolve(self, host: str) -> tuple[str, ...]:
         try:

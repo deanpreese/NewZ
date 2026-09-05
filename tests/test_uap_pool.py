@@ -102,3 +102,44 @@ def test_speculation_is_declined_with_a_reason_rather_than_ignored(name):
     entry = next(e for e in uap_pool.REVIEW if e.name == name)
     assert entry.verdict == uap_pool.DECLINED
     assert entry.note
+
+
+# ---------------------------------------------------------------------------
+# What the live survey found
+# ---------------------------------------------------------------------------
+
+
+def test_the_survey_findings_are_recorded_against_the_review():
+    """The review was written from memory; the survey is what checked it."""
+    findings = uap_pool.SURVEY_FINDINGS
+    assert findings["surveyed"] == 18
+    assert findings["reachable"] + findings["refused"] == findings["surveyed"]
+    assert len(findings["findings"]) == 4
+
+
+def test_a_403_is_recorded_as_an_answer_rather_than_retried():
+    """Rotating an agent until a site relents is evading a stated policy."""
+    findings = uap_pool.SURVEY_FINDINGS
+    assert findings["declined_the_agent"]
+    assert any("asking is the way" in item for item in findings["findings"])
+
+    import inspect
+
+    from newz.pilot import slots
+
+    source = inspect.getsource(slots.survey_candidate)
+    assert "403 is an answer" in source
+    assert "does not get to make an exception for the sources it wants most" in source
+
+
+def test_the_role_proposal_disagreed_with_the_review_and_that_is_recorded():
+    """Two in ten. The heuristic was reading front doors."""
+    findings = uap_pool.SURVEY_FINDINGS
+    assert findings["role_proposal_agreed_with_review"] == 2
+    assert any("point at the material" in item for item in findings["findings"])
+
+
+def test_most_sources_publish_nothing_about_their_terms():
+    findings = uap_pool.SURVEY_FINDINGS["terms_published"]
+    assert findings["nothing_found"] == 7
+    assert "MUFON" in findings["all_rights_reserved"]

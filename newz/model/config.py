@@ -25,8 +25,9 @@ from urllib.parse import urlsplit
 ENDPOINT_KEYS = ("NEWZ_MODEL_ENDPOINT", "LLM_ENDPOINT_AMBIENT")
 MODEL_KEYS = ("NEWZ_MODEL_NAME", "LLM_MODEL_AMBIENT")
 EMBEDDING_KEYS = ("NEWZ_EMBEDDING_MODEL", "LLM_MODEL_EMBED")
+USER_AGENT_KEYS = ("NEWZ_USER_AGENT",)
 
-READ_KEYS = frozenset(ENDPOINT_KEYS + MODEL_KEYS + EMBEDDING_KEYS)
+READ_KEYS = frozenset(ENDPOINT_KEYS + MODEL_KEYS + EMBEDDING_KEYS + USER_AGENT_KEYS)
 
 
 class ModelConfigError(RuntimeError):
@@ -87,6 +88,20 @@ def read_env_file(path: Path, keys: frozenset[str] = READ_KEYS) -> dict[str, str
         if key in keys:
             found[key] = value.strip().strip('"').strip("'")
     return found
+
+
+def user_agent(env_file: Path | str = ".env") -> str:
+    """The contactable agent string, from `.env` or the environment.
+
+    Kept here rather than in the transport because it is operator configuration
+    like the model endpoint, and read the same narrow way: only the key that is
+    needed, never the whole file.
+    """
+    import os
+
+    source = dict(read_env_file(Path(env_file)))
+    source.update({k: v for k, v in os.environ.items() if k in READ_KEYS})
+    return _first(source, USER_AGENT_KEYS)
 
 
 def _first(source: dict[str, str], keys: tuple[str, ...]) -> str:

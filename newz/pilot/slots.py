@@ -299,6 +299,13 @@ def survey_candidate(
     This is a read like any other: the fetcher's scheme, address, size, timeout,
     decompression and MIME rules all apply, and a candidate that trips one of
     them is recorded as refused rather than retried by another route.
+
+    **A 403 is an answer, not an obstacle.** Three of the most valuable sources
+    in the first live survey declined the agent, and the correct response is to
+    record the refusal and stop. Rotating a User-Agent until a site relents is
+    evading a stated policy, and a system built to respect what other people
+    published does not get to make an exception for the sources it wants most.
+    If a source is worth having, the way to have it is to ask.
     """
     result = fetch(candidate.url, transport, policy)
     if not result.retained:

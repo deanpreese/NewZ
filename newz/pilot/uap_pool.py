@@ -245,7 +245,9 @@ REVIEW: tuple[Reviewed, ...] = (
         "UFOs and Intelligence: A Timeline by George M. Eberhart",
         CANDIDATE,
         "historical_or_general_context",
-        "a sourced chronology by a professional librarian",
+        "a sourced chronology by a professional librarian; hosted within CUFOS, so it "
+        "shares a publisher with the CUFOS entry and the two cannot both be taken",
+        "https://cufos.org/",
     ),
     # -- claimant and firsthand ----------------------------------------------
     Reviewed(
@@ -355,6 +357,73 @@ REVIEW: tuple[Reviewed, ...] = (
     Reviewed("Cosmic Pluralism Studies", DECLINED, note="philosophical essays"),
     Reviewed("UFOs as wildlife", DECLINED, note="a single hypothesis argued at length; an inference"),
 )
+
+
+def candidates() -> tuple[Reviewed, ...]:
+    """The entries that survived review and can actually be fetched."""
+    return tuple(entry for entry in REVIEW if entry.verdict == CANDIDATE and entry.url)
+
+
+def as_candidates(prefix: str = "candidate:uap") -> list:
+    """The pool as survey candidates, carrying the groups the review found."""
+    from newz.pilot.slots import Candidate
+
+    seen: set[str] = set()
+    out = []
+    for index, entry in enumerate(candidates()):
+        if entry.url in seen:
+            continue
+        seen.add(entry.url)
+        out.append(
+            Candidate(
+                id=f"{prefix}-{index:02d}",
+                url=entry.url,
+                publisher=entry.name,
+                topic="uap_and_aerospace_anomalies",
+                note=entry.note,
+                independence_group=entry.independence_group,
+            )
+        )
+    return out
+
+
+#: What the first live survey found, 2026-09-05. Recorded because the review
+#: above was written from memory and the survey is the thing that checked it.
+SURVEY_FINDINGS: dict[str, Any] = {
+    "surveyed": 18,
+    "reachable": 10,
+    "refused": 8,
+    "declined_the_agent": ["CUFOS", "The Galileo Project", "NUFORC"],
+    "url_wrong_or_stale": [
+        "National UFO Historical Records Center",
+        "Bruce Maccabee's Website",
+        "Tim Printy's Website",
+    ],
+    "tls_too_old": ["Ian Ridpath's UFO Skeptic Pages"],
+    "no_addressable_text": ["MADAR"],
+    "terms_published": {
+        "all_rights_reserved": ["MUFON", "UAPX"],
+        "terms_of_use_linked": ["AIAA UAP"],
+        "nothing_found": 7,
+    },
+    "role_proposal_agreed_with_review": 2,
+    "findings": [
+        "A 403 is an answer. Three of the most valuable sources decline automated "
+        "access, and the response is to record it and stop rather than to try a "
+        "different agent — asking is the way to have a source that says no.",
+        "The role proposal agreed with the review twice in ten. It was reading front "
+        "doors: a homepage is navigation, and 'archive' in a site's masthead made two "
+        "document collections look like historical context. A candidate should point "
+        "at the material — a case index, an article listing — not the root.",
+        "Seven of ten published nothing about their terms on the page fetched, so the "
+        "catalog review will refuse them for retention rights not established. That is "
+        "the expected outcome and not a surprise: personal sites and volunteer "
+        "organisations rarely state a licence.",
+        "One candidate served a page with no addressable text at all. The rule that an "
+        "empty parse is a failure rather than an empty success caught it, which is what "
+        "it was written for.",
+    ],
+}
 
 
 def by_verdict() -> dict[str, list[Reviewed]]:
