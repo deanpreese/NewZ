@@ -20,7 +20,9 @@ from newz.pilot.prescription import prescribe
 def test_the_slate_answers_the_prescription_exactly():
     """One source per prescribed slot, not merely twenty sources."""
     proposed = collections.Counter((seed.bucket, seed.topic) for seed in seeds.SEEDS)
-    prescribed = collections.Counter((spec.bucket, spec.topic) for spec in prescribe())
+    prescribed = collections.Counter(
+        (spec.bucket, spec.topic) for spec in prescribe(pins=seeds.PINS)
+    )
     assert proposed == prescribed
 
 
@@ -79,7 +81,9 @@ def test_the_slate_registers_as_a_candidate_adapter(store):
     seeds.register()
     assert "seeds" in slots.registered_adapters()
 
-    added, unserved = slots.propose_candidates(store, added_by="operator:dean")
+    added, unserved = slots.propose_candidates(
+        store, specs=seeds.prescribed(), added_by="operator:dean"
+    )
     assert added == 20
     assert unserved == ()
     assert len(slots.candidates(store)) == 20
@@ -97,7 +101,31 @@ def test_the_cautions_carry_the_things_that_would_otherwise_be_learned_late():
     cautions = " ".join(seed.caution for seed in seeds.SEEDS)
     # A patent proves a filing, not performance.
     assert "never performance" in cautions
-    # Two federal sources can rest on one incident.
-    assert "shared" in cautions and "derivation link" in cautions
+    # Two records of one incident share a basis rather than corroborating.
+    assert "share a basis" in cautions and "derivation link" in cautions
     # Wikipedia needs a contactable user agent or it refuses.
     assert "403" in cautions
+    # A released document cannot speak to what was redacted out of it.
+    assert "redactions are absences" in cautions
+
+
+def test_the_slate_reports_the_gaps_it_leaves():
+    """Two findings the operator needs before the pilot, not after it."""
+    found = seeds.gaps()
+    assert "cannot reach `refuted`" in found["no_adjudicator"]["finding"]
+    assert "adjudicator" not in found["no_adjudicator"]["buckets_present"]
+    assert "cannot establish even an attribution" in found["claimant_retention"]["finding"]
+    assert len(found["claimant_retention"]["answers"]) == 3
+
+
+def test_the_pins_are_stated_with_their_reasons():
+    """Pinned rather than encoded into the score, so the scoring function is not
+    quietly rewritten until it produces a wanted answer."""
+    assert {
+        ("primary_or_adjudicative", "alternative_physics_and_energy"),
+        ("primary_or_adjudicative", "uap_and_aerospace_anomalies"),
+    } == seeds.PINS
+    import inspect
+
+    source = inspect.getsource(seeds)
+    assert "domain knowledge" in source or "knowledge rather than" in source

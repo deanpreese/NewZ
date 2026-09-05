@@ -31,8 +31,9 @@ def main(argv: list[str]) -> int:
 
     if "--prescribe" in args:
         from newz.pilot.prescription import render as render_prescription
+        from newz.pilot.seeds import prescribed
 
-        print(render_prescription())
+        print(render_prescription(prescribed()))
         return 0
 
     if "--seeds" in args:
@@ -42,10 +43,13 @@ def main(argv: list[str]) -> int:
         return 0
 
     if "--survey" in args:
+        from newz.pilot.seeds import prescribed
         from newz.pilot.seeds import register as register_seeds
 
         register_seeds()
-        added, unserved = propose_candidates(store, added_by="operator")
+        added, unserved = propose_candidates(
+            store, specs=prescribed(), added_by="operator"
+        )
         if added:
             print(f"{added} candidate(s) proposed from the diet.")
         for spec in unserved:
@@ -57,7 +61,9 @@ def main(argv: list[str]) -> int:
         print(f"\n{len(probes)} candidate(s) surveyed.")
         return 0
 
-    slate = solve(store)
+    from newz.pilot.seeds import prescribed
+
+    slate = solve(store, specs=prescribed())
     print(render(slate, store))
     return 0 if slate.acceptable else 1
 
