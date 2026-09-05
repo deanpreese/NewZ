@@ -1222,4 +1222,67 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         ) STRICT;
         """,
     ),
+    (
+        16,
+        "erasure",
+        """
+        -- Private personal data, encrypted under a per-subject key held outside
+        -- this file. The row survives erasure; only the key goes.
+        CREATE TABLE protected_payloads (
+            id          TEXT PRIMARY KEY,
+            subject_id  TEXT NOT NULL,
+            kind        TEXT NOT NULL,
+            ciphertext  BLOB NOT NULL,
+            risk        TEXT NOT NULL,
+            reason      TEXT NOT NULL,
+            recorded_at TEXT NOT NULL,
+            last_review TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX protected_payloads_by_subject ON protected_payloads (subject_id);
+
+        -- That erasure happened, when, and why. The event the ledger keeps in
+        -- place of what it can no longer read.
+        CREATE TABLE erasure_tombstones (
+            id            TEXT PRIMARY KEY,
+            subject_id    TEXT NOT NULL,
+            reason        TEXT NOT NULL,
+            payload_count INTEGER NOT NULL,
+            actor         TEXT NOT NULL,
+            erased_at     TEXT NOT NULL
+        ) STRICT;
+
+        -- Every read of protected material, whoever did it and why.
+        CREATE TABLE protected_access (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            payload_id  TEXT NOT NULL,
+            subject_id  TEXT NOT NULL,
+            actor       TEXT NOT NULL,
+            reason      TEXT NOT NULL,
+            outcome     TEXT NOT NULL,
+            accessed_at TEXT NOT NULL
+        ) STRICT;
+
+        -- An operator extending retention past the default, with a reason.
+        CREATE TABLE retention_extensions (
+            subject_id  TEXT PRIMARY KEY,
+            until       TEXT NOT NULL,
+            actor       TEXT NOT NULL,
+            reason      TEXT NOT NULL,
+            recorded_at TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TRIGGER protected_payloads_are_immutable
+        BEFORE UPDATE OF id, subject_id, ciphertext ON protected_payloads
+        BEGIN
+            SELECT RAISE(ABORT, 'a protected payload is immutable; erase the key instead');
+        END;
+
+        CREATE TRIGGER erasure_tombstones_are_immutable
+        BEFORE UPDATE ON erasure_tombstones
+        BEGIN
+            SELECT RAISE(ABORT, 'a tombstone is the record that erasure happened');
+        END;
+        """,
+    ),
 )

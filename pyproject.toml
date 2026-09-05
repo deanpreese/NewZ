@@ -3,7 +3,12 @@ name = "newz"
 version = "0.1.0"
 description = "A rigorous investigator of contested claims"
 requires-python = ">=3.13"
-dependencies = []
+# The whole third-party surface, one ADR each. ADR-0003 set the floor at zero;
+# ADR-0004 took pypdf for PDF text and ADR-0005 took cryptography for erasure.
+dependencies = [
+    "pypdf>=6",
+    "cryptography>=46",
+]
 
 [build-system]
 requires = ["setuptools>=68"]

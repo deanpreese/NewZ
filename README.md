@@ -106,7 +106,7 @@ newz/converse     the conversational surface and what it structurally cannot do
 newz/pilot        deployment modes, pause conditions, shadow, the daily reports
 policy/           the emitted machine-readable policy (regenerate, never hand-edit)
 tests/fixtures    the hostile corpus and the controlled cases
-docs/adr          ADR-0001 storage, 0002 model tier, 0003 runtime, 0004 parsers
+docs/adr          ADR-0001 storage, 0002 model, 0003 runtime, 0004 parsers, 0005 erasure
 ```
 
 Exactly two modules may open a socket, and the test suite enforces it:

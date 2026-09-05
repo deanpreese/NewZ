@@ -130,13 +130,21 @@ def test_extraction_validates_without_reaching_the_model_or_the_store():
     assert not any(module.startswith("newz.store") for module in imported)
 
 
-#: The complete third-party surface, from ADR-0004. Adding a name here is a
+#: The complete third-party surface, one ADR each. Adding a name here is a
 #: decision that needs its own ADR, which is what makes this list worth having.
-ALLOWED_DEPENDENCIES = {"pypdf"}
+ALLOWED_DEPENDENCIES = {"pypdf", "cryptography"}
+
+#: Where each is allowed to be imported. A supply-chain surface is contained by
+#: staying in one place, and a cipher reachable from the policy engine would be
+#: a cipher somebody eventually uses to decide something.
+DEPENDENCY_HOMES = {
+    "pypdf": {"newz/parse/pdf.py"},
+    "cryptography": {"newz/store/erasure.py"},
+}
 
 
 def test_the_package_takes_only_the_dependencies_an_adr_records():
-    """ADR-0003 set the floor at zero; ADR-0004 raised it by exactly one."""
+    """ADR-0003 set the floor at zero; ADR-0004 and ADR-0005 each raised it by one."""
     third_party = set()
     for path in PACKAGE.rglob("*.py"):
         for module in _imported_modules(path):
@@ -147,11 +155,13 @@ def test_the_package_takes_only_the_dependencies_an_adr_records():
     assert third_party == ALLOWED_DEPENDENCIES
 
 
-def test_the_one_dependency_lives_behind_the_parser_that_needs_it():
-    """A supply-chain surface in the parser plane is contained by staying there."""
+@pytest.mark.parametrize("dependency", sorted(ALLOWED_DEPENDENCIES))
+def test_each_dependency_lives_only_where_it_is_needed(dependency):
     for path in sorted(PACKAGE.rglob("*.py")):
-        if "pypdf" in _imported_modules(path):
-            assert str(path.relative_to(PACKAGE.parent)) == "newz/parse/pdf.py"
+        if dependency in _imported_modules(path):
+            assert (
+                str(path.relative_to(PACKAGE.parent)) in DEPENDENCY_HOMES[dependency]
+            ), f"{dependency} imported in {path}"
 
 
 @pytest.mark.parametrize("path", case_paths(), ids=lambda p: p.stem)
