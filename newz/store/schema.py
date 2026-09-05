@@ -675,4 +675,128 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        9,
+        "publication",
+        """
+        -- One row per appraisal dimension per revision. The four machine
+        -- dimensions gate publication; the two judgment dimensions are reviewed
+        -- behind it, so a row here with decided_by = 'person' and no reviewer is
+        -- a debt rather than a failure.
+        CREATE TABLE appraisals (
+            id               TEXT PRIMARY KEY,
+            card_revision_id TEXT NOT NULL REFERENCES card_revisions(id),
+            dimension        TEXT NOT NULL,
+            decided_by       TEXT NOT NULL,
+            passed           INTEGER,
+            detail           TEXT NOT NULL,
+            reviewer         TEXT,
+            appraised_at     TEXT NOT NULL,
+            UNIQUE (card_revision_id, dimension)
+        ) STRICT;
+
+        -- Clearance is of an exact revision and its content hash. A clearance
+        -- that named only a claim would be a standing permission.
+        CREATE TABLE clearances (
+            id               TEXT PRIMARY KEY,
+            card_revision_id TEXT NOT NULL REFERENCES card_revisions(id),
+            content_hash     TEXT NOT NULL,
+            class            TEXT NOT NULL,
+            granted          INTEGER NOT NULL,
+            refusal_reason   TEXT,
+            policy_version   TEXT NOT NULL,
+            operator_actor   TEXT,
+            cleared_at       TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX clearances_by_revision ON clearances (card_revision_id);
+
+        -- Attempted effect and confirmed outcome, never conflated.
+        CREATE TABLE publications (
+            id                  TEXT PRIMARY KEY,
+            card_revision_id    TEXT NOT NULL REFERENCES card_revisions(id),
+            clearance_id        TEXT NOT NULL REFERENCES clearances(id),
+            audience            TEXT NOT NULL,
+            status              TEXT NOT NULL,
+            attempted_at        TEXT NOT NULL,
+            confirmed_at        TEXT,
+            confirmation_source TEXT NOT NULL DEFAULT ''
+        ) STRICT;
+
+        CREATE INDEX publications_by_revision ON publications (card_revision_id);
+
+        -- A correction or a retraction. Both are revocations, both are bounded
+        -- in time, and an overdue unconfirmed one halts its class.
+        CREATE TABLE revocations (
+            id                  TEXT PRIMARY KEY,
+            kind                TEXT NOT NULL,
+            claim_id            TEXT NOT NULL REFERENCES claims(id),
+            card_revision_id    TEXT NOT NULL REFERENCES card_revisions(id),
+            class               TEXT NOT NULL,
+            reason              TEXT NOT NULL,
+            attempted_at        TEXT NOT NULL,
+            due_at              TEXT NOT NULL,
+            confirmed_at        TEXT,
+            confirmation_source TEXT NOT NULL DEFAULT '',
+            status              TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX revocations_open ON revocations (status, due_at);
+
+        -- What is left where a retracted presentation was.
+        CREATE TABLE tombstones (
+            id               TEXT PRIMARY KEY,
+            claim_id         TEXT NOT NULL REFERENCES claims(id),
+            card_revision_id TEXT NOT NULL REFERENCES card_revisions(id),
+            explanation      TEXT NOT NULL,
+            created_at       TEXT NOT NULL
+        ) STRICT;
+
+        -- Published output awaiting the two dimensions only a person decides.
+        CREATE TABLE review_queue (
+            id               TEXT PRIMARY KEY,
+            card_revision_id TEXT NOT NULL REFERENCES card_revisions(id),
+            class            TEXT NOT NULL,
+            sampled_reason   TEXT NOT NULL,
+            state            TEXT NOT NULL,
+            finding          TEXT NOT NULL DEFAULT '',
+            reviewer         TEXT,
+            queued_at        TEXT NOT NULL,
+            reviewed_at      TEXT
+        ) STRICT;
+
+        CREATE INDEX review_queue_pending ON review_queue (class, state);
+
+        -- Reach: where cleared output lands. Public defaults to absent, which
+        -- reads as off; enabling it is an explicit scoped act.
+        CREATE TABLE reach_settings (
+            audience    TEXT PRIMARY KEY,
+            enabled     INTEGER NOT NULL,
+            scope       TEXT NOT NULL,
+            changed_by  TEXT NOT NULL,
+            reason      TEXT NOT NULL,
+            changed_at  TEXT NOT NULL
+        ) STRICT;
+
+        -- A halted class publishes nothing until the halt clears.
+        CREATE TABLE class_halts (
+            class      TEXT PRIMARY KEY,
+            reason     TEXT NOT NULL,
+            halted_at  TEXT NOT NULL,
+            cleared_at TEXT
+        ) STRICT;
+
+        CREATE TRIGGER clearances_are_immutable
+        BEFORE UPDATE ON clearances
+        BEGIN
+            SELECT RAISE(ABORT, 'a clearance is immutable: grant another');
+        END;
+
+        CREATE TRIGGER tombstones_are_immutable
+        BEFORE UPDATE ON tombstones
+        BEGIN
+            SELECT RAISE(ABORT, 'a tombstone is immutable');
+        END;
+        """,
+    ),
 )
