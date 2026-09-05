@@ -1096,4 +1096,82 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        14,
+        "pilot",
+        """
+        -- The deployment mode, and every transition between modes. Transitions
+        -- are explicit, audited and reversible; entry into lockdown is the one
+        -- that may happen without an operator, and the system cannot clear it.
+        CREATE TABLE mode_transitions (
+            id           TEXT PRIMARY KEY,
+            from_mode    TEXT NOT NULL,
+            to_mode      TEXT NOT NULL,
+            actor        TEXT NOT NULL,
+            reason       TEXT NOT NULL,
+            automatic    INTEGER NOT NULL DEFAULT 0,
+            code_version TEXT NOT NULL,
+            at           TEXT NOT NULL
+        ) STRICT;
+
+        -- A violation is a pause condition that fired. Resumption requires a
+        -- recorded cause, a fix, and a permanent regression fixture.
+        CREATE TABLE violations (
+            id             TEXT PRIMARY KEY,
+            condition      TEXT NOT NULL,
+            detail         TEXT NOT NULL,
+            detected_at    TEXT NOT NULL,
+            cause          TEXT NOT NULL DEFAULT '',
+            fix            TEXT NOT NULL DEFAULT '',
+            fixture        TEXT NOT NULL DEFAULT '',
+            resolved_at    TEXT,
+            resets_routes  INTEGER NOT NULL DEFAULT 0
+        ) STRICT;
+
+        CREATE INDEX violations_open ON violations (resolved_at);
+
+        -- Which source and parser routes have been exercised, under which code
+        -- version. A fix that changes evidence, promotion, risk or publication
+        -- behaviour resets these; one that does not preserves them, and the
+        -- code version recorded against each is what makes the distinction
+        -- auditable rather than asserted.
+        CREATE TABLE route_exercises (
+            source_revision_id TEXT NOT NULL REFERENCES source_revisions(id),
+            normalized_mime    TEXT NOT NULL,
+            code_version       TEXT NOT NULL,
+            exercised_at       TEXT NOT NULL,
+            stage              TEXT NOT NULL,
+            PRIMARY KEY (source_revision_id, normalized_mime, code_version, stage)
+        ) STRICT;
+
+        -- A local day of the pilot. Dates during a pause are not eligible.
+        CREATE TABLE pilot_days (
+            local_day       TEXT PRIMARY KEY,
+            eligible        INTEGER NOT NULL,
+            paused_reason   TEXT NOT NULL DEFAULT '',
+            retained_reads  INTEGER NOT NULL DEFAULT 0,
+            report_json     TEXT NOT NULL DEFAULT '',
+            acknowledged_at TEXT,
+            acknowledged_by TEXT
+        ) STRICT;
+
+        -- Shadow: assessments computed and compared, never authoritative.
+        CREATE TABLE shadow_runs (
+            id           TEXT PRIMARY KEY,
+            claim_id     TEXT NOT NULL REFERENCES claims(id),
+            expected     TEXT NOT NULL,
+            observed     TEXT NOT NULL,
+            matched      INTEGER NOT NULL,
+            cause        TEXT NOT NULL DEFAULT '',
+            code_version TEXT NOT NULL,
+            ran_at       TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TRIGGER mode_transitions_are_immutable
+        BEFORE UPDATE ON mode_transitions
+        BEGIN
+            SELECT RAISE(ABORT, 'a mode transition is a fact; record another');
+        END;
+        """,
+    ),
 )

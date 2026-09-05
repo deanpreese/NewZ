@@ -55,6 +55,14 @@ and whose verdict it does not, the reckoning records, and the conversational
 surface. Gate 4A is proven by a static audit rather than by sampling — see
 `tests/test_separation.py`.
 
+**Phase 5 — the pilot.** *Machinery built; the gate is not passable here.*
+Deployment modes with shadow between fixture and live, the seven pause
+conditions and what resumption costs, eligible-date and route-exercise
+accounting, the daily funnel, and the catalog review. Gate 5 wants thirty
+elapsed days, a hundred live retained reads and the operator's approval, so
+this counts and does not judge — `newz/pilot/catalog_review.py` states what is
+outstanding as a checklist rather than choosing it.
+
 ```text
 newz/domain       the frozen enumerations and record shapes
 newz/policy       the capability matrix, promotion, risk, independence, the bundle
@@ -73,6 +81,7 @@ newz/publish      appraisal, clearance, reach, the surface, the reader, export
 newz/attention    noticing, the interest register, the diet self-report, decay
 newz/reckoning    decisions, surprise, consequence, escalation, the four checks
 newz/converse     the conversational surface and what it structurally cannot do
+newz/pilot        deployment modes, pause conditions, shadow, the daily reports
 policy/           the emitted machine-readable policy (regenerate, never hand-edit)
 tests/fixtures    the hostile corpus and the controlled cases
 docs/adr          ADR-0001 storage, 0002 model tier, 0003 runtime, 0004 parsers
