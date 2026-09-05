@@ -94,8 +94,8 @@ def assess_claim(
         connection.execute(
             "INSERT INTO assessments (id, claim_id, state, supporting_bases, "
             "contradicting_bases, policy_version, code_version, explanation, "
-            "blocked_lanes_json, countable_edge_ids_json, derived_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))",
+            "blocked_lanes_json, countable_edge_ids_json, horizon_reached, derived_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))",
             (
                 assessment_id,
                 claim_id,
@@ -109,6 +109,10 @@ def assess_claim(
                     [[lane.value, state.value, reason] for lane, state, reason in result.blocked_lanes]
                 ),
                 json.dumps(list(result.countable_edge_ids)),
+                # The horizon is an input, not a result, so it is recorded
+                # beside the assessment rather than inside it: replaying a
+                # forecast otherwise has to guess at what it was told.
+                int(horizon_reached),
             ),
         )
         if previous is None or previous.state is not result.state:
@@ -151,6 +155,12 @@ def assessment_history(store: Store, claim_id: str) -> tuple[Assessment, ...]:
             "SELECT * FROM assessments WHERE claim_id = ? ORDER BY rowid", claim_id
         )
     )
+
+
+def load_assessment(store: Store, assessment_id: str) -> Assessment | None:
+    """One assessment by its own id, for replaying the occurrence rather than the claim."""
+    row = store.one("SELECT * FROM assessments WHERE id = ?", assessment_id)
+    return None if row is None else _as_assessment(row)
 
 
 def _as_assessment(row) -> Assessment:

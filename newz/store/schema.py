@@ -1285,4 +1285,32 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        17,
+        "policy_versions",
+        """
+        -- What a policy version actually contained. An assessment records the
+        -- version it was derived under; this records what that version was, so
+        -- a version string reused over changed content is detectable rather
+        -- than merely unlikely.
+        CREATE TABLE policy_versions (
+            version     TEXT PRIMARY KEY,
+            digest      TEXT NOT NULL,
+            code_version TEXT NOT NULL,
+            recorded_at TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TRIGGER policy_versions_are_immutable
+        BEFORE UPDATE ON policy_versions
+        BEGIN
+            SELECT RAISE(ABORT, 'a policy version is what it was; record a new version');
+        END;
+
+        -- An assessment records the edges and the policy it was derived under,
+        -- but the resolution horizon was an input too, and a forecast's state
+        -- turns on it. Without this, replaying a forecast assessment guesses at
+        -- one of its own inputs, which is not replay.
+        ALTER TABLE assessments ADD COLUMN horizon_reached INTEGER NOT NULL DEFAULT 0;
+        """,
+    ),
 )

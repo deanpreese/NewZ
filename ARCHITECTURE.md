@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.10.0
+**Document version:** 1.11.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -197,6 +197,7 @@ ever changes.
 SQLite (WAL, one file, foreign keys enforced)
 ├── catalog         sources, revisions, publishers, independence
 ├── control         diet epochs, policy bundles, budgets, operations
+├── policy          what each policy version contained, by digest
 ├── acquisition     attempts, responses, sightings, parse executions
 ├── evidence        spans, assertions, claims, bases, edges, assessments
 ├── research        investigations, tasks, resolution attempts
@@ -334,6 +335,13 @@ storage-adapter change and does not alter the domain contract.
 - A failed or retracted edge invalidates all dependent projections.
 - A policy version change reassesses every claim derived under the superseded
   version; a stored assessment never outlives the policy that produced it.
+- What a policy version contained is recorded when it is first used, so a policy
+  edited without a version bump is detectable rather than merely unlikely.
+- A derivation records every input it consumed, including inputs that are not
+  evidence, so its result can be re-derived rather than guessed at.
+- Replay is exact for a claim's current assessment and refuses anything else:
+  edge liveness is a mutable projection over an immutable log, so the graph as
+  it stood at an earlier derivation cannot be rebuilt from the ledger alone.
 - A lane that was refused, cancelled, or expired never reads as a lane that
   searched and found nothing.
 - Interest reaches attention; evidence reaches conclusion. No path runs from
@@ -393,6 +401,7 @@ stage, left by a recorded cause and a regression fixture under `SPEC.md` section
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.11.0 | 2026-09-05 | Recorded policy versions by digest, made derivation inputs part of what a derivation records, and stated the limit of replay: the current assessment is exact, an earlier one is not reconstructible from the ledger alone. |
 | 1.10.0 | 2026-09-04 | Recorded the implementation platform — Python 3.13 on conda `agent13` against SQLite 3.51 — as ADR-0003, with the determinism the choice must not touch, and corrected the claim that every mode but Fixture has an exit gate: Lockdown is a state left by cause and fixture, not a stage that passes a gate. |
 | 1.9.0 | 2026-09-04 | Added decisions, expectations, surprise, and consequence to the attention plane as a reckoning component that may change behaviour and never an assessment, with invariants for retained surprise, decaying attention, unreachable metrics, and legible constraints. |
 | 1.8.0 | 2026-09-04 | Gave appraisal its machine and person dimensions with a review debt ceiling, bounded revocation in time, and made failure-to-change linkage a permanent invariant. |

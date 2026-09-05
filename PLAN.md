@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.10.1
+**Document version:** 1.11.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -512,6 +512,28 @@ Deliver in order:
 drill, policy replay, and public correction drill pass. R4 remains permanently
 quarantined.
 
+Three of those are procedures rather than judgments, and a procedure nobody has
+executed is a plan, so they are executable and each is tested against the defect
+it exists to catch:
+
+- **Policy replay** re-derives each claim's current assessment from the ledger
+  and compares it byte for byte. It also compares the running policy against
+  what was recorded for that version string, because a policy edited without a
+  bump would let every replay pass while proving nothing. A divergence is
+  reported as a claim finding rather than a replay failure: the rules did not
+  move, the evidence did, and the claim owes a reassessment nobody performed.
+- **The disaster-recovery drill** backs up, opens the copy as a store in its own
+  right, and rebuilds every claim card and assessment history from it. It
+  refuses before taking a backup at all if the subject keys sit inside the
+  artifact tree, because the dangerous failure is not a bad backup but a good
+  one carrying the keys erasure destroys.
+- **The public correction drill** corrects a published card and confirms the
+  correction by reading the surface, inside the revocation window.
+
+Production service objectives, the security review, catalog expansion, R2 after
+adversarial review, and R3 intake remain operator work. A passing test would not
+be evidence of a judgment or a commitment, so none is written.
+
 ## Cross-cutting work
 
 ### Security
@@ -599,6 +621,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.11.0 | 2026-09-05 | Split Gate 6 into the three drills that execute and the judgments that cannot, and stated what each drill is tested against failing on. |
 | 1.10.1 | 2026-09-05 | Recorded what ADR-0003 actually decided about test tooling once Phase 0 was built: the Phase 0 spaces are finite, so the invariants are enumerated exhaustively and no property-testing dependency is taken. |
 | 1.10.0 | 2026-09-04 | Added ADR-0003 for the runtime and toolchain, so the first backlog item is not the first undecided one. Fixed the capability matrix's stale reference to the task states and named `SPEC.md` 7.3 as the source of the evidence-lane set, which the matrix maps and does not define. Moved the interest-cannot-select-a-person test from Phase 4 to Phase 4A, where the interest register exists, and renumbered the Phase 4 deliverables, which 1.9.1 had missed. |
 | 1.9.1 | 2026-09-04 | Renumbered the Phase 0, 1, and 4A deliverable lists, which had accumulated lettered suffixes. |

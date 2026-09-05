@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.11.0
+**Document version:** 1.12.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -1071,8 +1071,16 @@ operator action MUST record actor, time, reason, target preimage, and result.
 
 ## 13. Non-functional requirements
 
-- **Reproducibility:** Given the same retained artifacts, policy version, and
-  code version, assessment and claim-card data MUST reproduce exactly.
+- **Reproducibility:** Given the same retained artifacts, policy version, code
+  version, and recorded derivation inputs, assessment and claim-card data MUST
+  reproduce exactly. Every input a derivation consumed MUST be recorded beside
+  its result, including inputs that are not evidence — a forecast's resolution
+  horizon among them — because a replay that has to guess at one of its own
+  inputs is not a replay. Replay is exact for a claim's current assessment;
+  reproducing a superseded one additionally requires that policy version's
+  bundle and the edge liveness of the moment, neither of which the ledger
+  retains, and a replay MUST report such an assessment as unreplayable rather
+  than re-derive it under today's rules and call the agreement reproduction.
 - **Auditability:** Every displayed factual sentence MUST trace to live evidence
   edges and exact spans.
 - **Security:** Fetching MUST resist SSRF, redirect escape, decompression bombs,
@@ -1187,6 +1195,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.12.0 | 2026-09-05 | Section 13: reproducibility requires the recorded derivation inputs, not the versions alone, and names the limit of replay — a superseded assessment is unreplayable rather than re-derived under current rules. |
 | 1.11.0 | 2026-09-04 | Closed four gaps a readiness review found before Phase 0. Enumerated the six evidence lanes in section 7.3, which `indeterminate` rests on and which no document had fixed, and split the glossary's one word for two things into read lane and evidence lane. Set the counterpart due time at 72 hours, so the overdue brake is computable from this document. Made the retained-read publisher cap enforce at reservation and stated that it never reaches evidence. Reconciled section 9.4 with the section 9.1 self-report: performance figures are withheld from the system, descriptions of conditions set for it are not. |
 | 1.10.2 | 2026-09-04 | Put section 10.1 before 10.2, which insertion order had reversed, and renumbered the acceptance criteria, which had run 6a-6c and 9a-9k with 9d and 9e landing after 9k. |
 | 1.10.1 | 2026-09-04 | Hygiene. Defined reckoning, escalation event, review debt, operational standing, and decay in section 4. Set the five configured values that had none: interest productivity window, appraisal sampling share, review debt ceiling, request and inference and storage ceilings, and attention retention. Reconciled decay with append-only — a superseding event carries the summary and the superseded payload is discarded, the event never removed. Gave section 13 the metric list section 9.4 refers to. |
