@@ -178,6 +178,36 @@ def test_an_interest_cannot_record_an_outcome_it_is_not_allowed_to_cause(store):
 
 
 # ---------------------------------------------------------------------------
+# Reckoning
+# ---------------------------------------------------------------------------
+
+
+def test_the_reckoning_plane_writes_only_to_reckoning_tables():
+    written = written_tables(PACKAGE / "reckoning")
+    assert set(written) <= RECKONING_TABLES, {
+        table: sorted(files) for table, files in written.items() if table not in RECKONING_TABLES
+    }
+
+
+def test_no_consequence_path_reaches_a_threshold_or_an_assessment():
+    """Learning changes what happens next, never what the evidence establishes."""
+    written = set(written_tables(PACKAGE / "reckoning"))
+    assert not (written & FORBIDDEN)
+
+
+def test_a_consequence_may_change_only_the_four_things_it_is_allowed_to():
+    from newz.reckoning.consequence import CHANGEABLE
+
+    assert sorted(CHANGEABLE) == [
+        "decision_rule",
+        "interest_priority",
+        "source_operational_standing",
+        "task_retry_policy",
+    ]
+    assert not (CHANGEABLE & FORBIDDEN)
+
+
+# ---------------------------------------------------------------------------
 # The evidence plane, from the other side
 # ---------------------------------------------------------------------------
 
@@ -188,6 +218,7 @@ def test_the_evidence_plane_never_reads_the_interest_register():
         for path in sorted((PACKAGE / area).rglob("*.py")):
             names = imported(path)
             assert not any(name.startswith("newz.attention") for name in names), path
+            assert not any(name.startswith("newz.reckoning") for name in names), path
             blob = "\n".join(sql_literals(path))
             for table in ("interest_entries", "interest_events", "notices", "interest_outcomes"):
                 assert table not in blob, f"{path} reads {table}"

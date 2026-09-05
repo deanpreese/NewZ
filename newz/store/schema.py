@@ -936,4 +936,105 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        12,
+        "reckoning",
+        """
+        -- What the system expected before it acted. Recorded first, so the
+        -- comparison afterwards is a comparison rather than a recollection.
+        CREATE TABLE expectations (
+            id              TEXT PRIMARY KEY,
+            subject         TEXT NOT NULL,
+            expected        TEXT NOT NULL,
+            recorded_before TEXT NOT NULL,
+            at              TEXT NOT NULL
+        ) STRICT;
+
+        -- A decision nobody can re-examine against what later happened is not a
+        -- decision; it is an action with a timestamp. Hence the alternatives.
+        CREATE TABLE decisions (
+            id                 TEXT PRIMARY KEY,
+            outcome            TEXT NOT NULL,
+            subject            TEXT NOT NULL,
+            alternatives_json  TEXT NOT NULL,
+            decided_by         TEXT NOT NULL,
+            reason             TEXT NOT NULL,
+            expectation_id     TEXT REFERENCES expectations(id),
+            confidence         TEXT NOT NULL DEFAULT '',
+            re_raise_condition TEXT NOT NULL DEFAULT '',
+            at                 TEXT NOT NULL
+        ) STRICT;
+
+        -- An outcome from outside the system's own account of it.
+        CREATE TABLE confirmed_outcomes (
+            id                  TEXT PRIMARY KEY,
+            expectation_id      TEXT NOT NULL REFERENCES expectations(id),
+            status              TEXT NOT NULL,
+            observed            TEXT NOT NULL,
+            confirmation_source TEXT NOT NULL,
+            at                  TEXT NOT NULL
+        ) STRICT;
+
+        -- Retained whether or not it fits a live interest. A system that keeps
+        -- only what it expected learns the shape of its own expectations.
+        CREATE TABLE surprises (
+            id                 TEXT PRIMARY KEY,
+            expectation_id     TEXT NOT NULL REFERENCES expectations(id),
+            outcome_id         TEXT NOT NULL REFERENCES confirmed_outcomes(id),
+            divergence         TEXT NOT NULL,
+            fits_live_interest INTEGER NOT NULL,
+            raised_to_operator INTEGER NOT NULL DEFAULT 0,
+            at                 TEXT NOT NULL
+        ) STRICT;
+
+        -- The scored delta, and the change it justified. Activity that grows
+        -- while behaviour does not is the failure this table exists to show.
+        CREATE TABLE consequences (
+            id             TEXT PRIMARY KEY,
+            expectation_id TEXT NOT NULL REFERENCES expectations(id),
+            outcome_id     TEXT NOT NULL REFERENCES confirmed_outcomes(id),
+            score          TEXT NOT NULL,
+            changed        TEXT NOT NULL,
+            change_cites   TEXT NOT NULL,
+            at             TEXT NOT NULL
+        ) STRICT;
+
+        -- An attempt to lower risk, widen an envelope, edit the audit record or
+        -- bypass a refusal, by any route direct or indirect.
+        CREATE TABLE escalation_events (
+            id                 TEXT PRIMARY KEY,
+            route              TEXT NOT NULL,
+            attempted          TEXT NOT NULL,
+            detected_by        TEXT NOT NULL,
+            raised_to_operator INTEGER NOT NULL DEFAULT 0,
+            linked_change      TEXT NOT NULL DEFAULT '',
+            at                 TEXT NOT NULL
+        ) STRICT;
+
+        -- The self-deception checks, run periodically and adversarially rather
+        -- than once at a gate.
+        CREATE TABLE self_checks (
+            id          TEXT PRIMARY KEY,
+            kind        TEXT NOT NULL,
+            subject     TEXT NOT NULL,
+            finding     TEXT NOT NULL,
+            detail_json TEXT NOT NULL,
+            at          TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX self_checks_by_kind ON self_checks (kind, at);
+
+        CREATE TRIGGER surprises_are_immutable_except_raising
+        BEFORE UPDATE OF id, expectation_id, outcome_id, divergence ON surprises
+        BEGIN
+            SELECT RAISE(ABORT, 'a surprise is retained as it was recorded');
+        END;
+
+        CREATE TRIGGER expectations_are_immutable
+        BEFORE UPDATE ON expectations
+        BEGIN
+            SELECT RAISE(ABORT, 'an expectation recorded after the fact is a recollection');
+        END;
+        """,
+    ),
 )
