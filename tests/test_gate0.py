@@ -104,8 +104,13 @@ def test_the_part_that_decides_cannot_reach_the_network_or_the_store(area):
         assert not any(module.startswith("newz.acquisition") for module in imported), path
 
 
-def test_the_package_depends_on_nothing_outside_the_standard_library():
-    """ADR-0003 keeps the dependency floor at zero."""
+#: The complete third-party surface, from ADR-0004. Adding a name here is a
+#: decision that needs its own ADR, which is what makes this list worth having.
+ALLOWED_DEPENDENCIES = {"pypdf"}
+
+
+def test_the_package_takes_only_the_dependencies_an_adr_records():
+    """ADR-0003 set the floor at zero; ADR-0004 raised it by exactly one."""
     third_party = set()
     for path in PACKAGE.rglob("*.py"):
         for module in _imported_modules(path):
@@ -113,7 +118,14 @@ def test_the_package_depends_on_nothing_outside_the_standard_library():
             if root in ("newz", "__future__") or root in sys.stdlib_module_names:
                 continue
             third_party.add(root)
-    assert third_party == set()
+    assert third_party == ALLOWED_DEPENDENCIES
+
+
+def test_the_one_dependency_lives_behind_the_parser_that_needs_it():
+    """A supply-chain surface in the parser plane is contained by staying there."""
+    for path in sorted(PACKAGE.rglob("*.py")):
+        if "pypdf" in _imported_modules(path):
+            assert str(path.relative_to(PACKAGE.parent)) == "newz/parse/pdf.py"
 
 
 @pytest.mark.parametrize("path", case_paths(), ids=lambda p: p.stem)

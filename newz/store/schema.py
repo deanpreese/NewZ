@@ -248,4 +248,52 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        4,
+        "preservation",
+        """
+        -- One run of one parser over one artifact. Immutable: a re-parse under a
+        -- new parser version is a new execution, so a segmentation can always be
+        -- attributed to the code that produced it.
+        CREATE TABLE parse_executions (
+            id              TEXT PRIMARY KEY,
+            artifact_id     TEXT NOT NULL REFERENCES artifacts(id),
+            parser_name     TEXT NOT NULL,
+            parser_version  TEXT NOT NULL,
+            normalized_mime TEXT NOT NULL,
+            text_hash       TEXT NOT NULL,
+            segment_count   INTEGER NOT NULL,
+            failures_json   TEXT NOT NULL,
+            executed_at     TEXT NOT NULL,
+            UNIQUE (artifact_id, parser_name, parser_version)
+        ) STRICT;
+
+        -- Segment ids are derived from the artifact, the ordinal and the text,
+        -- so the same bytes read the same way yield the same segment, and a
+        -- segment whose text changed is a different segment rather than the
+        -- same one saying something else.
+        CREATE TABLE segments (
+            id          TEXT PRIMARY KEY,
+            artifact_id TEXT NOT NULL REFERENCES artifacts(id),
+            ordinal     INTEGER NOT NULL,
+            kind        TEXT NOT NULL,
+            locator     TEXT NOT NULL,
+            text        TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX segments_by_artifact ON segments (artifact_id, ordinal);
+
+        CREATE TRIGGER parse_executions_are_immutable
+        BEFORE UPDATE ON parse_executions
+        BEGIN
+            SELECT RAISE(ABORT, 'parse executions are immutable: record a new execution');
+        END;
+
+        CREATE TRIGGER segments_are_immutable
+        BEFORE UPDATE ON segments
+        BEGIN
+            SELECT RAISE(ABORT, 'segments are immutable: a changed segment is a new segment');
+        END;
+        """,
+    ),
 )

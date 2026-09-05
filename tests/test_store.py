@@ -18,7 +18,7 @@ def test_the_pragmas_adr_0001_requires_are_actually_set(store):
 
 def test_migrations_are_recorded_and_applying_twice_is_a_no_op(store):
     applied = [row["version"] for row in store.query("SELECT version FROM schema_migrations")]
-    assert applied == [1, 2, 3]
+    assert applied == [1, 2, 3, 4]
     assert migrate(store.connection) == 0
 
 
