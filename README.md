@@ -36,6 +36,12 @@ extraction that proposes into a shape with nowhere to put a permission, the
 basis registry and its derivation lineage, edge admission with an attestation
 per predicate, and append-only assessments.
 
+**Phase 3 — the investigation loop.** What the system does about a gap once it
+sees one: investigations that state what would close them before any work
+starts, a task per required evidence lane, the counterpart brake that stops
+discovery outrunning verification, directed search that produces leads and only
+leads, and resolvers whose silence is recorded as carefully as their answers.
+
 ```text
 newz/domain       the frozen enumerations and record shapes
 newz/policy       the capability matrix, promotion, risk, independence, the bundle
@@ -48,6 +54,7 @@ newz/parse        the parser registry, segments, and span verification
 newz/model        where the model lives, and the client that talks to it
 newz/extract      the prompt, the proposal shape, and what survives validation
 newz/evidence     bases and lineage, edge admission, assessments, inspection
+newz/research     investigations, tasks and the brake, leads, resolvers, packets
 policy/           the emitted machine-readable policy (regenerate, never hand-edit)
 tests/fixtures    the hostile corpus and the controlled cases
 docs/adr          ADR-0001 storage, 0002 model tier, 0003 runtime, 0004 parsers
@@ -78,6 +85,7 @@ python tools/gate.py                     # ruff, policy artifact freshness, pyte
 python -m pytest tests/test_cases.py -v  # the controlled cases, by name
 python -m pytest tests/test_gate1.py -v  # the provenance spine, end to end
 python -m pytest tests/test_gate2.py -v  # the evidence graph, corpus to assessment
+python -m pytest tests/test_gate3.py -v  # three investigations, three outcomes
 python -m newz.policy.emit               # regenerate policy/ after a policy change
 ```
 

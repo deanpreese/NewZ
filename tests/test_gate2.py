@@ -307,7 +307,7 @@ def test_an_operator_correction_to_a_basis_is_recorded_and_reassessed(store, wor
     after = assess_claim(store, claim, "assessment:c3")
     assert after.state is AssessmentState.SUPPORTED
 
-    audit = store.one("SELECT * FROM audit_events WHERE action = 'correct_basis'")
+    audit = store.one("SELECT * FROM audit_events WHERE action = 'correct_basis' ORDER BY id")
     assert audit["actor"] == "operator:dean"
     assert "resolved" in audit["preimage"]
     # Both events survive: the refusal and the admission are both readable.

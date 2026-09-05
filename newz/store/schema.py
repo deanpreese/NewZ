@@ -537,4 +537,79 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        7,
+        "research",
+        """
+        -- A bounded programme of claims, questions and exit conditions. An
+        -- investigation that cannot say what would close it is a subscription.
+        CREATE TABLE investigations (
+            id                  TEXT PRIMARY KEY,
+            question            TEXT NOT NULL,
+            rationale           TEXT NOT NULL,
+            priority            INTEGER NOT NULL,
+            exit_conditions     TEXT NOT NULL,
+            closing_observation TEXT NOT NULL,
+            origin              TEXT NOT NULL,
+            state               TEXT NOT NULL,
+            opened_at           TEXT NOT NULL,
+            closed_at           TEXT,
+            closed_reason       TEXT
+        ) STRICT;
+
+        CREATE TABLE investigation_claims (
+            investigation_id TEXT NOT NULL REFERENCES investigations(id),
+            claim_id         TEXT NOT NULL REFERENCES claims(id),
+            added_at         TEXT NOT NULL,
+            PRIMARY KEY (investigation_id, claim_id)
+        ) STRICT;
+
+        -- A lead is a place worth looking. It is never evidence: SPEC 6.2 keeps
+        -- feed entries and search results as leads until a full artifact is
+        -- retained, and a directed search produces nothing stronger.
+        CREATE TABLE leads (
+            id                 TEXT PRIMARY KEY,
+            claim_id           TEXT REFERENCES claims(id),
+            task_id            TEXT REFERENCES tasks(id),
+            adapter            TEXT NOT NULL,
+            url                TEXT NOT NULL,
+            source_revision_id TEXT REFERENCES source_revisions(id),
+            rationale          TEXT NOT NULL,
+            created_at         TEXT NOT NULL,
+            consumed_at        TEXT,
+            operation_id       TEXT REFERENCES operations(id)
+        ) STRICT;
+
+        CREATE INDEX leads_unconsumed ON leads (consumed_at) WHERE consumed_at IS NULL;
+
+        -- What a resolver did when it was asked. Recorded whether or not it
+        -- found anything, because a resolver that was never reachable and one
+        -- that looked and found nothing are different facts.
+        CREATE TABLE resolution_attempts (
+            id          TEXT PRIMARY KEY,
+            task_id     TEXT NOT NULL REFERENCES tasks(id),
+            claim_id    TEXT NOT NULL REFERENCES claims(id),
+            resolver    TEXT NOT NULL,
+            outcome     TEXT NOT NULL,
+            detail      TEXT NOT NULL,
+            sought      TEXT NOT NULL,
+            searched    TEXT NOT NULL,
+            attempted_at TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX resolution_attempts_by_claim ON resolution_attempts (claim_id);
+
+        CREATE TRIGGER investigations_keep_their_question
+        BEFORE UPDATE OF id, question, exit_conditions, origin ON investigations
+        BEGIN
+            SELECT RAISE(ABORT, 'an investigation''s question and exit conditions are fixed');
+        END;
+
+        CREATE TRIGGER resolution_attempts_are_immutable
+        BEFORE UPDATE ON resolution_attempts
+        BEGIN
+            SELECT RAISE(ABORT, 'resolution attempts are immutable: record another');
+        END;
+        """,
+    ),
 )

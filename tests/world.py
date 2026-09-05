@@ -31,7 +31,7 @@ from newz.domain.enums import (
 from newz.extract.run import extract
 from newz.parse.store import parse_artifact, record_parse, segments_for
 from tests.canaries import Canary
-from tests.model_stub import StubModel, assertion, extraction
+from tests.model_stub import StubModel, assertion, claim, extraction
 from tests.transport import FixtureTransport
 
 CORPUS = Path(__file__).parent / "fixtures" / "corpus"
@@ -46,6 +46,7 @@ LANES = (
     ReadLane.VERIFICATION,
     ReadLane.VERIFICATION,
     ReadLane.VERIFICATION,
+    ReadLane.CORRECTION,
 )
 
 
@@ -125,6 +126,11 @@ SOURCES: tuple[Canary, ...] = (
         "structured/measurements.csv", "text/csv",
         "instrument measurement runs under registered protocols",
     ),
+    _canary(
+        "journal", "Journal of Applied Field Metrology", SourceRole.PRIMARY_RECORD,
+        "text/retraction_notice.txt", "text/plain",
+        "the journal's own record of what it has published and withdrawn",
+    ),
 )
 
 
@@ -136,6 +142,7 @@ class Ingested:
     execution_id: str
     segments: tuple
     assertions: dict[str, str] = field(default_factory=dict)
+    claims: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -148,6 +155,9 @@ class World:
 
     def artifact(self, key: str) -> str:
         return self.sources[key].artifact_id
+
+    def claim(self, key: str, name: str) -> str:
+        return self.sources[key].claims[name]
 
 
 def transport_for() -> FixtureTransport:
@@ -202,6 +212,36 @@ def install(store) -> None:
     epochs.activate(store, plan, "epoch:1", "the Gate 2 world", "operator:dean")
 
 
+#: Claims each source is asked to propose: a name, a claim kind, the wording,
+#: and the fragment the claim arises from. Claims enter the registry through
+#: extraction like everything else — Gate 3 asks that no step need a manual edit.
+CLAIM_PROPOSALS: dict[str, tuple[tuple[str, str, str, str], ...]] = {
+    "registry": (
+        (
+            "radar",
+            "event_or_observation",
+            "An uncorrelated radar return accompanied the Coral Ridge sighting of 2 March 2026.",
+            "Radar correlation: none found in the recorded window.",
+        ),
+    ),
+    "kettleby": (
+        (
+            "signature",
+            "measurement_or_association",
+            "The RX-9 sensor array shows a thermal signature above baseline under protocol conditions.",
+            "run_id=RX9-A-001, laboratory=Kettleby Metrology",
+        ),
+    ),
+    "complaint": (
+        (
+            "falsified",
+            "identity_or_wrongdoing_allegation",
+            "Meridian Instruments Inc. knowingly falsified calibration records for the RX-9 sensor.",
+            "defendant knowingly falsified calibration records",
+        ),
+    ),
+}
+
 #: What each source is asked to extract: a name for the assertion, its kind, and
 #: a fragment that must appear exactly once in the parsed segments.
 EXTRACTIONS: dict[str, tuple[tuple[str, str, str], ...]] = {
@@ -228,6 +268,9 @@ EXTRACTIONS: dict[str, tuple[tuple[str, str, str], ...]] = {
     ),
     "kettleby": (
         ("effect", "measurement", "run_id=RX9-A-001, laboratory=Kettleby Metrology"),
+    ),
+    "journal": (
+        ("retracted", "documented_event", "The editors retract \"Anomalous thermal signature in the RX-9 sensor array\""),
     ),
 }
 
@@ -261,13 +304,17 @@ def build(store) -> World:
         segments = segments_for(store, record.artifact_id)
 
         wanted = EXTRACTIONS[key]
-        quotes: dict[str, str] = {}
         blocks = []
         for name, kind, fragment in wanted:
             exact = _exact_quote(segments, fragment)
             assert exact, f"{key}: {fragment!r} is not in the parsed segments exactly once"
-            quotes[name] = exact
             blocks.append(assertion(kind, exact, f"{key}:{name}"))
+
+        proposed_claims = CLAIM_PROPOSALS.get(key, ())
+        for _, kind, wording, fragment in proposed_claims:
+            exact = _exact_quote(segments, fragment)
+            assert exact, f"{key}: claim quote {fragment!r} is not in the segments exactly once"
+            blocks.append(claim(kind, wording, exact))
 
         extracted = extract(
             store,
@@ -278,7 +325,7 @@ def build(store) -> World:
             client=StubModel(reply=extraction(*blocks)),
             segments=segments,
         )
-        assert extracted.accepted == len(wanted), (key, extracted.refusals)
+        assert extracted.accepted == len(wanted) + len(proposed_claims), (key, extracted.refusals)
 
         world.sources[key] = Ingested(
             key=key,
@@ -287,6 +334,9 @@ def build(store) -> World:
             execution_id=execution,
             segments=segments,
             assertions=dict(zip([n for n, _, _ in wanted], extracted.assertion_ids, strict=True)),
+            claims=dict(
+                zip([n for n, _, _, _ in proposed_claims], extracted.claim_ids, strict=True)
+            ),
         )
     return world
 

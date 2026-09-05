@@ -110,12 +110,18 @@ def reserve(
     idempotency_key: str,
     local_day: str,
     budget: DailyBudget | None = None,
+    discovery_paused: str = "",
 ) -> Operation:
     """Take a slot, or refuse with a reason.
 
     Idempotent by key: asking twice for the same operation returns the operation
     that already exists and consumes nothing. That is what makes a retry after an
     ambiguous crash safe.
+
+    `discovery_paused` carries the counterpart brake of `SPEC.md` section 5.2,
+    computed by the caller rather than read from here. The scheduler owns lanes
+    and reservations; task state belongs to the research manager, and a
+    scheduler that reached into it would own both.
     """
     budget = budget or DailyBudget()
 
@@ -151,6 +157,9 @@ def reserve(
             FetchRefusal.HOST_NOT_IN_CATALOG,
             f"{source_revision_id} is not enabled in {epoch_id}",
         )
+
+    if lane is ReadLane.DISCOVERY and discovery_paused:
+        raise ReservationRefused(FetchRefusal.DISCOVERY_PAUSED, discovery_paused)
 
     if requests_this_month(store, local_day) >= MONTHLY_REQUEST_CEILING:
         raise ReservationRefused(FetchRefusal.REQUEST_CEILING, month_of(local_day))

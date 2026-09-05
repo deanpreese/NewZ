@@ -360,6 +360,7 @@ class FetchRefusal(StrEnum):
     TIMEOUT = "timeout"
     RATE_LIMITED = "rate_limited"
     BUDGET_EXHAUSTED = "budget_exhausted"
+    DISCOVERY_PAUSED = "discovery_paused"
     REQUEST_CEILING = "request_ceiling"
     STORAGE_CEILING = "storage_ceiling"
     RETENTION_PROHIBITED = "retention_prohibited"

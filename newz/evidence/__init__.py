@@ -14,6 +14,7 @@ from newz.evidence.bases import (
     record_derivation,
     record_independence,
 )
+from newz.evidence.claims import reclassify_claim_risk
 from newz.evidence.edges import admit_edge, withdraw_edge
 from newz.evidence.inspect import explain, trace_claim
 
@@ -24,6 +25,7 @@ __all__ = [
     "current_assessment",
     "explain",
     "load_bases",
+    "reclassify_claim_risk",
     "record_basis",
     "record_derivation",
     "record_independence",
