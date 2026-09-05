@@ -7,6 +7,7 @@ import sqlite3
 import pytest
 
 from newz.store.db import integrity_report, migrate, open_store
+from newz.store.schema import MIGRATIONS
 
 
 def test_the_pragmas_adr_0001_requires_are_actually_set(store):
@@ -17,8 +18,11 @@ def test_the_pragmas_adr_0001_requires_are_actually_set(store):
 
 
 def test_migrations_are_recorded_and_applying_twice_is_a_no_op(store):
+    """Asserted against the migration list rather than a literal, so adding one
+    is a schema decision and not also a test edit."""
     applied = [row["version"] for row in store.query("SELECT version FROM schema_migrations")]
-    assert applied == [1, 2, 3, 4]
+    assert applied == [version for version, _, _ in MIGRATIONS]
+    assert applied == sorted(applied), "migrations apply in order"
     assert migrate(store.connection) == 0
 
 

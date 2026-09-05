@@ -296,4 +296,105 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        5,
+        "semantics",
+        """
+        -- One model call over one parse. The raw proposal is retained as an
+        -- artifact like any other body: SPEC 6 keeps the operation's own
+        -- material inspectable, and a proposal nobody can read back is a
+        -- decision nobody can replay.
+        CREATE TABLE extraction_runs (
+            id                 TEXT PRIMARY KEY,
+            artifact_id        TEXT NOT NULL REFERENCES artifacts(id),
+            parse_execution_id TEXT NOT NULL REFERENCES parse_executions(id),
+            model              TEXT NOT NULL,
+            prompt_hash        TEXT NOT NULL,
+            raw_artifact_id    TEXT NOT NULL REFERENCES artifacts(id),
+            proposed           INTEGER NOT NULL,
+            accepted           INTEGER NOT NULL,
+            refusals_json      TEXT NOT NULL,
+            executed_at        TEXT NOT NULL
+        ) STRICT;
+
+        -- An assertion always points at a verified span. There is no column
+        -- here for a role or a risk: those live on the source revision and the
+        -- edge, where a model cannot reach them.
+        CREATE TABLE assertions (
+            id                 TEXT PRIMARY KEY,
+            extraction_run_id  TEXT NOT NULL REFERENCES extraction_runs(id),
+            artifact_id        TEXT NOT NULL REFERENCES artifacts(id),
+            segment_id         TEXT NOT NULL REFERENCES segments(id),
+            source_revision_id TEXT NOT NULL REFERENCES source_revisions(id),
+            kind               TEXT NOT NULL,
+            quote              TEXT NOT NULL,
+            offset_start       INTEGER NOT NULL,
+            offset_end         INTEGER NOT NULL,
+            locator            TEXT NOT NULL,
+            summary            TEXT NOT NULL,
+            live               INTEGER NOT NULL DEFAULT 1,
+            recorded_at        TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX assertions_by_artifact ON assertions (artifact_id);
+
+        -- Disambiguation data only. SPEC 10.1: a person is an address in the
+        -- graph, never a dossier in it, so there is deliberately no column here
+        -- for a claim, an allegation, an assessment, or a count of anything.
+        CREATE TABLE entities (
+            id             TEXT PRIMARY KEY,
+            name           TEXT NOT NULL UNIQUE,
+            kind           TEXT NOT NULL,
+            disambiguation TEXT NOT NULL,
+            recorded_at    TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TABLE assertion_entities (
+            assertion_id TEXT NOT NULL REFERENCES assertions(id),
+            entity_id    TEXT NOT NULL REFERENCES entities(id),
+            PRIMARY KEY (assertion_id, entity_id)
+        ) STRICT;
+
+        CREATE TABLE claims (
+            id                 TEXT PRIMARY KEY,
+            kind               TEXT NOT NULL,
+            wording            TEXT NOT NULL,
+            risk               TEXT,
+            resolution_horizon TEXT,
+            resolver           TEXT,
+            withdrawn          INTEGER NOT NULL DEFAULT 0,
+            recorded_at        TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TABLE claim_aliases (
+            claim_id TEXT NOT NULL REFERENCES claims(id),
+            alias    TEXT NOT NULL,
+            PRIMARY KEY (claim_id, alias)
+        ) STRICT;
+
+        -- Where a claim came from. Not evidence for it: a claim's origin says
+        -- who raised the question, and the edges say what answers it.
+        CREATE TABLE claim_origins (
+            claim_id          TEXT NOT NULL REFERENCES claims(id),
+            extraction_run_id TEXT NOT NULL REFERENCES extraction_runs(id),
+            artifact_id       TEXT NOT NULL REFERENCES artifacts(id),
+            segment_id        TEXT REFERENCES segments(id),
+            quote             TEXT NOT NULL,
+            PRIMARY KEY (claim_id, extraction_run_id)
+        ) STRICT;
+
+        CREATE TRIGGER assertions_are_immutable_except_liveness
+        BEFORE UPDATE OF id, artifact_id, segment_id, kind, quote, offset_start,
+                         offset_end, source_revision_id ON assertions
+        BEGIN
+            SELECT RAISE(ABORT, 'assertions are immutable: withdraw by setting live = 0');
+        END;
+
+        CREATE TRIGGER extraction_runs_are_immutable
+        BEFORE UPDATE ON extraction_runs
+        BEGIN
+            SELECT RAISE(ABORT, 'extraction runs are immutable: record a new run');
+        END;
+        """,
+    ),
 )

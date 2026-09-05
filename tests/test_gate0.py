@@ -46,9 +46,15 @@ NETWORK_MODULES = {
     "webbrowser",
 }
 
-#: The one module allowed through. `ARCHITECTURE.md` runs fetch as its own
-#: process behind its own egress limits; this is the in-process half of that.
-NETWORK_BOUNDARY = "newz/acquisition/transport.py"
+#: The modules allowed through, and why each is its own door rather than a
+#: shared HTTP helper. The acquisition transport fetches URLs the system did not
+#: choose and treats everything it receives as hostile. The model client talks
+#: to exactly one endpoint, configured by the operator and checked to be local.
+#: They are separate risks, and one helper serving both would let either inherit
+#: the other's assumptions.
+NETWORK_BOUNDARY = frozenset(
+    {"newz/acquisition/transport.py", "newz/model/client.py"}
+)
 
 #: Shelling out is not an evidence path, and a package that can start a process
 #: can reach the network without importing any of the names above.
@@ -76,8 +82,8 @@ def _imported_modules(path: Path) -> set[str]:
 def test_only_the_transport_can_reach_the_network(path):
     relative = str(path.relative_to(PACKAGE.parent))
     imported = _imported_modules(path)
-    if relative == NETWORK_BOUNDARY:
-        # The door exists, and this is it.
+    if relative in NETWORK_BOUNDARY:
+        # A door exists, and this is one of them.
         assert imported & NETWORK_MODULES
         return
     assert not (imported & NETWORK_MODULES), relative
@@ -102,6 +108,26 @@ def test_the_part_that_decides_cannot_reach_the_network_or_the_store(area):
         assert "sqlite3" not in imported, path
         assert not any(module.startswith("newz.store") for module in imported), path
         assert not any(module.startswith("newz.acquisition") for module in imported), path
+        assert not any(module.startswith("newz.model") for module in imported), path
+
+
+def test_the_model_cannot_be_reached_from_anywhere_that_decides():
+    """`SPEC.md` 2.3: a model proposes and never grants capability. The clearest
+    form of that is the deciding packages having no way to call one."""
+    for area in DECIDING_PACKAGES:
+        for path in sorted((PACKAGE / area).rglob("*.py")):
+            assert "newz.model" not in " ".join(_imported_modules(path)), path
+
+
+def test_extraction_validates_without_reaching_the_model_or_the_store():
+    """The half that decides what survives a proposal is pure, so a proposal can
+    be replayed against the same segments and validate identically."""
+    path = PACKAGE / "extract" / "proposal.py"
+    imported = _imported_modules(path)
+    assert not (imported & NETWORK_MODULES)
+    assert "sqlite3" not in imported
+    assert not any(module.startswith("newz.model") for module in imported)
+    assert not any(module.startswith("newz.store") for module in imported)
 
 
 #: The complete third-party surface, from ADR-0004. Adding a name here is a
