@@ -22,47 +22,68 @@ consequences of the decision, not its grounds — stating them as the grounds
 would make the decision reversible by a cheaper or more private frontier model,
 which is exactly the reversal this ADR exists to prevent.
 
-## The pin
+## What this ADR pins, and what it does not
 
-**Model:** `qwen/qwen3.6-35b-a3b`, served by LM Studio over its
-OpenAI-compatible HTTP API on the operator's local network.
+It pins the **tier** and the **boundary**: the model is small, it is served
+locally, it is replaceable, and it sits outside the trust boundary.
 
-**Size:** a mixture-of-experts model of roughly 35B total parameters with about
-3B active per token. Both numbers matter and they say different things. The
-active count is what the boundary is about: the model that proposes is doing
-about three billion parameters' worth of work per token, which is not a model
-anyone will be tempted to hand the system's judgment to. The total is what the
-host must hold in memory, and it is the number that constrains the local
-inference ceiling in `SPEC.md` section 13.
+It pins **neither the endpoint nor the model name**, and that is deliberate.
+Both are operator configuration and both move — the endpoint has already moved
+from `10.0.0.50` to `10.0.0.214`, and the model behind an LM Studio name changes
+whenever a different one is loaded. `.env` is the authority for both, read at
+run time by `newz/model/config.py`. A document that transcribes a value it does
+not own becomes wrong quietly, and the endpoint is the proof: the superseded
+address is still sitting commented out one line above the current one.
 
-**Serving path:** an OpenAI-compatible endpoint at `/v1` on port 1234, reached
-over plain HTTP on the LAN by the model worker and by nothing else in the
-system. As of 2026-09-05 the host is `10.0.0.214`; it was `10.0.0.50` before
-that. **`.env` is authoritative, not this document** — the address has already
-moved once, and an ADR that pins an IP becomes wrong quietly. What this ADR
-pins is the model, the tier, and the fact that the endpoint is local.
+**As configured on 2026-09-05,** for the record and not as the source of truth:
+`qwen/qwen3.6-35b-a3b`, served by LM Studio over an OpenAI-compatible endpoint
+at `/v1` on port 1234, with `text-embedding-nomic-embed-text-v1.5@q8_0` for
+retrieval vectors on the same endpoint.
 
-**Embeddings** run against the same endpoint using
-`text-embedding-nomic-embed-text-v1.5@q8_0`. They serve retrieval only.
-`ARCHITECTURE.md` already forbids search, embeddings, prose, and prior NewZ
-output from being external evidence, and nothing about having a vector index
-softens that: an embedding can decide what the system looks at next and can
-never contribute to an assessment.
+**Size.** That model is a mixture of experts of roughly 35B total parameters
+with about 3B active per token, and the two numbers say different things. The
+active count is what the boundary is about: a proposer doing about three billion
+parameters' worth of work per token is not a model anyone will be tempted to
+hand the system's judgment to. The total is what the host holds in memory, and
+it is the number the local inference ceiling in `SPEC.md` section 13 constrains.
+A swap to a different local model of a similar tier needs no amendment here; a
+swap to one strong enough to carry judgment contradicts this ADR whatever the
+configuration says.
+
+**Embeddings** serve retrieval only. `ARCHITECTURE.md` already forbids search,
+embeddings, prose, and prior NewZ output from being external evidence, and a
+vector index softens none of that: an embedding can decide what the system looks
+at next and can never contribute to an assessment.
 
 ### What the implementation reads
 
-The variables in `.env` are role-keyed from the superseded system —
-`LLM_ENDPOINT_AMBIENT`, `LLM_ENDPOINT_DEEP`, `LLM_ENDPOINT_VOICE`, and their
-`LLM_MODEL_*` counterparts — because that architecture had three cognitive
-roles at different tiers. This system has one model role: `SPEC.md` section 2.3
-gives the model a single job, to propose. All three endpoints and all three
-model names in `.env` currently hold the same value, which is the shape of that
-collapse already having happened in practice.
+`newz/model/config.py` reads one endpoint and one model name, preferring
+`NEWZ_MODEL_ENDPOINT` and `NEWZ_MODEL_NAME` and falling back to
+`LLM_ENDPOINT_AMBIENT` and `LLM_MODEL_AMBIENT`. Those fallbacks are role-keyed
+from the superseded system, which had three cognitive tiers; this system has one
+model role, and `SPEC.md` section 2.3 gives it a single job. All three endpoints
+and all three model names in `.env` currently hold the same value, which is that
+collapse having already happened in practice.
 
-The model worker therefore reads one endpoint and one model name. It is wired
-in P08, the first work that sends a prompt, and until then nothing in the
-repository reads `.env` at all: the Phase 0 policy engine imports no networking
-module, and the Gate 0 suite proves it.
+Three properties of that loader are the ADR expressed as code rather than as
+prose:
+
+1. **Missing configuration raises.** There is no default endpoint. One that
+   happened to work would be the system reaching somewhere nobody chose.
+2. **A non-local endpoint is refused.** It is the inverse of the acquisition
+   rule and deliberately so: the fetcher refuses an address inside the house
+   because it is reaching outward on someone else's instruction, and this
+   refuses an address outside it because inference leaving the machine is the
+   `TRUE_NORTH.md` boundary being crossed whatever the model is called. Lifting
+   it takes an explicit argument, so it cannot drift.
+3. **Only the keys it needs are parsed.** `.env` also holds a bot token and a
+   mail password, and a loader that read the whole file into a dictionary
+   somebody later logs is how those leave the machine.
+
+Nothing sends a prompt yet. The worker that uses this configuration is wired in
+P08, and the Gate 0 suite still holds: this module reaches no network, resolves
+no name, and the only module in the package that may open a socket is the
+acquisition transport.
 
 ## Alternatives considered
 

@@ -38,6 +38,7 @@ newz/store        SQLite in WAL, the migrations, backup and clean restore
 newz/catalog      source revisions and immutable diet epochs with a dry run
 newz/control      the daily budget, lanes, reservations, leases, retry, pacing
 newz/acquisition  URL policy, the transport, the fetcher, artifacts, instruction
+newz/model        where the model lives, read from .env rather than transcribed
 policy/           the emitted machine-readable policy (regenerate, never hand-edit)
 tests/fixtures    the hostile corpus and the controlled cases
 docs/adr          ADR-0001 storage, ADR-0002 model tier, ADR-0003 runtime
