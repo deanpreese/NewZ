@@ -69,9 +69,16 @@ each one, and the solver fills the prescription:
 
 ```sh
 python -m newz.pilot.propose --prescribe  # what the diet asks for, with the arithmetic
+python -m newz.pilot.propose --seeds      # the specific slate proposed against it
 python -m newz.pilot.propose --survey     # fetch each candidate, record what it serves
 python -m newz.pilot.propose              # solve the prescribed slate for reading
 ```
+
+`newz/pilot/seeds.py` holds a specific twenty. It was written without fetching
+anything, so every URL is a hypothesis the survey tests and every licence note
+is a prompt to read the terms. It also reports the gap it leaves: four of the
+five claimant slots have terms nobody has read, and a claimant source that
+cannot be retained in full cannot establish even an attribution.
 
 Two things stay a person's. Enabling a source is a diet decision, so the slate
 proposes and cannot activate. And retention is a claim about somebody else's

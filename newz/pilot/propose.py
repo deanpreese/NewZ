@@ -4,6 +4,8 @@ Three commands, all read-only as far as the diet is concerned.
 
     --prescribe   what the diet asks for: twenty bucket-and-topic slots,
                   derived from the menu targets, with the arithmetic shown
+    --seeds       the specific slate proposed against those slots, with the
+                  terms that need reading and the retention gap it leaves
     --survey      fetch each unsurveyed candidate through the ordinary fetcher
                   and record what it actually serves
     (no flag)     solve the prescribed slate from what has been surveyed
@@ -18,7 +20,7 @@ import sys
 from pathlib import Path
 
 from newz.acquisition.transport import SocketTransport
-from newz.pilot.slots import render, solve, survey
+from newz.pilot.slots import propose_candidates, render, solve, survey
 from newz.store.db import open_store
 
 
@@ -33,7 +35,21 @@ def main(argv: list[str]) -> int:
         print(render_prescription())
         return 0
 
+    if "--seeds" in args:
+        from newz.pilot.seeds import render as render_seeds
+
+        print(render_seeds())
+        return 0
+
     if "--survey" in args:
+        from newz.pilot.seeds import register as register_seeds
+
+        register_seeds()
+        added, unserved = propose_candidates(store, added_by="operator")
+        if added:
+            print(f"{added} candidate(s) proposed from the diet.")
+        for spec in unserved:
+            print(f"no candidate for {spec.bucket} / {spec.topic}")
         probes = survey(store, SocketTransport())
         for probe in probes:
             state = probe.proposed_role.value if probe.proposed_role else "no role proposed"
