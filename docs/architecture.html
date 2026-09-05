@@ -749,6 +749,9 @@ footer{
     <li>Claim merge and split re-point edges by new events and never rewrite existing ones.</li>
     <li>Erasure destroys a per-subject key; the ledger event survives, unreadable, with a tombstone.</li>
     <li>A policy version change reassesses every claim derived under the superseded version.</li>
+    <li>What a policy version contained is recorded when it is first used, so a policy edited without a version bump is detectable rather than merely unlikely.</li>
+    <li>A derivation records every input it consumed, including inputs that are not evidence, so its result can be re-derived rather than guessed at.</li>
+    <li>A conclusion that no longer follows from its own evidence never reaches a surface: clearance re-derives and refuses, because withdrawing an edge obliges no reassessment.</li>
     <li>An evidence lane that was refused, cancelled, or expired never reads as a lane that searched and found nothing.</li>
     <li>Interest reaches attention; evidence reaches conclusion. No path runs from the interest register to an assessment.</li>
     <li>Attempted effect and confirmed outcome are never conflated, on acquisition or on publication.</li>
@@ -790,7 +793,7 @@ footer{
     <li><span class="g">M4 · GATE 4</span><h4>Safe presentation</h4><p>A local reader can audit every sentence in a claim card, a correction updates it automatically, and a retraction removes the presentation and confirms it from outside the renderer. Passing this gate turns local publication on; failing it leaves it off. Public reach is a separate decision and stays disabled here.</p></li>
     <li><span class="g">M4A · GATE 4A</span><h4>The investigator</h4><p>The system opens an investigation nobody asked for, pursues it through the existing lanes, and writes an essay about what it found — while a static audit of the interest register shows no write path to any scheduling or evidence decision. One originated investigation reaches a conclusion its originating interest did not want, and the register reports its provenance mix, its origination share, and at least one interest retired for producing nothing.</p></li>
     <li><span class="g">M5 · GATE 5</span><h4>Contested pilot</h4><p>30 eligible dates, 100 retained full reads, all 20 routes exercised under the current code version, and live claims demonstrating supported, contested, indeterminate, and corrected outcomes.</p></li>
-    <li><span class="g">M6 · GATE 6</span><h4>Production</h4><p>Service objectives, security review, disaster-recovery drill, policy replay, and a public correction drill pass. R4 remains permanently quarantined.</p></li>
+    <li><span class="g">M6 · GATE 6</span><h4>Production</h4><p>Service objectives, security review, disaster-recovery drill, policy replay, and a public correction drill pass. R4 remains permanently quarantined. The three drills execute rather than being attested: replay re-derives each claim's current assessment and compares it byte for byte; the recovery drill rebuilds every card and history from the restored copy, and refuses to take a backup at all if the subject keys sit where it would carry them; the correction drill confirms from the surface inside the window. The service objectives and the security review are a commitment and a judgment, and no passing test is evidence of either.</p></li>
   </ol>
 </section>
 

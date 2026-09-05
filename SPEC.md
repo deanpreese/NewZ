@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.12.0
+**Document version:** 1.13.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -898,10 +898,11 @@ Because nothing now holds output back by waiting, what holds it back MUST be
 enumerated and MUST fail closed. Publication MUST be refused, automatically and
 without an operator present, when: risk state is missing or unreadable, which
 behaves as R3; any dependency is stale, withdrawn, or uncleared; any cited edge
-is not live; the content is R4; a machine appraisal dimension under section 10.2
-fails; the review debt ceiling for its class is exceeded; a revocation in its
-class is overdue and unconfirmed; or a prior retraction of the same claim has
-not been confirmed. A refusal is recorded with its reason
+is not live; the claim's current assessment no longer follows from its current
+evidence, or no assessment exists; the content is R4; a machine appraisal
+dimension under section 10.2 fails; the review debt ceiling for its class is
+exceeded; a revocation in its class is overdue and unconfirmed; or a prior
+retraction of the same claim has not been confirmed. A refusal is recorded with its reason
 and is visible to the operator, who may then decide; the system MUST NOT retry a
 refused publication by re-deriving the same output.
 
@@ -1195,6 +1196,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.13.0 | 2026-09-05 | Publication is refused when the claim's current assessment no longer follows from its current evidence. Withdrawing an edge obliges no reassessment, so a card could render a conclusion the ledger underneath had stopped supporting. |
 | 1.12.0 | 2026-09-05 | Section 13: reproducibility requires the recorded derivation inputs, not the versions alone, and names the limit of replay — a superseded assessment is unreplayable rather than re-derived under current rules. |
 | 1.11.0 | 2026-09-04 | Closed four gaps a readiness review found before Phase 0. Enumerated the six evidence lanes in section 7.3, which `indeterminate` rests on and which no document had fixed, and split the glossary's one word for two things into read lane and evidence lane. Set the counterpart due time at 72 hours, so the overdue brake is computable from this document. Made the retained-read publisher cap enforce at reservation and stated that it never reaches evidence. Reconciled section 9.4 with the section 9.1 self-report: performance figures are withheld from the system, descriptions of conditions set for it are not. |
 | 1.10.2 | 2026-09-04 | Put section 10.1 before 10.2, which insertion order had reversed, and renumbered the acceptance criteria, which had run 6a-6c and 9a-9k with 9d and 9e landing after 9k. |

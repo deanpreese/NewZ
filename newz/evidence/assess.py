@@ -157,6 +157,45 @@ def assessment_history(store: Store, claim_id: str) -> tuple[Assessment, ...]:
     )
 
 
+def reassessment_owed(store: Store, claim_id: str) -> str:
+    """Why a claim's current assessment no longer follows, or "" if it still does.
+
+    An edge is admitted once and withdrawn later, and nothing in the ledger
+    obliges the withdrawal to be followed by a reassessment. Until one happens
+    the claim carries a conclusion its own evidence stopped supporting, so this
+    re-derives and reports the disagreement rather than waiting for a drill to
+    find it after publication.
+    """
+    row = store.one(
+        "SELECT id, policy_version, code_version, horizon_reached FROM assessments a "
+        "WHERE a.claim_id = ? ORDER BY a.rowid DESC LIMIT 1",
+        claim_id,
+    )
+    if row is None:
+        return "no assessment has been derived"
+    if row["policy_version"] != POLICY_VERSION:
+        return f"derived under superseded policy {row['policy_version']}"
+    stored = _as_assessment(store.one("SELECT * FROM assessments WHERE id = ?", row["id"]))
+    again = assess(
+        evidence_input(store, claim_id, horizon_reached=bool(row["horizon_reached"])),
+        row["policy_version"],
+    )
+    if again.state is not stored.state:
+        return f"the evidence now reads {again.state.value}, the assessment says {stored.state.value}"
+    if (again.supporting_bases, again.contradicting_bases) != (
+        stored.supporting_bases,
+        stored.contradicting_bases,
+    ):
+        return (
+            f"the independent bases moved from {stored.supporting_bases}/"
+            f"{stored.contradicting_bases} to {again.supporting_bases}/"
+            f"{again.contradicting_bases}"
+        )
+    if again.countable_edge_ids != stored.countable_edge_ids:
+        return "the countable edges changed, so the same conclusion now rests on different evidence"
+    return ""
+
+
 def load_assessment(store: Store, assessment_id: str) -> Assessment | None:
     """One assessment by its own id, for replaying the occurrence rather than the claim."""
     row = store.one("SELECT * FROM assessments WHERE id = ?", assessment_id)

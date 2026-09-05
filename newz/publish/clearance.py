@@ -82,6 +82,7 @@ def refusal_conditions(
     store: Store, card_revision_id: str, now: str = ""
 ) -> tuple[Refusal, ...]:
     """Every enumerated reason this revision may not publish, with no operator present."""
+    from newz.evidence.assess import reassessment_owed
     from newz.publish.publication import overdue_revocations, unconfirmed_retraction
 
     row = store.one("SELECT * FROM card_revisions WHERE id = ?", card_revision_id)
@@ -96,6 +97,13 @@ def refusal_conditions(
         refusals.append(Refusal("risk_state_missing", "unreadable risk behaves as R3"))
     if risk == RiskTier.R4.value:
         refusals.append(Refusal("content_is_r4", "R4 is never published"))
+
+    owed = reassessment_owed(store, row["claim_id"])
+    if owed:
+        # The card is a rendering of a conclusion, and the conclusion stopped
+        # following from its own evidence. Publishing it would put a statement
+        # on a surface that the ledger underneath already disagrees with.
+        refusals.append(Refusal("assessment_no_longer_follows", owed))
 
     appraisal = appraise(store, card_revision_id)
     for result in appraisal.machine:

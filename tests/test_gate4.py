@@ -330,6 +330,36 @@ def test_a_failed_machine_dimension_refuses_clearance(store, world, surface):
     assert not result.granted
 
 
+def test_a_conclusion_that_no_longer_follows_refuses_clearance(store, world, surface):
+    """The card renders a conclusion; the conclusion has to still be one."""
+    claim, revision, _ = _published_card(store, world, surface)
+    withdraw_edge(store, "edge:con", "the second laboratory retracted")
+
+    refusals = {r.condition: r.detail for r in refusal_conditions(store, revision)}
+    assert "assessment_no_longer_follows" in refusals
+    assert "contested" in refusals["assessment_no_longer_follows"]
+
+    # It is the ledger disagreeing with itself, not the appraisal disagreeing
+    # with the card, so reassessing is what settles it.
+    assess_claim(store, claim, "assessment:a2")
+    assert "assessment_no_longer_follows" not in {
+        r.condition for r in refusal_conditions(store, revision)
+    }
+
+
+def test_a_claim_with_no_assessment_at_all_refuses_clearance(store, world, surface):
+    claim = world.claim("kettleby", "signature")
+    with store.write() as connection:
+        connection.execute("UPDATE claims SET risk = 'R1' WHERE id = ?", (claim,))
+    assess_claim(store, claim, "assessment:a1")
+    revision, _ = build_card(store, claim, "card:r1")
+    with store.write() as connection:
+        connection.execute("DELETE FROM assessments WHERE claim_id = ?", (claim,))
+
+    refusals = {r.condition for r in refusal_conditions(store, revision)}
+    assert "assessment_no_longer_follows" in refusals
+
+
 def test_a_judgment_finding_re_appraises_its_whole_class(store, world, surface):
     _, revision, _ = _published_card(store, world, surface)
     sample_for_review(store, revision, "sampled", "review:q1")
