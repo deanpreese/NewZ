@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.10.1
+**Document version:** 1.10.2
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -891,43 +891,6 @@ Corrections MUST remain visibly attached to prior outputs. Retraction removes
 the current presentation from navigation but MUST leave a tombstone explaining
 what changed.
 
-### 10.2 Appraisal and the review debt ceiling
-
-Approve-by-default removes the person standing in front of publication, so it
-must say what appraisal now means without one. Appraisal has five dimensions and
-they do not divide evenly.
-
-| Dimension | Decided by | Basis |
-|---|---|---|
-| Accuracy | Machine | Every factual sentence resolves to a live edge and an exact span. |
-| Privacy | Machine | Risk tier, personal-data minimisation, and the entity-card rules of section 10.1. |
-| Risk | Machine | Effective risk computed under section 8, failing closed when unreadable. |
-| Rendering | Machine | Dependencies resolve, nothing stale, withdrawn, or uncleared. |
-| **Fair representation** | **Person** | Whether a claimant's strongest actual position survived the rendering. |
-| **Material omission** | **Person** | Whether what was left out changes what the reader concludes. |
-
-The four machine dimensions MUST pass before publication; a failure is a refusal
-condition. The system MUST NOT assess its own fair representation or material
-omission, and MUST NOT publish a claim that it has.
-
-The two judgment dimensions are reviewed **after** publication, on a sample.
-This is a review queue, not a publication queue: output does not wait on it.
-Sampling MUST cover a configured share of published output — 25% during Pilot —
-and MUST cover in full: every essay, every R2 output, every output where a claimant's formulation
-was rewritten rather than quoted, and every output whose counterevidence section
-is materially shorter than its support.
-
-Sampling is meaningful only if a finding travels. A judgment failure on one
-sampled item MUST trigger re-appraisal of its whole class, not merely a
-correction to that item.
-
-**The review debt ceiling.** When unreviewed sampled output for a class exceeds
-its configured ceiling — ten items during Pilot — publication of that class MUST
-halt automatically until the backlog clears. This is what keeps approve-by-default honest: the operator
-cannot be a bottleneck in front of publication, and equally cannot become a
-formality behind it. Unreviewed output is a debt that the system stops
-borrowing against.
-
 ### 10.1 Entity cards
 
 A reader MUST be able to ask what the record holds about a named entity. That
@@ -969,6 +932,43 @@ revocability is a weaker remedy there than anywhere else.
 Interest under section 9.1 MUST NOT select a person. It attaches to subjects,
 questions, and claims. A system that develops an interest in an individual is
 building the thing this section exists to prevent.
+
+### 10.2 Appraisal and the review debt ceiling
+
+Approve-by-default removes the person standing in front of publication, so it
+must say what appraisal now means without one. Appraisal has five dimensions and
+they do not divide evenly.
+
+| Dimension | Decided by | Basis |
+|---|---|---|
+| Accuracy | Machine | Every factual sentence resolves to a live edge and an exact span. |
+| Privacy | Machine | Risk tier, personal-data minimisation, and the entity-card rules of section 10.1. |
+| Risk | Machine | Effective risk computed under section 8, failing closed when unreadable. |
+| Rendering | Machine | Dependencies resolve, nothing stale, withdrawn, or uncleared. |
+| **Fair representation** | **Person** | Whether a claimant's strongest actual position survived the rendering. |
+| **Material omission** | **Person** | Whether what was left out changes what the reader concludes. |
+
+The four machine dimensions MUST pass before publication; a failure is a refusal
+condition. The system MUST NOT assess its own fair representation or material
+omission, and MUST NOT publish a claim that it has.
+
+The two judgment dimensions are reviewed **after** publication, on a sample.
+This is a review queue, not a publication queue: output does not wait on it.
+Sampling MUST cover a configured share of published output — 25% during Pilot —
+and MUST cover in full: every essay, every R2 output, every output where a claimant's formulation
+was rewritten rather than quoted, and every output whose counterevidence section
+is materially shorter than its support.
+
+Sampling is meaningful only if a finding travels. A judgment failure on one
+sampled item MUST trigger re-appraisal of its whole class, not merely a
+correction to that item.
+
+**The review debt ceiling.** When unreviewed sampled output for a class exceeds
+its configured ceiling — ten items during Pilot — publication of that class MUST
+halt automatically until the backlog clears. This is what keeps approve-by-default honest: the operator
+cannot be a bottleneck in front of publication, and equally cannot become a
+formality behind it. Unreviewed output is a debt that the system stops
+borrowing against.
 
 ## 11. Data model
 
@@ -1078,50 +1078,50 @@ The first production release is acceptable only when:
    against fixtures, and remains gated while R0–R2 publish by default. Live R3
    intake is not part of the first release; it is gated to Phase 6 of
    `PLAN.md`.
-6a. Every automatic refusal condition holds with no operator present, and a
-    refused publication is not retried by re-deriving the same output.
-6b. The system never assesses its own fair representation or material omission;
-    a judgment finding on a sampled item re-appraises its whole class; and
-    exceeding the review debt ceiling halts publication of that class.
-6c. Revocation completes and confirms within its window, an overdue revocation
-    halts its class, and every recorded failure carries a change that cites
-    it.
-7. R4 content cannot enter model prompts or reader-facing output.
-8. The 20-source pilot meets role/topic coverage and the retained-read
-   publisher cap.
-9. At least three controlled cases demonstrate `supported`, `contested`, and
-   `indeterminate` outcomes, and one demonstrates correction after publication.
-9a. Interest can open an investigation and select an essay subject, and can
+7. Every automatic refusal condition holds with no operator present, and a
+   refused publication is not retried by re-deriving the same output.
+8. The system never assesses its own fair representation or material omission;
+   a judgment finding on a sampled item re-appraises its whole class; and
+   exceeding the review debt ceiling halts publication of that class.
+9. Revocation completes and confirms within its window, an overdue revocation
+   halts its class, and every recorded failure carries a change that cites
+   it.
+10. R4 content cannot enter model prompts or reader-facing output.
+11. The 20-source pilot meets role/topic coverage and the retained-read
+    publisher cap.
+12. At least three controlled cases demonstrate `supported`, `contested`, and
+    `indeterminate` outcomes, and one demonstrates correction after publication.
+13. Interest can open an investigation and select an essay subject, and can
     reach no scheduler decision, evidence weight, threshold, or assessment.
-9b. An essay refuses to render a factual sentence without a live edge, and
+14. An essay refuses to render a factual sentence without a live edge, and
     carries every discussed claim's current state and material
     counterevidence.
-9c. A message on an unpinned channel cannot instruct, and no clearance follows
+15. A message on an unpinned channel cannot instruct, and no clearance follows
     from a case the system made for publishing.
-9f. No notice arises from NewZ's own output, the register's provenance mix is
+16. No notice arises from NewZ's own output, the register's provenance mix is
     dominated by external material, and an interest traceable only to a
     configured topic target is labelled as diet-derived rather than formed.
-9g. Interest-originated investigations are a reported share of all
+17. Interest-originated investigations are a reported share of all
     investigations, and an interest that produced nothing is retired or
     renewed with a reason.
-9h. A surprise is retained when it fits no live interest, a consequence changes
+18. A surprise is retained when it fits no live interest, a consequence changes
     behaviour with the consequence cited, and an `unverifiable` outcome feeds
     nothing.
-9i. Declining and deferring appear as recorded decisions with alternatives and
+19. Declining and deferring appear as recorded decisions with alternatives and
     reasons, not as absences.
-9j. Evidence metrics are not reachable by the system, the agreement rate with
+20. Evidence metrics are not reachable by the system, the agreement rate with
     the operator is reported, a reversal without new evidence is recorded as
     pressure, and the system can state what it may not do and why.
-9k. An instruction attempt in retained content becomes an observation about that
+21. An instruction attempt in retained content becomes an observation about that
     source and never an epistemic score, and an escalation attempt is detected,
     raised, and carries a linked change.
-9d. Publication, correction, and retraction each record a confirmed outcome from
+22. Publication, correction, and retraction each record a confirmed outcome from
     outside the renderer, or are marked `unconfirmed` and not counted.
-9e. An entity card shows one basis where ten claims share one, says so when
+23. An entity card shows one basis where ten claims share one, says so when
     nothing about the person is established, and leaves no per-person
     aggregation at rest.
-10. A clean restore reproduces claim cards, histories, and artifact hashes.
-11. A 30-day pilot completes with at least 100 distinct full reads, at least
+24. A clean restore reproduces claim cards, histories, and artifact hashes.
+25. A 30-day pilot completes with at least 100 distinct full reads, at least
     one live claim reaching each of `supported`, `contested`, and
     `indeterminate`, at least one live correction after presentation, and zero
     unresolved critical provenance or publication violations. Fixture cases do
@@ -1134,6 +1134,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.10.2 | 2026-09-04 | Put section 10.1 before 10.2, which insertion order had reversed, and renumbered the acceptance criteria, which had run 6a-6c and 9a-9k with 9d and 9e landing after 9k. |
 | 1.10.1 | 2026-09-04 | Hygiene. Defined reckoning, escalation event, review debt, operational standing, and decay in section 4. Set the five configured values that had none: interest productivity window, appraisal sampling share, review debt ceiling, request and inference and storage ceilings, and attention retention. Reconciled decay with append-only — a superseding event carries the summary and the superseded payload is discarded, the event never removed. Gave section 13 the metric list section 9.4 refers to. |
 | 1.10.0 | 2026-09-04 | Closed the remaining gaps from the functional-spec review. Section 9.3 adds decisions with recorded alternatives, expectations, surprise retained even where it fits no interest, and scored consequences that must change behaviour without ever reaching an assessment. Section 9.4 adds four checks against self-deception: metrics unreachable by the system, the simpler explanation tested first, mirroring measured with pressure recorded as pressure, and constraints legible to the system. Notices gain provenance kinds, attention gains decay while evidence stays immutable, instruction attempts become operational observations about a source rather than epistemic scores, escalation attempts are detected and carry a linked change, and export covers attention and reckoning. |
 | 1.9.0 | 2026-09-04 | Made approve-by-default safe rather than nominally safe. Section 10.2 splits appraisal into four machine-decided dimensions that gate publication and two — fair representation and material omission — that only a person decides, reviewed after publication on a mandatory sample, with a review debt ceiling that halts a class when unreviewed output accumulates. Revocation gains a time bound, measured and reported, with an overdue revocation halting its class. Correction becomes a permanent system-wide requirement: every failure links to a change that cites it, and a failure producing only an explanation is itself the defect. |
