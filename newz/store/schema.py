@@ -830,4 +830,110 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         CREATE INDEX reader_access_by_token ON reader_access (token_id, accessed_at);
         """,
     ),
+    (
+        11,
+        "attention",
+        """
+        -- A notice is an attention record. It points at a retained span and
+        -- establishes nothing. There is deliberately no column here that could
+        -- become an assertion, an edge, or a basis.
+        CREATE TABLE notices (
+            id               TEXT PRIMARY KEY,
+            artifact_id      TEXT NOT NULL REFERENCES artifacts(id),
+            segment_id       TEXT NOT NULL REFERENCES segments(id),
+            quote            TEXT NOT NULL,
+            offset_start     INTEGER NOT NULL,
+            offset_end       INTEGER NOT NULL,
+            locator          TEXT NOT NULL,
+            reason           TEXT NOT NULL,
+            provenance_kind  TEXT NOT NULL,
+            superseded_by    TEXT REFERENCES decay_events(id),
+            noticed_at       TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX notices_by_artifact ON notices (artifact_id);
+
+        -- A durable, revisable disposition. Append-only through
+        -- `interest_events`; the columns here are the current projection of them.
+        CREATE TABLE interest_entries (
+            id                TEXT PRIMARY KEY,
+            subject           TEXT NOT NULL,
+            rationale         TEXT NOT NULL,
+            diet_epoch_id     TEXT NOT NULL REFERENCES diet_epochs(id),
+            topic_targets_json TEXT NOT NULL,
+            operator_input    TEXT NOT NULL DEFAULT '',
+            diet_derived      INTEGER NOT NULL DEFAULT 0,
+            priority          INTEGER NOT NULL DEFAULT 5,
+            window_days       INTEGER NOT NULL,
+            retired           INTEGER NOT NULL DEFAULT 0,
+            retirement_reason TEXT NOT NULL DEFAULT '',
+            opened_at         TEXT NOT NULL,
+            retired_at        TEXT,
+            superseded_by     TEXT REFERENCES decay_events(id)
+        ) STRICT;
+
+        CREATE TABLE interest_events (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            interest_id TEXT NOT NULL REFERENCES interest_entries(id),
+            kind        TEXT NOT NULL,
+            reason      TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            at          TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX interest_events_by_interest ON interest_events (interest_id, id);
+
+        CREATE TABLE interest_notices (
+            interest_id TEXT NOT NULL REFERENCES interest_entries(id),
+            notice_id   TEXT NOT NULL REFERENCES notices(id),
+            PRIMARY KEY (interest_id, notice_id)
+        ) STRICT;
+
+        -- The downstream trace. An interest that changes nothing is decorative,
+        -- and this is where that becomes visible rather than arguable.
+        CREATE TABLE interest_outcomes (
+            interest_id TEXT NOT NULL REFERENCES interest_entries(id),
+            kind        TEXT NOT NULL,
+            target_id   TEXT NOT NULL,
+            at          TEXT NOT NULL,
+            PRIMARY KEY (interest_id, kind, target_id)
+        ) STRICT;
+
+        -- Decay is append-only like everything else: a superseding event carries
+        -- the summary and cites what it covers, the superseded event remains,
+        -- and its payload is what goes. Silent truncation is forbidden.
+        CREATE TABLE decay_events (
+            id          TEXT PRIMARY KEY,
+            covers_json TEXT NOT NULL,
+            summary     TEXT NOT NULL,
+            reason      TEXT NOT NULL,
+            at          TEXT NOT NULL
+        ) STRICT;
+
+        -- Immutable except for exactly one transition. Decay may empty the
+        -- quote, mark the reason decayed and name the superseding event, and
+        -- may change nothing else; every other update is refused. Writing the
+        -- permitted transition into the trigger is what keeps "the payload goes
+        -- and the record stays" from depending on the caller remembering it.
+        CREATE TRIGGER notices_are_immutable_except_decay
+        BEFORE UPDATE ON notices
+        WHEN NEW.superseded_by IS NULL
+             OR NEW.artifact_id != OLD.artifact_id
+             OR NEW.segment_id != OLD.segment_id
+             OR NEW.provenance_kind != OLD.provenance_kind
+             OR NEW.offset_start != OLD.offset_start
+             OR NEW.offset_end != OLD.offset_end
+             OR NEW.quote != ''
+             OR NEW.reason != '[decayed]'
+        BEGIN
+            SELECT RAISE(ABORT, 'a notice is immutable; only decay may supersede it');
+        END;
+
+        CREATE TRIGGER interest_events_are_immutable
+        BEFORE UPDATE ON interest_events
+        BEGIN
+            SELECT RAISE(ABORT, 'the interest register is append-only');
+        END;
+        """,
+    ),
 )
