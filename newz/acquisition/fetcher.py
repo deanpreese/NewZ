@@ -15,9 +15,12 @@ from __future__ import annotations
 
 import hashlib
 import zlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import datetime
 from urllib.parse import urljoin, urlsplit
 
+from newz.acquisition.robots import Robots, RobotsCache, path_of
+from newz.acquisition.robots import parse as parse_robots
 from newz.acquisition.transport import RawResponse, Transport
 from newz.acquisition.urlpolicy import UrlPolicy, inspect_address, inspect_redirect, inspect_url
 from newz.domain.enums import AttemptOutcome, FetchRefusal
@@ -57,6 +60,56 @@ class FetchPolicy:
     max_decompressed_bytes: int = 32 * 1024 * 1024
     max_decompression_ratio: int = 100
     url: UrlPolicy = field(default_factory=UrlPolicy)
+    #: Off only where there is nothing to ask — the offline fixture harness.
+    respect_robots: bool = True
+
+
+ROBOTS_MAX_BYTES = 512 * 1024
+
+
+def robots_for(
+    host: str,
+    scheme: str,
+    port: int,
+    address: str,
+    transport: Transport,
+    policy: FetchPolicy,
+    agent: str,
+) -> Robots:
+    """Ask the host what it permits. Never itself subject to a robots check."""
+    try:
+        response = transport.open(
+            scheme=scheme,
+            host=host,
+            port=port,
+            path="/robots.txt",
+            address=address,
+            timeout=policy.timeout_seconds,
+        )
+    except (TimeoutError, OSError) as error:
+        # Unreachable: RFC 9309 disallows rather than assuming consent.
+        return Robots(host=host, fetched=False, detail=f"unreachable: {type(error).__name__}")
+
+    if 400 <= response.status < 500:
+        # Unavailable: the site published no rules, so ordinary use applies.
+        return Robots(host=host, rules=(), detail=f"no robots.txt (HTTP {response.status})")
+    if response.status >= 500:
+        return Robots(host=host, fetched=False, detail=f"unreachable (HTTP {response.status})")
+
+    # Read it the same way any other body is read. The first version of this
+    # function read the socket directly, and because the transport asks for gzip
+    # it parsed compressed bytes as text, found no directives in them, and
+    # concluded that everything was permitted. A safety check that fails open
+    # while appearing to work is worse than not having one.
+    try:
+        body, _, refusal = _read_body(
+            response, replace(policy, max_bytes=ROBOTS_MAX_BYTES)
+        )
+    except (TimeoutError, OSError):
+        return Robots(host=host, fetched=False, detail="unreachable while reading")
+    if refusal is not None:
+        return Robots(host=host, fetched=False, detail=f"unreadable: {refusal.value}")
+    return parse_robots(body.decode("utf-8", errors="replace"), agent, host)
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,9 +185,23 @@ def _read_body(response: RawResponse, policy: FetchPolicy) -> tuple[bytes, int, 
     return bytes(out), raw_read, None
 
 
-def fetch(url: str, transport: Transport, policy: FetchPolicy | None = None) -> FetchResult:
-    """Fetch one URL under policy, following redirects it is allowed to follow."""
+def fetch(
+    url: str,
+    transport: Transport,
+    policy: FetchPolicy | None = None,
+    robots_cache: RobotsCache | None = None,
+    now: datetime | None = None,
+) -> FetchResult:
+    """Fetch one URL under policy, following redirects it is allowed to follow.
+
+    Every hop is checked against the host's robots.txt, not only the first: a
+    redirect that lands somewhere the site disallows is somewhere the site
+    disallows, whatever door it was reached through.
+    """
     policy = policy or FetchPolicy()
+    robots_cache = robots_cache if robots_cache is not None else RobotsCache()
+    now = now or datetime.now()
+    agent = getattr(transport, "user_agent", "newz")
     current = url
     redirects: list[str] = []
 
@@ -160,6 +227,28 @@ def fetch(url: str, transport: Transport, policy: FetchPolicy | None = None) -> 
                 # name that resolves to one public and one private address is
                 # the rebinding case wearing a disguise.
                 return _refuse(url, refusal, f"{host} -> {address}", redirects=tuple(redirects))
+
+        if policy.respect_robots:
+            robots = robots_cache.get(host, now)
+            if robots is None:
+                robots = robots_for(
+                    host, verdict.scheme, verdict.port, addresses[0], transport, policy, agent
+                )
+                robots_cache.put(host, robots, now)
+            if not robots.fetched:
+                return _refuse(
+                    url,
+                    FetchRefusal.ROBOTS_UNREACHABLE,
+                    f"{host}: {robots.detail}",
+                    redirects=tuple(redirects),
+                )
+            if not robots.allows(path_of(current)):
+                return _refuse(
+                    url,
+                    FetchRefusal.ROBOTS_DISALLOWED,
+                    f"{host} disallows {path_of(current)} ({robots.detail})",
+                    redirects=tuple(redirects),
+                )
 
         try:
             response = transport.open(

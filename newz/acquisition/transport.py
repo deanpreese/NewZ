@@ -88,17 +88,25 @@ class SocketTransport:
         connection._create_connection = lambda addr, tmo, src: socket.create_connection(  # type: ignore[method-assign]
             (address, addr[1]), tmo, src
         )
-        connection.request(
-            "GET",
-            path,
-            headers={
-                "Host": host,
-                "User-Agent": self.user_agent,
-                "Accept-Encoding": "gzip",
-                "Connection": "close",
-            },
-        )
-        response = connection.getresponse()
+        try:
+            connection.request(
+                "GET",
+                path,
+                headers={
+                    "Host": host,
+                    "User-Agent": self.user_agent,
+                    "Accept-Encoding": "gzip",
+                    "Connection": "close",
+                },
+            )
+            response = connection.getresponse()
+        except http.client.HTTPException as error:
+            # The transport owns the protocol, so it owns protocol failures. A
+            # server answering with a malformed status line is the far side
+            # being broken, and the fetcher above cannot catch an exception from
+            # a module it is not allowed to import — so it is translated here
+            # into the error contract the fetcher does handle.
+            raise OSError(f"{type(error).__name__}: {error}") from error
         return RawResponse(
             status=response.status,
             headers=tuple(response.getheaders()),

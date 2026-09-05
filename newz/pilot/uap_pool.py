@@ -407,6 +407,17 @@ SURVEY_FINDINGS: dict[str, Any] = {
         "nothing_found": 7,
     },
     "role_proposal_agreed_with_review": 2,
+    "robots_checked_retrospectively": {
+        "when": "after the reads, because the check did not exist yet",
+        "result": "every path read was permitted by the site's own rules",
+        "crawl_delay_declared": {"www.aiaa.org": 120.0},
+        "would_now_refuse": ["www.isaackoi.com"],
+        "note": (
+            "one host answers robots.txt with a malformed status line, so under "
+            "RFC 9309 it is unreachable rather than unavailable and the read is now "
+            "refused — conservative, and correct"
+        ),
+    },
     "findings": [
         "A 403 is an answer. Three of the most valuable sources decline automated "
         "access, and the response is to record it and stop rather than to try a "

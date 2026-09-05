@@ -47,9 +47,14 @@ class SlowBody:
 
 @dataclass
 class FixtureTransport:
+    #: Serves a permissive robots.txt for every host unless a test overrides it,
+    #: so the robots check runs for real against fixtures rather than being
+    #: switched off. A test that wants a refusal serves its own.
     replies: dict[str, Reply] = field(default_factory=dict)
     addresses: dict[str, tuple[str, ...]] = field(default_factory=dict)
     default_address: str = "93.184.216.34"
+    #: What a site sees, and what its robots.txt rules are read for.
+    user_agent: str = "newz-test/1.0"
     requested: list[str] = field(default_factory=list)
 
     def serve(self, url: str, reply: Reply) -> None:
@@ -76,6 +81,12 @@ class FixtureTransport:
             ),
         )
 
+    def serve_robots(self, host: str, body: str, scheme: str = "https") -> None:
+        self.serve(
+            f"{scheme}://{host}/robots.txt",
+            Reply(headers={"Content-Type": "text/plain"}, body=body.encode()),
+        )
+
     def serve_redirect(self, url: str, to: str, status: int = 302) -> None:
         self.serve(url, Reply(status=status, headers={"Location": to}))
 
@@ -88,6 +99,9 @@ class FixtureTransport:
         url = f"{scheme}://{host}{'' if port in (80, 443) else f':{port}'}{path}"
         self.requested.append(url)
         reply = self.replies.get(url)
+        if reply is None and path == "/robots.txt":
+            # Nothing published: RFC 9309 treats that as ordinary use permitted.
+            return RawResponse(404, (("Content-Type", "text/plain"),), io.BytesIO(b""))
         if reply is None:
             return RawResponse(404, (("Content-Type", "text/plain"),), io.BytesIO(b"not found"))
         if reply.unreachable:

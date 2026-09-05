@@ -364,6 +364,8 @@ class FetchRefusal(StrEnum):
     REQUEST_CEILING = "request_ceiling"
     STORAGE_CEILING = "storage_ceiling"
     RETENTION_PROHIBITED = "retention_prohibited"
+    ROBOTS_DISALLOWED = "robots_disallowed"
+    ROBOTS_UNREACHABLE = "robots_unreachable"
     SOURCE_QUARANTINED = "source_quarantined"
 
 

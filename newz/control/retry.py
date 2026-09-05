@@ -84,8 +84,23 @@ def last_attempt_at(store, host: str) -> datetime | None:
     return datetime.fromisoformat(row["at"])
 
 
+def effective_interval(policy: RetryPolicy, crawl_delay: float | None) -> float:
+    """The longer of our floor and what the site asked for.
+
+    A shorter crawl-delay is not a licence to go faster than our own floor, and
+    a longer one is not a suggestion. One real source in the first survey asks
+    for two minutes, four times the floor, and honouring the larger number is
+    the whole of the rule.
+    """
+    return max(float(policy.min_host_interval_seconds), float(crawl_delay or 0))
+
+
 def pacing_refusal(
-    store, host: str, now: datetime, policy: RetryPolicy | None = None
+    store,
+    host: str,
+    now: datetime,
+    policy: RetryPolicy | None = None,
+    crawl_delay: float | None = None,
 ) -> FetchRefusal | None:
     """Refuse a read that would arrive too soon after the last one."""
     policy = policy or RetryPolicy()
@@ -95,6 +110,6 @@ def pacing_refusal(
     elapsed = (now - previous).total_seconds()
     # A negative elapsed time means the clock moved backwards, which fails
     # closed here: a clock that went backwards is not a licence to read again.
-    if elapsed < policy.min_host_interval_seconds:
+    if elapsed < effective_interval(policy, crawl_delay):
         return FetchRefusal.RATE_LIMITED
     return None
