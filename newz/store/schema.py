@@ -799,4 +799,35 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        10,
+        "reader",
+        """
+        -- A reader is a token, not a person. The token's hash is stored so the
+        -- store never holds the credential itself.
+        CREATE TABLE reader_tokens (
+            id          TEXT PRIMARY KEY,
+            token_hash  TEXT NOT NULL UNIQUE,
+            label       TEXT NOT NULL,
+            audience    TEXT NOT NULL,
+            revoked     INTEGER NOT NULL DEFAULT 0,
+            issued_by   TEXT NOT NULL,
+            issued_at   TEXT NOT NULL,
+            revoked_at  TEXT
+        ) STRICT;
+
+        -- Every read, so the rate limit is measured against what happened
+        -- rather than against a counter somebody could restart.
+        CREATE TABLE reader_access (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            token_id    TEXT NOT NULL REFERENCES reader_tokens(id),
+            surface     TEXT NOT NULL,
+            target      TEXT NOT NULL,
+            outcome     TEXT NOT NULL,
+            accessed_at TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX reader_access_by_token ON reader_access (token_id, accessed_at);
+        """,
+    ),
 )

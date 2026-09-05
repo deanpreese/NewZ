@@ -42,6 +42,12 @@ starts, a task per required evidence lane, the counterpart brake that stops
 discovery outrunning verification, directed search that produces leads and only
 leads, and resolvers whose silence is recorded as carefully as their answers.
 
+**Phase 4 — safe output.** Claim cards and entity cards, the split appraisal
+with its review debt ceiling, clearance of an exact revision, a local reader
+surface with its own controls, and correction and retraction that confirm from
+outside the renderer inside a bounded window. Gate 4 is what earns
+approve-by-default: local publication is on for R0–R2, public reach is off.
+
 ```text
 newz/domain       the frozen enumerations and record shapes
 newz/policy       the capability matrix, promotion, risk, independence, the bundle
@@ -55,6 +61,8 @@ newz/model        where the model lives, and the client that talks to it
 newz/extract      the prompt, the proposal shape, and what survives validation
 newz/evidence     bases and lineage, edge admission, assessments, inspection
 newz/research     investigations, tasks and the brake, leads, resolvers, packets
+newz/present      claim cards, entity cards, dependency validation
+newz/publish      appraisal, clearance, reach, the surface, the reader, export
 policy/           the emitted machine-readable policy (regenerate, never hand-edit)
 tests/fixtures    the hostile corpus and the controlled cases
 docs/adr          ADR-0001 storage, 0002 model tier, 0003 runtime, 0004 parsers
@@ -86,6 +94,7 @@ python -m pytest tests/test_cases.py -v  # the controlled cases, by name
 python -m pytest tests/test_gate1.py -v  # the provenance spine, end to end
 python -m pytest tests/test_gate2.py -v  # the evidence graph, corpus to assessment
 python -m pytest tests/test_gate3.py -v  # three investigations, three outcomes
+python -m pytest tests/test_gate4.py -v  # publication, revocation, and its window
 python -m newz.policy.emit               # regenerate policy/ after a policy change
 ```
 
