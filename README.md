@@ -30,24 +30,35 @@ decided.
 operation. One scheduler, one operation ledger, immutable diet epochs, a safe
 fetcher, and a content-addressed artifact store.
 
+**Phase 2 — the evidence graph.** The only path from retained material to an
+assessment: five versioned parsers, byte-exact span verification, model
+extraction that proposes into a shape with nowhere to put a permission, the
+basis registry and its derivation lineage, edge admission with an attestation
+per predicate, and append-only assessments.
+
 ```text
 newz/domain       the frozen enumerations and record shapes
 newz/policy       the capability matrix, promotion, risk, independence, the bundle
 newz/graph        claim merge and split
 newz/store        SQLite in WAL, the migrations, backup and clean restore
 newz/catalog      source revisions and immutable diet epochs with a dry run
-newz/control      the daily budget, lanes, reservations, leases, retry, pacing
+newz/control      the daily budget, lanes, reservations, leases, retry, pacing, audit
 newz/acquisition  URL policy, the transport, the fetcher, artifacts, instruction
-newz/model        where the model lives, read from .env rather than transcribed
+newz/parse        the parser registry, segments, and span verification
+newz/model        where the model lives, and the client that talks to it
+newz/extract      the prompt, the proposal shape, and what survives validation
+newz/evidence     bases and lineage, edge admission, assessments, inspection
 policy/           the emitted machine-readable policy (regenerate, never hand-edit)
 tests/fixtures    the hostile corpus and the controlled cases
-docs/adr          ADR-0001 storage, ADR-0002 model tier, ADR-0003 runtime
+docs/adr          ADR-0001 storage, 0002 model tier, 0003 runtime, 0004 parsers
 ```
 
-Exactly one module — `newz/acquisition/transport.py` — may open a socket, and
-the test suite enforces it. The part of the system that decides anything
-(`policy`, `domain`, `graph`) can reach neither the network nor the store, so a
-policy decision cannot depend on either.
+Exactly two modules may open a socket, and the test suite enforces it:
+`newz/acquisition/transport.py`, which fetches URLs the system did not choose,
+and `newz/model/client.py`, which talks to one operator-configured local
+endpoint. The part of the system that decides anything (`policy`, `domain`,
+`graph`) can reach neither the network nor the store nor the model, so a policy
+decision cannot depend on any of them.
 
 The capability matrix is 2,016 cells — 8 source roles x 9 claim kinds x 7
 assertion kinds x 4 relations — derived from about ten stated principles by
@@ -66,6 +77,7 @@ conda activate agent13
 python tools/gate.py                     # ruff, policy artifact freshness, pytest
 python -m pytest tests/test_cases.py -v  # the controlled cases, by name
 python -m pytest tests/test_gate1.py -v  # the provenance spine, end to end
+python -m pytest tests/test_gate2.py -v  # the evidence graph, corpus to assessment
 python -m newz.policy.emit               # regenerate policy/ after a policy change
 ```
 

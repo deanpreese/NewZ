@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from newz.canonical import dumps
+from newz.control import audit
 from newz.control.budget import DailyBudget
 from newz.store.db import Store
 
@@ -118,18 +119,17 @@ def activate(store: Store, epoch_plan: EpochPlan, epoch_id: str, note: str, acto
             "INSERT INTO diet_epoch_sources (epoch_id, source_revision_id) VALUES (?, ?)",
             [(epoch_id, revision_id) for revision_id in members],
         )
-        connection.execute(
-            "INSERT INTO audit_events "
-            "(id, at, actor, channel, action, target, reason, preimage, result) "
-            "VALUES (?, datetime('now'), ?, 'command', 'activate_diet_epoch', ?, ?, ?, ?)",
-            (
-                f"audit:{epoch_id.split(':')[-1]}",
-                actor,
-                epoch_id,
-                note,
-                json.dumps({"added": list(epoch_plan.added), "removed": list(epoch_plan.removed)}),
-                f"epoch {epoch_plan.epoch} with {len(members)} sources",
+        audit.record(
+            connection,
+            actor=actor,
+            action="activate_diet_epoch",
+            target=epoch_id,
+            reason=note,
+            preimage=json.dumps(
+                {"added": list(epoch_plan.added), "removed": list(epoch_plan.removed)},
+                sort_keys=True,
             ),
+            result=f"epoch {epoch_plan.epoch} with {len(members)} sources",
         )
     return epoch_id
 

@@ -397,4 +397,144 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        6,
+        "evidence",
+        """
+        -- A basis is the upstream origin an edge rests on. `resolved` is basis
+        -- IDENTITY: the origin is nameable and stable, even when it is a single
+        -- unnamed witness reached through one publication. Independence is a
+        -- separate, pairwise property and is deliberately not a column here.
+        CREATE TABLE bases (
+            id                 TEXT PRIMARY KEY,
+            origin_kind        TEXT NOT NULL,
+            origin_identifier  TEXT NOT NULL,
+            resolved           INTEGER NOT NULL,
+            independence_group TEXT,
+            recorded_at        TEXT NOT NULL
+        ) STRICT;
+
+        -- Publication lineage. If this basis is downstream of that one they are
+        -- the same underlying origin, and no justification makes them two.
+        CREATE TABLE basis_derivations (
+            basis_id              TEXT NOT NULL REFERENCES bases(id),
+            derived_from_basis_id TEXT NOT NULL REFERENCES bases(id),
+            reason                TEXT NOT NULL,
+            recorded_at           TEXT NOT NULL,
+            PRIMARY KEY (basis_id, derived_from_basis_id)
+        ) STRICT;
+
+        -- The operator correcting basis identity, append-only and reasoned.
+        CREATE TABLE basis_corrections (
+            id          TEXT PRIMARY KEY,
+            basis_id    TEXT NOT NULL REFERENCES bases(id),
+            actor       TEXT NOT NULL,
+            reason      TEXT NOT NULL,
+            preimage    TEXT NOT NULL,
+            result      TEXT NOT NULL,
+            corrected_at TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TABLE independence_claims (
+            id              TEXT PRIMARY KEY,
+            basis_a         TEXT NOT NULL REFERENCES bases(id),
+            basis_b         TEXT NOT NULL REFERENCES bases(id),
+            justification   TEXT NOT NULL,
+            evidence        TEXT NOT NULL,
+            operator_actor  TEXT,
+            operator_reason TEXT,
+            recorded_at     TEXT NOT NULL,
+            UNIQUE (basis_a, basis_b)
+        ) STRICT;
+
+        -- Append-only. A withdrawal is a later event with live = 0, never an
+        -- edit, so an admitted edge and its later withdrawal both stay readable.
+        CREATE TABLE edge_events (
+            id              TEXT PRIMARY KEY,
+            assertion_id    TEXT NOT NULL REFERENCES assertions(id),
+            claim_id        TEXT NOT NULL REFERENCES claims(id),
+            relation        TEXT NOT NULL,
+            basis_id        TEXT NOT NULL REFERENCES bases(id),
+            role            TEXT NOT NULL,
+            assertion_kind  TEXT NOT NULL,
+            risk            TEXT,
+            policy_version  TEXT,
+            admitted        INTEGER NOT NULL,
+            live            INTEGER NOT NULL DEFAULT 1,
+            refusal_reason  TEXT,
+            declared_scope  TEXT NOT NULL,
+            topic           TEXT NOT NULL,
+            adjudicative_scope_covers_claim INTEGER,
+            recorded_at     TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX edge_events_by_claim ON edge_events (claim_id);
+
+        -- One row per named predicate, with its inputs, so an admission replays.
+        CREATE TABLE predicate_attestations (
+            edge_event_id TEXT NOT NULL REFERENCES edge_events(id),
+            predicate     TEXT NOT NULL,
+            held          INTEGER NOT NULL,
+            inputs_json   TEXT NOT NULL,
+            PRIMARY KEY (edge_event_id, predicate)
+        ) STRICT;
+
+        CREATE TABLE tasks (
+            id              TEXT PRIMARY KEY,
+            claim_id        TEXT NOT NULL REFERENCES claims(id),
+            lane            TEXT NOT NULL,
+            state           TEXT NOT NULL,
+            owner           TEXT NOT NULL,
+            reason          TEXT NOT NULL,
+            due             TEXT NOT NULL,
+            retry_budget    INTEGER NOT NULL DEFAULT 0,
+            state_reason    TEXT NOT NULL DEFAULT '',
+            expected_record TEXT NOT NULL DEFAULT '',
+            repository      TEXT NOT NULL DEFAULT '',
+            query           TEXT NOT NULL DEFAULT '',
+            time_window     TEXT NOT NULL DEFAULT '',
+            searched_scope  TEXT NOT NULL DEFAULT '',
+            recorded_at     TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX tasks_by_claim ON tasks (claim_id, lane);
+
+        -- Append-only history. The current assessment is the newest row, and an
+        -- assessment never outlives the policy version that produced it.
+        CREATE TABLE assessments (
+            id                     TEXT PRIMARY KEY,
+            claim_id               TEXT NOT NULL REFERENCES claims(id),
+            state                  TEXT NOT NULL,
+            supporting_bases       INTEGER NOT NULL,
+            contradicting_bases    INTEGER NOT NULL,
+            policy_version         TEXT NOT NULL,
+            code_version           TEXT NOT NULL,
+            explanation            TEXT NOT NULL,
+            blocked_lanes_json     TEXT NOT NULL,
+            countable_edge_ids_json TEXT NOT NULL,
+            derived_at             TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX assessments_by_claim ON assessments (claim_id, derived_at);
+
+        CREATE TRIGGER edge_events_are_immutable_except_liveness
+        BEFORE UPDATE OF id, assertion_id, claim_id, relation, basis_id, role,
+                         assertion_kind, admitted, policy_version ON edge_events
+        BEGIN
+            SELECT RAISE(ABORT, 'edge events are immutable: withdraw by setting live = 0');
+        END;
+
+        CREATE TRIGGER assessments_are_immutable
+        BEFORE UPDATE ON assessments
+        BEGIN
+            SELECT RAISE(ABORT, 'assessments are append-only: derive a new one');
+        END;
+
+        CREATE TRIGGER bases_keep_their_identity
+        BEFORE UPDATE OF id, origin_kind, origin_identifier ON bases
+        BEGIN
+            SELECT RAISE(ABORT, 'basis identity changes through a recorded correction');
+        END;
+        """,
+    ),
 )
