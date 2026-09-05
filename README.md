@@ -26,14 +26,27 @@ no network, no store, no model. The point of building it first is that every
 later phase is persistence and plumbing around concepts that are already
 decided.
 
+**Phase 1 — the provenance spine.** Every byte attributable to an authorized
+operation. One scheduler, one operation ledger, immutable diet epochs, a safe
+fetcher, and a content-addressed artifact store.
+
 ```text
-newz/domain     the frozen enumerations and record shapes
-newz/policy     the capability matrix, promotion, risk, independence, the bundle
-newz/graph      claim merge and split
-policy/         the emitted machine-readable policy (regenerate, never hand-edit)
-tests/fixtures  the hostile corpus and the controlled cases
-docs/adr        ADR-0001 storage, ADR-0002 model tier, ADR-0003 runtime
+newz/domain       the frozen enumerations and record shapes
+newz/policy       the capability matrix, promotion, risk, independence, the bundle
+newz/graph        claim merge and split
+newz/store        SQLite in WAL, the migrations, backup and clean restore
+newz/catalog      source revisions and immutable diet epochs with a dry run
+newz/control      the daily budget, lanes, reservations, leases, retry, pacing
+newz/acquisition  URL policy, the transport, the fetcher, artifacts, instruction
+policy/           the emitted machine-readable policy (regenerate, never hand-edit)
+tests/fixtures    the hostile corpus and the controlled cases
+docs/adr          ADR-0001 storage, ADR-0002 model tier, ADR-0003 runtime
 ```
+
+Exactly one module — `newz/acquisition/transport.py` — may open a socket, and
+the test suite enforces it. The part of the system that decides anything
+(`policy`, `domain`, `graph`) can reach neither the network nor the store, so a
+policy decision cannot depend on either.
 
 The capability matrix is 2,016 cells — 8 source roles x 9 claim kinds x 7
 assertion kinds x 4 relations — derived from about ten stated principles by
@@ -49,9 +62,10 @@ required to run the policy engine; `pytest` and `ruff` run the checks.
 
 ```sh
 conda activate agent13
-python tools/gate.py                    # ruff, policy artifact freshness, pytest
-python -m pytest tests/test_cases.py -v # the controlled cases, by name
-python -m newz.policy.emit              # regenerate policy/ after a policy change
+python tools/gate.py                     # ruff, policy artifact freshness, pytest
+python -m pytest tests/test_cases.py -v  # the controlled cases, by name
+python -m pytest tests/test_gate1.py -v  # the provenance spine, end to end
+python -m newz.policy.emit               # regenerate policy/ after a policy change
 ```
 
 A change to the capability matrix, the promotion thresholds, the independence

@@ -283,3 +283,119 @@ class AdmissionPredicate(StrEnum):
     BASIS_IDENTITY_RESOLVED = "basis_identity_resolved"
     RISK_CLASSIFIED = "risk_classified"
     POLICY_VERSION_RECORDED = "policy_version_recorded"
+
+
+# ---------------------------------------------------------------------------
+# Acquisition and control. Added in Phase 1, which is where persistence begins;
+# `PLAN.md` Phase 0 froze the evidence vocabulary, and these are the operational
+# states that vocabulary is acquired under.
+# ---------------------------------------------------------------------------
+
+
+@unique
+class OperationKind(StrEnum):
+    """What an authorized operation does. Every network act is one of these."""
+
+    FETCH = "fetch"
+    PARSE = "parse"
+    RESOLVE = "resolve"
+
+
+@unique
+class OperationState(StrEnum):
+    """`ARCHITECTURE.md`: workers claim operations through leases with an expiry,
+    so a crashed worker's operation is reclaimed rather than lost."""
+
+    RESERVED = "reserved"
+    LEASED = "leased"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    QUARANTINED = "quarantined"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+
+
+TERMINAL_OPERATION_STATES: frozenset[OperationState] = frozenset(
+    {
+        OperationState.SUCCEEDED,
+        OperationState.FAILED,
+        OperationState.QUARANTINED,
+        OperationState.CANCELLED,
+        OperationState.EXPIRED,
+    }
+)
+
+
+@unique
+class AttemptOutcome(StrEnum):
+    """The terminal outcome of one attempt. `REFUSED` means policy declined
+    before or during the read; `ERROR` means the far side or the network did."""
+
+    RETAINED = "retained"
+    REFUSED = "refused"
+    ERROR = "error"
+
+
+@unique
+class FetchRefusal(StrEnum):
+    """Why a fetch was refused, before or during the read.
+
+    Refusals are recorded, never merely returned: an unbounded fetch that did
+    not happen is as much a fact about a source as one that did.
+    """
+
+    SCHEME_NOT_ALLOWED = "scheme_not_allowed"
+    URL_MALFORMED = "url_malformed"
+    CREDENTIALS_IN_URL = "credentials_in_url"
+    PORT_NOT_ALLOWED = "port_not_allowed"
+    HOST_NOT_RESOLVABLE = "host_not_resolvable"
+    NON_PUBLIC_ADDRESS = "non_public_address"
+    HOST_NOT_IN_CATALOG = "host_not_in_catalog"
+    REDIRECT_LIMIT = "redirect_limit"
+    REDIRECT_SCHEME_DOWNGRADE = "redirect_scheme_downgrade"
+    REDIRECT_OFF_POLICY = "redirect_off_policy"
+    RESPONSE_TOO_LARGE = "response_too_large"
+    DECOMPRESSION_LIMIT = "decompression_limit"
+    CONTENT_TYPE_NOT_ALLOWED = "content_type_not_allowed"
+    TIMEOUT = "timeout"
+    RATE_LIMITED = "rate_limited"
+    BUDGET_EXHAUSTED = "budget_exhausted"
+    REQUEST_CEILING = "request_ceiling"
+    STORAGE_CEILING = "storage_ceiling"
+    RETENTION_PROHIBITED = "retention_prohibited"
+    SOURCE_QUARANTINED = "source_quarantined"
+
+
+@unique
+class RetentionPolicy(StrEnum):
+    """`SPEC.md` section 6 item 8. Where full retention is prohibited the
+    material can remain a lead and cannot qualify as evidence."""
+
+    FULL_TEXT = "full_text"
+    METADATA_ONLY = "metadata_only"
+    LEAD_ONLY = "lead_only"
+
+
+@unique
+class DeliveryKind(StrEnum):
+    FEED = "feed"
+    PAGE = "page"
+    DOCUMENT = "document"
+    DATASET = "dataset"
+    API = "api"
+
+
+@unique
+class InstructionMarker(StrEnum):
+    """What retained content did when it tried to instruct.
+
+    These bear on a source's *operational* standing only. `TRUE_NORTH.md`
+    forbids global truth scores, and a source that serves hostile markup may
+    still be the only surviving record of what it published.
+    """
+
+    DIRECTIVE = "directive"
+    AUTHORITY_CLAIM = "authority_claim"
+    URGENCY = "urgency"
+    IDENTITY_CLAIM = "identity_claim"
+    SUPPRESSION_REQUEST = "suppression_request"

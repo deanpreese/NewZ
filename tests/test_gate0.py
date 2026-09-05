@@ -1,15 +1,19 @@
-"""Gate 0: policy decisions are deterministic and versioned, and no network
-access exists yet.
+"""Gate 0: policy decisions are deterministic and versioned, and the network
+lives behind one door.
 
-The network test is static rather than behavioural. Phase 0 has no fetcher, so
-the honest assertion is not that nothing was called but that nothing could be:
-the package imports no networking module at all.
+The network test is static rather than behavioural — the honest assertion is not
+that nothing was called but that nothing *could* be. Phase 0 had no fetcher at
+all, so it asserted that the package imported no networking module anywhere.
+Phase 1 has one, so the assertion moved rather than weakened: exactly one module
+may open a socket, and the part of the system that decides anything still cannot
+reach the network to decide it.
 """
 
 from __future__ import annotations
 
 import ast
 import random
+import sys
 from pathlib import Path
 
 import pytest
@@ -23,31 +27,45 @@ from tests.casefiles import build, case_paths, load_raw
 
 PACKAGE = Path(__file__).resolve().parents[1] / "newz"
 
-FORBIDDEN_MODULES = {
+#: Modules that can reach the network, by their full dotted name. `urllib.parse`
+#: is deliberately absent: parsing a URL is not opening one, and the URL policy
+#: needs it precisely so that nothing further down has to.
+NETWORK_MODULES = {
     "socket",
     "ssl",
     "http",
-    "urllib",
-    "urllib3",
+    "http.client",
+    "urllib.request",
+    "urllib.error",
     "ftplib",
     "smtplib",
-    "telnetlib",
     "asyncio",
     "requests",
     "httpx",
     "aiohttp",
     "webbrowser",
-    "subprocess",
 }
+
+#: The one module allowed through. `ARCHITECTURE.md` runs fetch as its own
+#: process behind its own egress limits; this is the in-process half of that.
+NETWORK_BOUNDARY = "newz/acquisition/transport.py"
+
+#: Shelling out is not an evidence path, and a package that can start a process
+#: can reach the network without importing any of the names above.
+FORBIDDEN_EVERYWHERE = {"subprocess", "multiprocessing", "ctypes"}
 
 
 def _imported_modules(path: Path) -> set[str]:
+    """Every module a file imports, by full dotted name and by root."""
     tree = ast.parse(path.read_text(encoding="utf-8"))
     found: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
-            found |= {alias.name.split(".")[0] for alias in node.names}
+            for alias in node.names:
+                found.add(alias.name)
+                found.add(alias.name.split(".")[0])
         elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            found.add(node.module)
             found.add(node.module.split(".")[0])
     return found
 
@@ -55,18 +73,46 @@ def _imported_modules(path: Path) -> set[str]:
 @pytest.mark.parametrize(
     "path", sorted(PACKAGE.rglob("*.py")), ids=lambda p: str(p.relative_to(PACKAGE.parent))
 )
-def test_no_network_access_exists(path):
-    assert not (_imported_modules(path) & FORBIDDEN_MODULES), path
+def test_only_the_transport_can_reach_the_network(path):
+    relative = str(path.relative_to(PACKAGE.parent))
+    imported = _imported_modules(path)
+    if relative == NETWORK_BOUNDARY:
+        # The door exists, and this is it.
+        assert imported & NETWORK_MODULES
+        return
+    assert not (imported & NETWORK_MODULES), relative
 
 
-def test_the_policy_engine_depends_on_nothing_outside_the_standard_library():
-    """ADR-0003 keeps the dependency floor at zero for the part that decides."""
+@pytest.mark.parametrize(
+    "path", sorted(PACKAGE.rglob("*.py")), ids=lambda p: str(p.relative_to(PACKAGE.parent))
+)
+def test_nothing_in_the_package_starts_a_process(path):
+    assert not (_imported_modules(path) & FORBIDDEN_EVERYWHERE), path
+
+
+DECIDING_PACKAGES = ("policy", "domain", "graph")
+
+
+@pytest.mark.parametrize("area", DECIDING_PACKAGES)
+def test_the_part_that_decides_cannot_reach_the_network_or_the_store(area):
+    """Policy is a pure function of its inputs, and stays reachable only that way."""
+    for path in sorted((PACKAGE / area).rglob("*.py")):
+        imported = _imported_modules(path)
+        assert not (imported & NETWORK_MODULES), path
+        assert "sqlite3" not in imported, path
+        assert not any(module.startswith("newz.store") for module in imported), path
+        assert not any(module.startswith("newz.acquisition") for module in imported), path
+
+
+def test_the_package_depends_on_nothing_outside_the_standard_library():
+    """ADR-0003 keeps the dependency floor at zero."""
     third_party = set()
-    stdlib = {"ast", "dataclasses", "enum", "hashlib", "json", "pathlib", "re", "sys", "typing"}
     for path in PACKAGE.rglob("*.py"):
         for module in _imported_modules(path):
-            if module not in stdlib and module not in {"newz", "collections", "__future__"}:
-                third_party.add(module)
+            root = module.split(".")[0]
+            if root in ("newz", "__future__") or root in sys.stdlib_module_names:
+                continue
+            third_party.add(root)
     assert third_party == set()
 
 

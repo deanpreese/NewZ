@@ -14,7 +14,7 @@ include = ["newz*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q --strict-markers"
+addopts = "-q --strict-markers --timeout=60"
 filterwarnings = ["error"]
 
 [tool.ruff]
