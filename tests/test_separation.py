@@ -35,6 +35,10 @@ ATTENTION_TABLES = {
     "decay_events",
 }
 
+#: The conversational surface may raise things and record the operator pausing.
+#: It may not write anywhere a decision lives.
+CONVERSE_TABLES = {"raised_items", "surface_state", "pinned_channels", "audit_events"}
+
 #: Everything the reckoning plane may write.
 RECKONING_TABLES = {
     "decisions",
@@ -205,6 +209,80 @@ def test_a_consequence_may_change_only_the_four_things_it_is_allowed_to():
         "task_retry_policy",
     ]
     assert not (CHANGEABLE & FORBIDDEN)
+
+
+# ---------------------------------------------------------------------------
+# The conversational surface
+# ---------------------------------------------------------------------------
+
+
+def test_the_conversational_surface_writes_nowhere_a_decision_lives():
+    written = written_tables(PACKAGE / "converse")
+    assert set(written) <= CONVERSE_TABLES, {
+        table: sorted(files) for table, files in written.items() if table not in CONVERSE_TABLES
+    }
+    assert not (set(written) & FORBIDDEN)
+
+
+def test_the_conversational_surface_cannot_import_what_it_may_not_carry():
+    for path in sorted((PACKAGE / "converse").rglob("*.py")):
+        names = imported(path)
+        for forbidden in (
+            "newz.publish.clearance",
+            "newz.publish.export",
+            "newz.catalog.epochs",
+            "newz.evidence.bases",
+            "newz.evidence.claims",
+        ):
+            assert forbidden not in names, f"{path.name} imports {forbidden}"
+
+
+# ---------------------------------------------------------------------------
+# Origination, which is the one thing interest may cause
+# ---------------------------------------------------------------------------
+
+
+#: The only NewZ modules the attention plane may reach. A table audit is
+#: per-package, so a cross-package call would escape it: this closes that by
+#: naming the two effects interest is allowed to have — open an investigation,
+#: and select an essay's subject — as imports, so a third would fail here.
+ATTENTION_MAY_IMPORT = {
+    "newz.canonical",
+    "newz.domain.enums",
+    "newz.domain.records",
+    "newz.parse.spans",
+    "newz.parse.store",
+    "newz.store.db",
+    # the two permitted effects
+    "newz.research.investigations",
+    "newz.research.tasks",
+    "newz.present.essays",
+    # its own package
+    "newz.attention.decay",
+    "newz.attention.diet",
+    "newz.attention.interest",
+    "newz.attention.notices",
+    "newz.attention.origination",
+    "newz.attention.essays",
+}
+
+
+def test_the_attention_plane_reaches_only_what_interest_is_allowed_to_cause():
+    for path in sorted((PACKAGE / "attention").rglob("*.py")):
+        for name in imported(path):
+            if not name.startswith("newz"):
+                continue
+            assert name in ATTENTION_MAY_IMPORT, f"{path.name} imports {name}"
+
+
+def test_origination_reaches_the_research_manager_and_not_the_scheduler():
+    """An originated investigation queues in the ordinary lanes and buys nothing."""
+    names = imported(PACKAGE / "attention" / "origination.py")
+    assert "newz.control.scheduler" not in names
+    assert "newz.control.budget" not in names
+    written = written_tables(PACKAGE / "attention")
+    assert "reservations" not in written
+    assert "operations" not in written
 
 
 # ---------------------------------------------------------------------------

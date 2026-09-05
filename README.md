@@ -48,6 +48,13 @@ surface with its own controls, and correction and retraction that confirm from
 outside the renderer inside a bounded window. Gate 4 is what earns
 approve-by-default: local publication is on for R0–R2, public reach is off.
 
+**Phase 4A — the investigator.** The faculty that decides what is worth
+investigating: noticing over retained spans, an inspectable interest register,
+investigations the system opens itself, essays whose subject interest chooses
+and whose verdict it does not, the reckoning records, and the conversational
+surface. Gate 4A is proven by a static audit rather than by sampling — see
+`tests/test_separation.py`.
+
 ```text
 newz/domain       the frozen enumerations and record shapes
 newz/policy       the capability matrix, promotion, risk, independence, the bundle
@@ -63,6 +70,9 @@ newz/evidence     bases and lineage, edge admission, assessments, inspection
 newz/research     investigations, tasks and the brake, leads, resolvers, packets
 newz/present      claim cards, entity cards, dependency validation
 newz/publish      appraisal, clearance, reach, the surface, the reader, export
+newz/attention    noticing, the interest register, the diet self-report, decay
+newz/reckoning    decisions, surprise, consequence, escalation, the four checks
+newz/converse     the conversational surface and what it structurally cannot do
 policy/           the emitted machine-readable policy (regenerate, never hand-edit)
 tests/fixtures    the hostile corpus and the controlled cases
 docs/adr          ADR-0001 storage, 0002 model tier, 0003 runtime, 0004 parsers
@@ -95,6 +105,8 @@ python -m pytest tests/test_gate1.py -v  # the provenance spine, end to end
 python -m pytest tests/test_gate2.py -v  # the evidence graph, corpus to assessment
 python -m pytest tests/test_gate3.py -v  # three investigations, three outcomes
 python -m pytest tests/test_gate4.py -v  # publication, revocation, and its window
+python -m pytest tests/test_gate4a.py -v # an investigation nobody asked for
+python -m pytest tests/test_separation.py -v  # interest reaches attention, not conclusion
 python -m newz.policy.emit               # regenerate policy/ after a policy change
 ```
 

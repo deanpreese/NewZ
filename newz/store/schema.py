@@ -1037,4 +1037,63 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        13,
+        "essays",
+        """
+        -- An essay is a projection of the evidence graph and never a source.
+        -- `intended_conclusion` is recorded so that an essay whose evidence
+        -- turned against it is visible as one, rather than quietly rewritten.
+        CREATE TABLE essays (
+            id                  TEXT PRIMARY KEY,
+            subject             TEXT NOT NULL,
+            interest_id         TEXT REFERENCES interest_entries(id),
+            claim_ids_json      TEXT NOT NULL,
+            intended_conclusion TEXT NOT NULL,
+            outcome             TEXT NOT NULL,
+            content             TEXT NOT NULL,
+            failures_json       TEXT NOT NULL,
+            composed_at         TEXT NOT NULL
+        ) STRICT;
+
+        -- What the system raised, on which channel, and whether the operator
+        -- acknowledged it. Raising is additive: nothing here filters the record.
+        CREATE TABLE raised_items (
+            id              TEXT PRIMARY KEY,
+            kind            TEXT NOT NULL,
+            target_id       TEXT NOT NULL,
+            channel         TEXT NOT NULL,
+            summary         TEXT NOT NULL,
+            raised_at       TEXT NOT NULL,
+            acknowledged_at TEXT,
+            acknowledged_by TEXT
+        ) STRICT;
+
+        CREATE INDEX raised_unacknowledged ON raised_items (acknowledged_at);
+
+        -- The pinned channel. Authority comes from arriving here, never from
+        -- what a message claims about its sender.
+        CREATE TABLE pinned_channels (
+            channel_id  TEXT PRIMARY KEY,
+            label       TEXT NOT NULL,
+            registered_by TEXT NOT NULL,
+            registered_at TEXT NOT NULL,
+            revoked     INTEGER NOT NULL DEFAULT 0
+        ) STRICT;
+
+        CREATE TABLE surface_state (
+            key        TEXT PRIMARY KEY,
+            value      TEXT NOT NULL,
+            changed_by TEXT NOT NULL,
+            reason     TEXT NOT NULL,
+            changed_at TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TRIGGER essays_are_immutable
+        BEFORE UPDATE ON essays
+        BEGIN
+            SELECT RAISE(ABORT, 'an essay is immutable: compose another');
+        END;
+        """,
+    ),
 )

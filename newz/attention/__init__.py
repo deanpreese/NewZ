@@ -14,6 +14,7 @@ package writes to.
 
 from newz.attention.decay import decay_interests, decay_notices, what_is_no_longer_held
 from newz.attention.diet import diet_self_report
+from newz.attention.essays import essay_from_interest, select_subject
 from newz.attention.interest import (
     form_interest,
     interest_register,
@@ -28,6 +29,7 @@ __all__ = [
     "decay_interests",
     "decay_notices",
     "diet_self_report",
+    "essay_from_interest",
     "form_interest",
     "interest_register",
     "notice_over_span",
@@ -35,5 +37,6 @@ __all__ = [
     "record_notice",
     "record_outcome",
     "retire_interest",
+    "select_subject",
     "what_is_no_longer_held",
 ]
