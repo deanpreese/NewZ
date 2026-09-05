@@ -612,4 +612,67 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        8,
+        "presentation",
+        """
+        -- One built revision of one claim card. The content is stored because
+        -- clearance is of an exact rendered revision: approving something that
+        -- has to be rebuilt to be read is approving a procedure, not a page.
+        CREATE TABLE card_revisions (
+            id             TEXT PRIMARY KEY,
+            claim_id       TEXT NOT NULL REFERENCES claims(id),
+            revision       INTEGER NOT NULL,
+            content_json   TEXT NOT NULL,
+            content_hash   TEXT NOT NULL,
+            policy_version TEXT NOT NULL,
+            code_version   TEXT NOT NULL,
+            risk           TEXT NOT NULL,
+            state          TEXT NOT NULL,
+            live           INTEGER NOT NULL DEFAULT 1,
+            superseded_by  TEXT REFERENCES card_revisions(id),
+            built_at       TEXT NOT NULL,
+            UNIQUE (claim_id, revision)
+        ) STRICT;
+
+        CREATE INDEX card_revisions_by_claim ON card_revisions (claim_id, revision);
+
+        -- What a revision rests on. The validator walks this before a card may
+        -- publish, so a withdrawn edge cannot keep appearing on a page that was
+        -- built while it was live.
+        CREATE TABLE card_dependencies (
+            card_revision_id TEXT NOT NULL REFERENCES card_revisions(id),
+            kind             TEXT NOT NULL,
+            dependency_id    TEXT NOT NULL,
+            PRIMARY KEY (card_revision_id, kind, dependency_id)
+        ) STRICT;
+
+        CREATE INDEX card_dependencies_by_dependency ON card_dependencies (kind, dependency_id);
+
+        -- Every access to an entity card naming a living person at R2 or above.
+        -- SPEC 10.1: the aggregation harm is hardest to undo once seen.
+        CREATE TABLE entity_card_access (
+            id          TEXT PRIMARY KEY,
+            entity_id   TEXT NOT NULL REFERENCES entities(id),
+            actor       TEXT NOT NULL,
+            reason      TEXT NOT NULL,
+            risk        TEXT NOT NULL,
+            claims_shown INTEGER NOT NULL,
+            accessed_at TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TRIGGER card_revisions_are_immutable_except_liveness
+        BEFORE UPDATE OF id, claim_id, revision, content_json, content_hash, policy_version
+            ON card_revisions
+        BEGIN
+            SELECT RAISE(ABORT, 'a card revision is immutable: build a new one');
+        END;
+
+        CREATE TRIGGER card_dependencies_are_immutable
+        BEFORE UPDATE ON card_dependencies
+        BEGIN
+            SELECT RAISE(ABORT, 'card dependencies are fixed at build time');
+        END;
+        """,
+    ),
 )
