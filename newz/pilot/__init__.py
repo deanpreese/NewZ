@@ -17,6 +17,7 @@ from newz.pilot.modes import (
 )
 from newz.pilot.reports import daily_report, funnel
 from newz.pilot.shadow import exit_criteria, shadow_assess
+from newz.pilot.slots import Candidate, add_candidates, solve, survey
 from newz.pilot.violations import (
     PAUSE_CONDITIONS,
     eligible_dates,
@@ -27,8 +28,10 @@ from newz.pilot.violations import (
 
 __all__ = [
     "PAUSE_CONDITIONS",
+    "Candidate",
     "DeploymentMode",
     "ProposedSlot",
+    "add_candidates",
     "current_mode",
     "daily_report",
     "eligible_dates",
@@ -40,5 +43,7 @@ __all__ = [
     "resolve_violation",
     "review",
     "shadow_assess",
+    "solve",
+    "survey",
     "transition",
 ]

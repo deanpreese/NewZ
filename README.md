@@ -58,10 +58,22 @@ surface. Gate 4A is proven by a static audit rather than by sampling — see
 **Phase 5 — the pilot.** *Machinery built; the gate is not passable here.*
 Deployment modes with shadow between fixture and live, the seven pause
 conditions and what resumption costs, eligible-date and route-exercise
-accounting, the daily funnel, and the catalog review. Gate 5 wants thirty
-elapsed days, a hundred live retained reads and the operator's approval, so
-this counts and does not judge — `newz/pilot/catalog_review.py` states what is
-outstanding as a checklist rather than choosing it.
+accounting, and the daily funnel. Gate 5 wants thirty elapsed days, a hundred
+live retained reads and the operator's approval, so this counts and does not
+judge.
+
+Assembling the twenty slots is automated: add candidate URLs, survey them
+through the ordinary fetcher, and let the solver satisfy the buckets, the eight
+topics and the publisher cap. Two things stay a person's:
+
+```sh
+python -m newz.pilot.propose --survey     # fetch each candidate, record what it serves
+python -m newz.pilot.propose              # solve and print the slate for reading
+```
+
+Enabling a source is a diet decision, so the slate proposes and cannot activate.
+And retention is a claim about somebody else's rights, so the survey gathers
+what each source publishes about its own terms and stops there.
 
 ```text
 newz/domain       the frozen enumerations and record shapes

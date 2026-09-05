@@ -1174,4 +1174,52 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        15,
+        "slots",
+        """
+        -- A candidate for a pilot slot. Cheap to add: a URL, a publisher, a
+        -- topic guess. Everything else is established by surveying it.
+        CREATE TABLE slot_candidates (
+            id           TEXT PRIMARY KEY,
+            url          TEXT NOT NULL UNIQUE,
+            publisher    TEXT NOT NULL,
+            topic        TEXT NOT NULL,
+            note         TEXT NOT NULL DEFAULT '',
+            independence_group TEXT,
+            added_by     TEXT NOT NULL,
+            added_at     TEXT NOT NULL
+        ) STRICT;
+
+        -- What surveying the candidate actually observed. Evidence for a slot
+        -- decision, never the decision.
+        CREATE TABLE slot_probes (
+            candidate_id     TEXT PRIMARY KEY REFERENCES slot_candidates(id),
+            operation_id     TEXT REFERENCES operations(id),
+            reachable        INTEGER NOT NULL,
+            observed_mime    TEXT NOT NULL DEFAULT '',
+            byte_size        INTEGER NOT NULL DEFAULT 0,
+            full_text_capable INTEGER NOT NULL DEFAULT 0,
+            segment_count    INTEGER NOT NULL DEFAULT 0,
+            delivery_kind    TEXT NOT NULL DEFAULT '',
+            retention_signals_json TEXT NOT NULL DEFAULT '[]',
+            role_evidence_json TEXT NOT NULL DEFAULT '[]',
+            proposed_role    TEXT NOT NULL DEFAULT '',
+            refusal          TEXT NOT NULL DEFAULT '',
+            surveyed_at      TEXT NOT NULL
+        ) STRICT;
+
+        -- A solved slate, kept so a proposal can be read, compared and refused
+        -- rather than regenerated each time somebody asks what it was.
+        CREATE TABLE slate_proposals (
+            id            TEXT PRIMARY KEY,
+            slate_json    TEXT NOT NULL,
+            problems_json TEXT NOT NULL,
+            acceptable    INTEGER NOT NULL,
+            solved_at     TEXT NOT NULL,
+            accepted_by   TEXT,
+            accepted_at   TEXT
+        ) STRICT;
+        """,
+    ),
 )
