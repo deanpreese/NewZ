@@ -1,0 +1,41 @@
+{
+  "id": "05-copied-story-falsely-independent",
+  "title": "Two publishers, one witness: distinct sightings are not distinct bases",
+  "spec_ref": "SPEC 7.2 and 7.3 rule 6, decisions D-011 and D-012",
+  "fixture": "html/syndicated_copy.html",
+  "note": "An operator-verified justification is recorded and does not survive: the two publishers share an independence group, and membership blocks independence however it is justified.",
+  "claim": {
+    "id": "claim:c05",
+    "kind": "event_or_observation",
+    "wording": "An object paced a commercial aircraft near Coral Ridge for roughly four minutes on 2 March 2026.",
+    "risk": "R1"
+  },
+  "bases": [
+    {"id": "basis:b05a", "origin_kind": "witness", "origin_identifier": "witness:alvarado-r", "resolved": true, "independence_group": "grp:meridian-holdings"},
+    {"id": "basis:b05b", "origin_kind": "witness", "origin_identifier": "witness:alvarado-r-as-carried", "resolved": true, "independence_group": "grp:meridian-holdings"}
+  ],
+  "assertions": [
+    {"id": "assertion:a05a", "kind": "testimony", "role": "firsthand_witness", "source": "srcrev:harbour-dispatch@2026-03-14", "quote": "It held station off the right wing, then left on a vector we could not match"},
+    {"id": "assertion:a05b", "kind": "testimony", "role": "firsthand_witness", "source": "srcrev:meridian-wire@2026-03-15", "quote": "It held station off the right wing, then left on a vector we could not match"}
+  ],
+  "edges": [
+    {"id": "edge:e05a", "assertion": "assertion:a05a", "relation": "supports", "basis": "basis:b05a"},
+    {"id": "edge:e05b", "assertion": "assertion:a05b", "relation": "supports", "basis": "basis:b05b"}
+  ],
+  "independence": [
+    {"a": "basis:b05a", "b": "basis:b05b", "justification": "operator_verified", "operator_actor": "operator:dean", "operator_reason": "the two reports read as separate accounts", "evidence": "different bylines and datelines"}
+  ],
+  "tasks": [
+    {"id": "task:t05a", "lane": "claimant_origin", "state": "satisfied"},
+    {"id": "task:t05b", "lane": "primary_record", "state": "exhausted"},
+    {"id": "task:t05c", "lane": "independent_counterpart", "state": "open"},
+    {"id": "task:t05d", "lane": "skeptical_analysis", "state": "open"}
+  ],
+  "expect": {
+    "state": "provisional_support",
+    "supporting_bases": 1,
+    "contradicting_bases": 0,
+    "countable_edges": ["edge:e05a", "edge:e05b"],
+    "explanation_contains": "one_independent_basis"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "11-unresolved-forecast",
+  "title": "A forecast holds at reported until its horizon, whatever accumulates",
+  "spec_ref": "SPEC 7.1",
+  "note": "Two independent bases already meet the ordinary threshold. Before the horizon they change nothing; at the horizon the same evidence settles it. The case is run both ways.",
+  "claim": {
+    "id": "claim:c11",
+    "kind": "forecast",
+    "wording": "The registry will publish the Coral Ridge radar window before 1 December 2026.",
+    "risk": "R1",
+    "resolution_horizon": "2026-12-01",
+    "resolver": "resolver:national-aviation-safety-registry"
+  },
+  "horizon_reached": false,
+  "bases": [
+    {"id": "basis:b11a", "origin_kind": "official_record", "origin_identifier": "registry:publication-schedule-2026", "resolved": true},
+    {"id": "basis:b11b", "origin_kind": "official_record", "origin_identifier": "registry:disclosure-log-2026-08", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a11a", "kind": "documented_event", "role": "primary_record", "source": "srcrev:registry-schedule@2026-04-02", "quote": "sector windows for Q1 are scheduled for release in the fourth quarter"},
+    {"id": "assertion:a11b", "kind": "documented_event", "role": "adjudicator", "source": "srcrev:disclosure-tribunal@2026-08-11", "quote": "the authority is directed to release the sector window", "scope": "information disclosure appeals"}
+  ],
+  "edges": [
+    {"id": "edge:e11a", "assertion": "assertion:a11a", "relation": "supports", "basis": "basis:b11a"},
+    {"id": "edge:e11b", "assertion": "assertion:a11b", "relation": "supports", "basis": "basis:b11b", "scope_covers": false}
+  ],
+  "independence": [
+    {"a": "basis:b11a", "b": "basis:b11b", "justification": "distinct_official_record", "evidence": "different registry and tribunal record numbers"}
+  ],
+  "tasks": [
+    {"id": "task:t11", "lane": "resolver", "state": "scheduled"}
+  ],
+  "expect": {
+    "state": "reported",
+    "supporting_bases": 2,
+    "contradicting_bases": 0,
+    "explanation_contains": "resolution horizon"
+  },
+  "at_horizon": {
+    "state": "supported",
+    "supporting_bases": 2,
+    "contradicting_bases": 0
+  }
+}

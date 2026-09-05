@@ -1,0 +1,13 @@
+Ardenne Institute — Replication report RR-2026-118
+Registered protocol PROTO-5520. Registration date 5 January 2026.
+
+We attempted a direct replication of the thermal signature reported by Kettleby
+Metrology (PROTO-4471) in the RX-9 sensor array, using a different instrument of
+the same class and an independently prepared sample set.
+
+Across 256 runs in two sessions we observe an effect of -0.01 (95% CI -0.15 to
+0.13), consistent with no effect. The original laboratory reviewed our protocol
+before data collection and agreed it was a fair test.
+
+We note that our result does not establish that the original measurement was in
+error. It establishes that the effect did not appear under this protocol.

@@ -1,0 +1,36 @@
+{
+  "id": "08-allegation-refuted-by-adjudication",
+  "title": "A final adjudicative record within scope refutes the allegation alone",
+  "spec_ref": "SPEC 7.3, single-record exception at R2 and R3, decision D-013",
+  "fixture": "structured/docket.json",
+  "note": "This is the only route by which a false allegation about a living party reaches refuted under symmetrical thresholds. Withholding the exception would make symmetry operate against the accused.",
+  "claim": {
+    "id": "claim:c08",
+    "kind": "identity_or_wrongdoing_allegation",
+    "wording": "Meridian Instruments Inc. knowingly falsified calibration records for the RX-9 sensor between 2023 and 2025.",
+    "risk": "R3"
+  },
+  "bases": [
+    {"id": "basis:b08a", "origin_kind": "filing", "origin_identifier": "docket:3:25-cv-01142#1", "resolved": true},
+    {"id": "basis:b08b", "origin_kind": "official_record", "origin_identifier": "docket:3:25-cv-01142#44", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a08a", "kind": "allegation", "role": "primary_record", "source": "srcrev:nd-docket@2025-11-04", "quote": "Plaintiff alleges that defendant knowingly falsified calibration records"},
+    {"id": "assertion:a08b", "kind": "documented_event", "role": "adjudicator", "source": "srcrev:nd-docket@2026-06-19", "quote": "The court finds no evidence that calibration records were falsified", "scope": "civil matters within the Northern District"}
+  ],
+  "edges": [
+    {"id": "edge:e08a", "assertion": "assertion:a08a", "relation": "claimant_says", "basis": "basis:b08a"},
+    {"id": "edge:e08b", "assertion": "assertion:a08b", "relation": "contradicts", "basis": "basis:b08b", "scope_covers": true}
+  ],
+  "tasks": [
+    {"id": "task:t08a", "lane": "claimant_origin", "state": "satisfied"},
+    {"id": "task:t08b", "lane": "primary_record", "state": "satisfied"},
+    {"id": "task:t08c", "lane": "resolver", "state": "satisfied"}
+  ],
+  "expect": {
+    "state": "refuted",
+    "supporting_bases": 0,
+    "contradicting_bases": 1,
+    "explanation_contains": "single_record_exception"
+  }
+}

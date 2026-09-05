@@ -1,0 +1,34 @@
+{
+  "id": "04-absence-from-a-competent-repository",
+  "title": "Every required lane looked competently and found nothing",
+  "spec_ref": "SPEC 7.3 rule 8 and SPEC 9.2",
+  "fixture": "pdf/registry_record.pdf",
+  "note": "The claimant's account is retained and carries a claimant_says edge, which establishes what was said and counts toward nothing.",
+  "claim": {
+    "id": "claim:c04",
+    "kind": "event_or_observation",
+    "wording": "An uncorrelated radar return accompanied the Coral Ridge sighting on 2 March 2026.",
+    "risk": "R1"
+  },
+  "bases": [
+    {"id": "basis:b04", "origin_kind": "witness", "origin_identifier": "witness:alvarado-r", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a04", "kind": "testimony", "role": "claimant", "source": "srcrev:harbour-dispatch@2026-03-14", "quote": "No radar correlation has been released"}
+  ],
+  "edges": [
+    {"id": "edge:e04", "assertion": "assertion:a04", "relation": "claimant_says", "basis": "basis:b04"}
+  ],
+  "tasks": [
+    {"id": "task:t04a", "lane": "claimant_origin", "state": "satisfied"},
+    {"id": "task:t04b", "lane": "primary_record", "state": "exhausted", "expected_record": "radar correlation record for the Coral Ridge sector", "repository": "National Aviation Safety Registry", "query": "occurrence records, Coral Ridge sector", "time_window": "2026-03-02 18:00/20:00 local", "searched_scope": "all occurrence records held for the sector and window"},
+    {"id": "task:t04c", "lane": "independent_counterpart", "state": "exhausted"},
+    {"id": "task:t04d", "lane": "skeptical_analysis", "state": "unreachable"}
+  ],
+  "expect": {
+    "state": "indeterminate",
+    "supporting_bases": 0,
+    "contradicting_bases": 0,
+    "explanation_contains": "searched competently"
+  }
+}

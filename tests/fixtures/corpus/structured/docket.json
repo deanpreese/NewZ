@@ -1,0 +1,22 @@
+{
+  "registry": "Northern District civil docket",
+  "case_number": "3:25-cv-01142",
+  "caption": "Halvorsen v. Meridian Instruments Inc.",
+  "filed": "2025-11-04",
+  "entries": [
+    {
+      "number": 1,
+      "date": "2025-11-04",
+      "type": "complaint",
+      "text": "Plaintiff alleges that defendant knowingly falsified calibration records for the RX-9 sensor between 2023 and 2025."
+    },
+    {
+      "number": 44,
+      "date": "2026-06-19",
+      "type": "final_judgment",
+      "text": "The court finds no evidence that calibration records were falsified. Judgment is entered for the defendant on all counts."
+    }
+  ],
+  "status": "closed",
+  "scope": "civil matters within the Northern District"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "13-r4-operational-payload",
+  "title": "R4 material is refused at admission, not withheld at publication",
+  "spec_ref": "SPEC 8, decision D-015",
+  "note": "An admitted edge carries a verified span and is quotable on a claim card. Refusing at admission keeps the payload out of every downstream path rather than relying on each of them to remember.",
+  "claim": {
+    "id": "claim:c13",
+    "kind": "capability_or_performance",
+    "wording": "The published procedure reliably defeats the interlock on the RX-9 enclosure.",
+    "risk": "R4"
+  },
+  "bases": [
+    {"id": "basis:b13", "origin_kind": "publication", "origin_identifier": "post:ridge-forum-88412", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a13", "kind": "measurement", "role": "empirical_study", "source": "srcrev:ridge-forum@2026-04-09", "quote": "[operational payload withheld]"}
+  ],
+  "edges": [
+    {"id": "edge:e13", "assertion": "assertion:a13", "relation": "supports", "basis": "basis:b13", "risk": "R4"}
+  ],
+  "tasks": [
+    {"id": "task:t13a", "lane": "primary_record", "state": "refused", "state_reason": "R4 quarantine: metadata only"},
+    {"id": "task:t13b", "lane": "empirical", "state": "refused", "state_reason": "R4 quarantine: metadata only"},
+    {"id": "task:t13c", "lane": "independent_counterpart", "state": "refused", "state_reason": "R4 quarantine: metadata only"},
+    {"id": "task:t13d", "lane": "skeptical_analysis", "state": "refused", "state_reason": "R4 quarantine: metadata only"}
+  ],
+  "expect": {
+    "state": "reported",
+    "supporting_bases": 0,
+    "contradicting_bases": 0,
+    "refusals": {"edge:e13": "quarantined_r4"},
+    "blocked_lanes": 4,
+    "effective_risk": "R4"
+  }
+}

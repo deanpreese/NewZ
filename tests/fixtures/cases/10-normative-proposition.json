@@ -1,0 +1,30 @@
+{
+  "id": "10-normative-proposition",
+  "title": "A normative proposition admits no evidence edge",
+  "spec_ref": "SPEC 7.1",
+  "note": "The promotion rules cannot evaluate an ought. The claim is kept, attributed, and never promoted — which is different from being dismissed.",
+  "claim": {
+    "id": "claim:c10",
+    "kind": "normative_proposition",
+    "wording": "Aviation authorities ought to publish uncorrelated radar returns within 30 days.",
+    "risk": "R1"
+  },
+  "bases": [
+    {"id": "basis:b10", "origin_kind": "publication", "origin_identifier": "editorial:harbour-dispatch-2026-03-20", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a10a", "kind": "inference", "role": "claimant", "source": "srcrev:harbour-dispatch@2026-03-20", "quote": "authorities ought to publish uncorrelated returns within 30 days"},
+    {"id": "assertion:a10b", "kind": "documented_event", "role": "primary_record", "source": "srcrev:regulator-policy@2026-01-05", "quote": "the authority publishes correlated returns only, on a 12-month cycle"}
+  ],
+  "edges": [
+    {"id": "edge:e10a", "assertion": "assertion:a10a", "relation": "claimant_says", "basis": "basis:b10"},
+    {"id": "edge:e10b", "assertion": "assertion:a10b", "relation": "supports", "basis": "basis:b10"}
+  ],
+  "tasks": [],
+  "expect": {
+    "state": "reported",
+    "supporting_bases": 0,
+    "contradicting_bases": 0,
+    "refusals": {"edge:e10b": "normative_admits_no_evidence"}
+  }
+}

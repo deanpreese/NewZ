@@ -1,0 +1,15 @@
+UNITED STATES PATENT AND TRADEMARK OFFICE
+Patent 11,842,905 B2 — granted 12 December 2023
+
+APPARATUS FOR ASYMMETRIC FIELD PROPULSION
+
+Abstract: An apparatus is disclosed comprising a resonant cavity, an asymmetric
+dielectric insert, and a drive circuit operable between 1.8 and 2.4 GHz. In
+operation the apparatus is said to produce a net directional thrust in the
+absence of propellant expulsion.
+
+Claims: 18. Examiner: G. Nakamura. Art unit: 3646.
+
+NOTE ON THE RECORD: grant establishes that the application met the office's
+requirements for novelty, non-obviousness, and enablement as examined. The
+office does not test the apparatus.

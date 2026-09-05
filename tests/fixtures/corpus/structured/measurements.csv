@@ -1,0 +1,5 @@
+run_id,laboratory,protocol_id,date,sample,effect_size,ci_low,ci_high,n
+RX9-A-001,Kettleby Metrology,PROTO-4471,2026-01-12,RX-9 sensor,0.11,-0.04,0.26,64
+RX9-A-002,Kettleby Metrology,PROTO-4471,2026-01-19,RX-9 sensor,0.09,-0.06,0.24,64
+RX9-B-001,Ardenne Institute,PROTO-5520,2026-02-08,RX-9 sensor,0.02,-0.13,0.17,128
+RX9-B-002,Ardenne Institute,PROTO-5520,2026-02-22,RX-9 sensor,-0.01,-0.15,0.13,128

@@ -1,0 +1,43 @@
+{
+  "id": "09-resolved-bases-unknown-independence",
+  "title": "Three resolved bases, one justified pair: counting collapses, edges survive",
+  "spec_ref": "SPEC 7.2, decision D-011",
+  "note": "Every edge stays live and countable. What unknown independence takes away is the count, not the evidence — and the collapse is transitive, so a chain of partially justified pairs cannot be counted as fully distinct.",
+  "claim": {
+    "id": "claim:c09",
+    "kind": "event_or_observation",
+    "wording": "A luminous object was observed over the Coral Ridge sector on the evening of 2 March 2026.",
+    "risk": "R1"
+  },
+  "bases": [
+    {"id": "basis:b09a", "origin_kind": "witness", "origin_identifier": "witness:alvarado-r", "resolved": true},
+    {"id": "basis:b09b", "origin_kind": "witness", "origin_identifier": "witness:okonkwo-t", "resolved": true},
+    {"id": "basis:b09c", "origin_kind": "witness", "origin_identifier": "witness:unnamed-ground-observer", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a09a", "kind": "testimony", "role": "firsthand_witness", "source": "srcrev:harbour-dispatch@2026-03-14", "quote": "It held station off the right wing"},
+    {"id": "assertion:a09b", "kind": "testimony", "role": "firsthand_witness", "source": "srcrev:coastal-record@2026-03-16", "quote": "a steady light, no strobe, moving against the wind"},
+    {"id": "assertion:a09c", "kind": "testimony", "role": "firsthand_witness", "source": "srcrev:ridge-forum-archive@2026-03-18", "quote": "saw the same light from the headland that night"}
+  ],
+  "edges": [
+    {"id": "edge:e09a", "assertion": "assertion:a09a", "relation": "supports", "basis": "basis:b09a"},
+    {"id": "edge:e09b", "assertion": "assertion:a09b", "relation": "supports", "basis": "basis:b09b"},
+    {"id": "edge:e09c", "assertion": "assertion:a09c", "relation": "supports", "basis": "basis:b09c"}
+  ],
+  "independence": [
+    {"a": "basis:b09a", "b": "basis:b09b", "justification": "distinct_witness", "evidence": "two named people of record with separate accounts"}
+  ],
+  "tasks": [
+    {"id": "task:t09a", "lane": "claimant_origin", "state": "satisfied"},
+    {"id": "task:t09b", "lane": "primary_record", "state": "open"},
+    {"id": "task:t09c", "lane": "independent_counterpart", "state": "open"},
+    {"id": "task:t09d", "lane": "skeptical_analysis", "state": "open"}
+  ],
+  "expect": {
+    "state": "provisional_support",
+    "supporting_bases": 1,
+    "contradicting_bases": 0,
+    "countable_edges": ["edge:e09a", "edge:e09b", "edge:e09c"],
+    "explanation_contains": "one_independent_basis"
+  }
+}

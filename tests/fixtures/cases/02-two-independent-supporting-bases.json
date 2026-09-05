@@ -1,0 +1,39 @@
+{
+  "id": "02-two-independent-supporting-bases",
+  "title": "Two independent countable bases, one of them empirical",
+  "spec_ref": "SPEC 7.3, ordinary R0-R1 promotion",
+  "fixture": "structured/measurements.csv",
+  "claim": {
+    "id": "claim:c02",
+    "kind": "measurement_or_association",
+    "wording": "The RX-9 sensor array shows a thermal signature above baseline under protocol conditions.",
+    "risk": "R1"
+  },
+  "bases": [
+    {"id": "basis:b02a", "origin_kind": "dataset", "origin_identifier": "protocol:PROTO-4471", "resolved": true},
+    {"id": "basis:b02b", "origin_kind": "dataset", "origin_identifier": "instrument:ardenne-rx9-2", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a02a", "kind": "measurement", "role": "empirical_study", "source": "srcrev:kettleby-metrology@2026-01-19", "quote": "effect size 0.11 (95% CI -0.04 to 0.26) across 64 runs"},
+    {"id": "assertion:a02b", "kind": "measurement", "role": "primary_record", "source": "srcrev:instrument-log@2026-02-01", "quote": "logged deviation of 0.10 above baseline on the calibrated channel"}
+  ],
+  "edges": [
+    {"id": "edge:e02a", "assertion": "assertion:a02a", "relation": "supports", "basis": "basis:b02a"},
+    {"id": "edge:e02b", "assertion": "assertion:a02b", "relation": "supports", "basis": "basis:b02b"}
+  ],
+  "independence": [
+    {"a": "basis:b02a", "b": "basis:b02b", "justification": "distinct_instrument_or_dataset", "evidence": "different accession identifiers and different physical instruments"}
+  ],
+  "tasks": [
+    {"id": "task:t02a", "lane": "primary_record", "state": "satisfied"},
+    {"id": "task:t02b", "lane": "empirical", "state": "satisfied"},
+    {"id": "task:t02c", "lane": "independent_counterpart", "state": "satisfied"},
+    {"id": "task:t02d", "lane": "skeptical_analysis", "state": "exhausted"}
+  ],
+  "expect": {
+    "state": "supported",
+    "supporting_bases": 2,
+    "contradicting_bases": 0,
+    "explanation_contains": "two_independent_bases_one_strong"
+  }
+}

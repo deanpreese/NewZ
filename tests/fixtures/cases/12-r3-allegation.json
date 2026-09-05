@@ -1,0 +1,39 @@
+{
+  "id": "12-r3-allegation",
+  "title": "An R3 allegation reaching supported still cannot publish itself",
+  "spec_ref": "SPEC 7.3 R3 threshold and SPEC 10, decisions D-010 and D-013",
+  "note": "Two independent bases, one of them a direct primary record, meet the R3 threshold. The adjudicative edge does not settle it alone because the tribunal's declared scope does not cover the claim. Reaching supported is an internal state; publication requires operator approval of the exact revision.",
+  "claim": {
+    "id": "claim:c12",
+    "kind": "identity_or_wrongdoing_allegation",
+    "wording": "Meridian Instruments Inc. omitted failing calibration runs from its retained records in 2024.",
+    "risk": "R3"
+  },
+  "bases": [
+    {"id": "basis:b12a", "origin_kind": "official_record", "origin_identifier": "regulator:inspection-2026-114", "resolved": true},
+    {"id": "basis:b12b", "origin_kind": "dataset", "origin_identifier": "archive:calibration-exports-2024", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a12a", "kind": "documented_event", "role": "primary_record", "source": "srcrev:regulator-inspection@2026-05-30", "quote": "the retained record omits 41 runs present in the instrument log", "scope": "calibration compliance inspections"},
+    {"id": "assertion:a12b", "kind": "documented_event", "role": "adjudicator", "source": "srcrev:standards-board@2026-07-14", "quote": "the omission is established on the record before us", "scope": "professional standards for metrology laboratories"}
+  ],
+  "edges": [
+    {"id": "edge:e12a", "assertion": "assertion:a12a", "relation": "supports", "basis": "basis:b12a"},
+    {"id": "edge:e12b", "assertion": "assertion:a12b", "relation": "supports", "basis": "basis:b12b", "scope_covers": null}
+  ],
+  "independence": [
+    {"a": "basis:b12a", "b": "basis:b12b", "justification": "distinct_official_record", "evidence": "an inspection number and a separate archive accession"}
+  ],
+  "tasks": [
+    {"id": "task:t12a", "lane": "claimant_origin", "state": "satisfied"},
+    {"id": "task:t12b", "lane": "primary_record", "state": "satisfied"},
+    {"id": "task:t12c", "lane": "resolver", "state": "satisfied"}
+  ],
+  "expect": {
+    "state": "supported",
+    "supporting_bases": 2,
+    "contradicting_bases": 0,
+    "effective_risk": "R3",
+    "explanation_contains": "r3_direct_record_plus_independent_basis"
+  }
+}

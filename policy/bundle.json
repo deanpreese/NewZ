@@ -1,0 +1,364 @@
+{
+  "bundle": {
+    "capability_matrix": {
+      "cells": "2016 cells in capability_matrix.jsonl",
+      "decisions": [
+        {
+          "cost": "Strong analytical work is demoted to context unless its measurements or documented findings are extracted as their own assertions. That is extra extraction work, and it is the intended shape: the measurement is the evidence, the argument about it is not.",
+          "decision": "No. `inference` admits `contextualizes` only, for every role.",
+          "id": "D-001",
+          "question": "May an assertion typed `inference` support or contradict a claim?",
+          "reasoning": "An inference is the source's reasoning over evidence, not the evidence. Admitting it would let a chain of reasoning enter the graph as a basis and be counted against a threshold, which is how repetition of one underlying observation becomes apparent corroboration. Symmetry under SPEC 7.3 rule 7 makes this bind refutation identically, which is the half that costs something: a skeptic's well-argued inference is contextual material here, not a countable contradiction."
+        },
+        {
+          "cost": "None identified.",
+          "decision": "No. `prediction` admits `claimant_says` and `contextualizes` only.",
+          "id": "D-002",
+          "question": "May an assertion typed `prediction` support or contradict a claim?",
+          "reasoning": "A prediction is about a state of the world that has not happened. It can establish that someone predicted something — which is an attribution claim, reached by `claimant_says` — and nothing else. A forecast claim is settled at its horizon by a resolver, never by an earlier prediction agreeing with it."
+        },
+        {
+          "cost": "None identified.",
+          "decision": "Yes, and nothing else.",
+          "id": "D-008",
+          "question": "Does an assertion typed `allegation` support the attribution claim that the allegation was made?",
+          "reasoning": "`X alleged Y` is exactly an attribution claim, and the allegation is the record of it. Refusing it here would leave no way to establish that something was alleged, which is the fact the system most needs to hold accurately and separately from whether it is true."
+        },
+        {
+          "cost": "Encyclopedic and survey material never counts, however accurate. That is the intended posture: it is the trail behind the claim, not the claim.",
+          "decision": "No. `historical_context` and `general_context` admit `claimant_says` and `contextualizes` only.",
+          "id": "D-007",
+          "question": "May the context roles carry countable evidence?",
+          "reasoning": "SPEC 5.1 gives each role a maximum ordinary use, and for these two it is to supply provenance, chronology, interpretation, and background. A background source that turns out to carry a primary observation is miscatalogued, and the repair is a catalog correction with a recorded reason — not a wider capability for the role."
+        },
+        {
+          "cost": "A demonstration attested in a document but never measured cannot reach `supported`. It reaches `reported`, with the document-existence claim beside it fully settled, which is the honest decomposition.",
+          "decision": "Only assertions typed `measurement`. A `documented_event` — a patent, a specification, a press release — cannot support or contradict one.",
+          "id": "D-003",
+          "question": "What may support a capability-or-performance claim?",
+          "reasoning": "SPEC 7.3 rule 3 says a patent proves a filing and its contents, not performance. The general form of that rule is that a performance claim needs a measurement of the performance. Encoding it as a rule about patents specifically would leave the same error available through any other document type."
+        },
+        {
+          "cost": "It puts weight on extraction typing an assertion correctly. The controlled case for a complaint misused as proof of guilt exists to hold that line, and a mistyping there is a defect with a permanent fixture.",
+          "decision": "Assertions typed `documented_event` from an adjudicator or a primary record. Everything else is refused, and an assertion that alleges is typed `allegation` however official the document carrying it is.",
+          "id": "D-004",
+          "question": "What may support an identity-or-wrongdoing-allegation claim?",
+          "reasoning": "SPEC 7.3 rule 4 says a complaint proves an allegation was filed, not guilt. The control is assertion typing rather than source role: a filed complaint is a real primary record, and what makes it not proof of guilt is that what it contains is an allegation. `documented_event` is reserved for what a record establishes as having occurred."
+        },
+        {
+          "cost": "A witness account of a measurement is contextual material until the measurement itself is retained. For a system that investigates anomalous phenomena this is the most consequential single refusal in the matrix.",
+          "decision": "Attribution and event-or-observation claims only.",
+          "id": "D-005",
+          "question": "What may an assertion typed `testimony` support?",
+          "reasoning": "SPEC 7.3 rule 2: a witness report is evidence that the report occurred, not by itself that the external event occurred. `By itself` locates the constraint at the threshold rather than at admission, so testimony is admitted for the event claim and cannot promote it alone — an ordinary promotion needs two independent bases including one primary, empirical, or adjudicative record. For measurement, causal, and capability claims testimony is refused outright, because no quantity of it reaches those."
+        },
+        {
+          "cost": "A document known only through description stays `reported`.",
+          "decision": "`documented_event` assertions from a primary record or an adjudicator.",
+          "id": "D-006",
+          "question": "What may settle a document-existence claim?",
+          "reasoning": "The claim is that a document exists and says what it is said to say. The record itself establishes that; a description of it does not."
+        }
+      ],
+      "rules": [
+        {
+          "decision_id": null,
+          "description": "`claimant_says` is admitted for every role, claim kind, and assertion kind: it records that a source asserts the claim and establishes nothing about the claim.",
+          "id": "R-01",
+          "spec_ref": "7.2"
+        },
+        {
+          "decision_id": null,
+          "description": "`contextualizes` is admitted everywhere for the same reason: contextual material never counts toward a threshold.",
+          "id": "R-02",
+          "spec_ref": "7.2"
+        },
+        {
+          "decision_id": null,
+          "description": "A normative proposition admits no `supports` or `contradicts` edge; the promotion rules cannot evaluate one.",
+          "id": "R-03",
+          "spec_ref": "7.1"
+        },
+        {
+          "decision_id": "D-001",
+          "description": "An inference is reasoning over evidence, not evidence.",
+          "id": "R-04",
+          "spec_ref": "7.3 rule 6"
+        },
+        {
+          "decision_id": "D-002",
+          "description": "A prediction establishes only that it was made.",
+          "id": "R-05",
+          "spec_ref": "7.1"
+        },
+        {
+          "decision_id": "D-008",
+          "description": "An allegation proves an allegation. It reaches an attribution claim and no other kind.",
+          "id": "R-06",
+          "spec_ref": "7.3 rule 4"
+        },
+        {
+          "decision_id": null,
+          "description": "Claimant material may establish only an accurately attributed meta-claim.",
+          "id": "R-07",
+          "spec_ref": "7.3 rule 1"
+        },
+        {
+          "decision_id": "D-007",
+          "description": "The context roles supply background and carry no countable evidence.",
+          "id": "R-08",
+          "spec_ref": "5.1"
+        },
+        {
+          "decision_id": "D-003",
+          "description": "A performance claim needs a measurement; a filing is not performance.",
+          "id": "R-09",
+          "spec_ref": "7.3 rule 3"
+        },
+        {
+          "decision_id": "D-004",
+          "description": "A wrongdoing claim admits only a documented event from a primary record or an adjudicator. A complaint is an allegation and is already refused above.",
+          "id": "R-10",
+          "spec_ref": "7.3 rule 4"
+        },
+        {
+          "decision_id": "D-005",
+          "description": "Testimony reaches attribution and event claims. No quantity of it reaches a measurement, a mechanism, or a performance.",
+          "id": "R-11",
+          "spec_ref": "7.3 rule 2"
+        },
+        {
+          "decision_id": "D-006",
+          "description": "The role capability table: what each role may carry into a countable relation, read identically for support and for refutation.",
+          "id": "R-12",
+          "spec_ref": "5.1"
+        },
+        {
+          "decision_id": null,
+          "description": "Deny by default. A cell no rule admits is refused.",
+          "id": "R-13",
+          "spec_ref": "ARCHITECTURE, evidence engine"
+        }
+      ]
+    },
+    "code_version": "0.1.0",
+    "decisions": [
+      {
+        "cost": "Strong analytical work is demoted to context unless its measurements or documented findings are extracted as their own assertions. That is extra extraction work, and it is the intended shape: the measurement is the evidence, the argument about it is not.",
+        "decision": "No. `inference` admits `contextualizes` only, for every role.",
+        "id": "D-001",
+        "question": "May an assertion typed `inference` support or contradict a claim?",
+        "reasoning": "An inference is the source's reasoning over evidence, not the evidence. Admitting it would let a chain of reasoning enter the graph as a basis and be counted against a threshold, which is how repetition of one underlying observation becomes apparent corroboration. Symmetry under SPEC 7.3 rule 7 makes this bind refutation identically, which is the half that costs something: a skeptic's well-argued inference is contextual material here, not a countable contradiction."
+      },
+      {
+        "cost": "None identified.",
+        "decision": "No. `prediction` admits `claimant_says` and `contextualizes` only.",
+        "id": "D-002",
+        "question": "May an assertion typed `prediction` support or contradict a claim?",
+        "reasoning": "A prediction is about a state of the world that has not happened. It can establish that someone predicted something — which is an attribution claim, reached by `claimant_says` — and nothing else. A forecast claim is settled at its horizon by a resolver, never by an earlier prediction agreeing with it."
+      },
+      {
+        "cost": "A demonstration attested in a document but never measured cannot reach `supported`. It reaches `reported`, with the document-existence claim beside it fully settled, which is the honest decomposition.",
+        "decision": "Only assertions typed `measurement`. A `documented_event` — a patent, a specification, a press release — cannot support or contradict one.",
+        "id": "D-003",
+        "question": "What may support a capability-or-performance claim?",
+        "reasoning": "SPEC 7.3 rule 3 says a patent proves a filing and its contents, not performance. The general form of that rule is that a performance claim needs a measurement of the performance. Encoding it as a rule about patents specifically would leave the same error available through any other document type."
+      },
+      {
+        "cost": "It puts weight on extraction typing an assertion correctly. The controlled case for a complaint misused as proof of guilt exists to hold that line, and a mistyping there is a defect with a permanent fixture.",
+        "decision": "Assertions typed `documented_event` from an adjudicator or a primary record. Everything else is refused, and an assertion that alleges is typed `allegation` however official the document carrying it is.",
+        "id": "D-004",
+        "question": "What may support an identity-or-wrongdoing-allegation claim?",
+        "reasoning": "SPEC 7.3 rule 4 says a complaint proves an allegation was filed, not guilt. The control is assertion typing rather than source role: a filed complaint is a real primary record, and what makes it not proof of guilt is that what it contains is an allegation. `documented_event` is reserved for what a record establishes as having occurred."
+      },
+      {
+        "cost": "A witness account of a measurement is contextual material until the measurement itself is retained. For a system that investigates anomalous phenomena this is the most consequential single refusal in the matrix.",
+        "decision": "Attribution and event-or-observation claims only.",
+        "id": "D-005",
+        "question": "What may an assertion typed `testimony` support?",
+        "reasoning": "SPEC 7.3 rule 2: a witness report is evidence that the report occurred, not by itself that the external event occurred. `By itself` locates the constraint at the threshold rather than at admission, so testimony is admitted for the event claim and cannot promote it alone — an ordinary promotion needs two independent bases including one primary, empirical, or adjudicative record. For measurement, causal, and capability claims testimony is refused outright, because no quantity of it reaches those."
+      },
+      {
+        "cost": "A document known only through description stays `reported`.",
+        "decision": "`documented_event` assertions from a primary record or an adjudicator.",
+        "id": "D-006",
+        "question": "What may settle a document-existence claim?",
+        "reasoning": "The claim is that a document exists and says what it is said to say. The record itself establishes that; a description of it does not."
+      },
+      {
+        "cost": "Encyclopedic and survey material never counts, however accurate. That is the intended posture: it is the trail behind the claim, not the claim.",
+        "decision": "No. `historical_context` and `general_context` admit `claimant_says` and `contextualizes` only.",
+        "id": "D-007",
+        "question": "May the context roles carry countable evidence?",
+        "reasoning": "SPEC 5.1 gives each role a maximum ordinary use, and for these two it is to supply provenance, chronology, interpretation, and background. A background source that turns out to carry a primary observation is miscatalogued, and the repair is a catalog correction with a recorded reason — not a wider capability for the role."
+      },
+      {
+        "cost": "None identified.",
+        "decision": "Yes, and nothing else.",
+        "id": "D-008",
+        "question": "Does an assertion typed `allegation` support the attribution claim that the allegation was made?",
+        "reasoning": "`X alleged Y` is exactly an attribution claim, and the allegation is the record of it. Refusing it here would leave no way to establish that something was alleged, which is the fact the system most needs to hold accurately and separately from whether it is true."
+      },
+      {
+        "cost": "Claims about active institutions will sit at `provisional_support` longer. That is the intended direction of the error at R2.",
+        "decision": "Bases carried by the primary-record, empirical-study, or adjudicator roles. R2 requires two independent bases of which at least two are strong-provenance; R0-R1 requires two of which at least one is.",
+        "id": "D-009",
+        "question": "What counts as strong provenance for the R2 threshold?",
+        "reasoning": "SPEC 7.3 states the R0-R1 rule explicitly and says every other R2 claim requires two independent countable bases `with strong provenance`, without defining the phrase. Reading it as raising the count of strong bases from one to two is the only reading that makes R2 stricter than R0-R1 rather than identical to it."
+      },
+      {
+        "cost": "None identified; this is close to a transcription.",
+        "decision": "Two independent bases, of which at least one is carried by a primary record or an adjudicator.",
+        "id": "D-010",
+        "question": "How does the R3 threshold combine its two requirements?",
+        "reasoning": "SPEC 7.3 requires `a direct primary or adjudicative basis plus an independent countable basis`, which is two groups with a role constraint on one of them. The second basis carries no role constraint beyond being countable at all."
+      },
+      {
+        "cost": "A large set with sparse justification counts low, and the pilot reports the share of claims held below promotion by unknown independence alone so that this shows up as a design finding if it is unsatisfiable in practice.",
+        "decision": "The two collapse into one for counting. Collapsing is transitive: bases are grouped by union, so three bases with one justified pair among them count as two, not three.",
+        "id": "D-011",
+        "question": "When independence between two resolved bases is unknown, what happens to the count?",
+        "reasoning": "SPEC 7.2 requires unknown independence to collapse a pair without invalidating either edge. Transitivity is the conservative closure: counting a chain of partially-justified pairs as fully distinct would let a threshold be met by a set no single justification covers."
+      },
+      {
+        "cost": "Two genuinely separate observations published by co-owned outlets count once. The repair is a catalog correction to the grouping, which is an operator action with a recorded reason, not a per-claim override.",
+        "decision": "Yes, including an operator-verified one.",
+        "id": "D-012",
+        "question": "Does membership of a shared independence group void a recorded justification?",
+        "reasoning": "SPEC 7.2 says independence-group membership blocks independence and never establishes it. Letting a justification override the block would make the catalog's syndication knowledge advisory, and syndication is the specific mechanism by which copied stories look like corroboration."
+      },
+      {
+        "cost": "Someone must record the coverage judgment. Leaving it unrecorded is safe in the sense that the claim does not promote, and unsafe in the sense that a refuted allegation about a living person stays visibly unrefuted, which is why the R3 controlled case pins it.",
+        "decision": "Only when the edge records that the adjudicator's declared scope covers the claim. Unknown scope coverage fails closed.",
+        "id": "D-013",
+        "question": "When may an adjudicative record settle a claim under the single-record exception?",
+        "reasoning": "SPEC 7.3 admits the exception `within that adjudicator's declared scope`, and SPEC 5.1 says declared scope carries decision weight in exactly this one place. Since scope is recorded free text rather than an enumeration, the coverage judgment cannot be computed from it and is carried on the edge as a recorded boolean."
+      },
+      {
+        "cost": "A wider required set makes `indeterminate` rarer and slower to reach. That is the intended trade: the failure this guards against is a claim presenting as exhaustively investigated when two lanes were never opened.",
+        "decision": "The mapping in `newz.policy.lanes`. Normative propositions require none, because they never promote.",
+        "id": "D-014",
+        "question": "Which evidence lanes does each claim kind require?",
+        "reasoning": "`indeterminate` means every required lane looked and found nothing, so the required set decides what that result asserts. The mapping asks for the lanes whose silence is informative for that kind of claim: a counterpart and a skeptical reading wherever a claim could be corroborated or challenged, a resolver wherever an outside authority settles the question."
+      },
+      {
+        "cost": "The graph cannot represent why an R4 item was quarantined beyond the refusal record and its metadata. That is the intended limit.",
+        "decision": "Refused at admission.",
+        "id": "D-015",
+        "question": "Are edges at R4 refused, or admitted and withheld from publication?",
+        "reasoning": "SPEC 8 makes R4 metadata quarantine only, never reproduced or operationalized. An admitted edge carries a verified span, which is retained content, and a countable edge is quotable on a claim card. Refusing at admission keeps the payload out of every downstream path rather than relying on each of them to remember."
+      }
+    ],
+    "direct_record_roles": [
+      "adjudicator",
+      "primary_record"
+    ],
+    "independence_justifications": [
+      "distinct_experiment",
+      "distinct_instrument_or_dataset",
+      "distinct_official_record",
+      "distinct_primary_observation",
+      "distinct_witness",
+      "operator_verified"
+    ],
+    "publication_disposition": {
+      "R0": "publishes_on_checks_and_appraisal",
+      "R1": "publishes_on_checks_and_appraisal",
+      "R2": "publishes_on_checks_and_appraisal_with_evidence_preconditions",
+      "R3": "operator_approval_of_the_exact_revision",
+      "R4": "never"
+    },
+    "required_evidence_lanes": {
+      "attribution": [
+        "claimant_origin"
+      ],
+      "capability_or_performance": [
+        "empirical",
+        "independent_counterpart",
+        "primary_record",
+        "skeptical_analysis"
+      ],
+      "causal_or_mechanistic": [
+        "empirical",
+        "independent_counterpart",
+        "skeptical_analysis"
+      ],
+      "document_existence": [
+        "primary_record"
+      ],
+      "event_or_observation": [
+        "claimant_origin",
+        "independent_counterpart",
+        "primary_record",
+        "skeptical_analysis"
+      ],
+      "forecast": [
+        "resolver"
+      ],
+      "identity_or_wrongdoing_allegation": [
+        "claimant_origin",
+        "primary_record",
+        "resolver"
+      ],
+      "measurement_or_association": [
+        "empirical",
+        "independent_counterpart",
+        "primary_record",
+        "skeptical_analysis"
+      ],
+      "normative_proposition": []
+    },
+    "strong_provenance_roles": [
+      "adjudicator",
+      "empirical_study",
+      "primary_record"
+    ],
+    "task_states": {
+      "live": [
+        "blocked",
+        "in_progress",
+        "open",
+        "scheduled"
+      ],
+      "terminal_competent": [
+        "exhausted",
+        "satisfied",
+        "unreachable"
+      ],
+      "terminal_incomplete": [
+        "cancelled",
+        "expired",
+        "refused",
+        "superseded"
+      ]
+    },
+    "thresholds": {
+      "R0": {
+        "decision": "SPEC 7.3",
+        "independent_bases": 2,
+        "strong_provenance_bases": 1
+      },
+      "R1": {
+        "decision": "SPEC 7.3",
+        "independent_bases": 2,
+        "strong_provenance_bases": 1
+      },
+      "R2": {
+        "decision": "D-009",
+        "independent_bases": 2,
+        "strong_provenance_bases": 2
+      },
+      "R3": {
+        "decision": "D-010",
+        "direct_record_bases": 1,
+        "independent_bases": 2
+      },
+      "R4": {
+        "decision": "D-015",
+        "never_promotes": true
+      }
+    },
+    "version": "1.0.0"
+  },
+  "digest": "9b6cb42b939f6f16cca6e89859b32adb8224a266e74485958a194475db0113d3"
+}

@@ -1,0 +1,101 @@
+{
+  "note": "The Phase 0 fixture corpus. These files are hostile or awkward input staged for the parsers of Phase 2 and the fetcher of Phase 1. Phase 0 asserts only that they exist and are byte-stable: a fixture that drifts silently is not a regression test. Regenerate the PDFs with tests/fixtures/corpus/pdf/_generate.py.",
+  "files": [
+    {
+      "path": "html/witness_report.html",
+      "format": "html",
+      "category": "claimant_and_witness",
+      "purpose": "The originating publication of a witness account. The claimant-origin lane's answer, and the only place the quotation exists.",
+      "bytes": 772,
+      "sha256": "616d9cd2e4f922a233d3b5d8c85304092ab968fc5fb8810d30beecc355b907ae"
+    },
+    {
+      "path": "html/syndicated_copy.html",
+      "format": "html",
+      "category": "copied_article",
+      "purpose": "A second publisher carrying the same witness and the same quotation. Distinct sighting, same basis: it must never count as a second independent basis.",
+      "bytes": 739,
+      "sha256": "261ade05687f353e98c859fac1afa92812cd635d13185efda411b1e4a873013d"
+    },
+    {
+      "path": "html/prompt_injection.html",
+      "format": "html",
+      "category": "prompt_injection",
+      "purpose": "Retained content that instructs, claims authority, asserts prior operator approval, and asks not to be surfaced. It is world data: an observation about the source revision's operational standing, never an instruction and never an epistemic score.",
+      "bytes": 948,
+      "sha256": "4c656e3684ae449e56a4bfae713ddb4f94a20e13075afaca08a507d18df1a012"
+    },
+    {
+      "path": "html/malformed.html",
+      "format": "html",
+      "category": "malformed",
+      "purpose": "Unclosed tags, deep nesting, a stray entity, and a table that never terminates. The parser must fail or normalize without reading an unbounded body.",
+      "bytes": 2563,
+      "sha256": "d7be21a04bbd446cabf49239bd8a35f59e5a1e83507bc80ac4b172c208609698"
+    },
+    {
+      "path": "pdf/registry_record.pdf",
+      "format": "pdf",
+      "category": "primary_record",
+      "purpose": "A valid single-page PDF standing in for an official occurrence record, including a recorded search window and a null result - the material the absence rule needs.",
+      "bytes": 1012,
+      "sha256": "38062f59d85d279c60647366e9dbe2552e724906e8f5225188345ff48b5aa756"
+    },
+    {
+      "path": "pdf/truncated.pdf",
+      "format": "pdf",
+      "category": "malformed",
+      "purpose": "A real PDF header and object, truncated before the cross-reference table. Structurally invalid, not merely unusual.",
+      "bytes": 520,
+      "sha256": "3e959bf383561f3ab17cad7d0d525b43c04833590ef2e230e02feaa9680db221"
+    },
+    {
+      "path": "structured/docket.json",
+      "format": "structured",
+      "category": "adjudicative_record",
+      "purpose": "A docket carrying both the complaint that alleges and the final judgment that settles. The two entries are the same document family and must type differently.",
+      "bytes": 713,
+      "sha256": "fcec300a674b48f1a5f6e0ce62b5d482e51741caf717ac26aa30d5502c39339d"
+    },
+    {
+      "path": "structured/measurements.csv",
+      "format": "structured",
+      "category": "empirical",
+      "purpose": "Two laboratories, two protocol registrations, four runs. The rows that make distinct-experiment independence checkable rather than assumed.",
+      "bytes": 400,
+      "sha256": "b7cdd5b1c0dc838e8faf28045d4934a29372cbd3ee66a4a60467b60c7b86c013"
+    },
+    {
+      "path": "text/retraction_notice.txt",
+      "format": "text",
+      "category": "retraction",
+      "purpose": "A retraction with a stated cause. It withdraws the assertion; it does not delete the history.",
+      "bytes": 543,
+      "sha256": "5fbddfb4eb7785f93531a6809bad65d16d0f62ab597d161ff2877fffab8aea0b"
+    },
+    {
+      "path": "text/replication_failure.txt",
+      "format": "text",
+      "category": "conflicting_evidence",
+      "purpose": "An independent replication reporting no effect, explicitly declining to claim the original was in error. Counterevidence that is not a refutation.",
+      "bytes": 707,
+      "sha256": "a803ab3f9e72c8ba66d382fc98fc2ec23cf55f2ee2ba5704793b4fdad823f10d"
+    },
+    {
+      "path": "text/patent_abstract.txt",
+      "format": "text",
+      "category": "patent",
+      "purpose": "A granted patent whose own note says the office does not test the apparatus. The document-existence claim it settles and the performance claim it does not.",
+      "bytes": 640,
+      "sha256": "3966bc3e429cf14bf5c711ca760c2c06e01579c6faf6387ff6c544b7466c8d2e"
+    },
+    {
+      "path": "text/complaint_filing.txt",
+      "format": "text",
+      "category": "complaint",
+      "purpose": "A filed complaint. It proves an allegation was filed; the filing's own last line says the allegations are the plaintiff's.",
+      "bytes": 558,
+      "sha256": "9baab4fdadea471a812504ad0098c17473c71b4e5b921785ad67460fb0af65a6"
+    }
+  ]
+}

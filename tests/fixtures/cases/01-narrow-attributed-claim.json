@@ -1,0 +1,37 @@
+{
+  "id": "01-narrow-attributed-claim",
+  "title": "A narrow attribution claim settled by the record that literally establishes it",
+  "spec_ref": "SPEC 7.3, single-record exception",
+  "fixture": "html/witness_report.html",
+  "note": "What is established is that the pilot said this, and nothing about the object.",
+  "claim": {
+    "id": "claim:c01",
+    "kind": "attribution",
+    "wording": "Captain R. Alvarado reported that an object held station off her aircraft's right wing on 2 March 2026.",
+    "risk": "R1"
+  },
+  "bases": [
+    {"id": "basis:b01", "origin_kind": "witness", "origin_identifier": "witness:alvarado-r", "resolved": true}
+  ],
+  "assertions": [
+    {
+      "id": "assertion:a01",
+      "kind": "testimony",
+      "role": "claimant",
+      "source": "srcrev:harbour-dispatch@2026-03-14",
+      "quote": "It held station off the right wing, then left on a vector we could not match"
+    }
+  ],
+  "edges": [
+    {"id": "edge:e01", "assertion": "assertion:a01", "relation": "supports", "basis": "basis:b01"}
+  ],
+  "tasks": [
+    {"id": "task:t01", "lane": "claimant_origin", "state": "satisfied"}
+  ],
+  "expect": {
+    "state": "supported",
+    "supporting_bases": 1,
+    "contradicting_bases": 0,
+    "explanation_contains": "single_record_exception"
+  }
+}

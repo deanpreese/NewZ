@@ -1,0 +1,42 @@
+{
+  "id": "03-support-plus-contradiction",
+  "title": "Countable evidence in both directions is contested, never netted",
+  "spec_ref": "SPEC 7.3 rules 9 and 11",
+  "fixture": "text/replication_failure.txt",
+  "note": "Two supporting bases against one contradicting basis stays contested, and the assessment records 2 and 1 rather than a score of +1.",
+  "claim": {
+    "id": "claim:c03",
+    "kind": "measurement_or_association",
+    "wording": "The RX-9 sensor array shows a thermal signature above baseline under protocol conditions.",
+    "risk": "R1"
+  },
+  "bases": [
+    {"id": "basis:b03a", "origin_kind": "dataset", "origin_identifier": "protocol:PROTO-4471", "resolved": true},
+    {"id": "basis:b03b", "origin_kind": "dataset", "origin_identifier": "instrument:ardenne-rx9-2", "resolved": true},
+    {"id": "basis:b03c", "origin_kind": "experiment", "origin_identifier": "protocol:PROTO-5520", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a03a", "kind": "measurement", "role": "empirical_study", "source": "srcrev:kettleby-metrology@2026-01-19", "quote": "effect size 0.11 (95% CI -0.04 to 0.26) across 64 runs"},
+    {"id": "assertion:a03b", "kind": "measurement", "role": "primary_record", "source": "srcrev:instrument-log@2026-02-01", "quote": "logged deviation of 0.10 above baseline on the calibrated channel"},
+    {"id": "assertion:a03c", "kind": "measurement", "role": "empirical_study", "source": "srcrev:ardenne-institute@2026-03-02", "quote": "we observe an effect of -0.01 (95% CI -0.15 to 0.13), consistent with no effect"}
+  ],
+  "edges": [
+    {"id": "edge:e03a", "assertion": "assertion:a03a", "relation": "supports", "basis": "basis:b03a"},
+    {"id": "edge:e03b", "assertion": "assertion:a03b", "relation": "supports", "basis": "basis:b03b"},
+    {"id": "edge:e03c", "assertion": "assertion:a03c", "relation": "contradicts", "basis": "basis:b03c"}
+  ],
+  "independence": [
+    {"a": "basis:b03a", "b": "basis:b03b", "justification": "distinct_instrument_or_dataset", "evidence": "different accession identifiers and different physical instruments"}
+  ],
+  "tasks": [
+    {"id": "task:t03a", "lane": "primary_record", "state": "satisfied"},
+    {"id": "task:t03b", "lane": "empirical", "state": "satisfied"},
+    {"id": "task:t03c", "lane": "independent_counterpart", "state": "satisfied"},
+    {"id": "task:t03d", "lane": "skeptical_analysis", "state": "satisfied"}
+  ],
+  "expect": {
+    "state": "contested",
+    "supporting_bases": 2,
+    "contradicting_bases": 1
+  }
+}

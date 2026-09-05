@@ -1,0 +1,14 @@
+RETRACTION
+
+Journal of Applied Field Metrology, 12 August 2026
+
+The editors retract "Anomalous thermal signature in the RX-9 sensor array"
+(Vol. 41, pp. 233-248, published 3 April 2026).
+
+Following an institutional inquiry, the corresponding author confirmed that the
+calibration constant applied in Table 2 was taken from an earlier, superseded
+instrument profile. The reported signature does not survive re-analysis with the
+correct constant.
+
+All authors agree to the retraction. The article remains available, watermarked,
+for the record.

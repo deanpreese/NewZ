@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.10.0
+**Document version:** 1.10.1
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -67,9 +67,10 @@ Deliver:
    consequences the choice must respect: policy, promotion, and the capability
    matrix are pure functions with pinned versions, so a runtime upgrade is a
    code version change under `SPEC.md` section 13 and reproduces or is a
-   defect. Record what would reverse it, and pin the property-testing,
-   type-checking, and migration tools, none of which are present in the
-   environment yet.
+   defect. Record what would reverse it, and record the test tooling: `pytest`
+   and `ruff`, with the spaces that matter — 2,016 capability cells, 11 task
+   states, 5 risk tiers — enumerated exhaustively rather than sampled, so the
+   dependency floor for the part that decides stays at zero.
 5. Enumerations and schemas for source roles, claim kinds, assertion kinds,
    edge relations, assessment states, risk tiers, task states, decision
    outcomes, notice provenance kinds, and the expectation, surprise, and
@@ -598,6 +599,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.10.1 | 2026-09-05 | Recorded what ADR-0003 actually decided about test tooling once Phase 0 was built: the Phase 0 spaces are finite, so the invariants are enumerated exhaustively and no property-testing dependency is taken. |
 | 1.10.0 | 2026-09-04 | Added ADR-0003 for the runtime and toolchain, so the first backlog item is not the first undecided one. Fixed the capability matrix's stale reference to the task states and named `SPEC.md` 7.3 as the source of the evidence-lane set, which the matrix maps and does not define. Moved the interest-cannot-select-a-person test from Phase 4 to Phase 4A, where the interest register exists, and renumbered the Phase 4 deliverables, which 1.9.1 had missed. |
 | 1.9.1 | 2026-09-04 | Renumbered the Phase 0, 1, and 4A deliverable lists, which had accumulated lettered suffixes. |
 | 1.9.0 | 2026-09-04 | Froze the attention and reckoning record shapes in Phase 0 rather than deferring them to the phase that builds them, added decisions, expectations, surprise, consequence, self-deception checks, escalation detection and attention decay to Phase 4A, extended Gate 4A to require a contradicted expectation and an adversarial simpler-explanation review, and added calibration, surprise, and agreement-rate reporting to the pilot. |

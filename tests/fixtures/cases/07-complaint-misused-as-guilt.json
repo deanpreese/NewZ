@@ -1,0 +1,34 @@
+{
+  "id": "07-complaint-misused-as-guilt",
+  "title": "A complaint proves an allegation was filed, not guilt",
+  "spec_ref": "SPEC 7.3 rule 4, decision D-004",
+  "fixture": "text/complaint_filing.txt",
+  "note": "The filing is a genuine primary record. What makes it not proof is that what it contains is an allegation, so the assertion is typed as one.",
+  "claim": {
+    "id": "claim:c07",
+    "kind": "identity_or_wrongdoing_allegation",
+    "wording": "Meridian Instruments Inc. knowingly falsified calibration records for the RX-9 sensor between 2023 and 2025.",
+    "risk": "R3"
+  },
+  "bases": [
+    {"id": "basis:b07", "origin_kind": "filing", "origin_identifier": "docket:3:25-cv-01142#1", "resolved": true}
+  ],
+  "assertions": [
+    {"id": "assertion:a07", "kind": "allegation", "role": "primary_record", "source": "srcrev:nd-docket@2025-11-04", "quote": "Plaintiff alleges that defendant knowingly falsified calibration records for the RX-9 sensor between 2023 and 2025", "scope": "civil matters within the Northern District"}
+  ],
+  "edges": [
+    {"id": "edge:e07", "assertion": "assertion:a07", "relation": "supports", "basis": "basis:b07"}
+  ],
+  "tasks": [
+    {"id": "task:t07a", "lane": "claimant_origin", "state": "satisfied"},
+    {"id": "task:t07b", "lane": "primary_record", "state": "satisfied"},
+    {"id": "task:t07c", "lane": "resolver", "state": "open"}
+  ],
+  "expect": {
+    "state": "reported",
+    "supporting_bases": 0,
+    "contradicting_bases": 0,
+    "refusals": {"edge:e07": "allegation_is_not_proof"},
+    "effective_risk": "R3"
+  }
+}
