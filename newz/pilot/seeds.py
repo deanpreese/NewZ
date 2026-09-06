@@ -73,6 +73,21 @@ DECISIONS: tuple[dict[str, str], ...] = (
         ),
     },
     {
+        "id": "decision:expansion-target",
+        "on": "2026-09-05",
+        "actor": "operator:dean",
+        "decision": "51 slots, at Phase 6",
+        "subject": "how far the catalogue grows, and when",
+        "holds_while": "Gate 5 has not passed",
+        "closes_when": "Gate 5 passes and the mode reaches production",
+        "cost": (
+            "none taken now, and that is the point: expanding first would replace the "
+            "twenty-slot pilot SPEC 5.2 requires, reset Gate 5's route count, and — "
+            "at any size between 21 and 50 — leave topics the diet reads seriously "
+            "with nothing in it able to contradict them"
+        ),
+    },
+    {
         "id": "decision:drop-the-declined",
         "on": "2026-09-05",
         "actor": "operator:dean",

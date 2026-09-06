@@ -6,6 +6,7 @@ import pytest
 
 from newz.pilot.catalog_review import REQUIRED_SLOTS
 from newz.pilot.expansion import (
+    TARGET_SIZE,
     cap_conflicts,
     nearest_symmetrical,
     plan,
@@ -134,6 +135,23 @@ def test_growing_past_the_trough_costs_nothing():
     assert grown.safe, grown.findings
     assert len(grown.added) == 32
     assert grown.symmetry.whole
+
+
+def test_the_recorded_target_is_the_smallest_size_that_keeps_symmetry():
+    """51, chosen 2026-09-05. Nothing between 21 and 50 holds."""
+    assert TARGET_SIZE == 51
+    assert symmetry(TARGET_SIZE).whole
+    assert symmetrical_sizes(21, 50) == ()
+    assert plan(TARGET_SIZE).safe
+
+
+def test_expanding_before_gate_5_is_reported_as_replacing_the_pilot():
+    """Expansion is a Phase 6 deliverable; the gate counts routes over twenty."""
+    early = plan(TARGET_SIZE, mode=DeploymentMode.PILOT)
+    assert not early.safe
+    assert any("replaces what the gate measures" in finding for finding in early.findings)
+    # And staying at the pilot size says nothing, because nothing is happening.
+    assert plan(SLATE_SIZE, mode=DeploymentMode.PILOT).safe
 
 
 def test_the_added_slots_extend_the_slate_rather_than_replacing_it():

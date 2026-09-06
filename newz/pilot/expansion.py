@@ -51,6 +51,12 @@ from newz.pilot.prescription import (
 #: catalogue this system is going to read on one machine.
 SEARCH_LIMIT = 200
 
+#: The size the operator chose on 2026-09-05, to be reached at Phase 6 and not
+#: before. It is the smallest slate above the pilot at which every topic the
+#: diet reads seriously can still be contradicted — 20 and 51 are the only two
+#: sizes up to 50 that hold, and the ones between trade refutability for reach.
+TARGET_SIZE = 51
+
 
 @dataclass(frozen=True, slots=True)
 class Symmetry:
@@ -213,6 +219,15 @@ def plan(
     )
 
     findings: list[str] = []
+    if mode is not DeploymentMode.PRODUCTION and size > SLATE_SIZE:
+        # Not a refusal. Expansion is a Phase 6 deliverable and the pilot is
+        # specified at twenty slots, so growing before Gate 5 would replace the
+        # thing the gate is counting rather than build on it.
+        findings.append(
+            f"the mode is {mode.value}: SPEC 5.2 specifies a twenty-slot pilot and "
+            "Gate 5 counts routes exercised over it, so a slate of "
+            f"{size} replaces what the gate measures rather than growing it"
+        )
     grown = symmetry(size)
     current = symmetry(from_size)
     if not grown.whole:

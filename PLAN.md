@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.14.0
+**Document version:** 1.14.1
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -516,6 +516,12 @@ Deliver in order:
    does not refuse it: enabling a source is a diet decision and the operator's.
    What it will not do is hand over a larger slate without saying the larger
    slate can refute less than the one it replaces.
+
+   The operator set the target at **51 slots on 2026-09-05**, to be reached
+   here and not before Gate 5: twenty and fifty-one are the only sizes up to
+   fifty that keep the diet able to contradict what it reads seriously, and
+   expanding earlier would replace the twenty-slot pilot section 5.2 requires
+   rather than build on it.
 2. Widen reach: enable public audiences for output that has been publishing
    locally by default since Gate 4, as an explicit scoped operator act, with
    reach still independently lockable at any moment. The reader surface itself
@@ -648,6 +654,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.14.1 | 2026-09-05 | Recorded the operator's expansion target: 51 slots, at Phase 6, after Gate 5. |
 | 1.14.0 | 2026-09-05 | Phase 6 item 1: recorded that expansion is not monotone — between twenty-one and fifty slots the diet cannot contradict every topic it reads seriously — and that the plan states the cost rather than refusing the growth. |
 | 1.13.0 | 2026-09-05 | Observability: a daily figure counts every stage on one definition of the day, and the gate runs the clock-sensitive tests on both sides of Greenwich. |
 | 1.12.0 | 2026-09-05 | Phase 6 item 1: recorded that the concentration cap is enforced at reservation rather than reported after the fact, and why expansion is what makes it bite. |
