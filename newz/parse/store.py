@@ -21,14 +21,27 @@ def artifact_body(store: Store, artifact_id: str) -> bytes:
     return Path(store.artifact_root / row["stored_path"]).read_bytes()
 
 
-def parse_artifact(store: Store, artifact_id: str) -> ParseResult:
-    """Parse a retained artifact using the MIME its response recorded."""
+def parse_artifact(store: Store, artifact_id: str, isolated: bool = True) -> ParseResult:
+    """Parse a retained artifact using the MIME its response recorded.
+
+    Isolated by default. Threat model T-19: the parsers handle hostile input and
+    ran in the interpreter holding this store handle, one deserialization bug
+    away from writing to the ledger. `isolated=False` runs in-process and exists
+    for the tests that are about a parser rather than about the boundary — a
+    thousand subprocess spawns to check an HTML heading is a slow way to test
+    nothing.
+    """
     row = store.one(
         "SELECT a.media_type FROM artifacts a WHERE a.id = ?", artifact_id
     )
     if row is None:
         raise KeyError(artifact_id)
-    return parse(artifact_id, artifact_body(store, artifact_id), row["media_type"])
+    body = artifact_body(store, artifact_id)
+    if isolated:
+        from newz.parse.isolate import parse_isolated
+
+        return parse_isolated(artifact_id, body, row["media_type"])
+    return parse(artifact_id, body, row["media_type"])
 
 
 def record_parse(store: Store, result: ParseResult, execution_id: str) -> str:

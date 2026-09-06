@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.17.0
+**Document version:** 1.18.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -597,6 +597,10 @@ be evidence of a judgment or a commitment, so none is written.
   outliving its entry. The model does not replace the review: it cannot say
   whether a control is any good or whether the threats are the right ones.
 - Isolate fetch and document workers with least privilege and egress policy.
+  Parse is isolated: `newz/parse/worker.py` runs in a child with no store
+  handle, no network and no credentials, and `newz/parse/isolate.py` is the one
+  place in the package permitted to start a process. Fetch is not yet, and the
+  egress policy is still in Python rather than below it — threat model T-20.
 - Encrypt secrets and sensitive retained data; never store credentials in the
   repository.
 - Record access to R3 quarantined material.
@@ -684,6 +688,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.18.0 | 2026-09-05 | Parse now runs isolated from the ledger; what remains unisolated is named rather than implied. |
 | 1.17.0 | 2026-09-05 | The threat model exists and is auditable, and two unmet security controls are recorded rather than assumed. |
 | 1.16.0 | 2026-09-05 | Phase 6 item 3: the R2 adversarial review workflow is built, and what makes a review adversarial rather than a stamp is stated. |
 | 1.15.0 | 2026-09-05 | Phase 6 item 4: the R3 isolated workflow is built and exercised — operator-only intake, and a model boundary covering what a model is shown rather than only what it may grant. |

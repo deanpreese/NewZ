@@ -59,9 +59,15 @@ def test_the_threat_model_has_entries_at_all():
 @pytest.mark.parametrize("threat", sorted(ENTRIES))
 def test_every_entry_names_a_control_and_its_residual(threat):
     entry = ENTRIES[threat]
-    if "Requirement" in entry:  # an unmet control, section 7
-        for field in ("Requirement", "Actual", "Why it stands", "Closing it", "Test"):
+    if "Requirement" in entry:  # section 7: a control that was or is unmet
+        for field in ("Requirement", "Actual", "Test"):
             assert entry.get(field), (threat, field, sorted(entry))
+        # Either it still stands open, and says why and what would close it, or
+        # it has been closed and carries the code and residual of any other
+        # entry. What it may not do is stop saying which of those it is.
+        unmet = entry.get("Why it stands") and entry.get("Closing it")
+        closed = entry.get("Code") and entry.get("Residual")
+        assert unmet or closed, (threat, sorted(entry))
         return
     for field in ("Vector", "Control", "Code", "Test", "Residual"):
         assert entry.get(field), (threat, field)

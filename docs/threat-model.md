@@ -1,7 +1,7 @@
 # Threat model
 
 **Status:** Working document
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Effective:** 2026-09-05
 
 `PLAN.md` cross-cutting security asks for a threat model over acquisition,
@@ -239,23 +239,48 @@ These are requirements the documents state and the system does not meet. They
 are here rather than absent because a threat model that lists only what is built
 is a description of the system's strengths.
 
-### T-19 — Fetch and parse share an interpreter with the ledger
+An entry stays here after it is closed, carrying what closed it. The history of
+a control is part of reading it: T-19 was asserted as built before it was, and
+an entry that quietly moved to another section once it became true would lose
+the only record of that.
+
+### T-19 — Parse shares an interpreter with the ledger
 **Requirement:** `PLAN.md` cross-cutting security: isolate fetch and document
-workers with least privilege and egress policy. `ARCHITECTURE.md` asserted that
-they run as separate processes.
-**Actual:** Everything runs in one process. `pypdf` parses hostile input in the
-same interpreter that holds the store handle, and a deserialization bug there
-reaches the ledger directly.
-**Why it stands:** The static boundary in `tests/test_gate0.py` enforces that
-only two modules may open a socket and that nothing in the package starts a
-process — a code-level control, not an OS-level one. It stops the code from
-doing these things; it does not stop a compromised dependency.
-**Test:** `tests/test_gate0.py::test_only_the_transport_can_reach_the_network`
-**Closing it:** A separate parse worker with no store handle and no network, the
-artifact passed by path and segments returned as data. `ARCHITECTURE.md` was
-corrected in the same change that wrote this entry, because a document claiming
-a control that does not exist is worse than one admitting the gap: a reviewer
-ticks the box.
+workers with least privilege. `ARCHITECTURE.md` asserted they run as separate
+processes when they did not.
+**Actual:** **Closed for parse on 2026-09-05.** `newz/parse/worker.py` runs in a
+child process with no store handle, no network and no credentials; a static test
+walks its transitive imports and fails if any of them can reach `sqlite3`, a
+socket, or `newz.store`, so the isolation cannot be lost to a convenient import
+in a parser three modules down. Gate 0's "nothing starts a process" is narrowed
+to one named, tested door rather than dropped.
+**Still open for fetch.** The transport runs in the parent. It handles a hostile
+peer rather than a hostile document, and the body it returns is bytes it never
+interprets, which is why parse was the one worth moving first.
+**Code:** `newz/parse/isolate.py`
+**Test:** `tests/test_gate0.py::test_the_parse_worker_cannot_reach_the_store_or_the_network`
+**Residual:** The child is a process boundary, not a sandbox. It runs as the
+same user with the same filesystem access, so it constrains what a
+deserialization bug reaches in *this* program and not what it reaches on the
+machine. Closing that is T-20's territory.
+
+### T-21 — The parse worker's memory cap does not exist on macOS
+**Requirement:** The worker caps its own address space so a body that got past
+the fetcher's ceiling costs a bounded amount.
+**Actual:** On macOS neither `RLIMIT_AS` nor `RLIMIT_DATA` can be set. Both
+report as unlimited and both raise when set, so only the CPU cap applies —
+on the platform this system actually runs on today. `limit_self` returns the
+limits that applied rather than the ones it asked for, and a test asserts that
+what it reports matches the platform.
+**Why it stands:** What bounds a runaway parse here is the CPU cap, the caller's
+wall-clock timeout, and the fetcher's size ceiling upstream. That is weaker than
+a memory cap, and saying so is the only honest position: a worker that claimed
+the cap regardless would be the same shape as one that had it, which is the
+mistake this section exists to record.
+**Test:** `tests/test_isolate.py::test_the_worker_reports_which_limits_it_actually_got`
+**Closing it:** A container or a VM with a memory limit, on any platform. Same
+answer as T-20, which is not a coincidence: both are the point where a control
+has to move below the process.
 
 ### T-20 — There is no egress policy below the code
 **Requirement:** `PLAN.md`: least privilege and egress policy for the workers.
@@ -274,4 +299,5 @@ production service objectives Gate 6 also asks for.
 
 | Version | Date | Change |
 |---|---|---|
+| 1.1.0 | 2026-09-05 | T-19 closed for parse: the worker runs in a child process with no store handle, no network and no credentials, enforced by a transitive import audit. T-21 added: the worker's memory cap cannot be set on macOS, so only the CPU cap applies on the platform this runs on. |
 | 1.0.0 | 2026-09-05 | First threat model. Twenty entries across the seven areas `PLAN.md` names, each citing a control, its code, and a test. Two unmet controls recorded, and `ARCHITECTURE.md` corrected where it claimed process isolation the system does not have. |

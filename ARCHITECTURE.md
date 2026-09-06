@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.18.0
+**Document version:** 1.19.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -249,14 +249,24 @@ language: a parser in the same interpreter as the ledger is one deserialization
 bug away from writing to it, and fetch and parse should run as separate
 processes with their own privilege and egress limits.
 
-**They do not yet.** Everything runs in one process, `pypdf` parses hostile
-input beside the store handle, and the only boundary is the static one in
-`tests/test_gate0.py` — two modules may open a socket and nothing may start a
-process, which constrains the code and not a compromised dependency. This
-paragraph asserted the separation as fact until 2026-09-05. It is recorded as
-T-19 and T-20 in `docs/threat-model.md` rather than described as built, because
-a document claiming a control that does not exist is worse than one admitting
-the gap: a security reviewer reads the sentence and ticks the box.
+**Parse does; fetch does not yet.** `newz/parse/worker.py` runs in a child
+process with no store handle, no network and no inherited credentials, and a
+static test walks its transitive imports so the isolation cannot be lost to a
+convenient import in a parser three modules down. Gate 0's rule that nothing in
+the package starts a process is narrowed to one named, tested door rather than
+dropped: a rule with one audited exception is a different object from a rule
+with none, and the difference is that the exception is named.
+
+The transport still runs in the parent. It handles a hostile peer rather than a
+hostile document, and the bytes it returns are never interpreted there, which is
+why parse was the one worth moving first.
+
+This paragraph asserted the separation as fact before it was true, and the
+history is kept in `docs/threat-model.md` as T-19 rather than tidied away. What
+remains open is recorded there too: the child is a process boundary and not a
+sandbox (T-20), and its memory cap cannot be set on macOS at all, so on the
+platform this runs on today only the CPU cap and the caller's wall-clock timeout
+bound a runaway parse (T-21).
 
 ## Runtime topology
 
@@ -439,6 +449,7 @@ stage, left by a recorded cause and a regression fixture under `SPEC.md` section
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.19.0 | 2026-09-05 | Parse runs in an isolated child process with no store handle and no network, enforced by a transitive import audit; Gate 0's no-process rule is narrowed to one named door. Fetch, the sandbox gap and the macOS memory cap remain open in the threat model. |
 | 1.18.0 | 2026-09-05 | Corrected an assertion that fetch and parse run as separate processes. They do not; the gap is recorded as T-19 and T-20 in the threat model. |
 | 1.17.0 | 2026-09-05 | R2 source classes are admitted by adversarial review, and the self-deception checks report an explanation they tested and rejected rather than staying silent about it. |
 | 1.16.0 | 2026-09-05 | The R3 isolated workflow: intake is an operator act, quarantined material never reaches a prompt without a single-use recorded approval, and every access to it is logged including the refused ones. |

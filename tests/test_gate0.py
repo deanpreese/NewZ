@@ -60,6 +60,13 @@ NETWORK_BOUNDARY = frozenset(
 #: can reach the network without importing any of the names above.
 FORBIDDEN_EVERYWHERE = {"subprocess", "multiprocessing", "ctypes"}
 
+#: The one audited exception. Threat model T-19 asks for parse to run outside
+#: the interpreter that holds the store handle, which takes exactly one place
+#: that may start a process. The rule is narrowed rather than dropped: a rule
+#: with one named exception is a different object from a rule with none, and the
+#: difference is that the exception is named and tested.
+MAY_START_A_PROCESS = {"parse/isolate.py"}
+
 
 def _imported_modules(path: Path) -> set[str]:
     """Every module a file imports, by full dotted name and by root."""
@@ -93,7 +100,66 @@ def test_only_the_transport_can_reach_the_network(path):
     "path", sorted(PACKAGE.rglob("*.py")), ids=lambda p: str(p.relative_to(PACKAGE.parent))
 )
 def test_nothing_in_the_package_starts_a_process(path):
-    assert not (_imported_modules(path) & FORBIDDEN_EVERYWHERE), path
+    relative = path.relative_to(PACKAGE).as_posix()
+    forbidden = _imported_modules(path) & FORBIDDEN_EVERYWHERE
+    if relative in MAY_START_A_PROCESS:
+        assert forbidden <= {"subprocess"}, (relative, forbidden)
+        return
+    assert not forbidden, path
+
+
+def test_only_the_named_door_starts_a_process():
+    """The exception is one file, and the test says which."""
+    spawning = {
+        path.relative_to(PACKAGE).as_posix()
+        for path in sorted(PACKAGE.rglob("*.py"))
+        if _imported_modules(path) & FORBIDDEN_EVERYWHERE
+    }
+    assert spawning == MAY_START_A_PROCESS, spawning
+
+
+def _transitive_newz_imports(start: str) -> set[str]:
+    """Every `newz` module reachable from one, following imports."""
+    seen: set[str] = set()
+    frontier = [start]
+    while frontier:
+        module = frontier.pop()
+        if module in seen:
+            continue
+        seen.add(module)
+        path = PACKAGE.parent / (module.replace(".", "/") + ".py")
+        package_init = PACKAGE.parent / module.replace(".", "/") / "__init__.py"
+        for candidate in (path, package_init):
+            if candidate.is_file():
+                frontier.extend(
+                    name
+                    for name in _imported_modules(candidate)
+                    if name.startswith("newz.")
+                )
+    return seen
+
+
+def test_the_parse_worker_cannot_reach_the_store_or_the_network():
+    """Threat model T-19, enforced by what it can import rather than by intent.
+
+    The worker handles hostile documents. Walking its transitive imports is what
+    keeps the isolation from being lost to a convenient import in a parser three
+    modules down — the sort of change that looks harmless in review and quietly
+    hands a deserialization bug a store handle.
+    """
+    reachable = _transitive_newz_imports("newz.parse.worker")
+    assert "newz.parse.registry" in reachable, "it does parse something"
+    for module in sorted(reachable):
+        path = PACKAGE.parent / (module.replace(".", "/") + ".py")
+        if not path.is_file():
+            continue
+        imported = _imported_modules(path)
+        assert not (imported & NETWORK_MODULES), (module, imported & NETWORK_MODULES)
+        assert "sqlite3" not in imported, module
+        assert not (imported & FORBIDDEN_EVERYWHERE), module
+    assert not any(module.startswith("newz.store") for module in reachable), sorted(reachable)
+    assert not any(module.startswith("newz.acquisition") for module in reachable), sorted(reachable)
+    assert not any(module.startswith("newz.model") for module in reachable), sorted(reachable)
 
 
 DECIDING_PACKAGES = ("policy", "domain", "graph")

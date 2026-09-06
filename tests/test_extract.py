@@ -35,7 +35,7 @@ def prepared(catalog, transport):
         record = acquire(
             catalog, operation_for(catalog, canary, index), canary.revision, transport
         )
-        result = parse_artifact(catalog, record.artifact_id)
+        result = parse_artifact(catalog, record.artifact_id, isolated=False)
         execution = record_parse(catalog, result, f"parse:p{index}")
         return canary, record.artifact_id, execution, segments_for(catalog, record.artifact_id)
 

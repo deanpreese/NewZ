@@ -306,7 +306,12 @@ def build(store) -> World:
         record = acquire(store, operation, canary.revision, transport)
         assert record.retained, (key, record.refusal)
 
-        result = parse_artifact(store, record.artifact_id)
+        # In-process on purpose. This fixture is the pipeline nine other test
+        # files build on, and it is about what the pipeline produces rather
+        # than about which interpreter parsed it. Spawning a worker per source
+        # per test file buys nothing here; the boundary itself is tested in
+        # `tests/test_isolate.py`, which is where it belongs.
+        result = parse_artifact(store, record.artifact_id, isolated=False)
         execution = record_parse(store, result, f"parse:{key}")
         segments = segments_for(store, record.artifact_id)
 
