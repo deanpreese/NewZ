@@ -13,12 +13,21 @@ from newz.pilot import repoint, seeds
 #: Science refuses at the server a path its robots.txt permits.
 DROPPED = {"Skeptical Inquirer (Center for Inquiry)", "Royal Society Open Science"}
 
+#: Approved after this survey ran, from `newz/pilot/openings.py`. Their URLs came
+#: from that survey rather than from a repointing proposal.
+ADDED_AFTERWARDS = {"NARCAP", "Biodiversity Data Journal", "NeuroLogica"}
 
-def test_every_proposal_names_a_source_the_slate_had():
-    """A proposal for a publisher nobody read is a proposal about nothing."""
+
+def test_every_proposal_names_a_source_the_slate_had_at_the_time():
+    """A proposal for a publisher nobody read is a proposal about nothing.
+
+    Against the slate as it stood when these were drafted: the three sources
+    approved afterwards were never proposed for, and saying so is cheaper than
+    re-running a survey that already happened.
+    """
     slate = {seed.publisher for seed in seeds.SEEDS}
     proposed = {proposal.publisher for proposal in repoint.PROPOSALS}
-    assert proposed == slate | DROPPED
+    assert proposed == (slate | DROPPED) - ADDED_AFTERWARDS
 
 
 def test_the_confirmed_proposals_were_applied_and_the_rest_were_not():

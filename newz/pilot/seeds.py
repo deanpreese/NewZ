@@ -181,6 +181,10 @@ PINS: frozenset[tuple[str, str]] = frozenset(
 PUBLIC_DOMAIN = "US federal work, 17 U.S.C. 105 — full retention defensible"
 OPEN_LICENCE = "open licence claimed by the publisher — confirm the specific terms"
 UNCLEAR = "terms not established — a person must read them before retention"
+#: Observed on the page itself, which is more than "not established" and less
+#: than a finding: the survey read the words, and what they permit is still a
+#: person's reading.
+RESERVED = "the page asserts all rights reserved — retention needs permission, not inference"
 
 
 @dataclass(frozen=True, slots=True)
@@ -274,13 +278,28 @@ SEEDS: tuple[Seed, ...] = (
         terms=OPEN_LICENCE,
         caution="metadata is CC0; the articles it points at are not",
     ),
-    # ---- claimant and firsthand: four filled, one open ---------------------
+    # ---- claimant and firsthand: five ---------------------------------------
     #
-    # The fifth was the National UFO Reporting Center, dropped on 2026-09-05
-    # when the operator chose not to ask a source that had already declined the
-    # agent. Its slot is left open rather than filled from the next candidate
-    # down: which source speaks for a topic is a diet decision, and the two that
-    # could fill it are named in `gaps()` for the operator to choose between.
+    # The fifth was the National UFO Reporting Center until 2026-09-05, when the
+    # operator chose not to ask a source that had already declined the agent.
+    # NARCAP replaced it on the same day, from the surveyed candidates in
+    # `newz/pilot/openings.py`.
+    Seed(
+        bucket="claimant_or_firsthand",
+        topic="uap_and_aerospace_anomalies",
+        publisher="NARCAP",
+        url="https://www.narcap.org/",
+        why_this_role=(
+            "aviation witnesses — pilots and controllers — describing what they saw "
+            "with instrument context, which is firsthand testimony from a distinct "
+            "population than the public sighting databases"
+        ),
+        terms=RESERVED,
+        caution=(
+            "a root rather than a case listing: the survey reached it here and "
+            "repointing at the material is refinement the next survey settles"
+        ),
+    ),
     Seed(
         bucket="claimant_or_firsthand",
         topic="alternative_physics_and_energy",
@@ -331,8 +350,24 @@ SEEDS: tuple[Seed, ...] = (
         ),
         terms=PUBLIC_DOMAIN,
     ),
-    # The empirical slot on forteana was Royal Society Open Science, dropped on
-    # 2026-09-05: robots.txt permits the path and the server answers 403 anyway.
+    # The empirical slot on forteana was Royal Society Open Science until
+    # 2026-09-05, when it answered 403 on a path its own robots.txt permits.
+    Seed(
+        bucket="empirical_or_replication",
+        topic="forteana_cryptids_and_anomalous_natural_events",
+        publisher="Biodiversity Data Journal",
+        url="https://bdj.pensoft.net/articles",
+        why_this_role=(
+            "where a cryptid claim actually resolves: a new large vertebrate is "
+            "either described in the taxonomic literature or it is not described"
+        ),
+        terms=UNCLEAR,
+        caution=(
+            "the page links terms of use rather than stating a licence; open-access "
+            "publishing is not the same as permission to retain, and the difference "
+            "is a person's reading"
+        ),
+    ),
     Seed(
         bucket="empirical_or_replication",
         topic="anomalous_history_and_archaeology",
@@ -361,12 +396,28 @@ SEEDS: tuple[Seed, ...] = (
         ),
         terms=UNCLEAR,
     ),
-    # The skeptical slot on psi was the Skeptical Inquirer, dropped on 2026-09-05:
-    # its robots.txt disallows every path, including the one the slate held, so
-    # the slot had been unreadable since before the robots check existed. Losing
-    # it leaves psi and consciousness claims with no source in this diet able to
-    # contradict them — and psi is one of only three topics the prescription
-    # gave a skeptic to at all.
+    # The skeptical slot on psi was the Skeptical Inquirer until 2026-09-05,
+    # when its robots.txt turned out to disallow every path including the one
+    # the slate held. NeuroLogica replaced it, and the replacement is a trade
+    # rather than an equivalent: one author rather than an institution.
+    Seed(
+        bucket="skeptical_or_forensic",
+        topic="psi_and_consciousness_claims",
+        publisher="NeuroLogica",
+        url="https://theness.com/neurologicablog/",
+        why_this_role=(
+            "sustained skeptical analysis of parapsychology by a working "
+            "neurologist — the only route this diet has to contradicting a psi claim"
+        ),
+        terms=RESERVED,
+        caution=(
+            "one author rather than an institution, so a narrower basis than the "
+            "slot it fills; and the page asserts all rights reserved, which matters "
+            "more here than anywhere else in the slate — a skeptical source that "
+            "cannot be retained cannot establish a contradiction, and psi would be "
+            "unopposed with the slot apparently filled"
+        ),
+    ),
     Seed(
         bucket="skeptical_or_forensic",
         topic="alternative_physics_and_energy",
@@ -458,6 +509,24 @@ def gaps() -> dict[str, Any]:
         for topic, count in prescribed_per_topic.items()
         if count >= CONTESTED_THRESHOLD and topic not in has_skeptic
     }
+
+    # Opposed on paper. A skeptical source whose terms are not established reads
+    # as lead-only, and a lead cannot carry a contradiction — so the slot is
+    # filled and the topic is no better off than when it was empty. Reporting
+    # only the empty slots would make filling one look like solving it, which is
+    # the more comfortable of the two answers and the wrong one.
+    retainable_skeptic = {
+        seed.topic
+        for seed in SEEDS
+        if seed.bucket == SKEPTICAL and seed.terms not in (UNCLEAR, RESERVED)
+    }
+    nominally_opposed = {
+        topic
+        for topic, count in prescribed_per_topic.items()
+        if count >= CONTESTED_THRESHOLD
+        and topic in has_skeptic
+        and topic not in retainable_skeptic
+    }
     claimant_unclear = [
         seed.publisher
         for seed in SEEDS
@@ -526,6 +595,18 @@ def gaps() -> dict[str, Any]:
             ),
             "closes_when": "a skeptical or forensic source is found for each",
             "operator": _decision("decision:drop-the-unreadable"),
+        },
+        "opposed_on_paper": {
+            "finding": (
+                f"{len(nominally_opposed)} topic(s) have a skeptical source whose "
+                "retention terms are not established. A source that reads as "
+                "lead-only cannot carry a contradiction, so the slot is filled and "
+                "the topic is no better off than when it was empty. This is reported "
+                "separately from an open slot because filling one looks like solving "
+                "it and is not."
+            ),
+            "topics": sorted(nominally_opposed),
+            "closes_when": "the terms are read, or permission is given, per source",
         },
         "applied_repoints": {
             "finding": (

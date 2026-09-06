@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import collections
+
 import pytest
 
 from newz.acquisition.fetcher import FetchPolicy
@@ -9,12 +11,9 @@ from newz.acquisition.urlpolicy import inspect_url
 from newz.pilot import openings, seeds
 
 
-def test_a_candidate_is_proposed_for_every_open_slot():
-    open_slots = {
-        f"{slot['bucket']}/{slot['topic']}" for slot in seeds.gaps()["open_slots"]["slots"]
-    }
-    assert open_slots == set(openings.SLOTS)
-    assert set(openings.recommended()) == open_slots
+def test_the_three_slots_this_surveyed_are_now_filled():
+    assert seeds.gaps()["open_slots"]["slots"] == []
+    assert set(openings.recommended()) == set(openings.SLOTS)
 
 
 def test_a_wrong_path_is_not_reported_as_a_publisher_declining():
@@ -46,18 +45,25 @@ def test_the_recommendation_for_psi_states_the_trade_rather_than_hiding_it():
     assert psi.segments > 0
 
 
-def test_no_recommended_publisher_is_already_in_the_slate():
+def test_each_recommendation_holds_exactly_one_slot():
     """A second slot from a publisher already read is not an independent basis."""
-    held = {seed.publisher for seed in seeds.SEEDS}
+    held = collections.Counter(seed.publisher for seed in seeds.SEEDS)
     for candidate in openings.recommended().values():
-        assert candidate.publisher not in held, candidate.publisher
+        assert held[candidate.publisher] == 1, candidate.publisher
 
 
-def test_nothing_here_has_been_added_to_the_slate():
-    """Surveyed, not chosen. Enabling a source is a diet decision."""
+def test_only_the_recommended_candidates_reached_the_slate():
+    """The alternatives stay as the record of what was considered."""
     urls = {seed.url for seed in seeds.SEEDS}
-    assert not (urls & {c.url for c in openings.CANDIDATES})
-    assert "Surveyed, not chosen" in openings.report()["note"]
+    taken = {c.url for c in openings.CANDIDATES if c.url in urls}
+    assert taken == {c.url for c in openings.recommended().values()}
+
+
+def test_the_report_says_the_approved_sources_still_have_unread_terms():
+    report = openings.report()
+    assert report["approved"] == "2026-09-05"
+    assert "retention terms are still unread" in report["note"]
+    assert any("cannot carry a contradiction" in f for f in report["findings"])
 
 
 def test_the_report_says_what_declined_and_what_was_a_bad_guess():

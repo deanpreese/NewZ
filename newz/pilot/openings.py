@@ -22,8 +22,10 @@ reachable all along — which is the same lesson the URL repointing produced, in
 the same week, from the same habit of proposing a path and reading it back as a
 finding.
 
-**Nothing here is chosen.** Which source speaks for a topic is a diet decision.
-These are surveyed candidates with a recommendation and the reason for it.
+**Chosen on 2026-09-05.** The operator approved the three recommendations, and
+they are in `seeds.SEEDS`. This stays as the record of what else was considered
+and why it was not taken — a slate that shows only what was picked cannot be
+argued with, and the alternatives are half of the reasoning.
 """
 
 from __future__ import annotations
@@ -185,10 +187,16 @@ def report() -> dict[str, Any]:
             "Two of the three recommendations still point at a root or a listing "
             "root. Which source speaks for a topic is decided first; where in the "
             "site to read it is refinement after, and the survey is what settles it.",
+            "Two of the three assert all rights reserved on the page fetched. For "
+            "NeuroLogica that matters more than anywhere else in the slate: a "
+            "skeptical source that cannot be retained cannot carry a contradiction, "
+            "so psi would be unopposed with its slot apparently filled.",
         ],
+        "approved": "2026-09-05",
         "note": (
-            "Surveyed, not chosen. Enabling a source is a diet decision and the "
-            "operator's; `review()` still refuses a slate whose slots cannot state "
-            "their retention terms, and none of these have been read for terms."
+            "The three recommendations were approved and are in the slate. Their "
+            "retention terms are still unread: `review()` refuses a slate whose "
+            "slots cannot state their terms, and two of the three assert all rights "
+            "reserved on the page the survey fetched."
         ),
     }
