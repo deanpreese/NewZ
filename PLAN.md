@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.13.0
+**Document version:** 1.14.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -501,6 +501,21 @@ Deliver in order:
    evidence, which it is forbidden to do. Expansion is what makes the cap bite:
    at twenty sources an even diet sits near 5% a publisher, and the ceiling is
    reached by reading unevenly rather than by reading widely.
+
+   Expansion is not monotone, and the numbers say where. A topic holding three
+   or more slots is read seriously enough that symmetry applies to it, and
+   section 5.1 gives skeptical and forensic work 15% of the slate. At twenty,
+   three topics clear that threshold and three skeptical slots exist: every one
+   is served. At thirty, all eight clear it and four skeptical slots exist:
+   half the topics carry claims nothing in the diet can contradict. The slate
+   does not recover until fifty-one. Growing twenty to thirty adds ten reviewed
+   sources and halves the diet's capacity to refute anything — and every
+   individual addition looks reasonable while it happens.
+
+   So `newz/pilot/expansion.py` plans an expansion and states its cost, and
+   does not refuse it: enabling a source is a diet decision and the operator's.
+   What it will not do is hand over a larger slate without saying the larger
+   slate can refute less than the one it replaces.
 2. Widen reach: enable public audiences for output that has been publishing
    locally by default since Gate 4, as an explicit scoped operator act, with
    reach still independently lockable at any moment. The reader surface itself
@@ -633,6 +648,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.14.0 | 2026-09-05 | Phase 6 item 1: recorded that expansion is not monotone — between twenty-one and fifty slots the diet cannot contradict every topic it reads seriously — and that the plan states the cost rather than refusing the growth. |
 | 1.13.0 | 2026-09-05 | Observability: a daily figure counts every stage on one definition of the day, and the gate runs the clock-sensitive tests on both sides of Greenwich. |
 | 1.12.0 | 2026-09-05 | Phase 6 item 1: recorded that the concentration cap is enforced at reservation rather than reported after the fact, and why expansion is what makes it bite. |
 | 1.11.0 | 2026-09-05 | Split Gate 6 into the three drills that execute and the judgments that cannot, and stated what each drill is tested against failing on. |

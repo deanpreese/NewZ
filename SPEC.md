@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.14.0
+**Document version:** 1.15.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -262,6 +262,19 @@ MUST NOT invalidate an already-retained artifact, alter an admitted edge, or
 change an assessment — a system that reconsidered evidence because its reading
 became unbalanced would be letting a diet property reach a conclusion.
 
+Catalogue expansion MUST NOT reduce the share of seriously-read topics that the
+diet can contradict. A topic the slate reads seriously enough to need symmetry —
+`TRUE_NORTH.md` requires support and refutation to face the same burden — needs
+a source capable of contradicting it, and the scheduling shares do not
+guarantee one at every slate size. A larger catalogue that leaves topics
+unopposed is a worse catalogue, however many reviewed sources it adds, and an
+expansion plan MUST state that cost before the sources are enabled rather than
+report it afterwards.
+
+A publisher MUST NOT hold a share of the slate larger than its share of reads
+may be. A catalogue that cannot be read in proportion to itself without
+breaching section 5.1's cap is a catalogue that is not what it says, and the
+conflict MUST be reported at the point of expansion.
 Offered-menu concentration MUST be reported and MUST alert above 20%, but does
 not by itself block scheduling: with 20 pilot sources and at most two per
 publisher, ordinary
@@ -1208,6 +1221,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.15.0 | 2026-09-05 | Section 5.1: catalogue expansion may not reduce the share of seriously-read topics the diet can contradict, and a publisher may not hold a share of the slate larger than its share of reads may be. |
 | 1.14.0 | 2026-09-05 | Section 5.1: every refused reservation is recorded, not only a concentration refusal; the cap does not bind below the volume at which it could be satisfied, because the first read in an empty window is all of it; and a scoped exception must name an operator, a reason and an expiry. |
 | 1.13.0 | 2026-09-05 | Publication is refused when the claim's current assessment no longer follows from its current evidence. Withdrawing an edge obliges no reassessment, so a card could render a conclusion the ledger underneath had stopped supporting. |
 | 1.12.0 | 2026-09-05 | Section 13: reproducibility requires the recorded derivation inputs, not the versions alone, and names the limit of replay — a superseded assessment is unreplayable rather than re-derived under current rules. |

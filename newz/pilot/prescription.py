@@ -69,23 +69,27 @@ class SlotSpec:
         }
 
 
-def topic_allocation(size: int = SLATE_SIZE) -> tuple[dict[str, int], list[str]]:
-    """Allocate slots across topics by largest remainder, and show the working."""
-    exact = {topic: share * size for topic, share in TOPIC_TARGETS.items()}
-    floors = {topic: int(value) for topic, value in exact.items()}
+def _largest_remainder(targets: dict[str, float], size: int) -> tuple[dict[str, int], list[str]]:
+    """Allocate `size` whole slots across weighted shares, and show the working."""
+    exact = {name: share * size for name, share in targets.items()}
+    floors = {name: int(value) for name, value in exact.items()}
     remaining = size - sum(floors.values())
 
-    # Ties broken by topic name so the allocation is the same every run.
-    ranked = sorted(
-        exact.items(), key=lambda item: (-(item[1] - int(item[1])), item[0])
-    )
+    # Ties broken by name so the allocation is the same every run.
+    ranked = sorted(exact.items(), key=lambda item: (-(item[1] - int(item[1])), item[0]))
     working = [
-        f"{topic}: {TOPIC_TARGETS[topic]:.0%} of {size} is {value:.2f}"
-        for topic, value in sorted(exact.items())
+        f"{name}: {targets[name]:.0%} of {size} is {value:.2f}"
+        for name, value in sorted(exact.items())
     ]
-    for topic, _ in ranked[:remaining]:
-        floors[topic] += 1
-        working.append(f"{topic}: +1 from the largest remainder")
+    for name, _ in ranked[:remaining]:
+        floors[name] += 1
+        working.append(f"{name}: +1 from the largest remainder")
+    return floors, working
+
+
+def topic_allocation(size: int = SLATE_SIZE) -> tuple[dict[str, int], list[str]]:
+    """Allocate slots across topics by largest remainder, and show the working."""
+    floors, working = _largest_remainder(TOPIC_TARGETS, size)
 
     # Every topic must appear: SPEC 5.2 requires all eight covered, and a
     # share small enough to floor to zero would silently drop one.
@@ -93,6 +97,24 @@ def topic_allocation(size: int = SLATE_SIZE) -> tuple[dict[str, int], list[str]]
         if floors[topic] == 0:
             raise ValueError(
                 f"{topic} allocated no slot; all eight initial topics must be covered"
+            )
+    return floors, working
+
+
+def bucket_allocation(size: int = SLATE_SIZE) -> tuple[dict[str, int], list[str]]:
+    """Allocate slots across scheduling buckets, the same way.
+
+    At twenty this reproduces section 5.2's stated counts exactly, which is what
+    lets the slate grow past twenty at all: the specification fixes a
+    distribution and states one instance of it, and a catalogue that expanded by
+    adding whatever was available would drift off that distribution while every
+    individual addition looked reasonable.
+    """
+    floors, working = _largest_remainder(BUCKET_TARGETS, size)
+    for bucket in BUCKET_TARGETS:
+        if floors[bucket] == 0:
+            raise ValueError(
+                f"{bucket} allocated no slot at size {size}; every bucket must be served"
             )
     return floors, working
 
@@ -118,6 +140,66 @@ CLAIMANT = "claimant_or_firsthand"
 #: cost rather than an oversight.
 CONTESTED_THRESHOLD = 3
 SKEPTICAL_THRESHOLD = CONTESTED_THRESHOLD
+
+
+#: Buckets a topic needs at most one of before anything else is distributed.
+#: Order matters and is `_score`'s order: something that can carry a promotion,
+#: then something that can contradict, then the claimant's own voice.
+SCARCE = (EVIDENCE_WEIGHTED, frozenset({SKEPTICAL}), frozenset({CLAIMANT}))
+
+
+def _reserve_scarce_buckets(
+    allocation: dict[str, int],
+    slots: dict[str, int],
+    pins: frozenset[tuple[str, str]],
+) -> tuple[dict[str, dict[str, int]], dict[str, int], dict[str, int]]:
+    """Give every topic one of each scarce bucket before distributing the rest.
+
+    The search ranks each topic's options in isolation and takes them in order,
+    so at twenty slots — where the scarce buckets are almost exactly as large as
+    the number of topics — it lands on the right answer and proves it. Past that
+    the first topic considered takes several skeptical slots because nothing
+    stops it, and the topics considered later get none. At sixty slots that left
+    five of eight topics with no skeptical source: a slate three times the size
+    of the pilot and worse at the thing the pilot was built to do.
+
+    This is not a change to what a good assignment is. `_score` already says
+    promotion capacity first, then refutability, then representation; this
+    settles those three before the search runs, so the search decides only what
+    `_score` was going to decide last anyway.
+
+    A topic below `CONTESTED_THRESHOLD` is not reserved a skeptic or a claimant.
+    That is the same rule the ranking applies: five claimant slots cannot cover
+    eight topics, and the menu targets already say which topics matter most.
+    """
+    reserved: dict[str, dict[str, int]] = {}
+    left = dict(slots)
+    remaining = dict(allocation)
+    pinned = {topic for _, topic in pins}
+
+    for group in SCARCE:
+        needs_it = [
+            topic
+            for topic in sorted(allocation, key=lambda t: (-allocation[t], t))
+            if remaining[topic] > 0
+            and topic not in pinned
+            and (group is SCARCE[0] or allocation[topic] >= CONTESTED_THRESHOLD)
+        ]
+        for topic in needs_it:
+            # The emptiest qualifying bucket, so the scarce ones are not spent
+            # on the topics that happen to be considered first.
+            options = sorted(
+                (bucket for bucket in group if left.get(bucket, 0) > 0),
+                key=lambda bucket: (-left[bucket], bucket),
+            )
+            if not options:
+                break
+            bucket = options[0]
+            reserved.setdefault(topic, {})
+            reserved[topic][bucket] = reserved[topic].get(bucket, 0) + 1
+            left[bucket] -= 1
+            remaining[topic] -= 1
+    return reserved, left, remaining
 
 
 def _score(assignment: dict[str, dict[str, int]], allocation: dict[str, int]) -> tuple[int, ...]:
@@ -150,14 +232,92 @@ def _score(assignment: dict[str, dict[str, int]], allocation: dict[str, int]) ->
     return (promotable, refutable, represented, spread, -concentrated)
 
 
-def _ideal(allocation: dict[str, int]) -> tuple[int, ...]:
-    """The best score any assignment could reach, used to stop searching early."""
-    spread = sum(min(count, len(REQUIRED_SLOTS)) for count in allocation.values())
-    return (len(allocation), len(allocation), len(allocation), spread, 0)
+def _ideal(allocation: dict[str, int], slots: dict[str, int]) -> tuple[int, ...]:
+    """The best score any assignment could actually reach.
+
+    A bound is only useful if something can reach it. The first version asked
+    for every topic promotable, refutable and represented, which is true at
+    twenty and false at thirty: fifteen percent of thirty is four or five
+    skeptical slots against eight topics that all clear the contested
+    threshold, so at most five of them can have a skeptic however the slots are
+    dealt. An unreachable ceiling is not a ceiling — the search never stopped,
+    spent its whole budget every time, and reported "not proven optimal" about
+    answers that were optimal.
+
+    So each term is bounded by the capacity that produces it.
+    """
+    topics = len(allocation)
+    contested = sum(1 for count in allocation.values() if count >= CONTESTED_THRESHOLD)
+    settled = topics - contested
+
+    evidence = sum(slots.get(bucket, 0) for bucket in EVIDENCE_WEIGHTED)
+    promotable = min(topics, evidence)
+    refutable = settled + min(contested, slots.get(SKEPTICAL, 0))
+    represented = settled + min(contested, slots.get(CLAIMANT, 0))
+
+    # A topic cannot spread wider than the buckets that exist, and the buckets
+    # cannot hold more distinct topics than they have slots.
+    by_topic = sum(min(count, len(slots)) for count in allocation.values())
+    by_bucket = sum(min(count, topics) for count in slots.values())
+    spread = min(by_topic, by_bucket)
+    return (promotable, refutable, represented, spread, spread - sum(allocation.values()))
+
+
+#: How many placements the search will consider before settling for the best it
+#: has found. The ceiling in `_ideal` is optimistic: it asks for every topic
+#: spread across distinct buckets, which is reachable at twenty and not at
+#: twenty-four, where several topics each want all five buckets and the smallest
+#: bucket holds two. When the ceiling is unreachable the search has nothing to
+#: stop it, and exhausting the space is not minutes but hours.
+#:
+#: So it is bounded. Options are generated best-first, so the good assignments
+#: are found early and the budget cuts off the long tail of equivalent and worse
+#: ones. `prescription_report` says whether the result was proven optimal or
+#: merely the best found, because "we did not search the whole space" is a fact
+#: about the answer and belongs with it.
+NODE_BUDGET = 50_000
 
 
 def assign(
-    allocation: dict[str, int], pins: frozenset[tuple[str, str]] = frozenset()
+    allocation: dict[str, int],
+    pins: frozenset[tuple[str, str]] = frozenset(),
+    slots: dict[str, int] | None = None,
+    node_budget: int = NODE_BUDGET,
+) -> dict[str, dict[str, int]]:
+    """The better of two constructions, by the score that encodes the spec.
+
+    The plain search is right at twenty and starves the topics it considers
+    last at sixty; reserving the scarce buckets first is right at sixty and
+    costs a unit of spread at twenty. Neither dominates, both are cheap, and
+    `_score` already says which answer is better — so both are built and the
+    better one is returned, rather than one being tuned until it wins.
+    """
+    full = dict(slots) if slots is not None else dict(REQUIRED_SLOTS)
+    plain = _assign(allocation, pins, full, node_budget)
+
+    reserved, left, remaining = _reserve_scarce_buckets(allocation, full, pins)
+    if not reserved:
+        return plain
+    seeded = _merge(_assign(remaining, pins, left, node_budget), reserved)
+    return max((plain, seeded), key=lambda option: _score(option, allocation))
+
+
+def _merge(
+    placed: dict[str, dict[str, int]], reserved: dict[str, dict[str, int]]
+) -> dict[str, dict[str, int]]:
+    merged = {topic: dict(buckets) for topic, buckets in placed.items()}
+    for topic, held in reserved.items():
+        for bucket, count in held.items():
+            merged.setdefault(topic, {})
+            merged[topic][bucket] = merged[topic].get(bucket, 0) + count
+    return {topic: dict(sorted(merged[topic].items())) for topic in sorted(merged)}
+
+
+def _assign(
+    allocation: dict[str, int],
+    pins: frozenset[tuple[str, str]],
+    slots: dict[str, int],
+    node_budget: int,
 ) -> dict[str, dict[str, int]]:
     """Place each topic's slots into buckets, best assignment by `_score`.
 
@@ -168,24 +328,30 @@ def assign(
     material — the topic most defined by primary documents — no primary slot.
 
     The search is ordered so the best candidates come first and stops as soon as
-    it reaches a score nothing could beat. Exhausting the space took minutes;
-    reaching the ceiling takes no time at all, and a search that has provably
-    hit its ceiling has nothing left to find.
+    it reaches a score nothing could beat, or as soon as it has spent its node
+    budget. Reaching the ceiling takes no time at all where the ceiling is
+    reachable.
     """
+    if sum(slots.values()) != sum(allocation.values()):
+        raise ValueError(
+            f"{sum(slots.values())} bucket slots against {sum(allocation.values())} topic slots"
+        )
     for bucket, topic in sorted(pins):
-        if bucket not in REQUIRED_SLOTS:
+        if bucket not in slots:
             raise ValueError(f"{bucket} is not a slot bucket")
         if topic not in allocation:
             raise ValueError(f"{topic} has no slots allocated")
 
     topics = sorted(allocation, key=lambda topic: (-allocation[topic], topic))
-    buckets = sorted(REQUIRED_SLOTS, key=lambda bucket: (-REQUIRED_SLOTS[bucket], bucket))
+    buckets = sorted(slots, key=lambda bucket: (-slots[bucket], bucket))
+
     evidence_index = [i for i, bucket in enumerate(buckets) if bucket in EVIDENCE_WEIGHTED]
     skeptical_index = buckets.index(SKEPTICAL)
     claimant_index = buckets.index(CLAIMANT)
-    ceiling = _ideal(allocation)
+    ceiling = _ideal(allocation, slots)
 
     best: tuple[tuple[int, ...], list[tuple[str, tuple[int, ...]]]] | None = None
+    spent = 0
 
     def distributions(topic: str, capacity: list[int]) -> list[tuple[int, ...]]:
         """Ways to place this topic's slots, most promising first."""
@@ -223,7 +389,10 @@ def assign(
         return options
 
     def search(index: int, capacity: list[int], chosen: list[tuple[str, tuple[int, ...]]]) -> bool:
-        nonlocal best
+        nonlocal best, spent
+        spent += 1
+        if spent > node_budget:
+            return True
         if index == len(topics):
             assignment = {
                 topic: {buckets[i]: value for i, value in enumerate(counts) if value}
@@ -242,7 +411,7 @@ def assign(
                 return True
         return False
 
-    search(0, [REQUIRED_SLOTS[bucket] for bucket in buckets], [])
+    search(0, [slots[bucket] for bucket in buckets], [])
     if best is None:
         raise ValueError(
             "no assignment satisfies the slot counts with these pins: "
@@ -252,6 +421,37 @@ def assign(
     return {
         topic: {buckets[i]: value for i, value in enumerate(counts) if value}
         for topic, counts in best[1]
+    }
+
+
+def prescription_report(
+    size: int = SLATE_SIZE, pins: frozenset[tuple[str, str]] = frozenset()
+) -> dict[str, Any]:
+    """The prescription with its derivation, and whether it was proven optimal."""
+    allocation, topic_working = topic_allocation(size)
+    slots, bucket_working = bucket_allocation(size)
+    assignment = assign(allocation, pins, slots)
+    score = _score(assignment, allocation)
+    ceiling = _ideal(allocation, slots)
+    return {
+        "size": size,
+        "topics": allocation,
+        "buckets": slots,
+        "working": topic_working + bucket_working,
+        "assignment": assignment,
+        "score": list(score),
+        "ceiling": list(ceiling),
+        "proven_optimal": score >= ceiling,
+        "shortfall": [
+            name
+            for name, got, want in zip(
+                ("promotable", "refutable", "represented", "spread", "concentration"),
+                score,
+                ceiling,
+                strict=True,
+            )
+            if got < want
+        ],
     }
 
 
@@ -274,11 +474,12 @@ def prescribe(
     rewritten until it produces the answer somebody already wanted.
     """
     allocation, _ = topic_allocation(size)
-    assignment = assign(allocation, pins)
+    slots, _ = bucket_allocation(size)
+    assignment = assign(allocation, pins, slots)
 
     specs: list[SlotSpec] = []
     index = 0
-    for bucket in sorted(REQUIRED_SLOTS, key=lambda b: (-REQUIRED_SLOTS[b], b)):
+    for bucket in sorted(slots, key=lambda b: (-slots[b], b)):
         for topic in sorted(assignment):
             for _ in range(assignment[topic].get(bucket, 0)):
                 specs.append(
@@ -288,7 +489,7 @@ def prescribe(
                         topic=topic,
                         rationale=(
                             f"{TOPIC_TARGETS[topic]:.0%} of the menu is {topic}; "
-                            f"{REQUIRED_SLOTS[bucket]} of {size} slots are {bucket}"
+                            f"{slots[bucket]} of {size} slots are {bucket}"
                         ),
                     )
                 )
