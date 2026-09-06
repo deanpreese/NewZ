@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.14.1
+**Document version:** 1.15.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -528,7 +528,23 @@ Deliver in order:
    was delivered in Phase 4 and has been serving locally since.
 3. Add R2 source classes after direct adversarial review.
 4. Add R3 intake only after the isolated workflow and exact-revision approval
-   are exercised in production-like tests.
+   are exercised in production-like tests. The workflow is
+   `newz/control/isolation.py` and the exercise is `tests/test_isolation.py`,
+   which runs the real path — real store, real migrations, real fetch, real
+   parse, real extraction call — with the stub standing in only for the far
+   side of the local model endpoint, and most of the tests asserting it is
+   never reached.
+
+   Two things were missing and are what that module adds. **Nothing autonomous
+   opens an R3 case**: a workflow the system can enter by itself is not
+   isolated from it, and raising a claim's risk is the system's while deciding
+   to work on it anyway is not. **The model does not read quarantined
+   material**: the boundary that stopped a model granting capability said
+   nothing about what a model is shown, and extraction would have sent an R3
+   body to the endpoint as readily as any other. The exception section 8 allows
+   is built narrow — one artifact, one operator, one stated necessity, one
+   expiry, spent on use — because a standing approval is the exclusion
+   rescinded while appearing to be honoured.
 5. Add OCR, transcript, and media-forensics paths as separate releases, each
    with fixtures, provenance rules, and rollback.
 6. Consider adaptive source ranking only after external review can measure
@@ -654,6 +670,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.15.0 | 2026-09-05 | Phase 6 item 4: the R3 isolated workflow is built and exercised — operator-only intake, and a model boundary covering what a model is shown rather than only what it may grant. |
 | 1.14.1 | 2026-09-05 | Recorded the operator's expansion target: 51 slots, at Phase 6, after Gate 5. |
 | 1.14.0 | 2026-09-05 | Phase 6 item 1: recorded that expansion is not monotone — between twenty-one and fifty slots the diet cannot contradict every topic it reads seriously — and that the plan states the cost rather than refusing the growth. |
 | 1.13.0 | 2026-09-05 | Observability: a daily figure counts every stage on one definition of the day, and the gate runs the clock-sensitive tests on both sides of Greenwich. |

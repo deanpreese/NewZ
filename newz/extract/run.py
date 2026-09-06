@@ -12,8 +12,10 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from datetime import datetime
 
 from newz.acquisition import artifacts
+from newz.control.isolation import guard_model_read
 from newz.extract.prompts import system_prompt, user_prompt
 from newz.extract.proposal import (
     ProposalUnreadable,
@@ -51,11 +53,24 @@ def extract(
     client: ModelClient,
     segments: tuple[Segment, ...] | None = None,
     source_name: str = "",
+    now: datetime | None = None,
 ) -> ExtractionRecord:
     """Ask the model to propose, keep what verifies, and record all of it."""
     segments = segments if segments is not None else segments_for(store, artifact_id)
     if not segments:
         raise ValueError(f"{artifact_id} has no segments; parse it first")
+
+    # Before the prompt is built, not after. `SPEC.md` section 8 excludes private
+    # personal data from prompts unless an operator has recorded that a
+    # particular read is strictly necessary, and the point of the rule is that
+    # the text never reaches the endpoint — a check that ran after the call
+    # would be describing something that had already happened.
+    #
+    # The model boundary already refused to let a model *grant* capability. It
+    # said nothing about what a model is *shown*, and those are different
+    # protections: one stops a wrong answer being believed, this stops a right
+    # answer being produced somewhere it should not have been asked.
+    guard_model_read(store, artifact_id, now or datetime.now())
 
     system = system_prompt()
     user = user_prompt(segments, source_name)

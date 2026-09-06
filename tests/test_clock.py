@@ -19,8 +19,6 @@ import sqlite3
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
-import pytest
-
 from newz.clock import as_utc, from_ledger, stamp, utc_now
 
 PACKAGE = Path(__file__).resolve().parents[1] / "newz"
@@ -36,10 +34,18 @@ MAY_FORMAT_A_TIMESTAMP = {"clock.py"}
 
 
 def test_a_naive_moment_is_read_as_local_and_written_as_utc():
-    """What a caller writing `datetime.now()` means."""
-    local = datetime.now()
-    assert as_utc(local) == pytest.approx(utc_now(), abs=timedelta(seconds=2))
+    """What a caller writing `datetime.now()` means.
+
+    Compared against one instant taken twice rather than two instants taken a
+    moment apart: an earlier version allowed two seconds of drift between two
+    `now()` calls, which passes or fails on how busy the machine is and says
+    nothing about timezones either way.
+    """
+    instant = datetime.now(UTC)
+    local = instant.astimezone().replace(tzinfo=None)
+    assert as_utc(local) == instant
     assert as_utc(local).tzinfo is UTC
+    assert as_utc(utc_now()).tzinfo is UTC
 
 
 def test_an_aware_moment_keeps_its_instant():
@@ -73,8 +79,10 @@ def test_a_ledger_timestamp_reads_back_as_the_instant_it_recorded():
 
 
 def test_a_round_trip_through_the_ledger_survives_the_local_zone():
-    moment = datetime.now()
-    assert from_ledger(stamp(moment)) == pytest.approx(as_utc(moment), abs=timedelta(seconds=1))
+    """Exact to the second the ledger stores, with no tolerance for a slow host."""
+    instant = datetime.now(UTC).replace(microsecond=0)
+    local = instant.astimezone().replace(tzinfo=None)
+    assert from_ledger(stamp(local)) == instant
 
 
 # ---------------------------------------------------------------------------

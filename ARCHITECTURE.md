@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.15.0
+**Document version:** 1.16.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -197,7 +197,8 @@ ever changes.
 SQLite (WAL, one file, foreign keys enforced)
 ├── catalog         sources, revisions, publishers, independence
 ├── control         diet epochs, policy bundles, budgets, operations,
-│                  refused reservations, concentration exceptions
+│                  refused reservations, concentration exceptions,
+│                  R3 cases, quarantine and its access log
 ├── policy          what each policy version contained, by digest
 ├── acquisition     attempts, responses, sightings, parse executions
 ├── evidence        spans, assertions, claims, bases, edges, assessments
@@ -359,6 +360,12 @@ storage-adapter change and does not alter the domain contract.
   the interest register to an assessment.
 - The model is small and local by design, so no rule may depend on model
   strength to hold.
+- A model may not grant capability, and may not be shown quarantined material.
+  Those are separate protections: one stops a wrong answer being believed, the
+  other stops a right answer being produced somewhere it should not be asked.
+- R3 intake is a person's act. The system may raise a claim's risk on its own;
+  deciding to work on it anyway is not something it may decide.
+- Every access to quarantined material is recorded, including the refused ones.
 - Attempted effect and confirmed outcome are never conflated, on acquisition or
   on publication.
 - The system may choose what to raise and never what the operator can see.
@@ -418,6 +425,7 @@ stage, left by a recorded cause and a regression fixture under `SPEC.md` section
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.16.0 | 2026-09-05 | The R3 isolated workflow: intake is an operator act, quarantined material never reaches a prompt without a single-use recorded approval, and every access to it is logged including the refused ones. |
 | 1.15.0 | 2026-09-05 | One conversion and one shape for every ledger timestamp: caller-supplied moments were written in local time and in a format that sorts against SQLite's own. |
 | 1.14.0 | 2026-09-05 | Named the ledger's timezone: rows are stamped UTC, the operator's day is local, and comparing them without converting silently disabled the per-host pacing floor and misreported the daily funnel. |
 | 1.13.0 | 2026-09-05 | The publisher concentration cap is enforced at reservation and every refused reservation is recorded; both were specified and neither was built. |

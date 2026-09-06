@@ -1365,4 +1365,88 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        19,
+        "r3_isolated_workflow",
+        """
+        -- R3 intake is an operator act. Nothing autonomous opens one of these:
+        -- SPEC section 8 puts medicine, elections, finance and alleged crimes by
+        -- living people behind an isolated workflow, and a workflow the system
+        -- can enter by itself is not isolated from it.
+        CREATE TABLE r3_cases (
+            id           TEXT PRIMARY KEY,
+            claim_id     TEXT NOT NULL REFERENCES claims(id),
+            subject      TEXT NOT NULL,
+            opened_by    TEXT NOT NULL,
+            reason       TEXT NOT NULL,
+            closed_at    TEXT,
+            closed_reason TEXT NOT NULL DEFAULT '',
+            opened_at    TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX r3_cases_by_claim ON r3_cases (claim_id);
+
+        CREATE TRIGGER r3_cases_keep_their_opening
+        BEFORE UPDATE OF id, claim_id, subject, opened_by, reason, opened_at ON r3_cases
+        BEGIN
+            SELECT RAISE(ABORT, 'an R3 case records why it opened; close it, do not rewrite it');
+        END;
+
+        -- Which retained bodies belong to a case. Quarantine is a property of
+        -- the artifact rather than of the claim, because one body can carry
+        -- material about a person whatever claim was being investigated when it
+        -- was fetched.
+        CREATE TABLE quarantined_artifacts (
+            artifact_id  TEXT NOT NULL REFERENCES artifacts(id),
+            case_id      TEXT NOT NULL REFERENCES r3_cases(id),
+            reason       TEXT NOT NULL,
+            recorded_at  TEXT NOT NULL,
+            PRIMARY KEY (artifact_id, case_id)
+        ) STRICT;
+
+        -- SPEC section 8: every access to R3 quarantined material is logged.
+        -- Including the refused ones. An access that was turned away is a fact
+        -- about what something tried to do.
+        CREATE TABLE quarantine_access (
+            id           INTEGER PRIMARY KEY,
+            artifact_id  TEXT NOT NULL,
+            case_id      TEXT NOT NULL,
+            actor        TEXT NOT NULL,
+            purpose      TEXT NOT NULL,
+            permitted    INTEGER NOT NULL,
+            detail       TEXT NOT NULL DEFAULT '',
+            at           TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX quarantine_access_by_artifact ON quarantine_access (artifact_id, at);
+
+        CREATE TRIGGER quarantine_access_is_immutable
+        BEFORE UPDATE ON quarantine_access
+        BEGIN
+            SELECT RAISE(ABORT, 'an access happened; record another, do not edit it');
+        END;
+
+        -- The narrow exception SPEC section 8 allows: private personal data is
+        -- excluded from prompts "unless strictly necessary and approved". An
+        -- approval names one artifact, one purpose, one operator and an expiry.
+        -- A standing approval would be the exclusion rescinded.
+        CREATE TABLE model_read_approvals (
+            id           TEXT PRIMARY KEY,
+            artifact_id  TEXT NOT NULL,
+            case_id      TEXT NOT NULL REFERENCES r3_cases(id),
+            approved_by  TEXT NOT NULL,
+            necessity    TEXT NOT NULL,
+            expires_at   TEXT NOT NULL,
+            used_at      TEXT,
+            recorded_at  TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TRIGGER model_read_approvals_are_single_use
+        BEFORE UPDATE OF id, artifact_id, case_id, approved_by, necessity, expires_at
+            ON model_read_approvals
+        BEGIN
+            SELECT RAISE(ABORT, 'an approval is a dated act; grant another one');
+        END;
+        """,
+    ),
 )
