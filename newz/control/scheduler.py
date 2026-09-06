@@ -18,6 +18,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from newz.clock import stamp
 from newz.control.budget import (
     MONTHLY_REQUEST_CEILING,
     MONTHLY_STORAGE_CEILING_BYTES,
@@ -285,7 +286,7 @@ def reserve(
 
 def claim(store, operation_id: str, owner: str, now: datetime, lease_seconds: int = 300) -> bool:
     """Take the lease, if it is free or expired. Returns whether it was taken."""
-    expires = (now + timedelta(seconds=lease_seconds)).isoformat(timespec="seconds")
+    expires = stamp(now + timedelta(seconds=lease_seconds))
     with store.write() as connection:
         cursor = connection.execute(
             "UPDATE operations SET state = ?, lease_owner = ?, lease_expires_at = ? "
@@ -298,7 +299,7 @@ def claim(store, operation_id: str, owner: str, now: datetime, lease_seconds: in
                 operation_id,
                 OperationState.RESERVED.value,
                 OperationState.LEASED.value,
-                now.isoformat(timespec="seconds"),
+                stamp(now),
             ),
         )
         return cursor.rowcount == 1
@@ -311,7 +312,7 @@ def reclaimable(store, now: datetime) -> tuple[str, ...]:
         for row in store.query(
             "SELECT id FROM operations WHERE state = ? AND lease_expires_at <= ? ORDER BY id",
             OperationState.LEASED.value,
-            now.isoformat(timespec="seconds"),
+            stamp(now),
         )
     )
 

@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
+from newz.clock import as_utc, from_ledger
 from newz.domain.enums import (
     AppraisalDimension,
     EdgeRelation,
@@ -190,7 +191,7 @@ def test_a_correction_attaches_to_the_output_and_confirms_inside_the_window(
         surface=surface,
         now=NOW,
     )
-    assert datetime.fromisoformat(due) == NOW + timedelta(minutes=15)
+    assert from_ledger(due) == as_utc(NOW) + timedelta(minutes=15)
 
     status = confirm_revocation(store, "revocation:x1", surface, NOW + timedelta(minutes=2))
     assert status == CONFIRMED

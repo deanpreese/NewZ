@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
+from newz.clock import stamp
 from newz.control.audit import record as audit_record
 from newz.present.cards import load_card
 from newz.publish.appraisal import class_of, sample_for_review
@@ -144,7 +145,7 @@ def _open_revocation(
     reason: str,
     now: datetime,
 ) -> str:
-    due = (now + timedelta(minutes=REVOCATION_WINDOW_MINUTES)).isoformat(timespec="seconds")
+    due = stamp(now + timedelta(minutes=REVOCATION_WINDOW_MINUTES))
     with store.write() as connection:
         connection.execute(
             "INSERT INTO revocations (id, kind, claim_id, card_revision_id, class, reason, "
@@ -156,7 +157,7 @@ def _open_revocation(
                 card_revision_id,
                 class_of(store, card_revision_id),
                 reason,
-                now.isoformat(timespec="seconds"),
+                stamp(now),
                 due,
                 ATTEMPTED,
             ),
@@ -186,7 +187,7 @@ def correct(
     )
     surface.attach_correction(
         claim_id,
-        {"revocation_id": revocation_id, "reason": reason, "at": now.isoformat(timespec="seconds")},
+        {"revocation_id": revocation_id, "reason": reason, "at": stamp(now)},
     )
     return due
 
@@ -223,7 +224,7 @@ def retract(
             "claim_id": claim_id,
             "card_revision_id": card_revision_id,
             "explanation": explanation,
-            "at": now.isoformat(timespec="seconds"),
+            "at": stamp(now),
         },
     )
     with store.write() as connection:
@@ -273,7 +274,7 @@ def confirm_revocation(
             "WHERE id = ?",
             (
                 status,
-                now.isoformat(timespec="seconds"),
+                stamp(now),
                 f"local surface at {surface.root}",
                 revocation_id,
             ),

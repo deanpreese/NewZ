@@ -733,6 +733,7 @@ footer{
     <li>Current state is derived from append-only events.</li>
     <li>Every consequential row records policy and implementation versions.</li>
     <li>The ledger's time is UTC and the operator's day is local — any comparison between the two converts first, because subtracting one from the other yields the UTC offset and looks correct from inside a single timezone.</li>
+    <li>Every timestamp written to the ledger passes through one conversion, in one shape: UTC, second resolution, space-separated, as SQLite writes it. Timestamps are compared as text and <code>T</code> sorts after a space, so a column holding both shapes orders wrongly for exactly the rows the other path wrote.</li>
     <li>Duplicate publication is distinct from independent basis.</li>
     <li>A failed or retracted edge invalidates all dependent projections.</li>
     <li>Search, embeddings, prose, and prior NewZ output are never external evidence.</li>

@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from newz.clock import stamp
 from newz.control.audit import record as audit_record
 from newz.domain.enums import (
     LIVE_TASK_STATES,
@@ -70,7 +71,7 @@ class GeneratedTask:
 
 def _due(now: datetime, lane: EvidenceLane) -> str:
     hours = COUNTERPART_DUE_HOURS if lane is EvidenceLane.INDEPENDENT_COUNTERPART else 24 * 14
-    return (now + timedelta(hours=hours)).isoformat(timespec="seconds")
+    return stamp(now + timedelta(hours=hours))
 
 
 def generate_tasks(
@@ -207,7 +208,7 @@ def overdue_counterparts(store: Store, now: datetime) -> tuple[str, ...]:
             "SELECT id FROM tasks WHERE lane = ? AND due <= ? AND state IN "
             f"({','.join('?' * len(LIVE_TASK_STATES))}) ORDER BY id",
             EvidenceLane.INDEPENDENT_COUNTERPART.value,
-            now.isoformat(timespec="seconds"),
+            stamp(now),
             *sorted(state.value for state in LIVE_TASK_STATES),
         )
     )
@@ -227,7 +228,7 @@ def expirable(store: Store, now: datetime) -> tuple[str, ...]:
         for row in store.query(
             "SELECT id FROM tasks WHERE due <= ? AND state IN "
             f"({','.join('?' * len(LIVE_TASK_STATES))}) ORDER BY id",
-            now.isoformat(timespec="seconds"),
+            stamp(now),
             *sorted(state.value for state in LIVE_TASK_STATES),
         )
     )

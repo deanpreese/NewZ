@@ -22,6 +22,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
+from newz.clock import stamp
 from newz.domain.enums import RiskTier
 from newz.publish.surface import LocalSurface
 from newz.store.db import Store
@@ -87,8 +88,13 @@ class Reader:
         return dict(row)
 
     def _rate_check(self, token_id: str, now: datetime) -> None:
-        minute = (now - timedelta(minutes=1)).isoformat(timespec="seconds")
-        hour = (now - timedelta(hours=1)).isoformat(timespec="seconds")
+        # Both cutoffs are stamped the way the log is, in the ledger's timezone.
+        # Rate limiting on a local wall clock breaks twice a year: at the autumn
+        # fall-back the hour repeats, so an hour of accesses already in the
+        # table sit ahead of the new cutoff and the limiter refuses a reader who
+        # has done nothing; in spring it forgets an hour of them.
+        minute = stamp(now - timedelta(minutes=1))
+        hour = stamp(now - timedelta(hours=1))
         recent = self.store.one(
             "SELECT COUNT(*) AS n FROM reader_access WHERE token_id = ? AND accessed_at > ?",
             token_id,
@@ -109,7 +115,7 @@ class Reader:
             connection.execute(
                 "INSERT INTO reader_access (token_id, surface, target, outcome, accessed_at) "
                 "VALUES (?, ?, ?, ?, ?)",
-                (token_id, str(self.surface.root), target, outcome, now.isoformat(timespec="seconds")),
+                (token_id, str(self.surface.root), target, outcome, stamp(now)),
             )
 
     def read(self, claim_id: str, now: datetime | None = None) -> dict[str, Any]:

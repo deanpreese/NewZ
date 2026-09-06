@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
+from newz.clock import as_utc, from_ledger, stamp
 from newz.control.scheduler import ReservationRefused, reserve
 from newz.domain.enums import (
     ClaimKind,
@@ -133,9 +134,10 @@ def test_the_counterpart_task_is_due_within_seventy_two_hours(store):
     claim = add_claim(store, "claim:e", "event_or_observation", "something happened", "R1")
     generated = {task.lane: task for task in generate_tasks(store, claim, ClaimKind.EVENT_OR_OBSERVATION, NOW)}
     counterpart = generated[EvidenceLane.INDEPENDENT_COUNTERPART]
-    assert datetime.fromisoformat(counterpart.due) == NOW + timedelta(hours=72)
+    # Read back the way the ledger stores it: UTC, whatever zone NOW is in.
+    assert from_ledger(counterpart.due) == as_utc(NOW) + timedelta(hours=72)
     other = generated[EvidenceLane.PRIMARY_RECORD]
-    assert datetime.fromisoformat(other.due) > NOW + timedelta(hours=72)
+    assert from_ledger(other.due) > as_utc(NOW) + timedelta(hours=72)
 
 
 def test_tasks_are_not_generated_twice_for_the_same_question(store):
@@ -212,7 +214,7 @@ def _counterparts(store, count: int, due: datetime = NOW + timedelta(days=3), st
                     f"task:brake{index}",
                     claim_id,
                     EvidenceLane.INDEPENDENT_COUNTERPART.value,
-                    due.isoformat(timespec="seconds"),
+                    stamp(due),
                 ),
             )
 

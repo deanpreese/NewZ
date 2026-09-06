@@ -18,6 +18,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Any
 
+from newz.clock import stamp
 from newz.store.db import Store
 
 NOTICE_FULL_DAYS = 90
@@ -25,7 +26,7 @@ RETIRED_INTEREST_FULL_DAYS = 90
 
 
 def decayable_notices(store: Store, now: datetime) -> tuple[str, ...]:
-    cutoff = (now - timedelta(days=NOTICE_FULL_DAYS)).isoformat(timespec="seconds")
+    cutoff = stamp(now - timedelta(days=NOTICE_FULL_DAYS))
     return tuple(
         row["id"]
         for row in store.query(
@@ -36,7 +37,7 @@ def decayable_notices(store: Store, now: datetime) -> tuple[str, ...]:
 
 
 def decayable_interests(store: Store, now: datetime) -> tuple[str, ...]:
-    cutoff = (now - timedelta(days=RETIRED_INTEREST_FULL_DAYS)).isoformat(timespec="seconds")
+    cutoff = stamp(now - timedelta(days=RETIRED_INTEREST_FULL_DAYS))
     return tuple(
         row["id"]
         for row in store.query(

@@ -259,6 +259,9 @@ ATTENTION_MAY_IMPORT = {
     "newz.present.essays",
     # its own package
     "newz.attention.decay",
+    # Pure arithmetic on a timestamp: no store, no network, no effect. Attention
+    # may know what time it is; the allowlist is about what it may cause.
+    "newz.clock",
     "newz.attention.diet",
     "newz.attention.interest",
     "newz.attention.notices",

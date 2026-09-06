@@ -20,6 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from newz.clock import as_utc
 from newz.domain.enums import AttemptOutcome, FetchRefusal
 
 #: Refusals worth trying again: the source was unable, not disallowed.
@@ -65,24 +66,6 @@ def attempts_for(store, source_revision_id: str) -> int:
         source_revision_id,
     )
     return row["n"] if row else 0
-
-
-def as_utc(moment: datetime) -> datetime:
-    """One timezone for both sides of every elapsed-time comparison.
-
-    The ledger stamps every row with SQLite's `datetime('now')`, which is UTC
-    and naive. Callers reach for `datetime.now()`, which is local and naive.
-    Subtracting one from the other silently yields the UTC offset: east of
-    Greenwich the politeness floor read every host as last contacted hours ago
-    and never paced anything, and west of it every elapsed time came out
-    negative and the floor refused permanently. Both look like a working floor
-    from inside, which is why the tests had to read the recorded timestamp back
-    instead of asking what time it was.
-
-    A naive value is taken as local, which is what `astimezone` does and what a
-    caller writing `datetime.now()` means.
-    """
-    return moment.astimezone(UTC) if moment.tzinfo else moment.astimezone().astimezone(UTC)
 
 
 def last_attempt_at(store, host: str) -> datetime | None:

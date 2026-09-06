@@ -37,6 +37,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from newz.clock import stamp
 from newz.domain.enums import RiskTier
 from newz.store.db import Store
 
@@ -145,8 +146,8 @@ def protect(
                 token,
                 risk.value,
                 reason,
-                now.isoformat(timespec="seconds"),
-                now.isoformat(timespec="seconds"),
+                stamp(now),
+                stamp(now),
             ),
         )
     return payload_id
@@ -173,7 +174,7 @@ def read(
                     actor,
                     reason,
                     outcome,
-                    now.isoformat(timespec="seconds"),
+                    stamp(now),
                 ),
             )
 
@@ -225,7 +226,7 @@ def erase(
         connection.execute(
             "INSERT INTO erasure_tombstones (id, subject_id, reason, payload_count, actor, "
             "erased_at) VALUES (?, ?, ?, ?, ?, ?)",
-            (tombstone_id, subject_id, reason, count, actor, now.isoformat(timespec="seconds")),
+            (tombstone_id, subject_id, reason, count, actor, stamp(now)),
         )
     return count
 
@@ -247,7 +248,7 @@ def record_review(store: Store, payload_id: str, now: datetime) -> None:
     with store.write() as connection:
         connection.execute(
             "UPDATE protected_payloads SET last_review = ? WHERE id = ?",
-            (now.isoformat(timespec="seconds"), payload_id),
+            (stamp(now), payload_id),
         )
 
 
@@ -263,10 +264,10 @@ def extend_retention(
             "recorded_at) VALUES (?, ?, ?, ?, ?)",
             (
                 subject_id,
-                until.isoformat(timespec="seconds"),
+                stamp(until),
                 actor,
                 reason,
-                now.isoformat(timespec="seconds"),
+                stamp(now),
             ),
         )
 

@@ -297,7 +297,8 @@ def test_the_politeness_floor_does_not_depend_on_the_host_timezone(catalog, tran
     working floor from the outside.
     """
     from newz.acquisition.run import acquire
-    from newz.control.retry import RetryPolicy, as_utc, last_attempt_at, pacing_refusal
+    from newz.clock import as_utc
+    from newz.control.retry import RetryPolicy, last_attempt_at, pacing_refusal
     from tests import canaries
 
     acquire(catalog, make(catalog, 1), canaries.CANARIES[0].revision, transport)

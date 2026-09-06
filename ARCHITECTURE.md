@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.14.0
+**Document version:** 1.15.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -335,6 +335,10 @@ storage-adapter change and does not alter the domain contract.
 - The ledger's time is UTC and the operator's day is local. Any comparison
   between the two converts first, because subtracting one from the other
   yields the UTC offset and looks correct from inside a single timezone.
+- Every timestamp written to the ledger passes through one conversion, in one
+  shape: UTC, second resolution, space-separated, as SQLite writes it.
+  Timestamps are compared as text and `T` sorts after a space, so a column
+  holding both shapes orders wrongly for exactly the rows the other path wrote.
 - Duplicate publication is distinct from independent basis.
 - A failed or retracted edge invalidates all dependent projections.
 - A conclusion that no longer follows from its own evidence never reaches a
@@ -414,6 +418,7 @@ stage, left by a recorded cause and a regression fixture under `SPEC.md` section
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.15.0 | 2026-09-05 | One conversion and one shape for every ledger timestamp: caller-supplied moments were written in local time and in a format that sorts against SQLite's own. |
 | 1.14.0 | 2026-09-05 | Named the ledger's timezone: rows are stamped UTC, the operator's day is local, and comparing them without converting silently disabled the per-host pacing floor and misreported the daily funnel. |
 | 1.13.0 | 2026-09-05 | The publisher concentration cap is enforced at reservation and every refused reservation is recorded; both were specified and neither was built. |
 | 1.12.0 | 2026-09-05 | Clearance re-derives the assessment and refuses a card whose conclusion no longer follows: the replay drill could only find that after publication. |
