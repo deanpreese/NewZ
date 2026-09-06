@@ -37,7 +37,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from newz.clock import stamp
+from newz.clock import as_utc, from_ledger, stamp
 from newz.domain.enums import RiskTier
 from newz.store.db import Store
 
@@ -273,13 +273,20 @@ def extend_retention(
 
 
 def _expiry(last_review: str, months: int = DEFAULT_RETENTION_MONTHS) -> datetime:
-    return datetime.fromisoformat(last_review) + timedelta(days=months * 30)
+    return from_ledger(last_review) + timedelta(days=months * 30)
 
 
 def expiring(store: Store, now: datetime) -> tuple[str, ...]:
-    """Subjects whose retention has run out and who hold no extension."""
+    """Subjects whose retention has run out and who hold no extension.
+
+    `now` is normalised into the ledger's timezone before anything is compared
+    against it: a retention clock that ran seven hours fast or slow depending on
+    the host would destroy a key early somewhere, which is not a fault a
+    tombstone can undo.
+    """
+    now = as_utc(now)
     extensions = {
-        row["subject_id"]: datetime.fromisoformat(row["until"])
+        row["subject_id"]: from_ledger(row["until"])
         for row in store.query("SELECT subject_id, until FROM retention_extensions")
     }
     already = set(erased(store))

@@ -73,6 +73,37 @@ DECISIONS: tuple[dict[str, str], ...] = (
         ),
     },
     {
+        "id": "decision:drop-the-unreadable",
+        "on": "2026-09-05",
+        "actor": "operator:dean",
+        "decision": "drop rather than ask",
+        "subject": (
+            "Skeptical Inquirer, whose robots.txt disallows every path, and Royal "
+            "Society Open Science, whose robots.txt permits the path its server "
+            "then refuses"
+        ),
+        "holds_while": "always, unless the operator asks them",
+        "closes_when": "a source grants access, which only a person can request",
+        "cost": (
+            "psi and consciousness claims lose the only source in this diet able to "
+            "contradict them, and forteana loses its empirical slot. Three of the "
+            "twenty slots are now open"
+        ),
+    },
+    {
+        "id": "decision:apply-the-repoints",
+        "on": "2026-09-05",
+        "actor": "operator:dean",
+        "decision": "apply the six that survived the survey",
+        "subject": "slot URLs pointing at material rather than front doors",
+        "holds_while": "the paths keep serving what the survey observed",
+        "closes_when": "a path stops resolving, which the next survey would find",
+        "cost": (
+            "none observed; the four refuted proposals were not applied and are kept "
+            "in `repoint.PROPOSALS` labelled as refuted"
+        ),
+    },
+    {
         "id": "decision:expansion-target",
         "on": "2026-09-05",
         "actor": "operator:dean",
@@ -144,7 +175,7 @@ SEEDS: tuple[Seed, ...] = (
         bucket="primary_or_adjudicative",
         topic="declassified_material_and_historical_secrecy",
         publisher="CIA FOIA Electronic Reading Room (CREST)",
-        url="https://www.cia.gov/readingroom/",
+        url="https://www.cia.gov/readingroom/collection/stargate",
         why_this_role=(
             "the declassified documents themselves, released by the agency that "
             "classified them — the primary record this topic is made of"
@@ -168,7 +199,7 @@ SEEDS: tuple[Seed, ...] = (
         bucket="primary_or_adjudicative",
         topic="uap_and_aerospace_anomalies",
         publisher="NASA Aviation Safety Reporting System",
-        url="https://asrs.arc.nasa.gov/search/database.html",
+        url="https://asrs.arc.nasa.gov/search/reportsets.html",
         why_this_role="the primary record of what aircrew reported, filed at the time and indexed",
         terms=PUBLIC_DOMAIN,
         caution=(
@@ -181,7 +212,7 @@ SEEDS: tuple[Seed, ...] = (
         bucket="primary_or_adjudicative",
         topic="forteana_cryptids_and_anomalous_natural_events",
         publisher="NOAA National Centers for Environmental Information",
-        url="https://www.ncei.noaa.gov/access/monitoring/",
+        url="https://www.ncei.noaa.gov/access/monitoring/monthly-report/",
         why_this_role="instrumented records of natural events an anomalous account would have to fit",
         terms=PUBLIC_DOMAIN,
     ),
@@ -216,7 +247,7 @@ SEEDS: tuple[Seed, ...] = (
         bucket="claimant_or_firsthand",
         topic="alternative_physics_and_energy",
         publisher="LENR-CANR",
-        url="https://lenr-canr.org/",
+        url="https://lenr-canr.org/wordpress/?page_id=952",
         why_this_role="the proponents' own library; the strongest actual position, stated by them",
         terms=UNCLEAR,
         caution="papers are hosted by author permission; retention terms differ per document",
@@ -242,7 +273,7 @@ SEEDS: tuple[Seed, ...] = (
         bucket="claimant_or_firsthand",
         topic="metascience_methods_and_replication",
         publisher="PubPeer",
-        url="https://pubpeer.com/",
+        url="https://pubpeer.com/recent",
         why_this_role=(
             "post-publication comments are allegations until adjudicated, which is what a "
             "claimant role is for"
@@ -262,14 +293,8 @@ SEEDS: tuple[Seed, ...] = (
         ),
         terms=PUBLIC_DOMAIN,
     ),
-    Seed(
-        bucket="empirical_or_replication",
-        topic="forteana_cryptids_and_anomalous_natural_events",
-        publisher="Royal Society Open Science",
-        url="https://royalsocietypublishing.org/journal/rsos",
-        why_this_role="where environmental-DNA and survey work on disputed species is published, CC BY",
-        terms=OPEN_LICENCE,
-    ),
+    # The empirical slot on forteana was Royal Society Open Science, dropped on
+    # 2026-09-05: robots.txt permits the path and the server answers 403 anyway.
     Seed(
         bucket="empirical_or_replication",
         topic="anomalous_history_and_archaeology",
@@ -282,7 +307,7 @@ SEEDS: tuple[Seed, ...] = (
         bucket="empirical_or_replication",
         topic="psi_and_consciousness_claims",
         publisher="Journal of Scientific Exploration",
-        url="https://journalofscientificexploration.org/index.php/jse",
+        url="https://journalofscientificexploration.org/index.php/jse/issue/archive",
         why_this_role="peer-reviewed and method-visible on exactly the claims other journals decline",
         terms=OPEN_LICENCE,
     ),
@@ -298,14 +323,12 @@ SEEDS: tuple[Seed, ...] = (
         ),
         terms=UNCLEAR,
     ),
-    Seed(
-        bucket="skeptical_or_forensic",
-        topic="psi_and_consciousness_claims",
-        publisher="Skeptical Inquirer (Center for Inquiry)",
-        url="https://skepticalinquirer.org/",
-        why_this_role="sustained methodological criticism of psi experiments rather than dismissal of them",
-        terms=UNCLEAR,
-    ),
+    # The skeptical slot on psi was the Skeptical Inquirer, dropped on 2026-09-05:
+    # its robots.txt disallows every path, including the one the slate held, so
+    # the slot had been unreadable since before the robots check existed. Losing
+    # it leaves psi and consciousness claims with no source in this diet able to
+    # contradict them — and psi is one of only three topics the prescription
+    # gave a skeptic to at all.
     Seed(
         bucket="skeptical_or_forensic",
         topic="alternative_physics_and_energy",
@@ -382,6 +405,21 @@ def gaps() -> dict[str, Any]:
     from newz.pilot.prescription import unmet
 
     unfilled = unmet(prescribed(), [(seed.bucket, seed.topic) for seed in SEEDS])
+
+    # A topic the slate reads seriously with nothing in the slate able to
+    # contradict it. Computed from what the slate holds rather than from what
+    # was dropped, so it stays true however the slate next changes.
+    from newz.pilot.prescription import CONTESTED_THRESHOLD, SKEPTICAL
+
+    prescribed_per_topic: dict[str, int] = {}
+    for spec in prescribed():
+        prescribed_per_topic[spec.topic] = prescribed_per_topic.get(spec.topic, 0) + 1
+    has_skeptic = {seed.topic for seed in SEEDS if seed.bucket == SKEPTICAL}
+    unopposed = {
+        topic
+        for topic, count in prescribed_per_topic.items()
+        if count >= CONTESTED_THRESHOLD and topic not in has_skeptic
+    }
     claimant_unclear = [
         seed.publisher
         for seed in SEEDS
@@ -431,6 +469,33 @@ def gaps() -> dict[str, Any]:
                 ]
             },
             "operator": _decision("decision:drop-the-declined"),
+        },
+        "unopposed_topics": {
+            "finding": (
+                f"{len(unopposed)} topic(s) hold slots this diet reads seriously and "
+                "have no skeptical or forensic source in it. `TRUE_NORTH.md` asks that "
+                "support and refutation face the same burden; where a topic has no "
+                "source able to contradict it, they cannot. This is a property of the "
+                "slate rather than of any claim in it, and it travels with every "
+                "conclusion the slate produces on those topics."
+            ),
+            "topics": sorted(unopposed),
+            "why": (
+                "the prescription gives three of eight topics a skeptical slot, and "
+                "one of the three was filled by a source whose robots.txt disallows "
+                "every path — so the slot was unreadable before it was dropped, and "
+                "the topic was unopposed before anyone noticed"
+            ),
+            "closes_when": "a skeptical or forensic source is found for each",
+            "operator": _decision("decision:drop-the-unreadable"),
+        },
+        "applied_repoints": {
+            "finding": (
+                "six slot URLs now point at material rather than a front door, applied "
+                "after the survey observed each one serving what was claimed. Four "
+                "further proposals were refuted and not applied."
+            ),
+            "operator": _decision("decision:apply-the-repoints"),
         },
     }
 

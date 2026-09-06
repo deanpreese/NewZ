@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
-from newz.clock import stamp
+from newz.clock import from_ledger, stamp
 from newz.control.audit import record as audit_record
 from newz.present.cards import load_card
 from newz.publish.appraisal import class_of, sample_for_review
@@ -287,7 +287,7 @@ def revocation_latency_seconds(store: Store, revocation_id: str) -> float | None
     if row is None or not row["confirmed_at"]:
         return None
     return (
-        datetime.fromisoformat(row["confirmed_at"]) - datetime.fromisoformat(row["attempted_at"])
+        from_ledger(row["confirmed_at"]) - from_ledger(row["attempted_at"])
     ).total_seconds()
 
 

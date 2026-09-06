@@ -8,19 +8,29 @@ from newz.acquisition.fetcher import FetchPolicy
 from newz.acquisition.urlpolicy import inspect_url
 from newz.pilot import repoint, seeds
 
+#: Proposed for, then dropped on 2026-09-05 because neither can be read: the
+#: Skeptical Inquirer's robots.txt disallows every path, and Royal Society Open
+#: Science refuses at the server a path its robots.txt permits.
+DROPPED = {"Skeptical Inquirer (Center for Inquiry)", "Royal Society Open Science"}
 
-def test_every_proposal_names_a_source_in_the_slate():
-    """A proposal for a publisher nobody reads is a proposal about nothing."""
+
+def test_every_proposal_names_a_source_the_slate_had():
+    """A proposal for a publisher nobody read is a proposal about nothing."""
     slate = {seed.publisher for seed in seeds.SEEDS}
     proposed = {proposal.publisher for proposal in repoint.PROPOSALS}
-    assert proposed == slate
+    assert proposed == slate | DROPPED
 
 
-def test_every_proposal_starts_from_the_url_the_slate_actually_has():
-    """A `was` that drifted from the slate would make the diff a fiction."""
+def test_the_confirmed_proposals_were_applied_and_the_rest_were_not():
+    """The record has to say which of these became the slate."""
     current = {seed.publisher: seed.url for seed in seeds.SEEDS}
     for proposal in repoint.PROPOSALS:
-        assert proposal.was == current[proposal.publisher], proposal.publisher
+        if proposal.publisher in DROPPED:
+            assert proposal.publisher not in current
+        elif proposal.confidence == repoint.OBSERVED:
+            assert current[proposal.publisher] == proposal.now, proposal.publisher
+        else:
+            assert current[proposal.publisher] == proposal.was, proposal.publisher
 
 
 @pytest.mark.parametrize("proposal", repoint.PROPOSALS, ids=lambda p: p.publisher)
@@ -78,11 +88,11 @@ def test_the_report_says_what_was_checked_and_what_failed():
     assert set(report["applicable"]) == {p.publisher for p in repoint.applicable()}
 
 
-def test_the_slate_is_not_changed_by_a_proposal():
-    """Approving these is the operator's; drafting them is not."""
+def test_no_refuted_proposal_reached_the_slate():
+    """Approving these was the operator's; four were checked and failed."""
     current = {seed.url for seed in seeds.SEEDS}
-    changed = {proposal.now for proposal in repoint.changes()}
-    assert not (changed & current), "a proposal that already applied itself is not a proposal"
+    refuted = {proposal.now for proposal in repoint.refuted()}
+    assert not (refuted & current)
 
 
 # ---------------------------------------------------------------------------
@@ -101,8 +111,10 @@ def test_a_source_already_in_the_slate_may_never_be_read():
     )
     assert "may never read" in finding
     assert "effectively open" in finding
-    current = {seed.publisher: seed.url for seed in seeds.SEEDS}
-    assert current["Skeptical Inquirer (Center for Inquiry)"] == "https://skepticalinquirer.org/"
+    # And the answer to it: the source is gone, and the slot it held is open.
+    assert not any(
+        seed.publisher == "Skeptical Inquirer (Center for Inquiry)" for seed in seeds.SEEDS
+    )
 
 
 def test_stated_rules_and_enforced_ones_are_recorded_as_different_facts():

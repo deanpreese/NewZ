@@ -35,6 +35,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
+from newz.clock import as_utc, from_ledger
 from newz.store.db import Store
 
 #: `SPEC.md` section 9.1: 30 days during Pilot.
@@ -321,10 +322,15 @@ def unproductive(store: Store, now: datetime) -> tuple[str, ...]:
     out = []
     for entry in interest_register(store, include_retired=False):
         row = store.one("SELECT opened_at FROM interest_entries WHERE id = ?", entry.id)
-        opened = datetime.fromisoformat(row["opened_at"])
+        # Both sides through the ledger's timezone. `opened_at` defaults to
+        # SQLite's `datetime('now')`, which is UTC, and a caller reaching for
+        # `datetime.now()` has a local one — so an interest formed this evening
+        # looked seven hours younger or older than it was, and a window measured
+        # in days quietly moved by the host's offset from Greenwich.
+        opened = from_ledger(row["opened_at"])
         if entry.productive:
             continue
-        if now - opened >= timedelta(days=entry.window_days):
+        if as_utc(now) - opened >= timedelta(days=entry.window_days):
             out.append(entry.id)
     return tuple(sorted(out))
 

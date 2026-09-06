@@ -16,10 +16,18 @@ from newz.pilot import seeds, slots
 from newz.pilot.catalog_review import MAX_PER_PUBLISHER, REQUIRED_SLOTS, REQUIRED_TOPICS
 from newz.pilot.prescription import prescribe
 
-#: The slate answers nineteen of the twenty prescribed slots. The twentieth was
-#: the National UFO Reporting Center, dropped on 2026-09-05 when the operator
-#: chose not to ask a source that had already declined the agent.
-FILLED = 19
+#: The slate answers seventeen of the twenty prescribed slots. Three sources were
+#: dropped on 2026-09-05 rather than asked: NUFORC, which declines the agent;
+#: the Skeptical Inquirer, whose robots.txt disallows every path; and Royal
+#: Society Open Science, which permits the path in robots.txt and refuses it at
+#: the server.
+FILLED = 17
+
+OPEN = [
+    ("claimant_or_firsthand", "uap_and_aerospace_anomalies"),
+    ("empirical_or_replication", "forteana_cryptids_and_anomalous_natural_events"),
+    ("skeptical_or_forensic", "psi_and_consciousness_claims"),
+]
 
 
 def test_the_slate_answers_the_prescription_except_where_it_says_it_does_not():
@@ -31,13 +39,9 @@ def test_the_slate_answers_the_prescription_except_where_it_says_it_does_not():
     assert proposed - prescribed == collections.Counter(), "no slot is filled twice"
 
     missing = prescribed - proposed
-    assert missing == collections.Counter(
-        {("claimant_or_firsthand", "uap_and_aerospace_anomalies"): 1}
-    )
+    assert missing == collections.Counter(dict.fromkeys(OPEN, 1))
     reported = seeds.gaps()["open_slots"]["slots"]
-    assert [(slot["bucket"], slot["topic"]) for slot in reported] == [
-        ("claimant_or_firsthand", "uap_and_aerospace_anomalies")
-    ]
+    assert sorted((slot["bucket"], slot["topic"]) for slot in reported) == sorted(OPEN)
 
 
 def test_a_dropped_source_leaves_its_slot_open_rather_than_backfilled():
@@ -54,7 +58,12 @@ def test_the_slate_covers_every_topic_and_almost_every_bucket_slot():
     assert len(seeds.SEEDS) == FILLED
     assert {seed.topic for seed in seeds.SEEDS} == set(REQUIRED_TOPICS)
     counts = collections.Counter(seed.bucket for seed in seeds.SEEDS)
-    assert dict(counts) == {**REQUIRED_SLOTS, "claimant_or_firsthand": 4}
+    assert dict(counts) == {
+        **REQUIRED_SLOTS,
+        "claimant_or_firsthand": 4,
+        "empirical_or_replication": 3,
+        "skeptical_or_forensic": 2,
+    }
 
 
 def test_no_publisher_appears_more_than_the_cap_allows():
@@ -87,7 +96,7 @@ def test_the_evidentiary_slots_are_weighted_toward_retainable_sources():
         if seed.bucket in ("primary_or_adjudicative", "empirical_or_replication")
     ]
     retainable = [seed for seed in weighted if seed.terms != seeds.UNCLEAR]
-    assert len(weighted) == 10
+    assert len(weighted) == 9, "one empirical slot is open: Royal Society declines"
     assert len(retainable) >= 8
 
 
@@ -112,9 +121,7 @@ def test_the_slate_registers_as_a_candidate_adapter(store):
     assert len(slots.candidates(store)) == FILLED
     # The slot nothing was proposed for is named by the proposer, not discovered
     # later by whatever notices the slate is short.
-    assert [(spec.bucket, spec.topic) for spec in unserved] == [
-        ("claimant_or_firsthand", "uap_and_aerospace_anomalies")
-    ]
+    assert sorted((spec.bucket, spec.topic) for spec in unserved) == sorted(OPEN)
     slots.clear_candidate_adapters()
 
 
@@ -157,3 +164,41 @@ def test_the_pins_are_stated_with_their_reasons():
 
     source = inspect.getsource(seeds)
     assert "domain knowledge" in source or "knowledge rather than" in source
+
+
+# ---------------------------------------------------------------------------
+# What dropping a source costs, said out loud
+# ---------------------------------------------------------------------------
+
+
+def test_a_topic_with_no_source_able_to_contradict_it_is_named():
+    """`TRUE_NORTH.md`: support and refutation face the same burden.
+
+    Dropping the Skeptical Inquirer took the only skeptical source on psi, and
+    psi is one of just three topics the prescription gives one to at all. The
+    slate says so rather than leaving it to be inferred from an empty slot.
+    """
+    unopposed = seeds.gaps()["unopposed_topics"]
+    assert unopposed["topics"] == ["psi_and_consciousness_claims"]
+    assert "cannot" in unopposed["finding"]
+    assert unopposed["operator"]["decision"] == "drop rather than ask"
+
+
+def test_the_unopposed_check_reads_the_slate_rather_than_the_history():
+    """It has to stay true however the slate next changes."""
+    from newz.pilot.prescription import SKEPTICAL
+
+    have = {seed.topic for seed in seeds.SEEDS if seed.bucket == SKEPTICAL}
+    for topic in seeds.gaps()["unopposed_topics"]["topics"]:
+        assert topic not in have
+
+
+def test_the_applied_repoints_are_the_ones_the_survey_confirmed():
+    from newz.pilot import repoint
+
+    urls = {seed.publisher: seed.url for seed in seeds.SEEDS}
+    for proposal in repoint.applicable():
+        if proposal.publisher in urls:
+            assert urls[proposal.publisher] == proposal.now, proposal.publisher
+    for proposal in repoint.refuted():
+        assert urls.get(proposal.publisher) != proposal.now, proposal.publisher
