@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.15.0
+**Document version:** 1.16.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -526,7 +526,14 @@ Deliver in order:
    locally by default since Gate 4, as an explicit scoped operator act, with
    reach still independently lockable at any moment. The reader surface itself
    was delivered in Phase 4 and has been serving locally since.
-3. Add R2 source classes after direct adversarial review.
+3. Add R2 source classes after direct adversarial review. The workflow is
+   `newz/control/adversarial.py`: a review states what the class is trusted
+   for, the strongest case against admitting it, how that case is answered, and
+   what would disqualify it later, and all four are required. A record of a
+   reviewer, a date and a verdict is the same shape whether somebody argued
+   about the class or nobody did, and the point of the exercise is to be able
+   to tell those apart. Clearance refuses an R2 revision whose live edges rest
+   on any source outside an admitted class.
 4. Add R3 intake only after the isolated workflow and exact-revision approval
    are exercised in production-like tests. The workflow is
    `newz/control/isolation.py` and the exercise is `tests/test_isolation.py`,
@@ -670,6 +677,7 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.16.0 | 2026-09-05 | Phase 6 item 3: the R2 adversarial review workflow is built, and what makes a review adversarial rather than a stamp is stated. |
 | 1.15.0 | 2026-09-05 | Phase 6 item 4: the R3 isolated workflow is built and exercised — operator-only intake, and a model boundary covering what a model is shown rather than only what it may grant. |
 | 1.14.1 | 2026-09-05 | Recorded the operator's expansion target: 51 slots, at Phase 6, after Gate 5. |
 | 1.14.0 | 2026-09-05 | Phase 6 item 1: recorded that expansion is not monotone — between twenty-one and fifty slots the diet cannot contradict every topic it reads seriously — and that the plan states the cost rather than refusing the growth. |

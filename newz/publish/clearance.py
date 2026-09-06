@@ -16,8 +16,10 @@ a different revision or class.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
+from newz.clock import from_ledger
 from newz.domain.enums import RiskTier
 from newz.publish.appraisal import appraise, class_of, debt_exceeded
 from newz.store.db import Store
@@ -82,6 +84,7 @@ def refusal_conditions(
     store: Store, card_revision_id: str, now: str = ""
 ) -> tuple[Refusal, ...]:
     """Every enumerated reason this revision may not publish, with no operator present."""
+    from newz.control.adversarial import r2_admission_refusal
     from newz.evidence.assess import reassessment_owed
     from newz.publish.publication import overdue_revocations, unconfirmed_retraction
 
@@ -97,6 +100,17 @@ def refusal_conditions(
         refusals.append(Refusal("risk_state_missing", "unreadable risk behaves as R3"))
     if risk == RiskTier.R4.value:
         refusals.append(Refusal("content_is_r4", "R4 is never published"))
+
+    # `PLAN.md` Phase 6: R2 source classes are added after direct adversarial
+    # review. The evidence bar at R2 was already enforced by the promotion
+    # thresholds; this is the other half of the rule — whether a class of source
+    # may supply that evidence at all, and on whose judgment.
+    # `now` arrives as a ledger string here; the admission check reasons in
+    # instants, so it is read back rather than reformatted.
+    at = from_ledger(now) if now else datetime.now()
+    unadmitted = r2_admission_refusal(store, row["claim_id"], risk, at)
+    if unadmitted:
+        refusals.append(Refusal("r2_source_class_unreviewed", unadmitted))
 
     owed = reassessment_owed(store, row["claim_id"])
     if owed:

@@ -161,15 +161,36 @@ def simpler_explanation_review(store: Store, interest_id: str) -> dict[str, Any]
         row["at"]
         for row in store.query("SELECT DISTINCT observed_at AS at FROM sightings ORDER BY at DESC")
     ]
-    if len(distinct) < 2:
-        # Everything was retained in the same instant, so recency cannot
-        # distinguish anything. Saying so is the honest answer; reporting the
-        # explanation as holding would credit a check that could not fail.
+    # How many reads share the most recent instant. Timestamps have second
+    # resolution and a day's reads arrive in a batch, so ties are ordinary
+    # rather than exceptional.
+    newest = (
+        store.one(
+            "SELECT COUNT(*) AS n FROM sightings WHERE observed_at = ?", distinct[0]
+        )["n"]
+        if distinct
+        else 0
+    )
+
+    if len(distinct) < 2 or newest > 1:
+        # Recency cannot distinguish anything here. Either everything was
+        # retained in the same instant, or the most recent instant holds several
+        # reads and being among them says nothing about which one was noticed.
+        #
+        # The second case was missed at first, and it made this check's answer
+        # depend on whether a batch of nine fetches happened to straddle a second
+        # boundary — the same result reported as conclusive or inconclusive
+        # according to how fast the machine was. A check whose answer moves with
+        # the host is not measuring what it names.
         cheaper.append(
             {
                 "explanation": "recency in the diet",
                 "holds": False,
-                "detail": "inconclusive: every retained read shares one timestamp",
+                "detail": (
+                    "inconclusive: every retained read shares one timestamp"
+                    if len(distinct) < 2
+                    else f"inconclusive: {newest} reads share the most recent timestamp"
+                ),
             }
         )
     elif recency and recency[0]["observed_at"] == distinct[0]:
@@ -178,6 +199,22 @@ def simpler_explanation_review(store: Store, interest_id: str) -> dict[str, Any]
                 "explanation": "recency in the diet",
                 "holds": True,
                 "detail": "it formed on the most recently retained material",
+            }
+        )
+    else:
+        # An explanation that was tested and did not hold. Reporting only the
+        # ones that hold leaves a review that looks the same whether an
+        # explanation was checked and rejected or never considered, which is the
+        # difference the whole section is about.
+        cheaper.append(
+            {
+                "explanation": "recency in the diet",
+                "holds": False,
+                "detail": (
+                    "it formed on material that was not the most recently retained"
+                    if recency
+                    else "the notice cites no retained read, so recency says nothing"
+                ),
             }
         )
 

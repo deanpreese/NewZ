@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.15.0
+**Document version:** 1.16.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -552,12 +552,22 @@ risk, domain risk, and intended output risk.
 |---|---|---|
 | R0 | Historical folklore and obsolete claims | Ordinary attributed research. |
 | R1 | UAP, psi, cryptids, alternative physics/history | Ordinary investigation; evidence rules apply. |
-| R2 | Active institutions, current secrecy, named organizations | Strong provenance, two independent bases, explicit allegation labels. |
+| R2 | Active institutions, current secrecy, named organizations | Strong provenance, two independent bases, explicit allegation labels, and evidence only from a source class admitted by direct adversarial review. |
 | R3 | Medicine, elections, finance, alleged crimes by living people | Isolated workflow; direct primary/adjudicative basis plus an independent countable basis; operator approval before any publication. |
 | R4 | Doxxing, incitement, harassment, operational wrongdoing | Metadata quarantine only; never reproduced or operationalized. |
 
 Missing or unreadable risk state MUST behave as R3 internally and MUST block
 publication. A model may raise risk but may not lower it.
+
+A source class MUST NOT carry R2 evidence without a live, recorded adversarial
+review. The review MUST state what the class is trusted for, the strongest case
+*against* admitting it, how that case is answered, and what would later
+disqualify it; a record naming only a reviewer, a date and a verdict is the same
+shape whether anybody argued about the class or nobody did, and cannot be told
+apart from a rubber stamp. Reviews MUST expire, because a source class is a
+claim about how a kind of publisher behaves now. Class membership MUST be
+declared rather than inferred: a class the system can widen by itself is a class
+whose review covers whatever it later decides to include.
 
 An attempt to lower an effective risk, widen an authorisation envelope, edit an
 audit record, or bypass a refusal condition MUST be detected and recorded as an
@@ -1221,6 +1231,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.16.0 | 2026-09-05 | Section 8: R2 evidence comes only from a source class admitted by a live adversarial review, and what makes a review adversarial rather than a rubber stamp is specified — the case against, its answer, and what would disqualify the class later. |
 | 1.15.0 | 2026-09-05 | Section 5.1: catalogue expansion may not reduce the share of seriously-read topics the diet can contradict, and a publisher may not hold a share of the slate larger than its share of reads may be. |
 | 1.14.0 | 2026-09-05 | Section 5.1: every refused reservation is recorded, not only a concentration refusal; the cap does not bind below the volume at which it could be satisfied, because the first read in an empty window is all of it; and a scoped exception must name an operator, a reason and an expiry. |
 | 1.13.0 | 2026-09-05 | Publication is refused when the claim's current assessment no longer follows from its current evidence. Withdrawing an edge obliges no reassessment, so a card could render a conclusion the ledger underneath had stopped supporting. |

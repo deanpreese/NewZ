@@ -1449,4 +1449,47 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         END;
         """,
     ),
+    (
+        20,
+        "r2_source_class_review",
+        """
+        -- A class of source admitted to carry R2 evidence, and the review that
+        -- admitted it. `PLAN.md` Phase 6: R2 source classes are added after
+        -- direct adversarial review, and a review nobody recorded is a review
+        -- nobody can be shown.
+        CREATE TABLE r2_class_reviews (
+            id            TEXT PRIMARY KEY,
+            source_class  TEXT NOT NULL,
+            reviewer      TEXT NOT NULL,
+            trusted_for   TEXT NOT NULL,
+            case_against  TEXT NOT NULL,
+            answer        TEXT NOT NULL,
+            disqualifiers TEXT NOT NULL,
+            expires_at    TEXT NOT NULL,
+            withdrawn_at  TEXT,
+            withdrawn_reason TEXT NOT NULL DEFAULT '',
+            recorded_at   TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX r2_class_reviews_by_class ON r2_class_reviews (source_class, expires_at);
+
+        CREATE TRIGGER r2_class_reviews_keep_their_reasoning
+        BEFORE UPDATE OF id, source_class, reviewer, trusted_for, case_against, answer,
+                         disqualifiers, expires_at, recorded_at ON r2_class_reviews
+        BEGIN
+            SELECT RAISE(ABORT, 'a review is what it said; withdraw it and record another');
+        END;
+
+        -- Which sources are in a class. Membership is declared rather than
+        -- inferred: a class the system could widen by itself is a class whose
+        -- review covers whatever it later decides to include.
+        CREATE TABLE r2_class_members (
+            source_class       TEXT NOT NULL,
+            source_revision_id TEXT NOT NULL REFERENCES source_revisions(id),
+            added_by           TEXT NOT NULL,
+            added_at           TEXT NOT NULL,
+            PRIMARY KEY (source_class, source_revision_id)
+        ) STRICT;
+        """,
+    ),
 )

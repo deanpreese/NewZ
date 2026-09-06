@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.16.0
+**Document version:** 1.17.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -366,6 +366,11 @@ storage-adapter change and does not alter the domain contract.
 - R3 intake is a person's act. The system may raise a claim's risk on its own;
   deciding to work on it anyway is not something it may decide.
 - Every access to quarantined material is recorded, including the refused ones.
+- R2 evidence comes only from a source class a person has admitted against the
+  case for refusing it. A review with no case against is a stamp, and the two
+  are indistinguishable in the record unless the case is written down.
+- A check whose answer moves with how fast the host is does not measure what it
+  names: where a tie makes an explanation undecidable, it reports that.
 - Attempted effect and confirmed outcome are never conflated, on acquisition or
   on publication.
 - The system may choose what to raise and never what the operator can see.
@@ -425,6 +430,7 @@ stage, left by a recorded cause and a regression fixture under `SPEC.md` section
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.17.0 | 2026-09-05 | R2 source classes are admitted by adversarial review, and the self-deception checks report an explanation they tested and rejected rather than staying silent about it. |
 | 1.16.0 | 2026-09-05 | The R3 isolated workflow: intake is an operator act, quarantined material never reaches a prompt without a single-use recorded approval, and every access to it is logged including the refused ones. |
 | 1.15.0 | 2026-09-05 | One conversion and one shape for every ledger timestamp: caller-supplied moments were written in local time and in a format that sorts against SQLite's own. |
 | 1.14.0 | 2026-09-05 | Named the ledger's timezone: rows are stamped UTC, the operator's day is local, and comparing them without converting silently disabled the per-host pacing floor and misreported the daily funnel. |
