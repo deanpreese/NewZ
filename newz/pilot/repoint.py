@@ -10,11 +10,18 @@ two document collections look like historical context.
 So each slot should point at the material — a case index, an article listing, an
 issue archive, a document collection — and this proposes one per slot that does.
 
-**These are proposals and several are guesses.** A path is proposed from what is
-known about how these publishers organise their sites, which is not the same as
-having looked. `CONFIDENCE` says which is which, and `survey()` is what turns a
-proposal into a finding. A proposal presented at the same confidence as an
-observation is how a plausible URL becomes a fact nobody checked.
+**They were proposed, then surveyed.** Ten changed paths went through the
+ordinary fetcher on 2026-09-05 and `SURVEY` records what came back. Six serve
+what was claimed and four do not, and the labels moved with the evidence rather
+than the evidence being read to fit them.
+
+The labelling was worth having and was not very good. Two of the four failures
+were marked `LIKELY` rather than `GUESS` — the Institute of Noetic Sciences'
+publications page returned 404 and Royal Society Open Science answered 403 — so
+"likely" was doing less work than it claimed. Two of the four guesses landed;
+one of the two that did not was the one it mattered least to get right. A
+confidence label is a claim about a claim, and this one was miscalibrated in the
+direction that flatters the person making it.
 
 **Two cannot be fixed by changing a path.** The USPTO's Patent Public Search and
 NASA's ASRS database are both applications rather than documents: there is no
@@ -30,10 +37,11 @@ from dataclasses import dataclass
 from typing import Any
 
 #: How far the proposal rests on knowing the site rather than guessing at it.
-OBSERVED = "observed"  # seen in the first survey, or a documented API
+OBSERVED = "observed"  # fetched, and it serves what was claimed
 LIKELY = "likely"  # the publisher's conventional layout for this kind of page
 GUESS = "guess"  # the shape is right; the exact path needs checking
 BLOCKED = "blocked"  # no addressable text exists at any path
+REFUTED = "refuted"  # fetched, and it does not
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +67,52 @@ class Repoint:
         }
 
 
+#: What the fetcher actually got, 2026-09-05. Recorded because the proposals
+#: above were written from what these publishers usually do, and this is the
+#: thing that checked them.
+SURVEY: dict[str, Any] = {
+    "when": "2026-09-05",
+    "surveyed": 10,
+    "confirmed": 6,
+    "refuted_count": 4,
+    "serves_what_was_claimed": {
+        "CIA FOIA Electronic Reading Room (CREST)": "49 segments, text/html — the STARGATE collection reads",
+        "LENR-CANR": "175 segments — the richest page in the slate, and it was a guess",
+        "Journal of Scientific Exploration": "79 segments — the issue archive reads",
+        "NASA Aviation Safety Reporting System": "38 segments — the report sets are documents after all",
+        "NOAA National Centers for Environmental Information": "13 segments from 508 KB — reads, but thin for its size",
+        "PubPeer": "7 segments from 26 KB — reads, and barely: the feed is assembled client-side",
+    },
+    "does_not": {
+        "Institute of Noetic Sciences": "404. /research/publications/ does not exist; the section page it replaced does",
+        "Royal Society Open Science": "403. robots.txt permits both paths and the server declines anyway",
+        "New Energy Times": "334 bytes, 0 segments. The path resolves and holds nothing",
+        "Skeptical Inquirer (Center for Inquiry)": "robots.txt disallows it — and disallows everything",
+    },
+    "findings": [
+        "Skeptical Inquirer disallows `/` as well as `/articles/`, so the URL already "
+        "in the slate is one this system may never read. It was added before the "
+        "robots check existed and has never been fetched under it. That slot is "
+        "effectively open, the same way the one NUFORC vacated is — and it was open "
+        "before this survey, silently.",
+        "Royal Society Open Science is a fourth source declining the agent, and a new "
+        "kind: robots.txt permits the path and the server refuses anyway. A site's "
+        "stated rules and its enforced ones are different facts, and only the second "
+        "one is discoverable by asking.",
+        "Pointing a slot at its material made the role heuristic worse before it made "
+        "it better. The Journal of Scientific Exploration's issue archive was proposed "
+        "as historical context because the word 'archive' was in the body — an "
+        "empirical journal read as a history shelf. Material listings are archives, so "
+        "the better the URL the more often that fired. The marker now has to name a "
+        "kind of record rather than a way of organising a page.",
+        "Two pages parse thin: PubPeer's feed and NOAA's monthly report are assembled "
+        "client-side, so a fetch gets the frame and not the contents. They are "
+        "readable rather than useful, which the segment count says and the status "
+        "code does not.",
+    ],
+}
+
+
 PROPOSALS: tuple[Repoint, ...] = (
     # ---- front doors, which is the whole problem ---------------------------
     Repoint(
@@ -71,14 +125,14 @@ PROPOSALS: tuple[Repoint, ...] = (
             "collection this portfolio actually needs — psi claims assessed by the "
             "agency that funded them"
         ),
-        confidence=LIKELY,
+        confidence=OBSERVED,
     ),
     Repoint(
         publisher="PubPeer",
         was="https://pubpeer.com/",
         now="https://pubpeer.com/recent",
         why="the recent-comments feed is the material; the root is a search box",
-        confidence=LIKELY,
+        confidence=OBSERVED,
     ),
     Repoint(
         publisher="LENR-CANR",
@@ -88,21 +142,21 @@ PROPOSALS: tuple[Repoint, ...] = (
             "the paper library rather than the front page — this is the claimant's "
             "strongest actual position, and the front page is its case for itself"
         ),
-        confidence=GUESS,
+        confidence=OBSERVED,
     ),
     Repoint(
         publisher="Skeptical Inquirer (Center for Inquiry)",
         was="https://skepticalinquirer.org/",
         now="https://skepticalinquirer.org/articles/",
         why="the article index; the root is a magazine cover",
-        confidence=LIKELY,
+        confidence=REFUTED,
     ),
     Repoint(
         publisher="New Energy Times",
         was="https://newenergytimes.com/",
         now="https://newenergytimes.com/v2/news/news.shtml",
         why="the news index rather than the landing page",
-        confidence=GUESS,
+        confidence=REFUTED,
     ),
     # ---- section pages: better than a root, still not the material ---------
     Repoint(
@@ -113,28 +167,28 @@ PROPOSALS: tuple[Repoint, ...] = (
             "the publications listing rather than the research overview: the "
             "overview describes a programme, the listing carries the papers"
         ),
-        confidence=LIKELY,
+        confidence=REFUTED,
     ),
     Repoint(
         publisher="Royal Society Open Science",
         was="https://royalsocietypublishing.org/journal/rsos",
         now="https://royalsocietypublishing.org/toc/rsos/current",
         why="the current issue's table of contents rather than the journal's home",
-        confidence=LIKELY,
+        confidence=REFUTED,
     ),
     Repoint(
         publisher="Journal of Scientific Exploration",
         was="https://journalofscientificexploration.org/index.php/jse",
         now="https://journalofscientificexploration.org/index.php/jse/issue/archive",
         why="the issue archive; an OJS journal home is a masthead",
-        confidence=LIKELY,
+        confidence=OBSERVED,
     ),
     Repoint(
         publisher="NOAA National Centers for Environmental Information",
         was="https://www.ncei.noaa.gov/access/monitoring/",
         now="https://www.ncei.noaa.gov/access/monitoring/monthly-report/",
         why="the monthly reports themselves rather than the monitoring index",
-        confidence=GUESS,
+        confidence=OBSERVED,
     ),
     Repoint(
         publisher="Wikipedia",
@@ -224,7 +278,7 @@ PROPOSALS: tuple[Repoint, ...] = (
             "are files that exist at an address. Weaker than a query but readable, "
             "which is the difference between a source and an intention"
         ),
-        confidence=GUESS,
+        confidence=OBSERVED,
     ),
 )
 
@@ -246,6 +300,20 @@ def needs_checking() -> tuple[Repoint, ...]:
     return tuple(proposal for proposal in PROPOSALS if proposal.confidence == GUESS)
 
 
+def refuted() -> tuple[Repoint, ...]:
+    """Proposed, fetched, and wrong. Not to be applied."""
+    return tuple(proposal for proposal in PROPOSALS if proposal.confidence == REFUTED)
+
+
+def applicable() -> tuple[Repoint, ...]:
+    """The changes the survey supports: fetched, and serving what was claimed."""
+    return tuple(
+        proposal
+        for proposal in PROPOSALS
+        if proposal.changed and proposal.confidence == OBSERVED
+    )
+
+
 def report() -> dict[str, Any]:
     return {
         "proposals": [proposal.as_record() for proposal in PROPOSALS],
@@ -253,9 +321,13 @@ def report() -> dict[str, Any]:
         "unchanged": len(PROPOSALS) - len(changes()),
         "guesses": [proposal.publisher for proposal in needs_checking()],
         "blocked": [proposal.publisher for proposal in blocked()],
+        "refuted": [proposal.publisher for proposal in refuted()],
+        "applicable": [proposal.publisher for proposal in applicable()],
+        "survey": SURVEY,
         "note": (
-            "Proposals, not findings. A survey is what makes one of these an "
-            "observation, and until then a guess that reads like an address is "
-            "still a guess."
+            "Surveyed on 2026-09-05. Six of the ten changes serve what was claimed "
+            "and are applicable; four do not and are kept, labelled refuted, because "
+            "a proposal that was checked and failed is more use than one that "
+            "quietly disappeared."
         ),
     }

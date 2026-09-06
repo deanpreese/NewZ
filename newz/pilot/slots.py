@@ -84,7 +84,15 @@ ROLE_RULES: tuple[tuple[str, SourceRole, str], ...] = (
     ("i saw", SourceRole.FIRSTHAND_WITNESS, "the body is written in the first person"),
     ("i witnessed", SourceRole.FIRSTHAND_WITNESS, "the body is written in the first person"),
     ("encyclopedia", SourceRole.GENERAL_CONTEXT, "the endpoint is reference material"),
-    ("archive", SourceRole.HISTORICAL_CONTEXT, "the endpoint is an archive"),
+    # Not the bare word "archive". It names how a page is organised, not what
+    # kind of record it holds, and every journal's issue listing contains it —
+    # so pointing a slot at its material rather than its front door made this
+    # rule fire more often and be right less often. The Journal of Scientific
+    # Exploration's issue archive was proposed as historical context on the
+    # strength of it, which is an empirical journal read as a history shelf.
+    # The other markers here name a kind of record: docket, patent, preprint.
+    ("archival record", SourceRole.HISTORICAL_CONTEXT, "the body holds archival records"),
+    ("historical archive", SourceRole.HISTORICAL_CONTEXT, "the endpoint is a historical archive"),
 )
 
 #: What the parsers can turn into addressable segments. A source serving

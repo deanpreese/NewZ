@@ -216,7 +216,9 @@ BODIES = {
     "primary_or_adjudicative": "This registry indexes filings.|Each filing is numbered.|Records follow.|More records.",
     "empirical_or_replication": "Methods are described below.|A replication is reported.|Results follow.|doi:10.1/x",
     "skeptical_or_forensic": "A skeptic writes here.|The forensic analysis follows.|Methods shown.|More.",
-    "historical_or_general_context": "This archive holds background.|Chronology follows.|Context.|More context.",
+    # "archive" alone no longer proposes a role: it says how a page is organised,
+    # not what kind of record it holds. This fixture says the latter.
+    "historical_or_general_context": "A historical archive of background.|Chronology follows.|Context.|More context.",
 }
 
 #: Most real sources say something about their terms. A source that says nothing
