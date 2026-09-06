@@ -126,3 +126,28 @@ def test_the_architecture_no_longer_claims_process_isolation():
     architecture = (ROOT / "ARCHITECTURE.md").read_text(encoding="utf-8")
     assert "Fetch and parse run as separate processes" not in architecture
     assert "T-19" in architecture or "one process" in architecture
+
+
+def test_gate_6_reports_the_same_unmet_controls_the_model_does():
+    """A status that lags the document it summarises is worse than none.
+
+    `gate_6_status` listed T-19 as open for a day after it was closed. It is a
+    hand-kept list on purpose — the package does not read its own documentation
+    at runtime — so this is what keeps it honest.
+    """
+    from newz.pilot.drills import gate_6_status
+
+    class _NoStore:
+        def query(self, *args):
+            return []
+
+        def one(self, *args):
+            return {"n": 0}
+
+    reported = {line.split()[0] for line in gate_6_status(_NoStore())["unmet_controls"]}
+    still_open = {
+        threat
+        for threat, entry in ENTRIES.items()
+        if entry.get("Why it stands") and entry.get("Closing it")
+    }
+    assert reported == still_open, (reported, still_open)

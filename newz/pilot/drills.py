@@ -343,9 +343,14 @@ def gate_6_status(store: Store, drills: tuple[DrillResult, ...] = ()) -> dict[st
             "which source classes are admitted, and against what case",
             "whether to open any R3 case at all",
         ],
+        # Kept in step with `docs/threat-model.md` section 7 by a test rather
+        # than by reading the file at runtime. This list said T-19 was open for
+        # a day after it was closed, which is the same drift the threat model's
+        # own audit exists to catch — a status that lags the thing it reports is
+        # worse than one that says nothing.
         "unmet_controls": [
-            "T-19 fetch and parse share an interpreter with the ledger",
             "T-20 there is no egress policy below the code",
+            "T-21 the parse worker's memory cap does not exist on macOS",
         ],
         "known_limits": [
             "replay covers each claim's current assessment only: edge liveness is a "
