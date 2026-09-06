@@ -327,12 +327,25 @@ def gate_6_status(store: Store, drills: tuple[DrillResult, ...] = ()) -> dict[st
         "drills": [drill.as_record() for drill in drills],
         "policy_version": BUNDLE.version,
         "policy_digest": BUNDLE.digest,
+        "built": [
+            "catalogue expansion, with the concentration cap enforced at reservation "
+            "and the symmetry cost of each size reported (newz/pilot/expansion.py)",
+            "the R2 source class adversarial review (newz/control/adversarial.py)",
+            "the R3 isolated workflow, exercised (newz/control/isolation.py)",
+            "a threat model citing each control and its test (docs/threat-model.md)",
+        ],
         "operator_supplied": [
             "production service objectives — a commitment, not a measurement",
-            "security review — a person reads the threat model against the code",
-            "catalog expansion beyond the pilot, with the concentration alerts holding",
-            "R2 source classes admitted only after direct adversarial review",
-            "R3 intake only after the isolated workflow is exercised",
+            "the security review itself — a person reads docs/threat-model.md against "
+            "the code, and the entries worth their attention are the residuals and the "
+            "two unmet controls in its section 7",
+            "the decision to expand, and to what size",
+            "which source classes are admitted, and against what case",
+            "whether to open any R3 case at all",
+        ],
+        "unmet_controls": [
+            "T-19 fetch and parse share an interpreter with the ledger",
+            "T-20 there is no egress policy below the code",
         ],
         "known_limits": [
             "replay covers each claim's current assessment only: edge liveness is a "

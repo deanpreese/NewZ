@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.17.0
+**Document version:** 1.18.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -244,10 +244,19 @@ randomization, locale, or the host clock. A runtime upgrade is a code version
 change under `SPEC.md` section 13: assessments either reproduce under it or the
 divergence is a defect with a regression fixture.
 
-The two planes that handle hostile input keep their own boundary regardless of
-language. Fetch and parse run as separate processes with their own privilege and
-egress limits, because a parser in the same interpreter as the ledger is one
-deserialization bug away from writing to it.
+The two planes that handle hostile input need their own boundary regardless of
+language: a parser in the same interpreter as the ledger is one deserialization
+bug away from writing to it, and fetch and parse should run as separate
+processes with their own privilege and egress limits.
+
+**They do not yet.** Everything runs in one process, `pypdf` parses hostile
+input beside the store handle, and the only boundary is the static one in
+`tests/test_gate0.py` — two modules may open a socket and nothing may start a
+process, which constrains the code and not a compromised dependency. This
+paragraph asserted the separation as fact until 2026-09-05. It is recorded as
+T-19 and T-20 in `docs/threat-model.md` rather than described as built, because
+a document claiming a control that does not exist is worse than one admitting
+the gap: a security reviewer reads the sentence and ticks the box.
 
 ## Runtime topology
 
@@ -430,6 +439,7 @@ stage, left by a recorded cause and a regression fixture under `SPEC.md` section
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.18.0 | 2026-09-05 | Corrected an assertion that fetch and parse run as separate processes. They do not; the gap is recorded as T-19 and T-20 in the threat model. |
 | 1.17.0 | 2026-09-05 | R2 source classes are admitted by adversarial review, and the self-deception checks report an explanation they tested and rejected rather than staying silent about it. |
 | 1.16.0 | 2026-09-05 | The R3 isolated workflow: intake is an operator act, quarantined material never reaches a prompt without a single-use recorded approval, and every access to it is logged including the refused ones. |
 | 1.15.0 | 2026-09-05 | One conversion and one shape for every ledger timestamp: caller-supplied moments were written in local time and in a format that sorts against SQLite's own. |
