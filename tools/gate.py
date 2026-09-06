@@ -12,6 +12,7 @@ than importing the policy engine and asking it.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -20,10 +21,36 @@ ROOT = Path(__file__).resolve().parents[1]
 ARTIFACTS = ("policy/capability_matrix.jsonl", "policy/bundle.json")
 
 
-def run(name: str, *command: str) -> bool:
+#: The clock-sensitive tests, run again on both sides of Greenwich. The ledger
+#: stamps UTC and the operator's day is local, and code that compares one to the
+#: other looks correct from inside a single timezone: the politeness floor
+#: silently stopped pacing anything east of Greenwich and refused permanently
+#: west of it, and the daily funnel reported an evening's reads as a total loss
+#: at the first stage. Neither cost anything to find once the suite was asked
+#: the question somewhere else.
+CLOCK_SENSITIVE = ("tests/test_scheduler.py", "tests/test_pilot.py", "tests/test_gate1.py")
+ELSEWHERE = ("Pacific/Auckland", "America/Los_Angeles")
+
+
+def run(name: str, *command: str, env: dict[str, str] | None = None) -> bool:
     print(f"\n=== {name} " + "=" * max(0, 60 - len(name)))
-    result = subprocess.run(command, cwd=ROOT)
+    result = subprocess.run(command, cwd=ROOT, env={**os.environ, **(env or {})})
     return result.returncode == 0
+
+
+def clocks_elsewhere() -> bool:
+    ok = True
+    for zone in ELSEWHERE:
+        ok &= run(
+            f"pytest ({zone})",
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            *CLOCK_SENSITIVE,
+            env={"TZ": zone},
+        )
+    return ok
 
 
 def policy_artifacts_are_current() -> bool:
@@ -48,6 +75,7 @@ def main() -> int:
         ("ruff", run("ruff", sys.executable, "-m", "ruff", "check", ".")),
         ("policy artifacts", policy_artifacts_are_current()),
         ("pytest", run("pytest", sys.executable, "-m", "pytest")),
+        ("clocks elsewhere", clocks_elsewhere()),
     ]
     print("\n" + "=" * 66)
     failed = [name for name, ok in checks if not ok]

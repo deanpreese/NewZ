@@ -2,7 +2,7 @@
 
 **Product:** NewZ
 **Status:** Authoritative specification
-**Document version:** 1.13.0
+**Document version:** 1.14.0
 **Effective:** 2026-09-04
 **Delivery model:** Greenfield rewrite
 
@@ -245,7 +245,19 @@ Production, unless the operator records a scoped exception.
 The cap is enforced at reservation, not after the fact: a read whose retention
 would carry its publisher past the cap MUST be refused a budget reservation, and
 the refusal MUST be recorded with the publisher, the window, and the figure so
-it is visible rather than merely absent. The cap governs acquisition only. It
+it is visible rather than merely absent. Every refused reservation MUST be
+recorded, not only this one: a diet repeatedly turned away at a ceiling and a
+diet nobody asked about are different facts and MUST NOT read alike.
+
+The cap MUST NOT bind below the window volume at which it could be satisfied,
+which is `ceil(1 / cap)` retained reads — five at 20%, ten at 10%. The first
+retained read in an empty window is 100% of it, and a cap applied there would
+refuse exactly the reads that would make it satisfiable. Below that volume the
+figure MUST still be computed and reported; it simply does not refuse.
+
+A scoped exception MUST name one publisher, an operator, a reason, and an
+expiry. An exception without an end is not an exception to the cap; it is a
+different cap for that publisher, which is a diet decision under another name. The cap governs acquisition only. It
 MUST NOT invalidate an already-retained artifact, alter an admitted edge, or
 change an assessment — a system that reconsidered evidence because its reading
 became unbalanced would be letting a diet property reach a conclusion.
@@ -1196,6 +1208,7 @@ Implementation sequencing and release gates are defined in `PLAN.md`.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative specification. |
+| 1.14.0 | 2026-09-05 | Section 5.1: every refused reservation is recorded, not only a concentration refusal; the cap does not bind below the volume at which it could be satisfied, because the first read in an empty window is all of it; and a scoped exception must name an operator, a reason and an expiry. |
 | 1.13.0 | 2026-09-05 | Publication is refused when the claim's current assessment no longer follows from its current evidence. Withdrawing an edge obliges no reassessment, so a card could render a conclusion the ledger underneath had stopped supporting. |
 | 1.12.0 | 2026-09-05 | Section 13: reproducibility requires the recorded derivation inputs, not the versions alone, and names the limit of replay — a superseded assessment is unreplayable rather than re-derived under current rules. |
 | 1.11.0 | 2026-09-04 | Closed four gaps a readiness review found before Phase 0. Enumerated the six evidence lanes in section 7.3, which `indeterminate` rests on and which no document had fixed, and split the glossary's one word for two things into read lane and evidence lane. Set the counterpart due time at 72 hours, so the overdue brake is computable from this document. Made the retained-read publisher cap enforce at reservation and stated that it never reaches evidence. Reconciled section 9.4 with the section 9.1 self-report: performance figures are withheld from the system, descriptions of conditions set for it are not. |

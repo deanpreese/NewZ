@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 **Status:** Authoritative target architecture
-**Document version:** 1.12.0
+**Document version:** 1.14.0
 **Effective:** 2026-09-04
 
 NewZ is a modular monolith with asynchronous workers and an append-oriented
@@ -196,7 +196,8 @@ ever changes.
 ```text
 SQLite (WAL, one file, foreign keys enforced)
 ├── catalog         sources, revisions, publishers, independence
-├── control         diet epochs, policy bundles, budgets, operations
+├── control         diet epochs, policy bundles, budgets, operations,
+│                  refused reservations, concentration exceptions
 ├── policy          what each policy version contained, by digest
 ├── acquisition     attempts, responses, sightings, parse executions
 ├── evidence        spans, assertions, claims, bases, edges, assessments
@@ -331,6 +332,9 @@ storage-adapter change and does not alter the domain contract.
 - One claim/evidence graph serves every consumer.
 - Current state is derived from append-only events.
 - Every consequential row records policy and implementation versions.
+- The ledger's time is UTC and the operator's day is local. Any comparison
+  between the two converts first, because subtracting one from the other
+  yields the UTC offset and looks correct from inside a single timezone.
 - Duplicate publication is distinct from independent basis.
 - A failed or retracted edge invalidates all dependent projections.
 - A conclusion that no longer follows from its own evidence never reaches a
@@ -365,6 +369,12 @@ storage-adapter change and does not alter the domain contract.
 - Search, embeddings, prose, and prior NewZ output are never external evidence.
 - Risk is monotonic within an automated operation; lowering it requires a
   reasoned operator action.
+- The publisher concentration cap is enforced before the read and never after
+  it: it may refuse a reservation, and may not touch a retained artifact, an
+  admitted edge, or an assessment.
+- A refused reservation is recorded, the same way a refused fetch is. A diet
+  repeatedly turned away at a ceiling must not read like a diet nobody asked
+  about.
 - Clearance and reach are separate axes: what publishes is approve-by-default,
   where it lands is local-first.
 - Public reach defaults to off, is widened only by an explicit scoped operator
@@ -404,6 +414,8 @@ stage, left by a recorded cause and a regression fixture under `SPEC.md` section
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative target architecture. |
+| 1.14.0 | 2026-09-05 | Named the ledger's timezone: rows are stamped UTC, the operator's day is local, and comparing them without converting silently disabled the per-host pacing floor and misreported the daily funnel. |
+| 1.13.0 | 2026-09-05 | The publisher concentration cap is enforced at reservation and every refused reservation is recorded; both were specified and neither was built. |
 | 1.12.0 | 2026-09-05 | Clearance re-derives the assessment and refuses a card whose conclusion no longer follows: the replay drill could only find that after publication. |
 | 1.11.0 | 2026-09-05 | Recorded policy versions by digest, made derivation inputs part of what a derivation records, and stated the limit of replay: the current assessment is exact, an earlier one is not reconstructible from the ledger alone. |
 | 1.10.0 | 2026-09-04 | Recorded the implementation platform — Python 3.13 on conda `agent13` against SQLite 3.51 — as ADR-0003, with the determinism the choice must not touch, and corrected the claim that every mode but Fixture has an exit gate: Lockdown is a state left by cause and fixture, not a stage that passes a gate. |

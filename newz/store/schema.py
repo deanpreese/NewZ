@@ -1313,4 +1313,56 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         ALTER TABLE assessments ADD COLUMN horizon_reached INTEGER NOT NULL DEFAULT 0;
         """,
     ),
+    (
+        18,
+        "concentration_and_reservation_refusals",
+        """
+        -- A refused reservation is a fact about a source, the same way a
+        -- refused fetch is. They were raised and never written down, so a diet
+        -- that kept hitting a ceiling looked identical to one nobody asked
+        -- about.
+        -- No foreign key on the source revision, deliberately. A reservation is
+        -- refused precisely when what was asked for is not what may be read,
+        -- and "that revision is not in the catalogue" is the commonest such
+        -- refusal. A key here would make the unrecordable case the one most
+        -- worth recording.
+        CREATE TABLE reservation_refusals (
+            id                 INTEGER PRIMARY KEY,
+            idempotency_key    TEXT NOT NULL,
+            source_revision_id TEXT NOT NULL,
+            lane               TEXT NOT NULL,
+            refusal            TEXT NOT NULL,
+            detail             TEXT NOT NULL,
+            local_day          TEXT NOT NULL,
+            refused_at         TEXT NOT NULL
+        ) STRICT;
+
+        CREATE INDEX reservation_refusals_by_day ON reservation_refusals (local_day, refusal);
+
+        CREATE TRIGGER reservation_refusals_are_immutable
+        BEFORE UPDATE ON reservation_refusals
+        BEGIN
+            SELECT RAISE(ABORT, 'a refusal happened; record another, do not edit it');
+        END;
+
+        -- The scoped exception SPEC section 5.1 allows. It names one publisher,
+        -- expires, and carries the operator who granted it: an exception with no
+        -- end and no author is a cap that was quietly removed.
+        CREATE TABLE concentration_exceptions (
+            id           TEXT PRIMARY KEY,
+            publisher_id TEXT NOT NULL REFERENCES publishers(id),
+            cap          REAL NOT NULL,
+            granted_by   TEXT NOT NULL,
+            reason       TEXT NOT NULL,
+            expires_at   TEXT NOT NULL,
+            recorded_at  TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TRIGGER concentration_exceptions_are_immutable
+        BEFORE UPDATE ON concentration_exceptions
+        BEGIN
+            SELECT RAISE(ABORT, 'an exception is a dated act; grant another one');
+        END;
+        """,
+    ),
 )

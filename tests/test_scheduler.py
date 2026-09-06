@@ -7,7 +7,7 @@ file. A busy-timeout that is only asserted in a comment is not a busy-timeout.
 from __future__ import annotations
 
 import threading
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -275,13 +275,41 @@ def test_a_host_is_not_read_twice_inside_the_politeness_floor(catalog, transport
     operation = make(catalog, 1)
     acquire(catalog, operation, canary.revision, transport)
 
-    # Pacing is measured against what the ledger recorded, not against a time
-    # the caller supplies, so the test reads the recorded moment back.
-    recorded = datetime.fromisoformat(catalog.one("SELECT started_at FROM attempts")["started_at"])
+    # Asked the way the acquisition path asks it: with the local wall clock.
+    # An earlier version of this test read the recorded UTC timestamp back and
+    # passed that in, which compared UTC against UTC and so agreed with the
+    # floor in every timezone -- including the ones where the floor was not
+    # working at all.
+    now = datetime.now()
     host = "harbour.example"
-    assert pacing_refusal(catalog, host, recorded, RetryPolicy()) is FetchRefusal.RATE_LIMITED
-    assert pacing_refusal(catalog, host, recorded + timedelta(seconds=31), RetryPolicy()) is None
-    assert pacing_refusal(catalog, "other.example", recorded, RetryPolicy()) is None
+    assert pacing_refusal(catalog, host, now, RetryPolicy()) is FetchRefusal.RATE_LIMITED
+    assert pacing_refusal(catalog, host, now + timedelta(seconds=31), RetryPolicy()) is None
+    assert pacing_refusal(catalog, "other.example", now, RetryPolicy()) is None
+
+
+def test_the_politeness_floor_does_not_depend_on_the_host_timezone(catalog, transport):
+    """The ledger stamps UTC; a caller says `datetime.now()`, which is local.
+
+    Subtracting one from the other yields the UTC offset, and the failure is
+    invisible from inside a single timezone: east of Greenwich elapsed time came
+    out hours large and the floor paced nothing, west of it elapsed time came
+    out negative and the floor refused every read forever. Both read as a
+    working floor from the outside.
+    """
+    from newz.acquisition.run import acquire
+    from newz.control.retry import RetryPolicy, as_utc, last_attempt_at, pacing_refusal
+    from tests import canaries
+
+    acquire(catalog, make(catalog, 1), canaries.CANARIES[0].revision, transport)
+    recorded = last_attempt_at(catalog, "harbour.example")
+    assert recorded.tzinfo is UTC, "the ledger's timestamps are UTC and say so"
+
+    naive_local = datetime.now()
+    aware_utc = datetime.now(UTC)
+    assert as_utc(naive_local) == pytest.approx(aware_utc, abs=timedelta(seconds=2))
+    assert pacing_refusal(catalog, "harbour.example", naive_local, RetryPolicy()) is (
+        pacing_refusal(catalog, "harbour.example", aware_utc, RetryPolicy())
+    )
 
 
 def test_a_clock_that_went_backwards_is_not_a_licence_to_read_again(catalog, transport):
@@ -291,8 +319,9 @@ def test_a_clock_that_went_backwards_is_not_a_licence_to_read_again(catalog, tra
 
     canary = canaries.CANARIES[0]
     acquire(catalog, make(catalog, 1), canary.revision, transport)
-    recorded = datetime.fromisoformat(catalog.one("SELECT started_at FROM attempts")["started_at"])
     assert (
-        pacing_refusal(catalog, "harbour.example", recorded - timedelta(hours=1), RetryPolicy())
+        pacing_refusal(
+            catalog, "harbour.example", datetime.now() - timedelta(hours=1), RetryPolicy()
+        )
         is FetchRefusal.RATE_LIMITED
     )

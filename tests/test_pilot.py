@@ -9,7 +9,7 @@ outstanding.
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 
@@ -40,7 +40,9 @@ from newz.pilot.violations import (
 )
 from tests import world as world_module
 
-DAY = "2026-09-05"
+#: The same day the world fixture reserves under, which is today: see
+#: `tests/world.py`.
+DAY = world_module.DAY
 
 
 @pytest.fixture
@@ -384,6 +386,36 @@ def test_shadow_exits_only_when_all_three_conditions_hold(store, world):
 # ---------------------------------------------------------------------------
 # Reports
 # ---------------------------------------------------------------------------
+
+
+def test_every_funnel_stage_lands_on_the_operators_day(store, world):
+    """The ledger stamps UTC; the funnel reports the operator's local date.
+
+    `reserved` reads a local `local_day` column and every other stage reads a
+    UTC timestamp. West of Greenwich those name different days for the hours
+    between local midnight and UTC midnight, and the funnel showed nine
+    reservations and zero fetches for work that had plainly run.
+    """
+    attempt = store.one("SELECT id, operation_id, url FROM attempts LIMIT 1")
+    stamped = "2026-03-14T23:30:00"  # UTC; a different date in most of the world
+    with store.write() as connection:
+        connection.execute(
+            "INSERT INTO attempts (id, operation_id, url, started_at, outcome, "
+            "refusal_reason, http_status, bytes_read, redirects_json, detail) "
+            "VALUES ('attempt:tz', ?, ?, ?, 'retained', NULL, 200, 10, '[]', '')",
+            (attempt["operation_id"], attempt["url"], stamped),
+        )
+
+    local_day = (
+        datetime.fromisoformat(stamped).replace(tzinfo=UTC).astimezone().date().isoformat()
+    )
+    assert reports.funnel(store, local_day)["fetched"] == 1
+
+    # And the two halves of the funnel agree with each other, which is the
+    # property that actually broke: a reservation and its own fetch are the
+    # same day's work in every timezone.
+    counted = reports.funnel(store, DAY)
+    assert counted["reserved"] == counted["fetched"] == 9
 
 
 def test_the_funnel_counts_every_stage_separately(store, world):

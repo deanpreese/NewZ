@@ -14,6 +14,16 @@ One figure escalates rather than being absorbed: the share of claims held below
 above 90%, that is not a strict system working; it is a design finding that the
 evidence rules are unsatisfiable in practice, and `PLAN.md` requires it be put
 in front of the operator rather than reported into a dashboard nobody reads.
+
+**The funnel's day is the operator's day, in every stage.** The ledger stamps
+rows in UTC, the budget and Gate 5's eligible dates count in local time, and the
+funnel originally read `reserved` from the local `local_day` column while
+matching every later stage against a UTC timestamp prefix. West of Greenwich the
+two disagree for the hours between local midnight and UTC midnight, so an
+evening's work reported nine reservations and zero fetches — a funnel showing a
+total loss at the first stage of a pipeline that had in fact run. Stages are
+counted in one timezone here or the shape of the funnel is an artifact of when
+somebody looked at it.
 """
 
 from __future__ import annotations
@@ -26,41 +36,38 @@ UNKNOWN_INDEPENDENCE_ESCALATION_SHARE = 0.90
 
 
 def funnel(store: Store, local_day: str) -> dict[str, int]:
-    """One local day, stage by stage."""
-    day = f"{local_day}%"
+    """One local day, stage by stage, every stage on the same day."""
 
     def count(sql: str, *params: Any) -> int:
         row = store.one(sql, *params)
         return row["n"] if row else 0
 
+    def on_day(table: str, column: str, extra: str = "") -> str:
+        # `date(x, 'localtime')` reads a UTC-stamped column as the operator's
+        # date. Every funnel column is written with SQLite's `datetime('now')`,
+        # which is UTC, so the conversion is exact rather than approximate.
+        return (
+            f"SELECT COUNT(*) AS n FROM {table} "
+            f"WHERE date({column}, 'localtime') = ?{' AND ' + extra if extra else ''}"
+        )
+
     return {
-        "leads": count("SELECT COUNT(*) AS n FROM leads WHERE created_at LIKE ?", day),
+        "leads": count(on_day("leads", "created_at"), local_day),
         "reserved": count("SELECT COUNT(*) AS n FROM reservations WHERE local_day = ?", local_day),
-        "fetched": count("SELECT COUNT(*) AS n FROM attempts WHERE started_at LIKE ?", day),
-        "retained": count(
-            "SELECT COUNT(*) AS n FROM attempts WHERE started_at LIKE ? AND outcome = 'retained'",
-            day,
+        "fetched": count(on_day("attempts", "started_at"), local_day),
+        "retained": count(on_day("attempts", "started_at", "outcome = 'retained'"), local_day),
+        "refused": count(on_day("attempts", "started_at", "outcome = 'refused'"), local_day),
+        "errored": count(on_day("attempts", "started_at", "outcome = 'error'"), local_day),
+        "reservations_refused": count(
+            "SELECT COUNT(*) AS n FROM reservation_refusals WHERE local_day = ?", local_day
         ),
-        "refused": count(
-            "SELECT COUNT(*) AS n FROM attempts WHERE started_at LIKE ? AND outcome = 'refused'",
-            day,
-        ),
-        "errored": count(
-            "SELECT COUNT(*) AS n FROM attempts WHERE started_at LIKE ? AND outcome = 'error'", day
-        ),
-        "parsed": count(
-            "SELECT COUNT(*) AS n FROM parse_executions WHERE executed_at LIKE ?", day
-        ),
-        "asserted": count("SELECT COUNT(*) AS n FROM assertions WHERE recorded_at LIKE ?", day),
-        "edges_admitted": count(
-            "SELECT COUNT(*) AS n FROM edge_events WHERE recorded_at LIKE ? AND admitted = 1", day
-        ),
-        "edges_refused": count(
-            "SELECT COUNT(*) AS n FROM edge_events WHERE recorded_at LIKE ? AND admitted = 0", day
-        ),
-        "assessments": count("SELECT COUNT(*) AS n FROM assessments WHERE derived_at LIKE ?", day),
+        "parsed": count(on_day("parse_executions", "executed_at"), local_day),
+        "asserted": count(on_day("assertions", "recorded_at"), local_day),
+        "edges_admitted": count(on_day("edge_events", "recorded_at", "admitted = 1"), local_day),
+        "edges_refused": count(on_day("edge_events", "recorded_at", "admitted = 0"), local_day),
+        "assessments": count(on_day("assessments", "derived_at"), local_day),
         "cards_invalidated": count(
-            "SELECT COUNT(*) AS n FROM outbox WHERE kind = 'cards_invalidated' AND at LIKE ?", day
+            on_day("outbox", "at", "kind = 'cards_invalidated'"), local_day
         ),
     }
 

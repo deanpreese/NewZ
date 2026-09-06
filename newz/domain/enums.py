@@ -367,6 +367,7 @@ class FetchRefusal(StrEnum):
     ROBOTS_DISALLOWED = "robots_disallowed"
     ROBOTS_UNREACHABLE = "robots_unreachable"
     SOURCE_QUARANTINED = "source_quarantined"
+    PUBLISHER_CONCENTRATION = "publisher_concentration"
 
 
 @unique

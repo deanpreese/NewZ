@@ -1,7 +1,7 @@
 # PLAN
 
 **Status:** Authoritative delivery plan
-**Document version:** 1.11.0
+**Document version:** 1.13.0
 **Effective:** 2026-09-04
 **Strategy:** Greenfield implementation with gated rollout
 
@@ -495,7 +495,12 @@ operator explicitly approves progression.
 Deliver in order:
 
 1. Expand the low-risk R0–R1 catalog while maintaining topic/role coverage and
-   concentration alerts.
+   concentration alerts. The cap those alerts report is enforced at reservation
+   under section 5.1 — a read whose retention would breach it never happens,
+   because a cap that noticed afterwards could only be honoured by discarding
+   evidence, which it is forbidden to do. Expansion is what makes the cap bite:
+   at twenty sources an even diet sits near 5% a publisher, and the ceiling is
+   reached by reading unevenly rather than by reading widely.
 2. Widen reach: enable public audiences for output that has been publishing
    locally by default since Gate 4, as an explicit scoped operator act, with
    reach still independently lockable at any moment. The reader surface itself
@@ -546,6 +551,13 @@ be evidence of a judgment or a commitment, so none is written.
 - Record access to R3 quarantined material.
 
 ### Observability
+
+Every stage of a daily figure MUST be counted on one definition of the day. The
+ledger stamps rows in UTC and the operator's day is local; a report that reads
+one stage from a local column and the next from a UTC timestamp shows a
+pipeline that reserved reads and never made them, for as many hours a day as
+the host is offset from Greenwich. The gate runs the clock-sensitive tests
+again on both sides of it.
 
 Instrument counts and latency at every pipeline boundary. Metrics MUST use
 explicit denominators and MUST distinguish source, publication, artifact body,
@@ -621,6 +633,8 @@ document describes MUST bump that document in the same change.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-09-03 | Initial authoritative delivery plan. |
+| 1.13.0 | 2026-09-05 | Observability: a daily figure counts every stage on one definition of the day, and the gate runs the clock-sensitive tests on both sides of Greenwich. |
+| 1.12.0 | 2026-09-05 | Phase 6 item 1: recorded that the concentration cap is enforced at reservation rather than reported after the fact, and why expansion is what makes it bite. |
 | 1.11.0 | 2026-09-05 | Split Gate 6 into the three drills that execute and the judgments that cannot, and stated what each drill is tested against failing on. |
 | 1.10.1 | 2026-09-05 | Recorded what ADR-0003 actually decided about test tooling once Phase 0 was built: the Phase 0 spaces are finite, so the invariants are enumerated exhaustively and no property-testing dependency is taken. |
 | 1.10.0 | 2026-09-04 | Added ADR-0003 for the runtime and toolchain, so the first backlog item is not the first undecided one. Fixed the capability matrix's stale reference to the task states and named `SPEC.md` 7.3 as the source of the evidence-lane set, which the matrix maps and does not define. Moved the interest-cannot-select-a-person test from Phase 4 to Phase 4A, where the interest register exists, and renumbered the Phase 4 deliverables, which 1.9.1 had missed. |

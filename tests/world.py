@@ -11,6 +11,7 @@ producing a world that quietly means something else.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 from newz.acquisition.run import acquire
@@ -35,7 +36,13 @@ from tests.model_stub import StubModel, assertion, claim, extraction
 from tests.transport import FixtureTransport
 
 CORPUS = Path(__file__).parent / "fixtures" / "corpus"
-DAY = "2026-09-05"
+#: The pipeline below runs against the real clock -- every row it writes is
+#: stamped with SQLite's `datetime('now')` -- so the day it labels its
+#: reservations with has to be the same day, or a report that counts
+#: reservations by their local label and fetches by their timestamp sees a
+#: pipeline that reserved and never read. A frozen date here agreed with the
+#: clock only by coincidence, and only until the date rolled.
+DAY = datetime.now().date().isoformat()
 
 LANES = (
     ReadLane.DISCOVERY,

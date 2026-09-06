@@ -18,7 +18,7 @@ principle.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from newz.domain.enums import AttemptOutcome, FetchRefusal
 
@@ -67,6 +67,24 @@ def attempts_for(store, source_revision_id: str) -> int:
     return row["n"] if row else 0
 
 
+def as_utc(moment: datetime) -> datetime:
+    """One timezone for both sides of every elapsed-time comparison.
+
+    The ledger stamps every row with SQLite's `datetime('now')`, which is UTC
+    and naive. Callers reach for `datetime.now()`, which is local and naive.
+    Subtracting one from the other silently yields the UTC offset: east of
+    Greenwich the politeness floor read every host as last contacted hours ago
+    and never paced anything, and west of it every elapsed time came out
+    negative and the floor refused permanently. Both look like a working floor
+    from inside, which is why the tests had to read the recorded timestamp back
+    instead of asking what time it was.
+
+    A naive value is taken as local, which is what `astimezone` does and what a
+    caller writing `datetime.now()` means.
+    """
+    return moment.astimezone(UTC) if moment.tzinfo else moment.astimezone().astimezone(UTC)
+
+
 def last_attempt_at(store, host: str) -> datetime | None:
     """When this host was last contacted, whatever the outcome.
 
@@ -81,7 +99,7 @@ def last_attempt_at(store, host: str) -> datetime | None:
     )
     if row is None or row["at"] is None:
         return None
-    return datetime.fromisoformat(row["at"])
+    return datetime.fromisoformat(row["at"]).replace(tzinfo=UTC)
 
 
 def effective_interval(policy: RetryPolicy, crawl_delay: float | None) -> float:
@@ -107,7 +125,7 @@ def pacing_refusal(
     previous = last_attempt_at(store, host)
     if previous is None:
         return None
-    elapsed = (now - previous).total_seconds()
+    elapsed = (as_utc(now) - previous).total_seconds()
     # A negative elapsed time means the clock moved backwards, which fails
     # closed here: a clock that went backwards is not a licence to read again.
     if elapsed < effective_interval(policy, crawl_delay):

@@ -732,10 +732,13 @@ footer{
     <li>One claim and evidence graph serves every consumer.</li>
     <li>Current state is derived from append-only events.</li>
     <li>Every consequential row records policy and implementation versions.</li>
+    <li>The ledger's time is UTC and the operator's day is local — any comparison between the two converts first, because subtracting one from the other yields the UTC offset and looks correct from inside a single timezone.</li>
     <li>Duplicate publication is distinct from independent basis.</li>
     <li>A failed or retracted edge invalidates all dependent projections.</li>
     <li>Search, embeddings, prose, and prior NewZ output are never external evidence.</li>
     <li>Risk is monotonic within an automated operation; lowering it requires a reasoned operator action.</li>
+    <li>The publisher concentration cap is enforced before the read and never after it: it may refuse a reservation, and may not touch a retained artifact, an admitted edge, or an assessment.</li>
+    <li>A refused reservation is recorded, the same way a refused fetch is — a diet repeatedly turned away at a ceiling must not read like a diet nobody asked about.</li>
     <li>Clearance and reach are separate axes: what publishes is approve-by-default, where it lands is local-first.</li>
     <li>Public reach defaults to off, widens only by an explicit scoped operator act, and can be locked down at any moment without changing evidence.</li>
     <li>Approve-by-default is earned by demonstrated revocation inside a bounded window, never assumed.</li>

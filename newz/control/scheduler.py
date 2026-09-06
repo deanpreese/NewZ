@@ -24,6 +24,7 @@ from newz.control.budget import (
     DailyBudget,
     availability,
 )
+from newz.control.concentration import record_refusal, would_exceed
 from newz.domain.enums import (
     TERMINAL_OPERATION_STATES,
     FetchRefusal,
@@ -148,23 +149,50 @@ def reserve(
             ),
         )
 
+    def refuse(reason: FetchRefusal, detail: str) -> ReservationRefused:
+        """Write the refusal down, then raise it.
+
+        `FetchRefusal` says refusals are recorded and never merely returned, and
+        for fetches that was true; reservations only ever raised. A diet
+        repeatedly turned away at a ceiling then read exactly like a diet nobody
+        had asked about, which is the shape of absence this system exists to
+        avoid producing.
+        """
+        record_refusal(
+            store,
+            idempotency_key=idempotency_key,
+            source_revision_id=source_revision_id,
+            lane=lane.value,
+            refusal=reason.value,
+            detail=detail,
+            local_day=local_day,
+        )
+        return ReservationRefused(reason, detail)
+
     if store.one(
         "SELECT 1 FROM diet_epoch_sources WHERE epoch_id = ? AND source_revision_id = ?",
         epoch_id,
         source_revision_id,
     ) is None:
-        raise ReservationRefused(
+        raise refuse(
             FetchRefusal.HOST_NOT_IN_CATALOG,
             f"{source_revision_id} is not enabled in {epoch_id}",
         )
 
     if lane is ReadLane.DISCOVERY and discovery_paused:
-        raise ReservationRefused(FetchRefusal.DISCOVERY_PAUSED, discovery_paused)
+        raise refuse(FetchRefusal.DISCOVERY_PAUSED, discovery_paused)
 
     if requests_this_month(store, local_day) >= MONTHLY_REQUEST_CEILING:
-        raise ReservationRefused(FetchRefusal.REQUEST_CEILING, month_of(local_day))
+        raise refuse(FetchRefusal.REQUEST_CEILING, month_of(local_day))
     if stored_bytes_this_month(store, local_day) >= MONTHLY_STORAGE_CEILING_BYTES:
-        raise ReservationRefused(FetchRefusal.STORAGE_CEILING, month_of(local_day))
+        raise refuse(FetchRefusal.STORAGE_CEILING, month_of(local_day))
+
+    # SPEC 5.1: enforced here rather than after the fact, because a read whose
+    # retention would breach the cap has already been taken by the time a report
+    # could notice it, and the cap may not answer that by discarding evidence.
+    concentrated = would_exceed(store, source_revision_id, local_day)
+    if concentrated:
+        raise refuse(FetchRefusal.PUBLISHER_CONCENTRATION, concentrated)
 
     try:
         with store.write() as connection:
@@ -207,6 +235,20 @@ def reserve(
                     borrowed_from.value if borrowed_from else None,
                 ),
             )
+    except ReservationRefused as refusal:
+        # The budget decision is made under the write lock, on purpose, but a
+        # refusal recorded inside that lock would roll back with the transaction
+        # it refused — the record would vanish along with the thing it recorded.
+        record_refusal(
+            store,
+            idempotency_key=idempotency_key,
+            source_revision_id=source_revision_id,
+            lane=lane.value,
+            refusal=refusal.refusal.value,
+            detail=refusal.detail,
+            local_day=local_day,
+        )
+        raise
     except sqlite3.IntegrityError as error:
         # Another writer took the same key between our read and our lock.
         if "idempotency_key" in str(error):
