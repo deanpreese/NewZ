@@ -9,6 +9,7 @@ import pytest
 from newz.attention import decay, interest, notices
 from newz.attention.diet import diet_self_report
 from newz.attention.notices import NoticeRefused, notice_over_span, record_notice
+from newz.clock import stamp
 from newz.domain.enums import NoticeProvenanceKind
 from tests import world as world_module
 
@@ -198,6 +199,10 @@ def test_an_interest_that_produced_nothing_is_retired_or_renewed_with_a_reason(s
         diet_epoch_id="epoch:1",
         topic_targets=TARGETS,
         window_days=30,
+        # Pinned, so this measures the window rather than racing the wall clock.
+        # With the opening stamped by the ledger it passed or failed depending on
+        # which side of UTC midnight the suite ran.
+        opened_at=stamp(NOW),
     )
     assert interest.unproductive(store, NOW) == ()
     later = NOW + timedelta(days=31)

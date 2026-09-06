@@ -104,6 +104,44 @@ DECISIONS: tuple[dict[str, str], ...] = (
         ),
     },
     {
+        "id": "decision:defer-media-paths",
+        "on": "2026-09-05",
+        "actor": "operator:dean",
+        "decision": "hold until after Gate 5, and record why",
+        "subject": "the OCR, transcript and media-forensics paths of PLAN Phase 6 item 5",
+        "holds_while": "the pilot has not read live material",
+        "closes_when": (
+            "Gate 5 passes, or a prescribed slot turns out to need one of them to be "
+            "readable at all — the survey would find that before the epoch activates"
+        ),
+        "cost": (
+            "a source serving only scanned documents, audio or video is unreadable "
+            "until then and must be recorded as lead-only rather than counted. The "
+            "alternative was building three parsers against guesses about material "
+            "nothing has read, each of which PLAN requires to arrive with its own "
+            "fixtures and rollback"
+        ),
+    },
+    {
+        "id": "decision:accept-the-sandbox-gap",
+        "on": "2026-09-05",
+        "actor": "operator:dean",
+        "decision": "accept for the pilot",
+        "subject": "threat model T-20 and T-21 — no egress policy below the code, "
+        "and no memory cap for the parse worker on macOS",
+        "holds_while": "one operator, one machine, and public reach stays off",
+        "closes_when": (
+            "public reach widens, which is when the blast radius stops being the "
+            "operator's own machine"
+        ),
+        "cost": (
+            "the parse boundary is a process and not a sandbox: same user, same "
+            "filesystem. A compromised dependency is constrained in this program and "
+            "not on the host, and a runaway parse is bounded here by the CPU cap and "
+            "the caller's timeout rather than by memory"
+        ),
+    },
+    {
         "id": "decision:expansion-target",
         "on": "2026-09-05",
         "actor": "operator:dean",

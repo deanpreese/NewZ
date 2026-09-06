@@ -280,7 +280,7 @@ mistake this section exists to record.
 **Test:** `tests/test_isolate.py::test_the_worker_reports_which_limits_it_actually_got`
 **Closing it:** A container or a VM with a memory limit, on any platform. Same
 answer as T-20, which is not a coincidence: both are the point where a control
-has to move below the process.
+has to move below the process. **Accepted for the pilot** on the same decision.
 
 ### T-20 — There is no egress policy below the code
 **Requirement:** `PLAN.md`: least privilege and egress policy for the workers.
@@ -292,6 +292,10 @@ test that fails the gate if a network import appears outside the transport.
 **Closing it:** An OS-level or container-level egress rule listing the enabled
 hosts and the model endpoint. This is deployment, not code, and belongs with the
 production service objectives Gate 6 also asks for.
+**Accepted for the pilot** on 2026-09-05 (`seeds.DECISIONS`,
+`decision:accept-the-sandbox-gap`), while there is one operator, one machine and
+public reach is off. It closes when reach widens, which is when the blast radius
+stops being the operator's own machine.
 
 ---
 
