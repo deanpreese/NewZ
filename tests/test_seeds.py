@@ -16,27 +16,51 @@ from newz.pilot import seeds, slots
 from newz.pilot.catalog_review import MAX_PER_PUBLISHER, REQUIRED_SLOTS, REQUIRED_TOPICS
 from newz.pilot.prescription import prescribe
 
+#: The slate answers nineteen of the twenty prescribed slots. The twentieth was
+#: the National UFO Reporting Center, dropped on 2026-09-05 when the operator
+#: chose not to ask a source that had already declined the agent.
+FILLED = 19
 
-def test_the_slate_answers_the_prescription_exactly():
-    """One source per prescribed slot, not merely twenty sources."""
+
+def test_the_slate_answers_the_prescription_except_where_it_says_it_does_not():
+    """One source per prescribed slot, and the shortfall named rather than absent."""
     proposed = collections.Counter((seed.bucket, seed.topic) for seed in seeds.SEEDS)
     prescribed = collections.Counter(
         (spec.bucket, spec.topic) for spec in prescribe(pins=seeds.PINS)
     )
-    assert proposed == prescribed
+    assert proposed - prescribed == collections.Counter(), "no slot is filled twice"
+
+    missing = prescribed - proposed
+    assert missing == collections.Counter(
+        {("claimant_or_firsthand", "uap_and_aerospace_anomalies"): 1}
+    )
+    reported = seeds.gaps()["open_slots"]["slots"]
+    assert [(slot["bucket"], slot["topic"]) for slot in reported] == [
+        ("claimant_or_firsthand", "uap_and_aerospace_anomalies")
+    ]
 
 
-def test_the_slate_is_twenty_and_covers_every_topic_and_bucket():
-    assert len(seeds.SEEDS) == 20
+def test_a_dropped_source_leaves_its_slot_open_rather_than_backfilled():
+    """Which source speaks for a topic is a diet decision, not a fallback."""
+    open_slots = seeds.gaps()["open_slots"]
+    assert open_slots["operator"]["decision"] == "drop rather than ask"
+    assert open_slots["candidates"], "the slate names who could fill it"
+    assert not any(
+        seed.publisher == "National UFO Reporting Center" for seed in seeds.SEEDS
+    )
+
+
+def test_the_slate_covers_every_topic_and_almost_every_bucket_slot():
+    assert len(seeds.SEEDS) == FILLED
     assert {seed.topic for seed in seeds.SEEDS} == set(REQUIRED_TOPICS)
     counts = collections.Counter(seed.bucket for seed in seeds.SEEDS)
-    assert dict(counts) == dict(REQUIRED_SLOTS)
+    assert dict(counts) == {**REQUIRED_SLOTS, "claimant_or_firsthand": 4}
 
 
 def test_no_publisher_appears_more_than_the_cap_allows():
     counts = collections.Counter(seed.publisher for seed in seeds.SEEDS)
     assert max(counts.values()) <= MAX_PER_PUBLISHER
-    assert len(counts) == 20
+    assert len(counts) == FILLED
 
 
 def test_every_url_is_one_the_fetcher_would_accept():
@@ -84,9 +108,13 @@ def test_the_slate_registers_as_a_candidate_adapter(store):
     added, unserved = slots.propose_candidates(
         store, specs=seeds.prescribed(), added_by="operator:dean"
     )
-    assert added == 20
-    assert unserved == ()
-    assert len(slots.candidates(store)) == 20
+    assert added == FILLED
+    assert len(slots.candidates(store)) == FILLED
+    # The slot nothing was proposed for is named by the proposer, not discovered
+    # later by whatever notices the slate is short.
+    assert [(spec.bucket, spec.topic) for spec in unserved] == [
+        ("claimant_or_firsthand", "uap_and_aerospace_anomalies")
+    ]
     slots.clear_candidate_adapters()
 
 

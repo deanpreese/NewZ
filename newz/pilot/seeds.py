@@ -38,6 +38,55 @@ from typing import Any
 #: record is where a UAP sighting first becomes a document" are knowledge rather
 #: than arbitrariness. Pinned rather than encoded into the score, so that the
 #: scoring function is not quietly rewritten until it produces a wanted answer.
+#: What the operator decided about this slate, and when. A gap the operator has
+#: weighed and accepted is a different thing from a gap nobody has looked at,
+#: and the difference has to survive in the record rather than in a memory of a
+#: conversation. Each entry says what was accepted, while it holds, and what
+#: would close it — an acceptance with no expiry condition is a requirement
+#: quietly deleted.
+DECISIONS: tuple[dict[str, str], ...] = (
+    {
+        "id": "decision:no-adjudicator",
+        "on": "2026-09-05",
+        "actor": "operator:dean",
+        "decision": "accept the gap",
+        "subject": "no adjudicator in the slate",
+        "holds_while": "the pilot stays at R0-R1 and takes no allegations about living people",
+        "closes_when": "R2 intake adds a court, tribunal or regulator",
+        "cost": (
+            "from this diet a false allegation about a living party cannot reach "
+            "`refuted`, which is the only route symmetry leaves open to the accused"
+        ),
+    },
+    {
+        "id": "decision:claimant-retention",
+        "on": "2026-09-05",
+        "actor": "operator:dean",
+        "decision": "accept the gap and report it",
+        "subject": "claimant slots whose retention terms are not established",
+        "holds_while": "every affected slot is reported as lead-only rather than read as retained",
+        "closes_when": "the terms are read, or permission is given, per source",
+        "cost": (
+            "the pilot under-represents what claimants said, and the alternative — "
+            "preferring claimants who publish permissively — would bias the slate "
+            "toward a property of a claimant's licensing rather than of their claim"
+        ),
+    },
+    {
+        "id": "decision:drop-the-declined",
+        "on": "2026-09-05",
+        "actor": "operator:dean",
+        "decision": "drop rather than ask",
+        "subject": "CUFOS, The Galileo Project and NUFORC, which decline the agent",
+        "holds_while": "always, unless the operator asks them",
+        "closes_when": "a source grants access, which only a person can request",
+        "cost": (
+            "one claimant slot on UAP is left open, and the UAP topic loses its "
+            "largest firsthand report collection"
+        ),
+    },
+)
+
 PINS: frozenset[tuple[str, str]] = frozenset(
     {
         ("primary_or_adjudicative", "alternative_physics_and_energy"),
@@ -141,15 +190,13 @@ SEEDS: tuple[Seed, ...] = (
         terms=OPEN_LICENCE,
         caution="metadata is CC0; the articles it points at are not",
     ),
-    # ---- claimant and firsthand: five, and the least retainable ------------
-    Seed(
-        bucket="claimant_or_firsthand",
-        topic="uap_and_aerospace_anomalies",
-        publisher="National UFO Reporting Center",
-        url="https://nuforc.org/subndx/?id=all",
-        why_this_role="firsthand sighting reports in the witness's own words, filed at the time",
-        terms=UNCLEAR,
-    ),
+    # ---- claimant and firsthand: four filled, one open ---------------------
+    #
+    # The fifth was the National UFO Reporting Center, dropped on 2026-09-05
+    # when the operator chose not to ask a source that had already declined the
+    # agent. Its slot is left open rather than filled from the next candidate
+    # down: which source speaks for a topic is a diet decision, and the two that
+    # could fill it are named in `gaps()` for the operator to choose between.
     Seed(
         bucket="claimant_or_firsthand",
         topic="alternative_physics_and_energy",
@@ -304,13 +351,22 @@ def prescribed() -> tuple:
     return prescribe(pins=PINS)
 
 
+def _decision(subject_id: str) -> dict[str, str] | None:
+    return next((entry for entry in DECISIONS if entry["id"] == subject_id), None)
+
+
 def gaps() -> dict[str, Any]:
     """What this slate cannot do, stated before the pilot rather than after it.
 
-    Two findings, and neither is a shortcoming of the search — they are what the
-    slate is, said out loud.
+    Neither finding is a shortcoming of the search — they are what the slate is,
+    said out loud. Both now carry the operator's answer, because a gap that has
+    been weighed and accepted still has to be visible: an accepted gap that
+    stopped being reported would be indistinguishable from one nobody found.
     """
     roles = {seed.bucket for seed in SEEDS}
+    from newz.pilot.prescription import unmet
+
+    unfilled = unmet(prescribed(), [(seed.bucket, seed.topic) for seed in SEEDS])
     claimant_unclear = [
         seed.publisher
         for seed in SEEDS
@@ -329,6 +385,7 @@ def gaps() -> dict[str, Any]:
                 "a court, tribunal or regulator is added, which R2 intake needs anyway"
             ),
             "buckets_present": sorted(roles),
+            "operator": _decision("decision:no-adjudicator"),
         },
         "claimant_retention": {
             "finding": (
@@ -342,6 +399,23 @@ def gaps() -> dict[str, Any]:
                 "prefer claimants publishing under an open licence",
                 "accept the gap and report it",
             ],
+            "operator": _decision("decision:claimant-retention"),
+        },
+        "open_slots": {
+            "finding": (
+                f"{len(unfilled)} prescribed slot(s) have no source. Dropping a source "
+                "that declines the agent leaves the slot it was filling open, and the "
+                "slate proposes rather than fills it: which source speaks for a topic "
+                "is a diet decision."
+            ),
+            "slots": [spec.as_record() for spec in unfilled],
+            "candidates": {
+                "claimant_or_firsthand/uap_and_aerospace_anomalies": [
+                    "MUFON — case management database; terms say all rights reserved",
+                    "BUFORA — unsurveyed; the British counterpart, and a distinct basis",
+                ]
+            },
+            "operator": _decision("decision:drop-the-declined"),
         },
     }
 
